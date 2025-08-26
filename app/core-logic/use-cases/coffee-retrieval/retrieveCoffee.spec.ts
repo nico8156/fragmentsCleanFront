@@ -24,6 +24,7 @@ describe('coffee retrieval', () => {
             AppState["coffeeRetrieval"]
         >({data: aCoffees});
     });
+
     const aCoffees: Coffee[] = [
         { id: "1", name: "Meilleur Café" },
         { id: "2", name: "Brûlerie Test" },

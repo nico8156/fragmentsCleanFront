@@ -7,6 +7,6 @@ export const coffeeRetrieved = createAction<Coffee[]>("COFFEE_RETRIEVED");
 export const retrieveCoffee =
     (): AppThunk<Promise<void>> =>
         async (dispatch, _, { coffeeGateway }) => {
-            const question = await coffeeGateway.retrieveCoffee();
-            dispatch(coffeeRetrieved(question));
+            const coffee = await coffeeGateway.retrieveCoffee();
+            dispatch(coffeeRetrieved(coffee));
         };

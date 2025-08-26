@@ -9,6 +9,7 @@ import {
 import { AppState } from "./appState";
 import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reducers/coffeeRetrievalReducer";
+import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/reducers/commentRetrievalReducer";
 
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
@@ -18,7 +19,8 @@ export const initReduxStore = (config: {
 }) => {
     return configureStore({
         reducer: {
-            coffeeRetrieval
+            coffeeRetrieval,
+            commentRetrieval,
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({
