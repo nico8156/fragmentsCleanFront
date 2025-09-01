@@ -3,7 +3,7 @@ import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentG
 import {AppState, Comment} from "@/app/store/appState";
 import {retrieveComment} from "@/app/core-logic/use-cases/comment/comment-retrieval/retrieveComment";
 
-describe('comment retrieval', () => {
+describe('On comment retrieval : ', () => {
     let store: ReduxStore;
     let commentGateway: FakeCommentGateway;
     beforeEach(() => {

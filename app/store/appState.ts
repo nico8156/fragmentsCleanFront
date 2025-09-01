@@ -4,7 +4,12 @@ export interface AppState {
     },
     commentRetrieval: {
         data : Comment[] | null;
-    }
+    },
+    // commentCreationValidation: {
+    //     data : boolean;
+    //     error: "EMPTY_CONTENT_NOT_ALLOWED" | null;
+    // }
+
 }
 
 export interface Coffee {

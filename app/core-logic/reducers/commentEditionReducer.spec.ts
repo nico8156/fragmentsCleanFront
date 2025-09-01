@@ -3,9 +3,17 @@ import {
     commentEditRequested,
     commentEditValidated
 } from "@/app/core-logic/use-cases/comment/comment-modification/submitCommentEdit";
+import {AppState} from "@/app/store/appState";
+import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
 
-describe("On comment update requested, ", () => {
-    it("stocke la requête d'édition", () => {
+describe("On comment updated, ", () => {
+    let store: AppState;
+    let commentGateway: FakeCommentGateway;
+
+    beforeEach(() => {
+        commentGateway = new FakeCommentGateway();
+    })
+    it("should update the comment when valid edited comment", () => {
         const next = commentEditionReducer(
             initialEditionState,
             commentEditRequested({ editorId: "u1", commentId: "c1", newContent: "x" }),
