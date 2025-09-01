@@ -3,7 +3,7 @@ export interface AppState {
         data : Coffee[] | null;
     },
     commentRetrieval: {
-        data : Comment[] | null;
+        data : Comment[] | [];
     },
     // commentCreationValidation: {
     //     data : boolean;

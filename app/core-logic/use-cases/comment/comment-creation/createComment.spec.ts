@@ -14,7 +14,7 @@ describe('Comment creation', () => {
     it("should create a comment when comment a comment is valid", async () => {
         commentGateway.nextComment = aComment;
         await store.dispatch(createComment("u1", "c3", "un commentaire"));
-        expect(store.getState().commentRetrieval).toEqual(
+        expect(store.getState().commentRetrieval.data).toEqual(
             [...aComment, {id: "c3", text: "un commentaire"}]
         )
     })
