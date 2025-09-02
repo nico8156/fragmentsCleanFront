@@ -9,6 +9,9 @@ export const createComment =
     (userId:string, commentId: string, content:string ):AppThunk<Promise<void>> =>
         async (dispatch, _, {commentGateway}) => {
         //TODO check validation for creating a comment
+            if(content.length === 0) {
+                return;
+            }
 
         //TODO dispatch action commentCreated if validation ok
             await commentGateway.saveComment(userId, commentId, content);

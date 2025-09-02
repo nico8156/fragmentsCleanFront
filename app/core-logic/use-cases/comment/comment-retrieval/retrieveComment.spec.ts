@@ -13,7 +13,7 @@ describe('On comment retrieval : ', () => {
     it("before retrieving comment, no comment should be available", () => {
         expect(store.getState().commentRetrieval).toEqual<
             AppState["commentRetrieval"]
-        >({data: null});
+        >({data: []});
     })
     it("should retrieve all comment", async () => {
         commentGateway.nextComment = aComment;

@@ -2,7 +2,7 @@ import {commentEditionReducer, initialEditionState} from "@/app/core-logic/reduc
 import {
     commentEditRequested,
     commentEditValidated
-} from "@/app/core-logic/use-cases/comment/comment-modification/submitCommentEdit";
+} from "@/app/core-logic/use-cases/comment/comment-update/submitCommentEdit";
 import {AppState} from "@/app/store/appState";
 import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
 

@@ -3,7 +3,7 @@ import {
     CommentEditRequest,
     commentEditRequested,
     commentEditValidated, CommentEditValidation
-} from "@/app/core-logic/use-cases/comment/comment-modification/submitCommentEdit";
+} from "@/app/core-logic/use-cases/comment/comment-update/submitCommentEdit";
 
 
 export type CommentEditionState = {
