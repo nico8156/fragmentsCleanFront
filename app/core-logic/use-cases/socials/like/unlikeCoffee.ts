@@ -8,5 +8,5 @@ export const unlikeCoffee =
     (like:Like) : AppThunk<Promise<void>> =>
 async (dispatch, _, { likeGateway }) => {
     await likeGateway.unlike(like.coffeeId, like.userId);
-    dispatch(coffeeUnliked(like.coffeeId));
+    dispatch(coffeeUnliked(like.id));
 };

@@ -1,8 +1,8 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppState, Like} from "@/app/store/appState";
-import {likeRetrieved} from "@/app/core-logic/use-cases/like/retrieveLike";
-import {coffeeLiked} from "@/app/core-logic/use-cases/like/likeCoffee";
-import {coffeeUnliked} from "@/app/core-logic/use-cases/like/unlikeCoffee";
+import {likeRetrieved} from "@/app/core-logic/use-cases/socials/like/retrieveLike";
+import {coffeeLiked} from "@/app/core-logic/use-cases/socials/like/likeCoffee";
+import {coffeeUnliked} from "@/app/core-logic/use-cases/socials/like/unlikeCoffee";
 
 const initialState: AppState["likeRetrieval"] = {
     data: [] as Like[]
@@ -19,7 +19,7 @@ export const likeRetrievalReducer = createReducer(
                 return {data: [...state.data, action.payload]}
             })
             .addCase(coffeeUnliked, (state, action) => {
-                return {data: state.data}
+                return {data: state.data.filter(l => l.id !== action.payload )}
             })
     }
 )

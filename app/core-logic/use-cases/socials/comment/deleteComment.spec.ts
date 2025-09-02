@@ -1,8 +1,8 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
 import {Comment} from "@/app/store/appState";
-import {retrieveComment} from "@/app/core-logic/use-cases/comment/comment-retrieval/retrieveComment";
-import {deleteComment} from "@/app/core-logic/use-cases/comment/comment-deletion/deleteComment";
+import {retrieveComment} from "@/app/core-logic/use-cases/socials/comment/retrieveComment";
+import {deleteComment} from "@/app/core-logic/use-cases/socials/comment/deleteComment";
 
 describe('On Delete Comment', () => {
 

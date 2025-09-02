@@ -1,9 +1,9 @@
 import {AppState, Comment} from "@/app/store/appState";
 import {createReducer} from "@reduxjs/toolkit";
-import {commentRetrieved} from "@/app/core-logic/use-cases/comment/comment-retrieval/retrieveComment";
-import {commentCreated} from "@/app/core-logic/use-cases/comment/comment-creation/createComment";
-import {commentUpdated} from "@/app/core-logic/use-cases/comment/comment-update/updateComment";
-import {commentDeleted} from "@/app/core-logic/use-cases/comment/comment-deletion/deleteComment";
+import {commentRetrieved} from "@/app/core-logic/use-cases/socials/comment/retrieveComment";
+import {commentCreated} from "@/app/core-logic/use-cases/socials/comment/createComment";
+import {commentUpdated} from "@/app/core-logic/use-cases/socials/comment/updateComment";
+import {commentDeleted} from "@/app/core-logic/use-cases/socials/comment/deleteComment";
 
 const initialState: AppState["commentRetrieval"] = {
     data: [] as Comment[]

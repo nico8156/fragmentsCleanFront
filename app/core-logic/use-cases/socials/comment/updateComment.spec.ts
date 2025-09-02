@@ -1,8 +1,8 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
 import {Comment} from "@/app/store/appState";
-import {retrieveComment} from "@/app/core-logic/use-cases/comment/comment-retrieval/retrieveComment";
-import {updateComment} from "@/app/core-logic/use-cases/comment/comment-update/updateComment";
+import {retrieveComment} from "@/app/core-logic/use-cases/socials/comment/retrieveComment";
+import {updateComment} from "@/app/core-logic/use-cases/socials/comment/updateComment";
 
 describe('On update Comment', () => {
     let store: ReduxStore;

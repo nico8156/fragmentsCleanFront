@@ -1,7 +1,7 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
 import {AppState, Comment} from "@/app/store/appState";
-import {retrieveComment} from "@/app/core-logic/use-cases/comment/comment-retrieval/retrieveComment";
+import {retrieveComment} from "@/app/core-logic/use-cases/socials/comment/retrieveComment";
 
 describe('On comment retrieval : ', () => {
     let store: ReduxStore;
