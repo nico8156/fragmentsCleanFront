@@ -11,7 +11,8 @@ import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysCon
 import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reducers/coffeeRetrievalReducer";
 import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/reducers/commentRetrievalReducer";
 import {likeRetrievalReducer as likeRetrieval} from "@/app/core-logic/reducers/likeRetrievalReducer";
-import {userReducer as user} from "@/app/core-logic/reducers/userReducer";
+import {userAuthReducer as authState} from "@/app/core-logic/reducers/userAuthReducer";
+
 
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
@@ -24,7 +25,7 @@ export const initReduxStore = (config: {
             coffeeRetrieval,
             commentRetrieval,
             likeRetrieval,
-            user
+            authState
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({

@@ -9,9 +9,9 @@ export interface AppState {
     likeRetrieval: {
         data : Like[] | [];
     },
-    userRetrieval: {
-        data : User | null;
-    },
+    authState: {
+        authData: AuthState;
+    }
     // commentCreationValidation: {
     //     data : boolean;
     //     error: "EMPTY_CONTENT_NOT_ALLOWED" | null;
