@@ -7,40 +7,15 @@ import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 
 describe('On Token Refresh, ', () => {
     let store: ReduxStore;
-    let authGateway: AuthGateway;
 
     beforeEach(() => {
         jest.useFakeTimers();
         jest.setSystemTime(new Date("2025-01-01T00:00:00Z"));
-        authGateway = new FakeAuthGateway();
     })
     afterEach(() => {
         jest.clearAllTimers();
         jest.useRealTimers();
     })
-    const createListener = (
-        doExpect: () => void,
-        resolve: (v: unknown) => void,
-        reject: (e: unknown) => void,
-    ) =>
-        onGoogleAuthFactory(authGateway, () => {
-            try {
-                doExpect();
-                resolve({});
-            } catch (e) {
-                reject(e);
-            }
-        });
-
-    const createStoreWithListener = (
-        doExpect: () => void,
-        resolve: (v: unknown) => void,
-        reject: (e: unknown) => void,
-    ) =>
-        initReduxStore({
-            gateways: { authGateway },
-            listeners: [createListener(doExpect, resolve, reject).middleware],
-        });
 
     it('Should plan a refresh after event login succeeded', () => {
         const now = Date.now();               // horloge figée
