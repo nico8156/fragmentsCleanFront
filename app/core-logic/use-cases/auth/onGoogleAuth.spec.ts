@@ -59,17 +59,13 @@ describe("On Google Oauth authentication, ", () => {
 
             store.dispatch(loginRequested("google"));
 
-            // état intermédiaire posé par le reducer
             expect(store.getState().authState.authData.status).toBe("authenticating");
 
-            // laisse tourner le listener (2000ms)
             jest.advanceTimersByTime(2300);
         });
     });
 
     it('should set status to error if gateway fails', () => {
-        // Ajoute ce flag / comportement dans ton FakeAuthGateway
-        // pour qu'il rejette la promesse (ex: throw new Error("provider"))
         (authGateway as any).willFail = true;
 
         return new Promise((resolve, reject) => {

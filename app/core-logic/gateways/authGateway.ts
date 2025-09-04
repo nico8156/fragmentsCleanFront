@@ -5,4 +5,5 @@ export interface AuthGateway {
     refreshToken(refreshToken: string): Promise<{ accessToken: string; expiresAt: number }>;
     getUserProfile(accessToken: string): Promise<User>;
     getUserProfileWithoutToken(): Promise<User>;
+    logout(): Promise<void>;
 }

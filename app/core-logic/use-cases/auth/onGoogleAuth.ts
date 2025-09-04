@@ -8,12 +8,6 @@ import { AppDispatch } from "@/app/store/reduxStore";
 import {AppState, Tokens, User} from "@/app/store/appState";
 import {AuthGateway} from "@/app/core-logic/gateways/authGateway";
 
-/**
- * Même signature d’usage que onAnswerSubmittedFactory:
- * - on retourne l’instance ListenerMiddleware
- * - on prend un callback pour signaler la fin aux tests
- * - on utilise TypedStartListening<AppState, AppDispatch>
- */
 
 export const loginRequested  = createAction<"google">("LOGIN_REQUESTED");
 export const loginSucceeded  = createAction<{ user: User; tokens: Tokens }>("LOGIN_SUCCEEDED");
@@ -33,7 +27,7 @@ export const onGoogleAuthFactory = (
     listener({
         actionCreator: loginRequested,
         effect: async (_action, api) => {
-            // même idée: temporisation optionnelle (comme tes 2000ms)
+            //simuler le call réel 
             setTimeout(async () => {
                 try {
                     const { user, tokens } = await authGateway.signInWithGoogle();

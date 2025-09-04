@@ -1,6 +1,7 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppState} from "@/app/store/appState";
 import {loginFailed, loginRequested, loginSucceeded} from "@/app/core-logic/use-cases/auth/onGoogleAuth";
+import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 
 const initialState: AppState['authState'] = {
     authData: {
@@ -36,6 +37,15 @@ export const userAuthReducer = createReducer(
             .addCase(loginFailed, (state, a) => {
                 state.authData.status = "error";
                 state.authData.error = a.payload;
-        });
+            })
+            .addCase(logoutClicked, (state, a) => {
+                state.authData.status = "anonymous";
+                state.authData.user = null;
+                state.authData.accessToken = null;
+                state.authData.refreshToken = null;
+                state.authData.expiresAt = null;
+                state.authData.error = null;
+            })
+        ;
     }
 )

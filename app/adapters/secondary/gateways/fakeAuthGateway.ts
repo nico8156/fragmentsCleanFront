@@ -44,6 +44,10 @@ export class FakeAuthGateway implements AuthGateway{
         // Ici on renvoie l’unique user; en “vrai” on décoderait le token.
         return this.users["google:demo"];
     }
+    async logout() {
+        //faire un call pour annoncer le logout ?
+        await delay(100);
+    }
     // // Optionnel: persistance (à mocker en tests)
     // saveSession(user: User, tokens: Tokens) {
     //     try { localStorage.setItem("auth", JSON.stringify({ user, tokens })); } catch {}
