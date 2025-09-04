@@ -1,7 +1,7 @@
 import {
     Action,
     configureStore,
-    ListenerMiddleware,
+    ListenerMiddleware, Middleware,
     Store,
     ThunkAction,
     ThunkDispatch,

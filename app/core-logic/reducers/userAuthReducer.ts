@@ -1,6 +1,6 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppState} from "@/app/store/appState";
-import {loginFailed, loginRequested, loginSucceeded} from "@/app/core-logic/use-cases/auth/onStartGoogleLogin";
+import {loginFailed, loginRequested, loginSucceeded} from "@/app/core-logic/use-cases/auth/onGoogleAuth";
 
 const initialState: AppState['authState'] = {
     authData: {

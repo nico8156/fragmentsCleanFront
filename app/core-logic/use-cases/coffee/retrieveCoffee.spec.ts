@@ -14,7 +14,7 @@ describe('coffee retrieval', () => {
     it("before retrieving coffee, no coffee should be available", () => {
         expect(store.getState().coffeeRetrieval).toEqual<
             AppState["coffeeRetrieval"]
-        >({data: null});
+        >({data: []});
     });
 
     it("should retrieve all coffee", async () => {

@@ -6,7 +6,9 @@ import {AuthGateway} from "@/app/core-logic/gateways/authGateway";
 
 export class FakeAuthGateway implements AuthGateway{
 
-    private users: Record<string, User> = {
+    willFail = false;
+
+    public users: Record<string, User> = {
         "google:demo": { id: "u123", email: "demo@example.com", name: "Demo User", avatarUrl: "https://example.com/avatar.png" },
     };
 
@@ -15,6 +17,7 @@ export class FakeAuthGateway implements AuthGateway{
         await delay(300); // simulate network
         const user = this.users["google:demo"];
         const now = Date.now();
+        if (this.willFail) throw new Error("provider_error");
         return {
             user,
             tokens: {
@@ -32,6 +35,11 @@ export class FakeAuthGateway implements AuthGateway{
     }
 
     async getUserProfile(accessToken: string): Promise<User> {
+        await delay(100);
+        // Ici on renvoie l’unique user; en “vrai” on décoderait le token.
+        return this.users["google:demo"];
+    }
+    async getUserProfileWithoutToken(): Promise<User> {
         await delay(100);
         // Ici on renvoie l’unique user; en “vrai” on décoderait le token.
         return this.users["google:demo"];
