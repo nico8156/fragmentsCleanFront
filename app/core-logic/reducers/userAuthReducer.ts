@@ -2,6 +2,7 @@ import {createReducer} from "@reduxjs/toolkit";
 import {AppState} from "@/app/store/appState";
 import {loginFailed, loginRequested, loginSucceeded} from "@/app/core-logic/use-cases/auth/onGoogleAuth";
 import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
+import {tokensRefreshed} from "@/app/core-logic/use-cases/auth/onTokenRefresh";
 
 const initialState: AppState['authState'] = {
     authData: {
@@ -25,8 +26,8 @@ export const userAuthReducer = createReducer(
                 state.authData.status = "authenticating";
                 state.authData.error = null;
             })
-            .addCase(loginSucceeded, (state, a) => {
-                const { user, tokens } = a.payload;
+            .addCase(loginSucceeded, (state, action) => {
+                const { user, tokens } = action.payload;
                 state.authData.status = "authenticated";
                 state.authData.user = user;
                 state.authData.accessToken = tokens.accessToken;
@@ -34,9 +35,9 @@ export const userAuthReducer = createReducer(
                 state.authData.expiresAt = tokens.expiresAt;
                 state.authData.error = null;
             })
-            .addCase(loginFailed, (state, a) => {
+            .addCase(loginFailed, (state, action) => {
                 state.authData.status = "error";
-                state.authData.error = a.payload;
+                state.authData.error = action.payload;
             })
             .addCase(logoutClicked, (state, a) => {
                 state.authData.status = "anonymous";
@@ -46,6 +47,11 @@ export const userAuthReducer = createReducer(
                 state.authData.expiresAt = null;
                 state.authData.error = null;
             })
+            builder.addCase(tokensRefreshed, (state, action) => {
+                state.authData.accessToken = action.payload.accessToken;
+                state.authData.expiresAt = action.payload.expiresAt;
+            });
+
         ;
     }
 )
