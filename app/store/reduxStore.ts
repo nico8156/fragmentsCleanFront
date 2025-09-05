@@ -17,6 +17,7 @@ import {ticketMetaReducer as ticketState} from "@/app/core-logic/reducers/ticket
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
     listeners?: ListenerMiddleware[];
+    extraReducers?: Record<string, any>;
     //pyramidSteps?: number[];
     //pyramidValues?: string[];
 }) => {
@@ -26,7 +27,7 @@ export const initReduxStore = (config: {
             commentRetrieval,
             likeRetrieval,
             authState,
-            ticketState
+            ...(config.extraReducers ?? {}),
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({

@@ -24,7 +24,7 @@ export const onTicketFlowFactory = (deps: {
     repo: RemoteTicketMetaGateway;
     uploader: TicketUploadGateway;
     done?: () => void; // pour les tests
-}) => {
+}, p0: () => void) => {
     const onTicketFlow = createListenerMiddleware();
     const listen = onTicketFlow.startListening as TypedStartListening<AppState, AppDispatch>;
 

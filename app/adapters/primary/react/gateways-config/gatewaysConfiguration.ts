@@ -2,12 +2,20 @@ import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
 import {CommentGateway} from "@/app/core-logic/gateways/commentGateway";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import {AuthGateway} from "@/app/core-logic/gateways/authGateway";
+import {CameraGateway} from "@/app/core-logic/gateways/cameraGateway";
+import {PhotoStorageGateway} from "@/app/core-logic/gateways/photoStorageGateway";
+import {RemoteTicketMetaGateway} from "@/app/core-logic/gateways/remoteTicketMetaGateway";
+import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
     commentGateway: CommentGateway;
     likeGateway: LikeGateway;
     authGateway: AuthGateway;
+    camera: CameraGateway;
+    storage: PhotoStorageGateway;
+    repo: RemoteTicketMetaGateway;
+    uploader: TicketUploadGateway;
 };
 
 const coffeeGateway = new GoogleApiCoffeeGateway(
@@ -22,7 +30,18 @@ const likeGateway = new FragmntsApiLikeGateway(
 const authGateway = new FragmentsApiAuthGateway(
     new httpGoogleAuthLoader()
 )
+const uploader = new fakeCameraDevice(
 
+)
+const storage = new fakeCameraDevice(
+
+)
+const repo = new fakeCameraDevice(
+
+)
+const camera = new fakeCameraDevice(
+
+)
 export const gateways: Gateways = {
-    coffeeGateway, commentGateway, likeGateway, authGateway
+    coffeeGateway, commentGateway, likeGateway, authGateway, camera, repo, storage, uploader
 };
