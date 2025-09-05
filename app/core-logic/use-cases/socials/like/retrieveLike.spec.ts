@@ -1,5 +1,5 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
-import {FakeLikeGateway} from "@/app/adapters/secondary/gateways/fakeLikeGateway";
+import {FakeLikeGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikeGateway";
 import {Like} from "@/app/store/appState";
 import {retrieveLike} from "@/app/core-logic/use-cases/socials/like/retrieveLike";
 

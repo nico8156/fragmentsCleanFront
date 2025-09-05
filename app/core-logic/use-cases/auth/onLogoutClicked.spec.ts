@@ -1,6 +1,6 @@
 import {AuthGateway} from "@/app/core-logic/gateways/authGateway";
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
-import {FakeAuthGateway} from "@/app/adapters/secondary/gateways/fakeAuthGateway";
+import {FakeAuthGateway} from "@/app/adapters/secondary/gateways/fake/fakeAuthGateway";
 import {onLogoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 
 describe('on Logout Button Clicked,  ', () => {

@@ -1,6 +1,6 @@
 // test
 import { initReduxStore, ReduxStore } from "@/app/store/reduxStore";
-import { FakeAuthGateway } from "@/app/adapters/secondary/gateways/fakeAuthGateway";
+import { FakeAuthGateway } from "@/app/adapters/secondary/gateways/fake/fakeAuthGateway";
 import {loginRequested, onGoogleAuthFactory} from "@/app/core-logic/use-cases/auth/onGoogleAuth";
 
 

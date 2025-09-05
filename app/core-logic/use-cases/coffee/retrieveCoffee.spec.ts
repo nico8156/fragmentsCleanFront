@@ -1,6 +1,6 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {AppState, Coffee} from "@/app/store/appState";
-import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fakeCoffeeGateway";
+import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeGateway";
 import {retrieveCoffee} from "@/app/core-logic/use-cases/coffee/retrieveCoffee";
 
 describe('coffee retrieval', () => {

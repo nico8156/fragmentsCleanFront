@@ -1,6 +1,6 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {Like} from "@/app/store/appState";
-import {FakeLikeGateway} from "@/app/adapters/secondary/gateways/fakeLikeGateway";
+import {FakeLikeGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikeGateway";
 import {retrieveLike} from "@/app/core-logic/use-cases/socials/like/retrieveLike";
 import {unlikeCoffee} from "@/app/core-logic/use-cases/socials/like/unlikeCoffee";
 

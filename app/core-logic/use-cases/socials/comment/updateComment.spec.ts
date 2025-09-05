@@ -1,5 +1,5 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
-import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fakeCommentGateway";
+import {FakeCommentGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentGateway";
 import {Comment} from "@/app/store/appState";
 import {retrieveComment} from "@/app/core-logic/use-cases/socials/comment/retrieveComment";
 import {updateComment} from "@/app/core-logic/use-cases/socials/comment/updateComment";
