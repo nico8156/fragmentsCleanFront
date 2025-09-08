@@ -12,10 +12,10 @@ export type Gateways = {
     commentGateway: CommentGateway;
     likeGateway: LikeGateway;
     authGateway: AuthGateway;
-    camera: CameraGateway;
-    storage: PhotoStorageGateway;
-    repo: RemoteTicketMetaGateway;
-    uploader: TicketUploadGateway;
+    cameraGateway: CameraGateway;
+    storageGateway: PhotoStorageGateway;
+    ticketApiGateway: RemoteTicketMetaGateway;
+    validityGateway: TicketUploadGateway;
 };
 
 const coffeeGateway = new GoogleApiCoffeeGateway(

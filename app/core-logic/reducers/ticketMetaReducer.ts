@@ -1,7 +1,7 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import {TicketMeta} from "@/app/store/appState";
 import {
-    photoCaptured, ticketRejected, ticketValidated, uploadFailed,
+    photoCaptured, uploadFailed,
     uploadProgressed,
     uploadRequested, uploadSucceeded,
     validationReceived
