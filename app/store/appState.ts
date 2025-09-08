@@ -11,11 +11,14 @@ export interface AppState {
     },
     authState: {
         authData: AuthState;
+    },
+    ticketState: {
+        byId: Record<string, TicketMeta>;
+        ids: string[];
+        uploadProgress: Record<string, number>;
+        validCount: number;
+        validatedIds: Record<string, true>;
     }
-    // commentCreationValidation: {
-    //     data : boolean;
-    //     error: "EMPTY_CONTENT_NOT_ALLOWED" | null;
-    // }
 }
 
 export interface Coffee {
@@ -62,6 +65,8 @@ export type TicketMeta = {
     ticketId: string;
     status: TicketStatus;
     createdAt: number;
+    localUri?: string;   // chemin complet à uploader
+    thumbUri?: string;
     remoteId?: string;
     cafeName?: string;
     amountCents?: number;

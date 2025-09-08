@@ -30,17 +30,17 @@ const likeGateway = new FragmntsApiLikeGateway(
 const authGateway = new FragmentsApiAuthGateway(
     new httpGoogleAuthLoader()
 )
-const uploader = new fakeCameraDevice(
-
+const uploader = new fragmentsUploader(
+    new httpFragmentsUploader()
 )
-const storage = new fakeCameraDevice(
-
+const storage = new fragmentsStorage(
+    new localDeviceStorage()
 )
-const repo = new fakeCameraDevice(
-
+const repo = new fragmentsApiTicket(
+    new httpFragmentsTicketRepo()
 )
-const camera = new fakeCameraDevice(
-
+const camera = new CameraDevice(
+    new cameraUserDevice()
 )
 export const gateways: Gateways = {
     coffeeGateway, commentGateway, likeGateway, authGateway, camera, repo, storage, uploader

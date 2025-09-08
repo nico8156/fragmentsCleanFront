@@ -18,8 +18,6 @@ export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
     listeners?: ListenerMiddleware[];
     extraReducers?: Record<string, any>;
-    //pyramidSteps?: number[];
-    //pyramidValues?: string[];
 }) => {
     return configureStore({
         reducer: {
@@ -27,7 +25,7 @@ export const initReduxStore = (config: {
             commentRetrieval,
             likeRetrieval,
             authState,
-            ...(config.extraReducers ?? {}),
+            ticketState
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({

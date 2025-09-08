@@ -27,8 +27,8 @@ describe("On Google Oauth authentication, ", () => {
         reject: (e: unknown) => void,
     ) =>
         onGoogleAuthFactory(authGateway, () => {
-            try {doExpect();resolve({});} catch (e) {reject(e);}
-        });
+            try {doExpect();resolve({});} catch (e) {reject(e);
+            }});
 
     const createStoreWithListener = (
         doExpect: () => void,

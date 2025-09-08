@@ -1,6 +1,6 @@
 import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
 
-export class FakeUploader implements TicketUploadGateway {
+/*export class FakeUploader implements TicketUploadGateway {
     delayMs = 0;
     remoteId = "r-1";
     willFail = false;
@@ -24,3 +24,5 @@ export class FakeUploader implements TicketUploadGateway {
         this.subscribers.get(remoteId)?.(payload);
     }
 }
+
+ */

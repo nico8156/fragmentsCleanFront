@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {TicketMeta} from "@/app/store/appState";
 import {
-    photoCaptured, ticketRejected, ticketValidated,
+    photoCaptured, ticketRejected, ticketValidated, uploadFailed,
     uploadProgressed,
     uploadRequested, uploadSucceeded,
     validationReceived
@@ -31,11 +31,9 @@ const slice = createSlice({
     reducers: {},
     extraReducers: (b) => {
         b.addCase(photoCaptured, (s, a) => {
-            const { ticketId, createdAt } = a.payload;
-            if (!s.byId[ticketId]) {
-                s.byId[ticketId] = { ticketId, status: "captured", createdAt };
-                s.ids.unshift(ticketId);
-            }
+            const { ticketId, createdAt, localUri, thumbUri } = a.payload;
+            if (!s.byId[ticketId]) s.ids.unshift(ticketId);
+            s.byId[ticketId] = { ticketId, status: "captured", createdAt, localUri, thumbUri };
         });
         b.addCase(uploadRequested, (s, a) => {
             const t = s.byId[a.payload.ticketId]; if (t) t.status = "uploading";
@@ -44,29 +42,20 @@ const slice = createSlice({
             s.uploadProgress[a.payload.ticketId] = a.payload.pct;
         });
         b.addCase(uploadSucceeded, (s, a) => {
-            const t = s.byId[a.payload.ticketId]; if (t) {
-                t.status = "pending"; t.remoteId = a.payload.remoteId;
-            }
+            const t = s.byId[a.payload.ticketId]; if (t) { t.status = "pending"; t.remoteId = a.payload.remoteId; }
+        });
+        b.addCase(uploadFailed, (s, a) => {
+            const t = s.byId[a.payload.ticketId]; if (t) { t.status = "invalid"; t.invalidReason = a.payload.reason ?? "UPLOAD_ERROR"; }
         });
         b.addCase(validationReceived, (s, a) => {
             const { ticketId, valid, data, reason } = a.payload;
             const t = s.byId[ticketId]; if (!t) return;
             if (valid) {
-                t.status = "validated"; t.validatedAt = Date.now();
-                Object.assign(t, data);
-                if (!s.validatedIds[ticketId]) {
-                    s.validatedIds[ticketId] = true;
-                    s.validCount += 1;
-                }
+                t.status = "validated"; t.validatedAt = Date.now(); Object.assign(t, data);
+                if (!s.validatedIds[ticketId]) { s.validatedIds[ticketId] = true; s.validCount += 1; }
             } else {
                 t.status = "invalid"; t.invalidReason = reason ?? "UNREADABLE";
             }
-        });
-        b.addCase(ticketValidated, (s, a) => {
-            // (optionnel si tu veux une action purement métier en plus de validationReceived)
-        });
-        b.addCase(ticketRejected, (s, a) => {
-            // idem (optionnel)
         });
     },
 });
