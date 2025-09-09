@@ -35,7 +35,7 @@ export const initReduxStore = (config: {
                 serializableCheck: false,
             });
             return config.listeners
-                ? middleware.prepend(config.listeners)
+                ? middleware.prepend(...config.listeners)
                 : middleware;
         },
         devTools: true,

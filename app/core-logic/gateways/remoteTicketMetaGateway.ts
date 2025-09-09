@@ -1,8 +1,10 @@
 import {TicketMeta} from "@/app/store/appState";
+import {Meta} from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways/fakeTicketGateways";
 
 export interface RemoteTicketMetaGateway {
     upsert(t: TicketMeta): Promise<void>;
     patch(id: string, changes: Partial<TicketMeta>): Promise<void>;
-    get(id: string): Promise<TicketMeta | null>;
-    list(offset: number, limit: number): Promise<TicketMeta[]>;
+    get(ticketId: string): Promise<Meta | undefined>;
+    list(offset: number, limit: number): Promise<Meta[]>;
 }
+
