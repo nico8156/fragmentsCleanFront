@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.3% </span>
+                <span class="strong">8.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/23</span>
+                <span class='fraction'>2/23</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.73% </span>
+                <span class="strong">10.52% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/19</span>
+                <span class='fraction'>2/19</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -127,26 +127,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -154,12 +154,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// onTokenRefresh.ts
 import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
@@ -172,30 +172,30 @@ import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 export const tokensRefreshed = createAction&lt;{ accessToken: string; expiresAt: number }&gt;("auth/TOKENS_REFRESHED");
 &nbsp;
 &nbsp;
-export const onTokenRefreshFactory = (deps: {
+export const onTokenRefreshFactory = <span class="fstat-no" title="function not covered" >(d</span>eps: {
     refresh: (refreshToken: string) =&gt; Promise&lt;{ accessToken: string; expiresAt: number }&gt;;
     skewMs?: number; // marge avant expiration
 }) =&gt; {
-    const onTokenRefresh = createListenerMiddleware();
-    const listen = onTokenRefresh.startListening as TypedStartListening&lt;AppState, AppDispatch&gt;;
+    const onTokenRefresh = <span class="cstat-no" title="statement not covered" >createListenerMiddleware();</span>
+    const listen = <span class="cstat-no" title="statement not covered" >onTokenRefresh.startListening as TypedStartListening&lt;AppState, AppDispatch&gt;;</span>
 &nbsp;
-    let timer: ReturnType&lt;typeof setTimeout&gt; | null = null;
+    let timer: ReturnType&lt;typeof setTimeout&gt; | null = <span class="cstat-no" title="statement not covered" >null;</span>
 &nbsp;
-    const clear = () =&gt; { if (timer) { clearTimeout(timer); timer = null; } };
+    const clear = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; { <span class="cstat-no" title="statement not covered" >if (timer) { <span class="cstat-no" title="statement not covered" >clearTimeout(timer); <span class="cstat-no" title="statement not covered" ></span>timer = null; </span>} </span>};</span>
 &nbsp;
-    listen({
+<span class="cstat-no" title="statement not covered" >    listen({</span>
         actionCreator: loginSucceeded,
-        effect: async (action, api) =&gt; {
-            clear();
-            const skew = deps.skewMs ?? <span class="branch-1 cbranch-no" title="branch not covered" >60_000;</span>
-            const { expiresAt, refreshToken } = api.getState().authState.authData;
-            <span class="missing-if-branch" title="if path not taken" >I</span>if (!expiresAt || !refreshToken) <span class="cstat-no" title="statement not covered" >return;</span>
-            const delay = Math.max(0, expiresAt - Date.now() - skew);
-            timer = setTimeout(async () =&gt; {
-                try {
-                    const { accessToken, expiresAt } = await deps.refresh(refreshToken);
+        effect: <span class="fstat-no" title="function not covered" >as</span>ync (action, api) =&gt; {
+<span class="cstat-no" title="statement not covered" >            clear();</span>
+            const skew = <span class="cstat-no" title="statement not covered" >deps.skewMs ?? 60_000;</span>
+            const { expiresAt, refreshToken } = <span class="cstat-no" title="statement not covered" >api.getState().authState.authData;</span>
+<span class="cstat-no" title="statement not covered" >            if (!expiresAt || !refreshToken) <span class="cstat-no" title="statement not covered" >return;</span></span>
+            const delay = <span class="cstat-no" title="statement not covered" >Math.max(0, expiresAt - Date.now() - skew);</span>
+<span class="cstat-no" title="statement not covered" >            timer = setTimeout(<span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >                try {</span>
+                    const { accessToken, expiresAt } = <span class="cstat-no" title="statement not covered" >await deps.refresh(refreshToken);</span>
                     // mets à jour ton slice (ajoute une action updateTokens si besoin)
-                    api.dispatch(tokensRefreshed({ accessToken, expiresAt }));
+<span class="cstat-no" title="statement not covered" >                    api.dispatch(tokensRefreshed({ accessToken, expiresAt }));</span>
                 } catch {
 <span class="cstat-no" title="statement not covered" >                    api.dispatch(loginFailed("REFRESH_ERROR"));</span>
                 }
@@ -203,12 +203,12 @@ export const onTokenRefreshFactory = (deps: {
         },
     });
 &nbsp;
-    listen({
+<span class="cstat-no" title="statement not covered" >    listen({</span>
         actionCreator: logoutClicked,
         effect: clear
     });
 &nbsp;
-    return onTokenRefresh;
+<span class="cstat-no" title="statement not covered" >    return onTokenRefresh;</span>
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -217,7 +217,7 @@ export const onTokenRefreshFactory = (deps: {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-05T11:53:09.413Z
+                at 2025-09-10T14:01:40.860Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

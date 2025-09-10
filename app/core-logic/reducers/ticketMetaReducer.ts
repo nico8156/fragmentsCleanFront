@@ -54,7 +54,7 @@ const slice = createSlice({
                     // createdAt: Date.now(), // ← décommente si ton type exige createdAt
                 return;
             }
-  c          // Mise à jour si elle existait déjà
+            // Mise à jour si elle existait déjà
             t.status = "invalid";
             t.invalidReason = reason ?? "UPLOAD_ERROR";
         });

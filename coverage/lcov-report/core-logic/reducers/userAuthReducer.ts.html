@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.6% </span>
+                <span class="strong">17.39% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>19/23</span>
+                <span class='fraction'>4/23</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">16.66% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/6</span>
+                <span class='fraction'>1/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.6% </span>
+                <span class="strong">17.39% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/23</span>
+                <span class='fraction'>4/23</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -148,29 +148,29 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -203,30 +203,30 @@ export const userAuthReducer = createReducer(
 <span class="cstat-no" title="statement not covered" >                state.authData.status = "authenticating";</span>
 <span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
             })
-            .addCase(loginSucceeded, (state, action) =&gt; {
-                const { user, tokens } = action.payload;
-                state.authData.status = "authenticated";
-                state.authData.user = user;
-                state.authData.accessToken = tokens.accessToken;
-                state.authData.refreshToken = tokens.refreshToken;
-                state.authData.expiresAt = tokens.expiresAt;
-                state.authData.error = null;
+            .addCase(loginSucceeded, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
+                const { user, tokens } = <span class="cstat-no" title="statement not covered" >action.payload;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.status = "authenticated";</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.user = user;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = tokens.accessToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.refreshToken = tokens.refreshToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = tokens.expiresAt;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
             })
             .addCase(loginFailed, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
 <span class="cstat-no" title="statement not covered" >                state.authData.status = "error";</span>
 <span class="cstat-no" title="statement not covered" >                state.authData.error = action.payload;</span>
             })
-            .addCase(logoutClicked, (state, a) =&gt; {
-                state.authData.status = "anonymous";
-                state.authData.user = null;
-                state.authData.accessToken = null;
-                state.authData.refreshToken = null;
-                state.authData.expiresAt = null;
-                state.authData.error = null;
+            .addCase(logoutClicked, <span class="fstat-no" title="function not covered" >(s</span>tate, a) =&gt; {
+<span class="cstat-no" title="statement not covered" >                state.authData.status = "anonymous";</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.user = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.refreshToken = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
             })
-            builder.addCase(tokensRefreshed, (state, action) =&gt; {
-                state.authData.accessToken = action.payload.accessToken;
-                state.authData.expiresAt = action.payload.expiresAt;
+            builder.addCase(tokensRefreshed, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
+<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = action.payload.accessToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = action.payload.expiresAt;</span>
             });
 &nbsp;
         ;
@@ -238,7 +238,7 @@ export const userAuthReducer = createReducer(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-05T11:53:09.413Z
+                at 2025-09-10T14:01:40.860Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
