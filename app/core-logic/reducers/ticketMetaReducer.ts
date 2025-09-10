@@ -45,7 +45,18 @@ const slice = createSlice({
             const t = s.byId[a.payload.ticketId]; if (t) { t.status = "pending"; t.remoteId = a.payload.remoteId; }
         });
         b.addCase(uploadFailed, (s, a) => {
-            const t = s.byId[a.payload.ticketId]; if (t) { t.status = "invalid"; t.invalidReason = a.payload.reason ?? "UPLOAD_ERROR"; }
+            const { ticketId, reason } = a.payload;
+            const t = s.byId[ticketId];
+            if (!t) {
+                // Créer l'entrée au moment de l'échec
+                s.ids.unshift(ticketId);
+                s.byId[ticketId] = {ticketId, status: "invalid", invalidReason: reason ?? "UPLOAD_ERROR",} as TicketMeta;
+                    // createdAt: Date.now(), // ← décommente si ton type exige createdAt
+                return;
+            }
+  c          // Mise à jour si elle existait déjà
+            t.status = "invalid";
+            t.invalidReason = reason ?? "UPLOAD_ERROR";
         });
         b.addCase(validationReceived, (s, a) => {
             const { ticketId, valid, data, reason } = a.payload;
