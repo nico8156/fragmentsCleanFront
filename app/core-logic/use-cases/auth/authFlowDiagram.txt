@@ -1,0 +1,17 @@
+[Mobile App (Expo RN)]
+        |
+        | 1) Google Auth (PKCE dans l’app)
+        v
+ [Google Identity Platform]
+        |
+        | 2) id_token (JWT Google)
+        v
+ [Auth API (Spring Boot)]
+   - Vérifie id_token (JWK Google)
+   - Crée/MAJ utilisateur
+   - Émet access_token (JWT App)
+        |
+        | 3) access_token (Bearer)
+        v
+ [API métiers (Gateway + Services)]
+

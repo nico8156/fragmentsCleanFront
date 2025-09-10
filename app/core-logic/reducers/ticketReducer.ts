@@ -5,7 +5,7 @@ import {
     uploadProgressed,
     uploadRequested, uploadSucceeded,
     validationReceived
-} from "@/app/core-logic/use-cases/ticket/onTicketFlowFactory";
+} from "@/app/core-logic/use-cases/ticket/onTicketSubmitedFlow";
 
 type ById<T> = Record<string, T>;
 
@@ -71,4 +71,4 @@ const slice = createSlice({
     },
 });
 
-export const ticketMetaReducer = slice.reducer;
+export const ticketReducer = slice.reducer;

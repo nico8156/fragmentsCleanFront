@@ -1,5 +1,5 @@
 import {TicketMeta} from "@/app/store/appState";
-import {Meta} from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways/fakeTicketGateways";
+import {Meta} from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways";
 
 export interface RemoteTicketMetaGateway {
     upsert(t: TicketMeta): Promise<void>;

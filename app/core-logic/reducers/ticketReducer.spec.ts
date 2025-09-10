@@ -1,18 +1,17 @@
-import { ticketMetaReducer } from "@/app/core-logic/reducers/ticketMetaReducer";
+import { ticketReducer } from "@/app/core-logic/reducers/ticketReducer";
 import {
-    photoCaptured, uploadFailed,
-    uploadRequested,
+    photoCaptured, uploadFailed, uploadRequested,
     uploadSucceeded,
     validationReceived
-} from "@/app/core-logic/use-cases/ticket/onTicketFlowFactory";
+} from "@/app/core-logic/use-cases/ticket/onTicketSubmitedFlow";
 
 
-const init = () => ticketMetaReducer(undefined as any, { type: "@@INIT" } as any);
+const init = () => ticketReducer(undefined as any, { type: "@@INIT" } as any);
 
 describe("ticket <reducer", () => {
     it("photoCaptured crée la meta avec URIs", () => {
         const s1 = init();
-        const s2 = ticketMetaReducer(s1, photoCaptured({
+        const s2 = ticketReducer(s1, photoCaptured({
             ticketId: "t1", createdAt: 1, localUri: "file://t1.jpg", thumbUri: "file://t1.thumb.jpg"
         }));
         expect(s2.ids[0]).toBe("t1");
@@ -21,30 +20,30 @@ describe("ticket <reducer", () => {
     });
 
     it("uploadRequested -> statut uploading", () => {
-        const s1 = ticketMetaReducer(init(), photoCaptured({
+        const s1 = ticketReducer(init(), photoCaptured({
             ticketId: "t1", createdAt: 1, localUri: "f", thumbUri: "th"
         }));
-        const s2 = ticketMetaReducer(s1, uploadRequested({ ticketId: "t1" }));
+        const s2 = ticketReducer(s1, uploadRequested({ ticketId: "t1" }));
         expect(s2.byId["t1"].status).toBe("uploading");
     });
 
     it("uploadSucceeded -> pending + remoteId", () => {
-        const s1 = ticketMetaReducer(init(), photoCaptured({
+        const s1 = ticketReducer(init(), photoCaptured({
             ticketId: "t1", createdAt: 1, localUri: "f", thumbUri: "th"
         }));
-        const s2 = ticketMetaReducer(s1, uploadSucceeded({ ticketId: "t1", remoteId: "r-1" }));
+        const s2 = ticketReducer(s1, uploadSucceeded({ ticketId: "t1", remoteId: "r-1" }));
         expect(s2.byId["t1"].status).toBe("pending");
         expect(s2.byId["t1"].remoteId).toBe("r-1");
     });
 
     it("validationReceived valid -> validated + increment unique", () => {
-        const s1 = ticketMetaReducer(init(), photoCaptured({
+        const s1 = ticketReducer(init(), photoCaptured({
             ticketId: "t1", createdAt: 1, localUri: "f", thumbUri: "th"
         }));
-        const s2 = ticketMetaReducer(s1, validationReceived({
+        const s2 = ticketReducer(s1, validationReceived({
             ticketId: "t1", valid: true, data: { cafeName: "Le Bon Café", amountCents: 420 }
         }));
-        const s3 = ticketMetaReducer(s2, validationReceived({
+        const s3 = ticketReducer(s2, validationReceived({
             ticketId: "t1", valid: true, data: { cafeName: "X" }
         }));
         expect(s2.byId["t1"].status).toBe("validated");
@@ -53,10 +52,10 @@ describe("ticket <reducer", () => {
     });
 
     it("uploadFailed -> invalid + reason", () => {
-        const s1 = ticketMetaReducer(init(), photoCaptured({
+        const s1 = ticketReducer(init(), photoCaptured({
             ticketId: "t1", createdAt: 1, localUri: "f", thumbUri: "th"
         }));
-        const s2 = ticketMetaReducer(s1, uploadFailed({ ticketId: "t1", reason: "UPLOAD_ERROR" }));
+        const s2 = ticketReducer(s1, uploadFailed({ ticketId: "t1", reason: "UPLOAD_ERROR" }));
         expect(s2.byId["t1"].status).toBe("invalid");
         expect(s2.byId["t1"].invalidReason).toBe("UPLOAD_ERROR");
     });

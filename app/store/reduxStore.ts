@@ -12,7 +12,7 @@ import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reduce
 import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/reducers/commentRetrievalReducer";
 import {likeRetrievalReducer as likeRetrieval} from "@/app/core-logic/reducers/likeRetrievalReducer";
 import {userAuthReducer as authState} from "@/app/core-logic/reducers/userAuthReducer";
-import {ticketMetaReducer as ticketState} from "@/app/core-logic/reducers/ticketMetaReducer";
+import {ticketReducer as ticketState} from "@/app/core-logic/reducers/ticketReducer";
 
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;

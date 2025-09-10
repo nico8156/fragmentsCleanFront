@@ -2,8 +2,8 @@ import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {
     FakeCameraGateway,
     FakePhotoStorageGateway, FakeRemoteTicketMetaGateway, FakeValidityGateway
-} from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways/fakeTicketGateways";
-import {captureRequested, uploadRequested} from "@/app/core-logic/use-cases/ticket/testThunk";
+} from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways";
+import {captureRequested, performUpload} from "@/app/core-logic/use-cases/ticket/onTicketSubmitedFlow";
 
 
 describe('On Ticket flow, ', () => {
@@ -56,7 +56,7 @@ describe('On Ticket flow, ', () => {
         const ticketId = "t-missing-file";
 
         // Act
-        await store.dispatch<any>(uploadRequested({ ticketId }));
+        await store.dispatch<any>(performUpload({ ticketId }));
 
         // Assert
         const s = store.getState().ticketState;
@@ -137,7 +137,7 @@ describe('On Ticket flow, ', () => {
         const ticketId = "t-get-fail";
         ticketApiGateway.willFailOnGet = true;
 
-        await store.dispatch<any>(uploadRequested({ ticketId }));
+        await store.dispatch<any>(performUpload({ ticketId }));
 
         const s = store.getState().ticketState;
         expect(s.ids).toContain(ticketId);
