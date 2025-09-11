@@ -9,9 +9,7 @@ export interface AppState {
     likeRetrieval: {
         data : Like[] | [];
     },
-    authState: {
-        authData: AuthState;
-    },
+    authState: AuthState,
     ticketState: {
         byId: Record<string, TicketMeta>;
         ids: string[];

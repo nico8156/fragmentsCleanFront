@@ -182,14 +182,14 @@ import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 import {tokensRefreshed} from "@/app/core-logic/use-cases/auth/onTokenRefresh";
 &nbsp;
 const initialState: AppState['authState'] = {
-    authData: {
+&nbsp;
         status: "anonymous",
         user: null,
         accessToken: null,
         refreshToken: null,
         expiresAt: null,
         error: null,
-    }
+&nbsp;
 }
 &nbsp;
 //TODO make auth reducer instead ... better approach !
@@ -200,33 +200,33 @@ export const userAuthReducer = createReducer(
     (builder) =&gt; {
         builder
             .addCase(loginRequested, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
-<span class="cstat-no" title="statement not covered" >                state.authData.status = "authenticating";</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.status = "authenticating";</span>
+<span class="cstat-no" title="statement not covered" >                state.error = null;</span>
             })
             .addCase(loginSucceeded, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
                 const { user, tokens } = <span class="cstat-no" title="statement not covered" >action.payload;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.status = "authenticated";</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.user = user;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = tokens.accessToken;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.refreshToken = tokens.refreshToken;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = tokens.expiresAt;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.status = "authenticated";</span>
+<span class="cstat-no" title="statement not covered" >                state.user = user;</span>
+<span class="cstat-no" title="statement not covered" >                state.accessToken = tokens.accessToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.refreshToken = tokens.refreshToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.expiresAt = tokens.expiresAt;</span>
+<span class="cstat-no" title="statement not covered" >                state.error = null;</span>
             })
             .addCase(loginFailed, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
-<span class="cstat-no" title="statement not covered" >                state.authData.status = "error";</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.error = action.payload;</span>
+<span class="cstat-no" title="statement not covered" >                state.status = "error";</span>
+<span class="cstat-no" title="statement not covered" >                state.error = action.payload;</span>
             })
             .addCase(logoutClicked, <span class="fstat-no" title="function not covered" >(s</span>tate, a) =&gt; {
-<span class="cstat-no" title="statement not covered" >                state.authData.status = "anonymous";</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.user = null;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = null;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.refreshToken = null;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = null;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.error = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.status = "anonymous";</span>
+<span class="cstat-no" title="statement not covered" >                state.user = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.accessToken = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.refreshToken = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.expiresAt = null;</span>
+<span class="cstat-no" title="statement not covered" >                state.error = null;</span>
             })
             builder.addCase(tokensRefreshed, <span class="fstat-no" title="function not covered" >(s</span>tate, action) =&gt; {
-<span class="cstat-no" title="statement not covered" >                state.authData.accessToken = action.payload.accessToken;</span>
-<span class="cstat-no" title="statement not covered" >                state.authData.expiresAt = action.payload.expiresAt;</span>
+<span class="cstat-no" title="statement not covered" >                state.accessToken = action.payload.accessToken;</span>
+<span class="cstat-no" title="statement not covered" >                state.expiresAt = action.payload.expiresAt;</span>
             });
 &nbsp;
         ;
@@ -238,7 +238,7 @@ export const userAuthReducer = createReducer(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-10T15:41:07.113Z
+                at 2025-09-11T08:49:32.516Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,52 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1757518867106" clover="3.2.0">
-  <project timestamp="1757518867106" name="All files">
-    <metrics statements="225" coveredstatements="131" conditionals="64" coveredconditionals="34" methods="70" coveredmethods="25" elements="359" coveredelements="190" complexity="0" loc="225" ncloc="225" packages="8" files="19" classes="19"/>
-    <package name="adapters.secondary.gateways.fake.fakeTicketGateways">
-      <metrics statements="37" coveredstatements="34" conditionals="24" coveredconditionals="22" methods="11" coveredmethods="8"/>
-      <file name="fakeTicketGateways.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/adapters/secondary/gateways/fake/fakeTicketGateways/fakeTicketGateways.ts">
-        <metrics statements="37" coveredstatements="34" conditionals="24" coveredconditionals="22" methods="11" coveredmethods="8"/>
-        <line num="10" count="10" type="stmt"/>
-        <line num="11" count="10" type="stmt"/>
-        <line num="12" count="10" type="stmt"/>
-        <line num="15" count="8" type="stmt"/>
-        <line num="16" count="8" type="cond" truecount="2" falsecount="0"/>
-        <line num="17" count="7" type="stmt"/>
-        <line num="22" count="10" type="stmt"/>
-        <line num="23" count="10" type="stmt"/>
-        <line num="24" count="10" type="stmt"/>
-        <line num="27" count="7" type="stmt"/>
-        <line num="28" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="29" count="6" type="stmt"/>
-        <line num="37" count="0" type="stmt"/>
-        <line num="66" count="10" type="stmt"/>
-        <line num="67" count="10" type="stmt"/>
-        <line num="70" count="0" type="stmt"/>
-        <line num="76" count="10" type="stmt"/>
-        <line num="77" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="78" count="3" type="stmt"/>
-        <line num="82" count="10" type="stmt"/>
-        <line num="84" count="0" type="stmt"/>
-        <line num="86" count="10" type="stmt"/>
-        <line num="87" count="10" type="stmt"/>
-        <line num="88" count="10" type="stmt"/>
-        <line num="90" count="10" type="stmt"/>
-        <line num="93" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="94" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="95" count="5" type="stmt"/>
-        <line num="99" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="101" count="6" type="stmt"/>
-        <line num="105" count="8" type="cond" truecount="1" falsecount="1"/>
-        <line num="107" count="8" type="cond" truecount="4" falsecount="0"/>
-        <line num="108" count="1" type="stmt"/>
-        <line num="110" count="7" type="cond" truecount="4" falsecount="0"/>
-        <line num="111" count="1" type="stmt"/>
-        <line num="114" count="6" type="stmt"/>
-        <line num="147" count="15" type="stmt"/>
-      </file>
-    </package>
+<coverage generated="1757580572510" clover="3.2.0">
+  <project timestamp="1757580572510" name="All files">
+    <metrics statements="196" coveredstatements="66" conditionals="40" coveredconditionals="1" methods="63" coveredmethods="11" elements="299" coveredelements="78" complexity="0" loc="196" ncloc="196" packages="8" files="20" classes="20"/>
     <package name="core-logic.reducers">
-      <metrics statements="69" coveredstatements="36" conditionals="22" coveredconditionals="8" methods="27" coveredmethods="10"/>
+      <metrics statements="73" coveredstatements="26" conditionals="22" coveredconditionals="0" methods="29" coveredmethods="7"/>
+      <file name="authReducer.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/reducers/authReducer.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+      </file>
       <file name="coffeeRetrievalReducer.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/reducers/coffeeRetrievalReducer.ts">
         <metrics statements="4" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
         <line num="5" count="1" type="stmt"/>
@@ -74,28 +38,28 @@
         <line num="22" count="0" type="stmt"/>
       </file>
       <file name="ticketReducer.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/reducers/ticketReducer.ts">
-        <metrics statements="29" coveredstatements="23" conditionals="20" coveredconditionals="8" methods="7" coveredmethods="6"/>
+        <metrics statements="29" coveredstatements="9" conditionals="20" coveredconditionals="0" methods="7" coveredmethods="1"/>
         <line num="20" count="1" type="stmt"/>
         <line num="28" count="1" type="stmt"/>
         <line num="33" count="1" type="stmt"/>
-        <line num="34" count="5" type="stmt"/>
-        <line num="35" count="5" type="cond" truecount="1" falsecount="1"/>
-        <line num="36" count="5" type="stmt"/>
+        <line num="34" count="0" type="stmt"/>
+        <line num="35" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="36" count="0" type="stmt"/>
         <line num="38" count="1" type="stmt"/>
-        <line num="39" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="39" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="41" count="1" type="stmt"/>
-        <line num="42" count="10" type="stmt"/>
+        <line num="42" count="0" type="stmt"/>
         <line num="44" count="1" type="stmt"/>
-        <line num="45" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="45" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="47" count="1" type="stmt"/>
-        <line num="48" count="8" type="stmt"/>
-        <line num="49" count="8" type="stmt"/>
-        <line num="50" count="8" type="cond" truecount="2" falsecount="0"/>
-        <line num="52" count="5" type="stmt"/>
-        <line num="53" count="5" type="cond" truecount="1" falsecount="1"/>
-        <line num="55" count="5" type="stmt"/>
-        <line num="58" count="3" type="stmt"/>
-        <line num="59" count="3" type="cond" truecount="1" falsecount="1"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="50" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="52" count="0" type="stmt"/>
+        <line num="53" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="55" count="0" type="stmt"/>
+        <line num="58" count="0" type="stmt"/>
+        <line num="59" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="61" count="1" type="stmt"/>
         <line num="62" count="0" type="stmt"/>
         <line num="63" count="0" type="cond" truecount="0" falsecount="2"/>
@@ -182,6 +146,16 @@
         <line num="48" count="0" type="stmt"/>
       </file>
     </package>
+    <package name="core-logic.use-cases.auth.oAuthFlow">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="onOAuthFlow.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/use-cases/auth/oAuthFlow/onOAuthFlow.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+      </file>
+    </package>
     <package name="core-logic.use-cases.coffee">
       <metrics statements="5" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
       <file name="retrieveCoffee.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/use-cases/coffee/retrieveCoffee.ts">
@@ -260,9 +234,9 @@
       </file>
     </package>
     <package name="core-logic.use-cases.ticket">
-      <metrics statements="33" coveredstatements="33" conditionals="4" coveredconditionals="3" methods="5" coveredmethods="5"/>
+      <metrics statements="33" coveredstatements="8" conditionals="4" coveredconditionals="0" methods="5" coveredmethods="0"/>
       <file name="onTicketSubmitedFlow.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/core-logic/use-cases/ticket/onTicketSubmitedFlow.ts">
-        <metrics statements="33" coveredstatements="33" conditionals="4" coveredconditionals="3" methods="5" coveredmethods="5"/>
+        <metrics statements="33" coveredstatements="8" conditionals="4" coveredconditionals="0" methods="5" coveredmethods="0"/>
         <line num="5" count="1" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
         <line num="7" count="1" type="stmt"/>
@@ -270,42 +244,42 @@
         <line num="9" count="1" type="stmt"/>
         <line num="10" count="1" type="stmt"/>
         <line num="14" count="1" type="stmt"/>
-        <line num="15" count="8" type="stmt"/>
-        <line num="17" count="8" type="cond" truecount="1" falsecount="1"/>
-        <line num="19" count="8" type="stmt"/>
-        <line num="22" count="8" type="stmt"/>
-        <line num="23" count="8" type="stmt"/>
-        <line num="24" count="7" type="stmt"/>
-        <line num="25" count="6" type="stmt"/>
-        <line num="32" count="5" type="stmt"/>
-        <line num="34" count="3" type="stmt"/>
-        <line num="35" count="3" type="stmt"/>
-        <line num="39" count="5" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="17" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="19" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="25" count="0" type="stmt"/>
+        <line num="32" count="0" type="stmt"/>
+        <line num="34" count="0" type="stmt"/>
+        <line num="35" count="0" type="stmt"/>
+        <line num="39" count="0" type="stmt"/>
         <line num="42" count="1" type="stmt"/>
-        <line num="43" count="7" type="stmt"/>
-        <line num="45" count="7" type="stmt"/>
-        <line num="46" count="7" type="stmt"/>
-        <line num="47" count="7" type="stmt"/>
-        <line num="48" count="7" type="stmt"/>
-        <line num="49" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="50" count="1" type="stmt"/>
-        <line num="51" count="1" type="stmt"/>
-        <line num="53" count="5" type="stmt"/>
-        <line num="54" count="4" type="stmt"/>
-        <line num="55" count="10" type="stmt"/>
-        <line num="57" count="3" type="stmt"/>
-        <line num="58" count="2" type="stmt"/>
-        <line num="60" count="4" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="45" count="0" type="stmt"/>
+        <line num="46" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="49" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="51" count="0" type="stmt"/>
+        <line num="53" count="0" type="stmt"/>
+        <line num="54" count="0" type="stmt"/>
+        <line num="55" count="0" type="stmt"/>
+        <line num="57" count="0" type="stmt"/>
+        <line num="58" count="0" type="stmt"/>
+        <line num="60" count="0" type="stmt"/>
       </file>
     </package>
     <package name="store">
       <metrics statements="4" coveredstatements="4" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="2"/>
       <file name="reduxStore.ts" path="/Users/nicolasmaldiney/fragmentsCleanFront/app/store/reduxStore.ts">
         <metrics statements="4" coveredstatements="4" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="2"/>
-        <line num="17" count="1" type="stmt"/>
-        <line num="22" count="10" type="stmt"/>
-        <line num="31" count="10" type="stmt"/>
-        <line num="37" count="10" type="cond" truecount="1" falsecount="1"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="40" count="1" type="cond" truecount="1" falsecount="1"/>
       </file>
     </package>
   </project>

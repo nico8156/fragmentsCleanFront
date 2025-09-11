@@ -6,6 +6,7 @@ import {CameraGateway} from "@/app/core-logic/gateways/cameraGateway";
 import {PhotoStorageGateway} from "@/app/core-logic/gateways/photoStorageGateway";
 import {RemoteTicketMetaGateway} from "@/app/core-logic/gateways/remoteTicketMetaGateway";
 import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
+import {oAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
@@ -16,6 +17,7 @@ export type Gateways = {
     storageGateway: PhotoStorageGateway;
     ticketApiGateway: RemoteTicketMetaGateway;
     validityGateway: TicketUploadGateway;
+    oAuthGateway: oAuthServerGateway;
 };
 
 const coffeeGateway = new GoogleApiCoffeeGateway(
@@ -42,6 +44,9 @@ const ticketApiGateway = new fragmentsApiTicket(
 const cameraGateway = new CameraDevice(
     new cameraUserDevice()
 )
+const oAuthGateway = new oAuthServer(
+    new httpOAuth()
+)
 export const gateways: Gateways = {
-    coffeeGateway, commentGateway, likeGateway, authGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway
+    coffeeGateway, commentGateway, likeGateway, authGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthGateway
 };

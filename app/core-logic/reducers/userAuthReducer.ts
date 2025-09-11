@@ -5,14 +5,14 @@ import {logoutClicked} from "@/app/core-logic/use-cases/auth/onLogoutClicked";
 import {tokensRefreshed} from "@/app/core-logic/use-cases/auth/onTokenRefresh";
 
 const initialState: AppState['authState'] = {
-    authData: {
+
         status: "anonymous",
         user: null,
         accessToken: null,
         refreshToken: null,
         expiresAt: null,
         error: null,
-    }
+
 }
 
 //TODO make auth reducer instead ... better approach !
@@ -23,33 +23,33 @@ export const userAuthReducer = createReducer(
     (builder) => {
         builder
             .addCase(loginRequested, (state, action) => {
-                state.authData.status = "authenticating";
-                state.authData.error = null;
+                state.status = "authenticating";
+                state.error = null;
             })
             .addCase(loginSucceeded, (state, action) => {
                 const { user, tokens } = action.payload;
-                state.authData.status = "authenticated";
-                state.authData.user = user;
-                state.authData.accessToken = tokens.accessToken;
-                state.authData.refreshToken = tokens.refreshToken;
-                state.authData.expiresAt = tokens.expiresAt;
-                state.authData.error = null;
+                state.status = "authenticated";
+                state.user = user;
+                state.accessToken = tokens.accessToken;
+                state.refreshToken = tokens.refreshToken;
+                state.expiresAt = tokens.expiresAt;
+                state.error = null;
             })
             .addCase(loginFailed, (state, action) => {
-                state.authData.status = "error";
-                state.authData.error = action.payload;
+                state.status = "error";
+                state.error = action.payload;
             })
             .addCase(logoutClicked, (state, a) => {
-                state.authData.status = "anonymous";
-                state.authData.user = null;
-                state.authData.accessToken = null;
-                state.authData.refreshToken = null;
-                state.authData.expiresAt = null;
-                state.authData.error = null;
+                state.status = "anonymous";
+                state.user = null;
+                state.accessToken = null;
+                state.refreshToken = null;
+                state.expiresAt = null;
+                state.error = null;
             })
             builder.addCase(tokensRefreshed, (state, action) => {
-                state.authData.accessToken = action.payload.accessToken;
-                state.authData.expiresAt = action.payload.expiresAt;
+                state.accessToken = action.payload.accessToken;
+                state.expiresAt = action.payload.expiresAt;
             });
 
         ;
