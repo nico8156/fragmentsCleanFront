@@ -8,6 +8,7 @@ import {RemoteTicketMetaGateway} from "@/app/core-logic/gateways/remoteTicketMet
 import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
 import {oAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
 import {oAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
+import {SecureStoreGateway} from "@/app/core-logic/gateways/secureStoreGateway";
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
@@ -20,6 +21,7 @@ export type Gateways = {
     validityGateway: TicketUploadGateway;
     oAuthServerGateway: oAuthServerGateway;
     oAuthGoogleGateway: oAuthGoogleGateway;
+    secureStorageGateway: SecureStoreGateway;
 };
 
 const coffeeGateway = new GoogleApiCoffeeGateway(
@@ -52,7 +54,9 @@ const oAuthServerGateway = new oAuthServer(
 const oAuthGoogleGateway = new oAuthGoogle(
     new httpOAuthGoogle()
 )
-
+const secureStorageGateway = new secureStoreG(
+    new deviceStorageG()
+)
 export const gateways: Gateways = {
-    coffeeGateway, commentGateway, likeGateway, authGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthServerGateway, oAuthGoogleGateway
+    coffeeGateway, commentGateway, likeGateway, authGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
 };
