@@ -55,7 +55,11 @@ export interface AuthState {
     accessToken: string | null;
     refreshToken: string | null;
     expiresAt: number | null;
-    error: string | null; // "PROVIDER_ERROR" | "TOKEN_EXPIRED" | ...
+    error: AuthStateError | null; // "PROVIDER_ERROR" | "TOKEN_EXPIRED" | ...
+}
+export interface AuthStateError {
+    step: string;
+    message: string;
 }
 export type TicketStatus = "captured"|"uploading"|"pending"|"validated"|"invalid";
 
@@ -86,3 +90,9 @@ export const applyValidation = (gp: GameProgress, id: string, valid: boolean): G
     next.add(id);
     return { validCount: gp.validCount + 1, validatedIds: next };
 };
+
+export const STORAGE_KEYS = {
+    accessToken: "accessToken",
+    refreshToken: "refreshToken",
+    accessTokenExpiresAt: "accessTokenExpiresAt",
+} as const;

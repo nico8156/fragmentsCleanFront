@@ -1,4 +1,5 @@
 export interface SecureStoreGateway {
-    setItemAsync(key: string, value: string): Promise<void>;
-    getItemAsync(key: string): Promise<string | null>;
+    setItemAsync(key: string, value: string|number): Promise<void>;
+    getItemAsync(key: string): Promise<string| number | null>;
+    removeItemAsync(key: string): Promise<void>;
 }

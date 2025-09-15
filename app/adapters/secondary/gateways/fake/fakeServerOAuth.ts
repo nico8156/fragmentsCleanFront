@@ -6,7 +6,12 @@ import {
 } from "@/app/core-logic/use-cases/auth/oAuthFlow/onOAuthFlow";
 
 export class FakeServerOAuth implements oAuthServerGateway{
+
+    public willFailInit: boolean = false;
+    public willFailToken: boolean = false;
+
     async initOAuth(_url: string): Promise<ResponseFromInitServerType> {
+        if (this.willFailInit) throw new Error("server_error_init");
         await new Promise((r) => setTimeout(r, 0));
         return {
             authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth?...",
@@ -15,6 +20,7 @@ export class FakeServerOAuth implements oAuthServerGateway{
     }
 
     async getAccessToken(request: RequestForTokenType): Promise<ResponseFromServerType> {
+        if (this.willFailToken) throw new Error("server_error_token");
         await new Promise((r) => setTimeout(r, 0));
         return {
             accessToken: "fake-access-token",

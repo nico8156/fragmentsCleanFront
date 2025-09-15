@@ -1,17 +1,15 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {loginWithGoogleRequested} from "@/app/core-logic/use-cases/auth/oAuthFlow/onOAuthFlow";
-import {oAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
-import {oAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
 import {FakeServerOAuth} from "@/app/adapters/secondary/gateways/fake/fakeServerOAuth";
 import {FakeGoogleOAuth} from "@/app/adapters/secondary/gateways/fake/fakeGoogleOAuth";
-import {SecureStoreGateway} from "@/app/core-logic/gateways/secureStoreGateway";
 import {FakeSecureStoreGateway} from "@/app/adapters/secondary/gateways/fake/fakeSecureStoreGateway";
 
 describe('On OAuth Flow', () => {
+
   let store: ReduxStore;
-  let oAuthServerGateway: oAuthServerGateway;
-  let oAuthGoogleGateway: oAuthGoogleGateway;
-  let secureStorageGateway: SecureStoreGateway;
+  let oAuthServerGateway: FakeServerOAuth;
+  let oAuthGoogleGateway: FakeGoogleOAuth;
+  let secureStorageGateway: FakeSecureStoreGateway;
 
   beforeEach(() => {
     oAuthServerGateway = new FakeServerOAuth();
@@ -37,6 +35,75 @@ describe('On OAuth Flow', () => {
     expect(token).toEqual(aToken);
     expect(refreshToken).toEqual(aRefreshToken);
   })
+
+  //ERRORS
+
+  it('should update state to error when init from server fails with relevant authError states', async () => {
+    oAuthServerGateway.willFailInit = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("initOAuth");
+    expect(store.getState().authState.error?.message).toEqual("server_error_init");
+  })
+  it('should update state to error when google requested for code with relevant authError states', async () => {
+    oAuthGoogleGateway.willFailCode = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("google");
+    expect(store.getState().authState.error?.message).toEqual("google_server_error_code");
+  })
+  it('should update state to error when server fails to send back tokens with relevant authError states', async () => {
+    oAuthServerGateway.willFailToken= true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("getAccessToken");
+    expect(store.getState().authState.error?.message).toEqual("server_error_token");
+  })
+  it('should update state to error when secure storage fails with relevant authError states', async () => {
+    secureStorageGateway.willFailStorageSet = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("storage");
+    expect(store.getState().authState.error?.message).toEqual("Failed to set item");
+  })
+  it('should update state to error when secure storage fails and delete all values', async () => {
+    secureStorageGateway.willFailStorageSet = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("storage");
+    expect(store.getState().authState.error?.message).toEqual("Failed to set item");
+    await expect(secureStorageGateway.getItemAsync("accessToken")).resolves.toBeNull();
+    await expect(secureStorageGateway.getItemAsync("refreshToken")).resolves.toBeNull();
+  })
+  it('should update state to error when state value from google does not match server s stateId value', async () => {
+    oAuthGoogleGateway.willSendWrongState = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("google");
+    expect(store.getState().authState.error?.message).toEqual("OAuth state mismatch");
+  })
+  it('should update state to error when google s response s type not success', async () => {
+    oAuthGoogleGateway.willSendDismissType = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("google");
+    expect(store.getState().authState.error?.message).toEqual("user cancelled");
+  })
+  it('should update state to error when google s response s type not success and not dismiss', async () => {
+    oAuthGoogleGateway.willSendOtherType = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("google");
+    expect(store.getState().authState.error?.message).toEqual("provider error");
+  })
+  it('should update udpate state to error when google s response s code is null', async () => {
+    oAuthGoogleGateway.wontSendCode = true;
+    await store.dispatch(loginWithGoogleRequested());
+    expect(store.getState().authState.status).toEqual("error");
+    expect(store.getState().authState.error?.step).toEqual("google");
+    expect(store.getState().authState.error?.message).toEqual("No authorization code returned by Google");
+  })
+
 });
 
 const aUser = {
