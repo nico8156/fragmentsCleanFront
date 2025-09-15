@@ -11,7 +11,6 @@ import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysCon
 import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reducers/coffeeRetrievalReducer";
 import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/reducers/commentRetrievalReducer";
 import {likeRetrievalReducer as likeRetrieval} from "@/app/core-logic/reducers/likeRetrievalReducer";
-//import {userAuthReducer as authState} from "@/app/core-logic/reducers/userAuthReducer";
 import {ticketReducer as ticketState} from "@/app/core-logic/reducers/ticketReducer";
 import {authReducer as authState} from "@/app/core-logic/reducers/authReducer";
 
