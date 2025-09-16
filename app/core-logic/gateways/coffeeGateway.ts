@@ -1,4 +1,5 @@
-import {Coffee} from "@/app/store/appState";
+import { Coffee } from "@/assets/data/coffee";
+
 
 export interface CoffeeGateway {
     retrieveCoffee(): Promise<Coffee[]>;

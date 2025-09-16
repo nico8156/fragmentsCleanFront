@@ -60,3 +60,47 @@ export const performUpload = (id: { ticketId: string }): AppThunk<Promise<void>>
             dispatch(uploadFailed({ ticketId, reason: "UPLOAD_ERROR" }));
         }
     };
+
+export const photoChosen = (imageURL: string) : AppThunk<Promise<void>> =>
+    async (dispatch, _, { ocrGateway, ticketApiGateway }) => {
+        let result: string
+        try {
+            result = await ocrGateway.recognize(imageURL);
+            await ticketApiGateway.verify(result)
+        } catch {
+
+        }
+    };
+
+//1/ dans le composant , nous avons une photo capturee
+
+//2/ apres acquisition de la photo , nous pouvons declencher le thunk
+
+//3/ le thunk va prendre pour argument un lien qui servira de point de depart du flow
+
+//4/ dans le thunk , nous faisons appel au OCRGateway pour trouver le texte contenu dans la photo (un ticket)
+
+//5/ ce texte est ensuite envoye au server pour analyse (via openAi)
+
+//6/ plus tard , une mise a jour du state par socket est effectuee au resultat de l'analyse
+
+//1/ dans le composant , nous avons une photo capturee
+//1/ dans le composant , nous avons une photo capturee
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

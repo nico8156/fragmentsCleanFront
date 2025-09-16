@@ -6,5 +6,6 @@ export interface RemoteTicketMetaGateway {
     patch(id: string, changes: Partial<TicketMeta>): Promise<void>;
     get(ticketId: string): Promise<Meta | undefined>;
     list(offset: number, limit: number): Promise<Meta[]>;
+    verify(result: string): Promise<void>;
 }
 

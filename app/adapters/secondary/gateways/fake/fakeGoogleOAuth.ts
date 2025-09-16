@@ -1,7 +1,7 @@
-import {oAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
+import {OAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
 import { RedirectUriType, CodeProviderType } from "@/app/core-logic/use-cases/auth/oAuthFlow/onOAuthFlow";
 
-export class FakeGoogleOAuth implements oAuthGoogleGateway {
+export class FakeGoogleOAuth implements OAuthGoogleGateway {
 
     public willFailCode: boolean = false;
     public willSendWrongState: boolean = false;

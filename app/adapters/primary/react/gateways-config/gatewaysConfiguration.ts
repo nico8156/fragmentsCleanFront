@@ -1,40 +1,51 @@
 import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
 import {CommentGateway} from "@/app/core-logic/gateways/commentGateway";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
-import {AuthGateway} from "@/app/core-logic/gateways/authGateway";
 import {CameraGateway} from "@/app/core-logic/gateways/cameraGateway";
 import {PhotoStorageGateway} from "@/app/core-logic/gateways/photoStorageGateway";
 import {RemoteTicketMetaGateway} from "@/app/core-logic/gateways/remoteTicketMetaGateway";
 import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
-import {oAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
-import {oAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
+import {OAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
 import {SecureStoreGateway} from "@/app/core-logic/gateways/secureStoreGateway";
+import {CoffeeApiGateway} from "@/app/adapters/secondary/gateways/coffee/coffeeApiGateway";
+import {HttpCoffeeApiLoader} from "@/app/adapters/secondary/gateways/coffee/httpCoffeeApiLoader";
+import {CommentApiGateway} from "@/app/adapters/secondary/gateways/comment/commentApiGateway";
+import {HttpCommentApiHandler} from "@/app/adapters/secondary/gateways/comment/httpCommentApiHandler";
+import {LikeApiGateway} from "@/app/adapters/secondary/gateways/like/likeApiGateway";
+import {HttpLikeApiHandler} from "@/app/adapters/secondary/gateways/like/httpLikeApiHandler";
+import {CameraDeviceGateway} from "@/app/adapters/secondary/gateways/camera/cameraDeviceGateway";
+import {GoogleGateway} from "@/app/adapters/secondary/gateways/auth/google/googleGateway";
+import {HttpOAuthGoogleApiHandler} from "@/app/adapters/secondary/gateways/auth/google/httpOAuthGoogleApiHandler";
+import {AuthServerGateway} from "@/app/adapters/secondary/gateways/auth/server/authServerGateway";
+import {HttpOAuthServerApiHandler} from "@/app/adapters/secondary/gateways/auth/server/httpOAuthServerApiHandler";
+import {OAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
+import {SecureStorageGateway} from "@/app/adapters/secondary/gateways/secureStorage/secureStorageGateway";
+import {SecureStorageDeviceHandler} from "@/app/adapters/secondary/gateways/secureStorage/secureStorageDeviceHandler";
+import {CameraDeviceApiIOSHandler} from "@/app/adapters/secondary/gateways/camera/cameraDeviceApiIOSHandler";
+import {OcrGateway} from "@/app/core-logic/gateways/ocrGateway";
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
     commentGateway: CommentGateway;
     likeGateway: LikeGateway;
-    authGateway: AuthGateway;
     cameraGateway: CameraGateway;
     storageGateway: PhotoStorageGateway;
     ticketApiGateway: RemoteTicketMetaGateway;
     validityGateway: TicketUploadGateway;
-    oAuthServerGateway: oAuthServerGateway;
-    oAuthGoogleGateway: oAuthGoogleGateway;
+    oAuthServerGateway: OAuthServerGateway;
+    oAuthGoogleGateway: OAuthGoogleGateway;
     secureStorageGateway: SecureStoreGateway;
+    ocrGateway: OcrGateway;
 };
 
-const coffeeGateway = new GoogleApiCoffeeGateway(
-    new HttpGoogleApicoffeeLoader(),
-);
-const commentGateway = new FragmentsApiCommenGateway(
-    new HttpFragmentsApiCommentLoader()
+const coffeeGateway = new CoffeeApiGateway(
+    new HttpCoffeeApiLoader()
 )
-const likeGateway = new FragmntsApiLikeGateway(
-    new HttpFragmentsApiLikeLoader()
+const commentGateway = new CommentApiGateway(
+    new HttpCommentApiHandler()
 )
-const authGateway = new FragmentsApiAuthGateway(
-    new httpGoogleAuthLoader()
+const likeGateway = new LikeApiGateway(
+    new HttpLikeApiHandler()
 )
 const validityGateway = new fragmentsUploader(
     new httpFragmentsUploader()
@@ -45,18 +56,18 @@ const storageGateway = new fragmentsStorage(
 const ticketApiGateway = new fragmentsApiTicket(
     new httpFragmentsTicketRepo()
 )
-const cameraGateway = new CameraDevice(
-    new cameraUserDevice()
+const cameraGateway = new CameraDeviceGateway(
+    new CameraDeviceApiIOSHandler()
 )
-const oAuthServerGateway = new oAuthServer(
-    new httpOAuth()
+const oAuthServerGateway = new AuthServerGateway(
+    new HttpOAuthServerApiHandler()
 )
-const oAuthGoogleGateway = new oAuthGoogle(
-    new httpOAuthGoogle()
+const oAuthGoogleGateway = new GoogleGateway(
+    new HttpOAuthGoogleApiHandler()
 )
-const secureStorageGateway = new secureStoreG(
-    new deviceStorageG()
+const secureStorageGateway = new SecureStorageGateway(
+    new SecureStorageDeviceHandler()
 )
 export const gateways: Gateways = {
-    coffeeGateway, commentGateway, likeGateway, authGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
+    coffeeGateway, commentGateway, likeGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
 };

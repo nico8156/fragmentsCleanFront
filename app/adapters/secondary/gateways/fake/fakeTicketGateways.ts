@@ -55,6 +55,9 @@ export class FakeValidityGateway implements TicketUploadGateway{
     }
 }
 export class FakeRemoteTicketMetaGateway implements RemoteTicketMetaGateway {
+    verify(result: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
     public willFailOnGet = false;
     list(offset: number, limit: number): Promise<Meta[]> {
         throw new Error("Method not implemented.");

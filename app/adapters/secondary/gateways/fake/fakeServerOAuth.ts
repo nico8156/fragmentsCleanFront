@@ -1,11 +1,11 @@
-import {oAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
+import {OAuthServerGateway} from "@/app/core-logic/gateways/oAuthServerGateway";
 import {
     RequestForTokenType,
     ResponseFromInitServerType,
     ResponseFromServerType
 } from "@/app/core-logic/use-cases/auth/oAuthFlow/onOAuthFlow";
 
-export class FakeServerOAuth implements oAuthServerGateway{
+export class FakeServerOAuth implements OAuthServerGateway{
 
     public willFailInit: boolean = false;
     public willFailToken: boolean = false;
@@ -31,7 +31,7 @@ export class FakeServerOAuth implements oAuthServerGateway{
                 id: "fake-user-id",
                 name: "fake-user-name",
                 email: "fake-user-email",
-                picture: "fake-user-picture",
+                avatarUrl: "fake-user-picture",
             },
         };
     }

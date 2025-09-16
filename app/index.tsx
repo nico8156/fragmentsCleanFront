@@ -7,5 +7,5 @@ export default function Index() {
     const status = useSelector((s: AppState) => s.authState.status);
     const isAuth = status === "authenticated";
 
-    return <Redirect href={isAuth ? "/(tabs)/home" : "/(auth)/login"}/>;
+    return <Redirect href={"/(tabs)/explore"} ></Redirect>;
 }

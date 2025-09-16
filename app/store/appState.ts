@@ -26,7 +26,9 @@ export interface Coffee {
 
 export interface Comment {
     id: string;
-    text: string;
+    userId: string;
+    coffeeId: string;
+    content: string;
 }
 export interface Like {
     id: string;
