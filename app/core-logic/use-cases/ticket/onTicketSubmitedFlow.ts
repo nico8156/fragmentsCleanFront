@@ -2,6 +2,7 @@ import {AppThunk} from "@/app/store/reduxStore";
 
 import {createAction} from "@reduxjs/toolkit";
 
+export const ticketTextDataSentSuccessfully = createAction("ticket/TEXT_DATA_SENT_SUCCESSFULLY");
 export const photoCaptured      = createAction<{ ticketId: string; createdAt: number; localUri: string; thumbUri: string }>("ticket/PHOTO_CAPTURED");
 export const uploadProgressed   = createAction<{ ticketId: string; pct: number }>("ticket/UPLOAD_PROGRESS");
 export const uploadSucceeded    = createAction<{ ticketId: string; remoteId: string }>("ticket/UPLOAD_SUCCEEDED");
@@ -61,12 +62,16 @@ export const performUpload = (id: { ticketId: string }): AppThunk<Promise<void>>
         }
     };
 
+
+//TODO bew flow for tockets with OCR ... faster !!
+
 export const photoChosen = (imageURL: string) : AppThunk<Promise<void>> =>
     async (dispatch, _, { ocrGateway, ticketApiGateway }) => {
         let result: string
         try {
             result = await ocrGateway.recognize(imageURL);
             await ticketApiGateway.verify(result)
+            dispatch(ticketTextDataSentSuccessfully())
         } catch {
 
         }

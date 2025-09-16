@@ -110,7 +110,7 @@ const aUser = {
   id: "fake-user-id",
   name: "fake-user-name",
   email: "fake-user-email",
-  picture: "fake-user-picture",
+  avatarUrl: "fake-user-picture",
 }
 
 const aToken = "fake-access-token";
