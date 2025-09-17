@@ -98,3 +98,29 @@ export const STORAGE_KEYS = {
     refreshToken: "refreshToken",
     accessTokenExpiresAt: "accessTokenExpiresAt",
 } as const;
+
+type TicketStatusOCR = "IDLE" | "OCR_RUNNING" | "PENDING_ANALYSIS" | "VERIFIED" | "PARTIAL" | "INVALID" | "FAILED";
+
+type TicketDraft = {
+    id: string;                 // correlationId
+    photoUri: string;
+    rawText?: string;
+    ocr: { engine: string; confidence?: number } | null;
+    capturedAt: string;         // ISO
+    status: TicketStatus;
+    issues?: string[];
+};
+
+type TicketVerified = {
+    id: string;                 // correlationId (ou id serveur)
+    merchant_name: string;
+    merchant_address?: string;
+    merchant_siret?: string;
+    purchase_datetime: string;  // ISO
+    total_amount: number;
+    currency: "EUR";
+    vat_amount?: number;
+    ticket_number?: string;
+    confidence: number;
+    status: "VERIFIED" | "PARTIAL";
+};

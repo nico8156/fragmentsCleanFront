@@ -55,19 +55,18 @@ export class FakeValidityGateway implements TicketUploadGateway{
     }
 }
 export class FakeRemoteTicketMetaGateway implements RemoteTicketMetaGateway {
-    verify(result: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
     public willFailOnGet = false;
-    list(offset: number, limit: number): Promise<Meta[]> {
-        throw new Error("Method not implemented.");
-    }
     public willFailOnUpsert = false;
     public willFailOnPatchUploading = false;
     public willFailOnPatchPending = false;
-
     private store: Record<string, TicketMeta> = {};
 
+    verify(result: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    list(offset: number, limit: number): Promise<Meta[]> {
+        throw new Error("Method not implemented.");
+    }
     async upsert(meta: TicketMeta): Promise<void> {
         if (this.willFailOnUpsert) throw new Error("fail-upsert");
         const prev = this.store[meta.ticketId] ?? ({} as TicketMeta);

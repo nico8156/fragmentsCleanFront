@@ -3,7 +3,8 @@ import {
     FakeCameraGateway,
     FakePhotoStorageGateway, FakeRemoteTicketMetaGateway, FakeValidityGateway
 } from "@/app/adapters/secondary/gateways/fake/fakeTicketGateways";
-import {captureRequested, performUpload} from "@/app/core-logic/use-cases/ticket/onTicketSubmitedFlow";
+import {captureRequested, performUpload, photoChosen} from "@/app/core-logic/use-cases/ticket/onTicketSubmitedFlow";
+import {FakeOcrGateway} from "@/app/adapters/secondary/gateways/fake/fakeOcrGateway";
 
 
 describe('On Ticket flow, ', () => {
@@ -12,13 +13,15 @@ describe('On Ticket flow, ', () => {
     let storageGateway: FakePhotoStorageGateway;
     let ticketApiGateway: FakeRemoteTicketMetaGateway;
     let validityGateway: FakeValidityGateway;
+    let ocrGateway: FakeOcrGateway;
 
     beforeEach(() => {
         cameraGateway = new FakeCameraGateway();
         storageGateway = new FakePhotoStorageGateway();
         ticketApiGateway = new FakeRemoteTicketMetaGateway();
         validityGateway = new FakeValidityGateway();
-        store = initReduxStore({gateways: {cameraGateway, storageGateway, ticketApiGateway, validityGateway}});
+        ocrGateway = new FakeOcrGateway();
+        store = initReduxStore({gateways: {cameraGateway, storageGateway, ticketApiGateway, validityGateway, ocrGateway}});
         cameraGateway.willFail = false;
         storageGateway.willFail = false;
         ticketApiGateway.willFailOnUpsert = false;
@@ -157,4 +160,7 @@ describe('On Ticket flow, ', () => {
         expect(s.uploadProgress[id]).toBe(100); // dernier pct reçu
         expect(s.byId[id].status).toBe("pending"); // upload ok
     });
+    it('', async () => {
+        await store.dispatch<any>(photoChosen("someurl"));
+    })
 })

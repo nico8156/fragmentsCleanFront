@@ -65,7 +65,8 @@ export const performUpload = (id: { ticketId: string }): AppThunk<Promise<void>>
 
 //TODO bew flow for tockets with OCR ... faster !!
 
-export const photoChosen = (imageURL: string) : AppThunk<Promise<void>> =>
+export const photoChosen =
+    (imageURL: string) : AppThunk<Promise<void>> =>
     async (dispatch, _, { ocrGateway, ticketApiGateway }) => {
         let result: string
         try {
@@ -83,11 +84,13 @@ export const photoChosen = (imageURL: string) : AppThunk<Promise<void>> =>
 
 //3/ le thunk va prendre pour argument un lien qui servira de point de depart du flow
 
-//4/ dans le thunk , nous faisons appel au OCRGateway pour trouver le texte contenu dans la photo (un ticket)
+//4/ dans le thunk , nous faisons appel au OCRGateway pour trouver le texte contenu dans la photo (d'un ticket)
 
-//5/ ce texte est ensuite envoye au server pour analyse (via openAi)
+// nous pouvons lier la chaine de caracteres à un od et une date pour former un objet-ticket-A-vérifier !
 
-//6/ plus tard , une mise a jour du state par socket est effectuee au resultat de l'analyse
+//5/ cet objet est ensuite envoye au server pour analyse (via openAi)
+
+//6/ plus tard , à reception de l'analyse sous forme d'un objet-ticket-vérifié  , on pourra updater le state
 
 //1/ dans le composant , nous avons une photo capturee
 //1/ dans le composant , nous avons une photo capturee
