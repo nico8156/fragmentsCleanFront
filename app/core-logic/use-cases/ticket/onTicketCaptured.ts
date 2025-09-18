@@ -2,34 +2,63 @@ import {AppThunk} from "@/app/store/reduxStore";
 import {createAction} from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 
-export const ocrStarted = createAction("OCR_STARTED_ANALYSIS")
-export const ocrFailed = createAction("OCR_FAILED_ANALYSIS")
-export const dataFromTicketSentToServer = createAction("DATA_FROM_TICKET_SENT_TO_SERVER")
+export const ocrStarted = createAction<{id:string}>("OCR_STARTED_ANALYSIS")
+export const ocrFailed = createAction<{id: string, reason: string}>("OCR_FAILED_ANALYSIS")
 export const ticketDraftCreated = createAction<{id: string, imageUri: string, capturedAt: string}>("TICKET_DRAFT_CREATED")
+export const verifyStartSent = createAction<{id: string, jobId: string}>("VERIFY_START_SENT")
+export const verifyStartFailed = createAction<{id: string, reason: string}>("VERIFY_START_FAILED")
+export const ticketDraftUpdatedWithRawText = createAction<{id: string, rawText: string}>("TICKET_DRAFT_UPDATED_WITH_RAW_TEXT")
+
+const normalizeLines = (lines: string[]) =>
+    lines
+        .map(l => l.replace(/\s+/g, " ").trim()) // squeeze spaces
+        .filter(l => l.length > 0);
+
 
 export const onTicketCaptured =
-    (imageUri: string) : AppThunk<Promise<void>> =>
-    async (dispatch, getState,{ocrGateway, ticketApiGateway}) => {
+    ({imageUri}:{imageUri: string}) : AppThunk<Promise<void>> =>
+    async (dispatch, _getState,{ocrGateway, ticketGateway}) => {
+
+        let result: string[] | null = null;
+        let rawText: string | null= null;
+
         const id = uuidv4();
         const capturedAt = new Date().toISOString();
-        // on crée le draft
+
         dispatch(ticketDraftCreated({ id, imageUri, capturedAt }));
-        //dispatch du debut du flow
-        dispatch(ocrStarted());
+        dispatch(ocrStarted({id}));
+
         try{
-            const result = await ocrGateway.recognize(imageUri);
-        } catch (e){
-            dispatch(ocrFailed())
+            result = await ocrGateway.recognize(imageUri);
+            if (!Array.isArray(result) || result.length === 0) {
+                dispatch(ocrFailed({ id, reason: reasonErrorTicketCaptured.EMPTY_OCR }));
+                return
+            }
+
+            rawText = normalizeLines(result).join("\n");
+
+            if (!rawText.trim()) {
+                dispatch(ocrFailed({ id, reason: reasonErrorTicketCaptured.EMPTY_OCR }));
+                return
+            }
+        } catch (e: unknown){
+            dispatch(ocrFailed({ id, reason: reasonErrorTicketCaptured.OCR_ERROR }))
             return
         }
-        // on passe par le gateway ocr pour la chaine de caracteres
-        // envoie au server de la chaine resultante
-        try{
-            await ticketApiGateway.verify(result);
-            dispatch(dataFromTicketSentToServer());
-        }catch (e){
 
+        dispatch(ticketDraftUpdatedWithRawText({ id,rawText }));
+
+        try {
+            const {jobId} = await ticketGateway.verify({ clientId: id});
+            dispatch(verifyStartSent({ id, jobId }));
+        } catch (e: unknown) {
+            dispatch(verifyStartFailed({ id, reason:reasonErrorTicketCaptured.VERIFY_START_ERROR }));
+            return
         }
+    }
 
-
+    export enum reasonErrorTicketCaptured {
+        EMPTY_OCR = "EMPTY_OCR",
+        OCR_ERROR = "OCR_ERROR",
+        VERIFY_START_ERROR = "VERIFY_START_ERROR"
     }

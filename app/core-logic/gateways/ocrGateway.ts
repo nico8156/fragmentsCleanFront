@@ -1,3 +1,3 @@
 export interface OcrGateway {
-    recognize (imageURL: string): Promise<string>
+    recognize (imageURL: string): Promise<string[]>
 }

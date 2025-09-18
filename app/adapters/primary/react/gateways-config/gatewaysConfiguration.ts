@@ -23,21 +23,30 @@ import {SecureStorageGateway} from "@/app/adapters/secondary/gateways/secureStor
 import {SecureStorageDeviceHandler} from "@/app/adapters/secondary/gateways/secureStorage/secureStorageDeviceHandler";
 import {CameraDeviceApiIOSHandler} from "@/app/adapters/secondary/gateways/camera/cameraDeviceApiIOSHandler";
 import {OcrGateway} from "@/app/core-logic/gateways/ocrGateway";
+import {OcrDeviceGateway} from "@/app/adapters/secondary/gateways/ocr/ocrDeviceGateway";
+import {OcrTextRecognitionApiHandler} from "@/app/adapters/secondary/gateways/ocr/ocrTextRecognitionApiHandler";
+import {TicketServerGateway} from "@/app/core-logic/gateways/ticketServerGateway";
+import {TicketServerApiGateway} from "@/app/adapters/secondary/gateways/ticket/ticketServerApiGateway";
+import {TicketServerApiImplHandler} from "@/app/adapters/secondary/gateways/ticket/ticketServerApiImplHandler";
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
     commentGateway: CommentGateway;
     likeGateway: LikeGateway;
     cameraGateway: CameraGateway;
-    storageGateway: PhotoStorageGateway;
-    ticketApiGateway: RemoteTicketMetaGateway;
-    validityGateway: TicketUploadGateway;
+    //storageGateway: PhotoStorageGateway;
+    //ticketApiGateway: RemoteTicketMetaGateway;
+    //validityGateway: TicketUploadGateway;
     oAuthServerGateway: OAuthServerGateway;
     oAuthGoogleGateway: OAuthGoogleGateway;
     secureStorageGateway: SecureStoreGateway;
     ocrGateway: OcrGateway;
+    ticketGateway: TicketServerGateway;
 };
 
+const ocrGateway = new OcrDeviceGateway(
+    new OcrTextRecognitionApiHandler()
+)
 const coffeeGateway = new CoffeeApiGateway(
     new HttpCoffeeApiLoader()
 )
@@ -47,15 +56,18 @@ const commentGateway = new CommentApiGateway(
 const likeGateway = new LikeApiGateway(
     new HttpLikeApiHandler()
 )
-const validityGateway = new fragmentsUploader(
-    new httpFragmentsUploader()
+const ticketGateway = new TicketServerApiGateway(
+    new TicketServerApiImplHandler()
 )
-const storageGateway = new fragmentsStorage(
-    new localDeviceStorage()
-)
-const ticketApiGateway = new fragmentsApiTicket(
-    new httpFragmentsTicketRepo()
-)
+// const validityGateway = new fragmentsUploader(
+//     new httpFragmentsUploader()
+// )
+// const storageGateway = new fragmentsStorage(
+//     new localDeviceStorage()
+// )
+// const ticketApiGateway = new fragmentsApiTicket(
+//     new httpFragmentsTicketRepo()
+// )
 const cameraGateway = new CameraDeviceGateway(
     new CameraDeviceApiIOSHandler()
 )
@@ -69,5 +81,5 @@ const secureStorageGateway = new SecureStorageGateway(
     new SecureStorageDeviceHandler()
 )
 export const gateways: Gateways = {
-    coffeeGateway, commentGateway, likeGateway, cameraGateway, ticketApiGateway, storageGateway, validityGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
+    ticketGateway,ocrGateway, cameraGateway,coffeeGateway, commentGateway, likeGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
 };
