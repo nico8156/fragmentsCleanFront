@@ -1,11 +1,4 @@
-import {
-    Action,
-    configureStore,
-    ListenerMiddleware, Middleware,
-    Store,
-    ThunkAction,
-    ThunkDispatch,
-} from "@reduxjs/toolkit";
+import {Action, configureStore, ListenerMiddleware, Store, ThunkAction, ThunkDispatch,} from "@reduxjs/toolkit";
 import { AppState } from "./appState";
 import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reducers/coffeeRetrievalReducer";
@@ -13,7 +6,8 @@ import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/redu
 import {likeRetrievalReducer as likeRetrieval} from "@/app/core-logic/reducers/likeRetrievalReducer";
 import {ticketReducer as ticketState} from "@/app/core-logic/reducers/ticketReducer";
 import {authReducer as authState} from "@/app/core-logic/reducers/authReducer";
-
+import {outboxReducer as outboxQueue} from "@/app/core-logic/reducers/outboxReducer";
+import { exchangesReducer as exchangesByKey} from "@/app/core-logic/reducers/exchangesReducer";
 
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
@@ -26,7 +20,9 @@ export const initReduxStore = (config: {
             commentRetrieval,
             likeRetrieval,
             ticketState,
-            authState
+            authState,
+            outboxQueue,
+            exchangesByKey
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({

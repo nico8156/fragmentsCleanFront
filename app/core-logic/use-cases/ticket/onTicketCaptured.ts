@@ -11,22 +11,21 @@ export const ticketDraftUpdatedWithRawText = createAction<{id: string, rawText: 
 
 const normalizeLines = (lines: string[]) =>
     lines
-        .map(l => l.replace(/\s+/g, " ").trim()) // squeeze spaces
-        .filter(l => l.length > 0);
-
+        .map(l => l.replace(/\s+/g, " ").trim())
+        .filter(l => l.length > 0)
 
 export const onTicketCaptured =
     ({imageUri}:{imageUri: string}) : AppThunk<Promise<void>> =>
     async (dispatch, _getState,{ocrGateway, ticketGateway}) => {
 
-        let result: string[] | null = null;
-        let rawText: string | null= null;
+        let result: string[] | null = null
+        let rawText: string | null= null
 
-        const id = uuidv4();
-        const capturedAt = new Date().toISOString();
+        const id = uuidv4()
+        const capturedAt = new Date().toISOString()
 
-        dispatch(ticketDraftCreated({ id, imageUri, capturedAt }));
-        dispatch(ocrStarted({id}));
+        dispatch(ticketDraftCreated({ id, imageUri, capturedAt }))
+        dispatch(ocrStarted({id}))
 
         try{
             result = await ocrGateway.recognize(imageUri);
@@ -35,7 +34,7 @@ export const onTicketCaptured =
                 return
             }
 
-            rawText = normalizeLines(result).join("\n");
+            rawText = normalizeLines(result).join("\n")
 
             if (!rawText.trim()) {
                 dispatch(ocrFailed({ id, reason: reasonErrorTicketCaptured.EMPTY_OCR }));

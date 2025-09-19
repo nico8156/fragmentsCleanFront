@@ -1,3 +1,4 @@
+import {JobEntry, OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
 
 export interface AppState {
     coffeeRetrieval: {
@@ -16,8 +17,14 @@ export interface AppState {
         uploadProgress: Record<string, number>;
         validCount: number;
         validatedIds: Record<string, true>;
-    }
+    },
+    outboxQueue: OutboxItem[],
+    exchangesByKey: Record<string, Job>
 }
+
+export type UUID = string;
+
+export type Job = { correlationKey:string; jobId:string; status:'sent'|'failed'|'timeout' };
 
 export interface Coffee {
     id: string;

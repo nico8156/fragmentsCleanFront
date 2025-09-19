@@ -25,7 +25,7 @@ const initialState: TicketState = {
     validatedIds: {},
 };
 
-const slice = createSlice({
+export const slice = createSlice({
     name: "ticket",
     initialState,
     reducers: {},

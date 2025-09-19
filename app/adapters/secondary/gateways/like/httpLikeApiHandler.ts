@@ -6,5 +6,4 @@ export class HttpLikeApiHandler implements LikeApiHandler {
     loadLike(): Promise<Like[]> {
         return Promise.resolve(commentData);
     }
-
 }
