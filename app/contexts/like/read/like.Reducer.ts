@@ -1,7 +1,11 @@
 import {AppState} from "@/app/store/appState";
-import {createReducer} from "@reduxjs/toolkit";
+import {createAction, createReducer} from "@reduxjs/toolkit";
 import {likeConfirmed, likeOptimisticApplied} from "@/app/contexts/like/write/like.listener";
+import {TargetId} from "@/app/contexts/like/write/like.type";
 
+
+export const likeFailedReverted = createAction<{ targetId: TargetId; previousLiked: boolean }>('like/FAILED_REVERTED')
+export const likesHydrated = createAction<Array<{ targetId: TargetId; liked: boolean; count?: number }>>('like/HYDRATED')
 
 const initialState: AppState["likes"] = {
     byId:{}
@@ -28,14 +32,24 @@ export const likeReducer = createReducer(
                     ...cur,
                     pending: false,
                     // si le serveur renvoie un compteur autoritatif
-                    count: action.payload.serverCount ?? cur.count,
-                };
+                    //count: action.payload.serverCount ?? cur.count,
+                }
             })
             .addCase(likeFailedReverted, (state, action) => {
-                return {data: state.data.filter(l => l.id !== action.payload )}
+                const cur = state.byId[action.payload.targetId];
+                if (!cur) return;
+                const delta = cur.liked === action.payload.previousLiked ? 0 : (action.payload.previousLiked ? +1 : -1);
+                state.byId[action.payload.targetId] = {
+                    ...cur,
+                    liked: action.payload.previousLiked,
+                    count: (cur.count ?? 0) + delta,
+                    pending: false,
+                }
             })
             .addCase(likesHydrated, (state, action) => {
-                return {data: state.data.filter(l => l.id !== action.payload )}
+                    for (const it of action.payload) {
+                        state.byId[it.targetId] = { liked: it.liked, count: it.count, pending: false };
+                    }
             })
     }
 )

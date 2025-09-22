@@ -16,6 +16,8 @@ export const likeEnqueued = createAction<{ type: string; commandId: string; targ
 export const likeRemoved= createAction('Like.Removed');
 export const likeConfirmed= createAction<{ commandId: string; targetId: string; liked: boolean }>('Like.Confirmed');
 export const likeBumped= createAction<{ commandId: string; error: string }>('Like.Bumped');
+export const likeFailed= createAction<{ commandId: string; error: string }>('Like.Failed');
+export const likeFailedReverted= createAction<{ commandId: string; previousLiked: boolean }>('Like.FailedReverted');
 
 export const onCoffeeLikeRequestedFactory = (callback: () => void) => {
     const onCoffeeLikeRequested = createListenerMiddleware<AppState, any, Partial<Gateways>>();
