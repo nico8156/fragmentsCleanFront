@@ -1,7 +1,8 @@
 import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
-import {AppState, Coffee} from "@/app/store/appState";
+import {AppState} from "@/app/store/appState";
 import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeGateway";
 import {retrieveCoffee} from "@/app/core-logic/use-cases/coffee/retrieveCoffee";
+import {Coffee} from "@/assets/data/coffee";
 
 describe('coffee retrieval', () => {
     let store: ReduxStore;
@@ -26,7 +27,16 @@ describe('coffee retrieval', () => {
     });
 
     const aCoffees: Coffee[] = [
-        { id: "1", name: "Meilleur Café" },
-        { id: "2", name: "Brûlerie Test" },
+        {
+            "id": "07dae867-1273-4d0f-b1dd-f206b290626b",
+            "google_id": "ChIJB8tVJh3eDkgRrbxiSh2Jj3c",
+            "display_name": "Columbus Café & Co",
+            "formatted_address": "Centre Commercial Grand Quartier, 35760 Saint-Grégoire, France",
+            "national_phone_number": "02 99 54 25 82",
+            "website_uri": "https://www.columbuscafe.com/boutique/saint-gregoire-centre-commercial-grand-quartier/",
+            "latitude": 48.1368282,
+            "longitude": -1.6953883
+        },
+
     ];
 })

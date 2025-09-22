@@ -2,9 +2,6 @@ import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
 import {CommentGateway} from "@/app/core-logic/gateways/commentGateway";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import {CameraGateway} from "@/app/core-logic/gateways/cameraGateway";
-import {PhotoStorageGateway} from "@/app/core-logic/gateways/photoStorageGateway";
-import {RemoteTicketMetaGateway} from "@/app/core-logic/gateways/remoteTicketMetaGateway";
-import {TicketUploadGateway} from "@/app/core-logic/gateways/ticketUploadGateway";
 import {OAuthGoogleGateway} from "@/app/core-logic/gateways/oAuthGoogleGateway";
 import {SecureStoreGateway} from "@/app/core-logic/gateways/secureStoreGateway";
 import {CoffeeApiGateway} from "@/app/adapters/secondary/gateways/coffee/coffeeApiGateway";
@@ -28,28 +25,18 @@ import {OcrTextRecognitionApiHandler} from "@/app/adapters/secondary/gateways/oc
 import {TicketServerGateway} from "@/app/core-logic/gateways/ticketServerGateway";
 import {TicketServerApiGateway} from "@/app/adapters/secondary/gateways/ticket/ticketServerApiGateway";
 import {TicketServerApiImplHandler} from "@/app/adapters/secondary/gateways/ticket/ticketServerApiImplHandler";
-import {OutboxGateway} from "@/app/adapters/secondary/gateways/outBoxGateway/outboxGatewayClass";
-import {OutBoxGateway} from "@/app/core-logic/gateways/outBoxGateway";
-import {getState} from "jest-circus";
-import {AppState} from "react-native";
-import {ReduxStore} from "@/app/store/reduxStore";
-import {backoff, delay, now} from "@/app/adapters/secondary/gateways/outBoxGateway/deps";
-import {store} from
+
 
 export type Gateways = {
     coffeeGateway: CoffeeGateway;
     commentGateway: CommentGateway;
     likeGateway: LikeGateway;
     cameraGateway: CameraGateway;
-    //storageGateway: PhotoStorageGateway;
-    //ticketApiGateway: RemoteTicketMetaGateway;
-    //validityGateway: TicketUploadGateway;
     oAuthServerGateway: OAuthServerGateway;
     oAuthGoogleGateway: OAuthGoogleGateway;
     secureStorageGateway: SecureStoreGateway;
     ocrGateway: OcrGateway;
-    ticketGateway: TicketServerGateway;
-    outboxGateway: OutBoxGateway;
+    ticketGateway: TicketServerGateway
 };
 
 const ocrGateway = new OcrDeviceGateway(
@@ -66,9 +53,6 @@ const likeGateway = new LikeApiGateway(
 )
 const ticketGateway = new TicketServerApiGateway(
     new TicketServerApiImplHandler()
-)
-const outboxGateway = new OutboxGateway(
-    store, {now, delay, backoff}
 )
 // const validityGateway = new fragmentsUploader(
 //     new httpFragmentsUploader()
@@ -92,5 +76,5 @@ const secureStorageGateway = new SecureStorageGateway(
     new SecureStorageDeviceHandler()
 )
 export const gateways: Gateways = {
-    outboxGateway,ticketGateway,ocrGateway, cameraGateway,coffeeGateway, commentGateway, likeGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
+    ticketGateway,ocrGateway, cameraGateway,coffeeGateway, commentGateway, likeGateway, oAuthServerGateway, oAuthGoogleGateway,secureStorageGateway
 };

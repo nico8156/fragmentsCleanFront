@@ -1,5 +1,6 @@
 import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
-import {Coffee} from "@/app/store/appState";
+import {Coffee} from "@/assets/data/coffee";
+
 
 export class FakeCoffeeGateway implements CoffeeGateway {
     nextCoffees: Coffee[] | null = null;

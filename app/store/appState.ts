@@ -1,4 +1,6 @@
 import {JobEntry, OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
+import {Coffee} from "@/assets/data/coffee";
+import {LikeState, TargetId} from "@/app/contexts/like/write/like.type";
 
 export interface AppState {
     coffeeRetrieval: {
@@ -9,6 +11,9 @@ export interface AppState {
     },
     likeRetrieval: {
         data : Like[] | [];
+    },
+    likes: {
+      byId: Record<TargetId, LikeState>;
     },
     authState: AuthState,
     ticketState: {
@@ -25,11 +30,6 @@ export interface AppState {
 export type UUID = string;
 
 export type Job = { correlationKey:string; jobId:string; status:'sent'|'failed'|'timeout' };
-
-export interface Coffee {
-    id: string;
-    name: string;
-}
 
 export interface Comment {
     id: string;
