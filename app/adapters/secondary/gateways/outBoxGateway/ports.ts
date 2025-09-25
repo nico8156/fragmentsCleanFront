@@ -6,7 +6,8 @@ import type { TicketServerGateway } from '@/app/core-logic/gateways/ticketServer
 
 export const makeApiPorts = (like: LikeGateway, comment: CommentGateway) => ({
     likes:   { set: (targetId: string, liked: boolean, { commandId }: { commandId: UUID }) =>
-            like.set({ targetId, liked, commandId }) },
+            like.set({targetId, liked, commandId})
+    },
     comments:{ create: (a:{ parentId:string; body:string; clientCommandId:UUID; tempId:string }) => comment.create(a),
         edit:   (a:{ id:string; body:string; clientCommandId:UUID }) => comment.edit(a),
         delete: (a:{ id:string; clientCommandId:UUID }) => comment.delete(a) },

@@ -1,12 +1,7 @@
 import {createAction, createReducer} from "@reduxjs/toolkit";
 import {AppState, UUID} from "@/app/store/appState";
 import {OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
-
-export const outboxEnqueued  = createAction<OutboxItem>("outbox/ENQUEUED")
-export const outboxReplaced = createAction<OutboxItem[]>("outbox/REPLACED")
-export const outboxRemoved = createAction<{commandId:UUID}>("outbox/REMOVED")
-export const outboxBumped = createAction<{commandId:UUID; error?:string}>("outbox/BUMPED")
-export const outboxFailed=createAction<{commandId:UUID; error:string}>("outbox/FAILED")
+import {likeBumped, likeEnqueued, likeFailed, likeRemoved} from "@/app/contexts/like/write/like.listener";
 
 const initialState : AppState["outboxQueue"]= [];
 
@@ -14,21 +9,21 @@ export const outboxReducer = createReducer(
     initialState,
     (builder) => {
         builder
-            .addCase(outboxEnqueued, (state, action) => {
-                state.push(action.payload)
+            .addCase(likeEnqueued, (state, action) => {
+                const i = state.findIndex(c => c.type === "Like.Set" && c.targetId === action.payload.targetId);
+                if (i !== -1) state.splice(i, 1);
+                state.push({ ...action.payload, attempts: 0 });
             })
-            .addCase(outboxReplaced, (_state, action) => {
-                return action.payload;
+            .addCase(likeRemoved, (state, action) => {
+                const i = state.findIndex(c => c.commandId === action.payload.commandId);
+                if (i !== -1) state.splice(i, 1);
             })
-            .addCase(outboxRemoved, (state, action) => {
-                state.filter(x => x.commandId !== action.payload.commandId)
+            .addCase(likeBumped, (state, action) => {
+                const c = state.find(x => x.commandId === action.payload.commandId);
+                if (c) { c.attempts += 1; c.error = action.payload.error; }
             })
-            .addCase(outboxBumped, (state, action) => {
-                const item = state.find(x => x.commandId === action.payload.commandId);
-                if (item) item.attempts += 1;
-            })
-            .addCase(outboxFailed, (state, action) => {
-                const i = state.findIndex(x => x.commandId === action.payload.commandId);
+            .addCase(likeFailed,(state, action) => {
+                const i = state.findIndex(c => c.commandId === action.payload.commandId);
                 if (i !== -1) state.splice(i, 1);
             })
     }

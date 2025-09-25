@@ -1,6 +1,11 @@
-import {Action, configureStore, ListenerMiddleware, Store, ThunkAction, ThunkDispatch,} from "@reduxjs/toolkit";
+import {
+    Action,
+    configureStore,
+    Middleware,
+    ThunkAction,
+    ThunkDispatch,
+} from "@reduxjs/toolkit";
 import { AppState } from "./appState";
-import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {coffeeRetrievalReducer as coffeeRetrieval} from "@/app/core-logic/reducers/coffeeRetrievalReducer";
 import {commentRetrievalReducer as commentRetrieval} from "@/app/core-logic/reducers/commentRetrievalReducer";
 import {likeRetrievalReducer as likeRetrieval} from "@/app/core-logic/reducers/likeRetrievalReducer";
@@ -8,10 +13,12 @@ import {ticketReducer as ticketState} from "@/app/core-logic/reducers/ticketRedu
 import {authReducer as authState} from "@/app/core-logic/reducers/authReducer";
 import {outboxReducer as outboxQueue} from "@/app/core-logic/reducers/outboxReducer";
 import { exchangesReducer as exchangesByKey} from "@/app/core-logic/reducers/exchangesReducer";
+import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+
 
 export const initReduxStore = (config: {
     gateways?: Partial<Gateways>;
-    listeners?: ListenerMiddleware[];
+    listeners?: Middleware[];
     extraReducers?: Record<string, any>;
 }) => {
     return configureStore({
@@ -22,7 +29,8 @@ export const initReduxStore = (config: {
             ticketState,
             authState,
             outboxQueue,
-            exchangesByKey
+            exchangesByKey,
+            ...(config.extraReducers ?? {}), // 👈 ajoute ça
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({
@@ -39,9 +47,7 @@ export const initReduxStore = (config: {
     });
 };
 
-export type ReduxStore = Store<AppState> & {
-    dispatch: ThunkDispatch<AppState, Gateways, Action>;
-};
+export type ReduxStore = ReturnType<typeof initReduxStore>;
 
 export type AppThunk<ReturnType = void> = ThunkAction<
     ReturnType,
@@ -50,4 +56,4 @@ export type AppThunk<ReturnType = void> = ThunkAction<
     Action
 >;
 
-export type AppDispatch = ThunkDispatch<AppState, Gateways, Action>;
+export type AppDispatch = ThunkDispatch<AppState,Gateways, Action>;

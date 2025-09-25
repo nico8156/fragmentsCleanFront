@@ -1,0 +1,21 @@
+flowchart TD
+    A["UI: likeSetRequested(targetId, liked)"] --> B["Reducer read/likes: likeOptimisticApplied"]
+B --> C["Outbox: likeEnqueued (squash par targetId)"]
+C --> D["Dispatch 'likes/PROCESS'"]
+D --> E["Listener: processeur séquentiel"]
+E --> F{Gateway dispo?}
+F -- non --> G["Stop (attendre prochain PROCESS)"]
+F -- oui --> H["items = selectLikesOutbox(state)"]
+H --> I{{Pour chaque cmd}}
+I --> J["try gw.set({targetId, liked, commandId})"]
+J -->|succès| K["Outbox: likeRemoved"]
+K --> L["Read model: likeConfirmed(serverCount?)"]
+J -->|erreur| M{"retryable? (ECONN, timeout, 5xx)"}
+M -- oui --> N["Outbox: likeBumped(+1, error)"]
+N --> O["sleep(backoff(attempts))"]
+O --> P[Fin boucle sur snapshot items]
+M -- non --> Q["Read model: likeFailedReverted(previousLiked)"]
+Q --> R["Outbox: likeFailed (retire cmd)"]
+P --> S[isProcessing=false]
+L --> S
+R --> S

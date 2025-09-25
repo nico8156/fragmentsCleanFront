@@ -1,27 +1,33 @@
 import {
+    Action,
     createAction,
     createListenerMiddleware, isAnyOf,
     TypedStartListening,
 } from "@reduxjs/toolkit";
-import {AppState} from "@/app/store/appState";
-import {AppDispatch} from "@/app/store/reduxStore";
+import {AppState, CommandId, LikeCmd} from "@/app/store/appState";
 import {nanoid} from "nanoid";
-import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+import {ThunkDispatch} from "@reduxjs/toolkit";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import {backoff} from "@/app/adapters/secondary/gateways/outBoxGateway/deps";
 
 export const likeSetRequested= createAction<{ targetId: string; liked: boolean }>('Like.SetRequested');
 export const likeOptimisticApplied = createAction<{ targetId: string; liked: boolean; now: number }>('Like.OptimisticApplied');
-export const likeEnqueued = createAction<{ type: string; commandId: string; targetId: string; liked: boolean }>('Like.Enqueued');
-export const likeRemoved= createAction('Like.Removed');
-export const likeConfirmed= createAction<{ commandId: string; targetId: string; liked: boolean }>('Like.Confirmed');
+export const likeEnqueued = createAction<Omit<LikeCmd, 'attempts'>>('Like.Enqueued');
+export const likeRemoved= createAction<{commandId: string}>('Like.Removed');
+export const likeConfirmed= createAction<{ targetId: string;serverCount: number }>('Like.Confirmed');
 export const likeBumped= createAction<{ commandId: string; error: string }>('Like.Bumped');
-export const likeFailed= createAction<{ commandId: string; error: string }>('Like.Failed');
-export const likeFailedReverted= createAction<{ commandId: string; previousLiked: boolean }>('Like.FailedReverted');
+export const likeFailed= createAction<{ commandId: CommandId; error: string }>('Like.Failed');
+export const likeFailedReverted= createAction<{ targetId: string; previousLiked: boolean }>('Like.FailedReverted');
+export const startLikeProcessing = createAction('Like.StartProcessing');
 
-export const onCoffeeLikeRequestedFactory = (callback: () => void) => {
-    const onCoffeeLikeRequested = createListenerMiddleware<AppState, any, Partial<Gateways>>();
+type AppDispatch = ThunkDispatch<AppState, any, Action>;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway }, callback?: () => void) => {
+    const onCoffeeLikeRequested = createListenerMiddleware();
     const listener = onCoffeeLikeRequested.startListening as TypedStartListening<AppState, AppDispatch>;
+
     listener({
         actionCreator: likeSetRequested,
         effect: async (action, api) => {
@@ -30,7 +36,7 @@ export const onCoffeeLikeRequestedFactory = (callback: () => void) => {
 
             const commandId = nanoid();
             api.dispatch(likeEnqueued({ type:'Like.Set', commandId, targetId: action.payload.targetId, liked: action.payload.liked }));
-            api.dispatch({ type: 'likes/PROCESS' }); // déclenche le processeur
+            api.dispatch(startLikeProcessing()); // déclenche le processeur
             // on stocke prev dans un map si tu préfères, ou on le recalcule côté reducer en cas d’échec
             (api as any).prevLikedMap ??= new Map();
             (api as any).prevLikedMap.set(commandId, prev);
@@ -39,21 +45,31 @@ export const onCoffeeLikeRequestedFactory = (callback: () => void) => {
 
     let isProcessing = false;
     listener({
-        matcher: isAnyOf(likeEnqueued),
+        matcher: isAnyOf(likeEnqueued, startLikeProcessing),
         effect: async (action, api) => {
             if (isProcessing) return;
             isProcessing = true;
             try {
                 //const gw = api.extra?.gateways.likeGateway;
-                const { likeGateways } = api.extra as { likeGateways: LikeGateway };
-                if (!likeGateways) return;
+                let { likeGateway } = deps;
+                if (!likeGateway) return;
 
-                const items = selectLikesOutbox(api.getState());
+                //const items = selectLikesOutbox(api.getState());
+                const items = api.getState().outboxQueue
                 for (const cmd of items) {
+
+                    if (cmd.type !== "Like.Set")continue;
+
                     try {
-                        const { count } = await likeGateways.set({ targetId: cmd.targetId, liked: cmd.liked, commandId: cmd.commandId });
+                        const { count } = await deps.likeGateway.set({
+                            targetId: cmd.targetId,
+                            liked: cmd.liked,
+                            commandId: cmd.commandId,
+                        });
                         api.dispatch(likeRemoved({ commandId: cmd.commandId }));
                         api.dispatch(likeConfirmed({ targetId: cmd.targetId, serverCount: count }));
+                        callback?.();
+
                     } catch (e) {
                         const msg = String(e);
                         const retryable = /ECONN|ETIMEDOUT|timeout|5\d\d/.test(msg);
@@ -64,9 +80,13 @@ export const onCoffeeLikeRequestedFactory = (callback: () => void) => {
                             // rollback vers l’état précédent pour CE commandId
                             const prevLiked = (api as any).prevLikedMap?.get(cmd.commandId);
                             if (typeof prevLiked === 'boolean') {
-                                api.dispatch(likeFailedReverted({ targetId: cmd.targetId, previousLiked: prevLiked }));
+                                api.dispatch(likeFailedReverted({
+                                    targetId: cmd.targetId,
+                                    previousLiked: prevLiked
+                                }));
                             }
-                            api.dispatch(likeFailed({ commandId: cmd.commandId, error: msg }));
+                            api.dispatch(likeFailed({commandId: cmd.commandId, error: msg}));
+                            callback?.();
                         }
                     }
                     await sleep(0);

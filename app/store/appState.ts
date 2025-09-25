@@ -1,4 +1,3 @@
-import {JobEntry, OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
 import {Coffee} from "@/assets/data/coffee";
 import {LikeState, TargetId} from "@/app/contexts/like/write/like.type";
 
@@ -23,9 +22,11 @@ export interface AppState {
         validCount: number;
         validatedIds: Record<string, true>;
     },
-    outboxQueue: OutboxItem[],
+    outboxQueue: LikeCmd[],
     exchangesByKey: Record<string, Job>
 }
+export type CommandId = string;
+export type LikeCmd = { type: 'Like.Set'; commandId: CommandId; targetId: string; liked: boolean; attempts: number; error?: string };
 
 export type UUID = string;
 
