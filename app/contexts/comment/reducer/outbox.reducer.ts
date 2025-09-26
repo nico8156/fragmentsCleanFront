@@ -1,6 +1,6 @@
 import {AppState} from "@/app/store/appState";
 import {createAction, createReducer} from "@reduxjs/toolkit";
-import {CommentCreateCmd, CommentEditCmd, OutboxCommand} from "../domain/comment.type";
+import {CommentCreateCmd, CommentEditCmd, OutboxCommand} from "../comment.type";
 import {enqueue} from "@/app/contexts/comment/write/commentCreationRequested";
 
 export const popNext= createAction('comment/outbox/POP_NEXT')

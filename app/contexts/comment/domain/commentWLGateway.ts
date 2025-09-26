@@ -1,5 +1,6 @@
-import {CommentId, CommentStatus} from "@/app/contexts/comment/domain/comment.type";
-import {CommentRoot} from "@/app/contexts/comment/canva";
+import {CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
+import {CommentRoot} from "@/app/store/appState";
+
 
 export interface CommentWLGateaway {
     createComment(params: {
@@ -15,12 +16,10 @@ export interface CommentWLGateaway {
         commandId: string;
     }): Promise<{ comment: Omit<Comment, "_local" | "tempId"> }>;
 
-
     deleteComment(params: {
         id: CommentId;
         commandId: string;
     }): Promise<{ id: CommentId; status: CommentStatus; updatedAt: string }>;
-
 
     retrieveForPost(params: {
         postId: string;

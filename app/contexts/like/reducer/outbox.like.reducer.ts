@@ -1,11 +1,11 @@
-import {createAction, createReducer} from "@reduxjs/toolkit";
-import {AppState, UUID} from "@/app/store/appState";
-import {OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
+import { createReducer} from "@reduxjs/toolkit";
+import {AppState} from "@/app/store/appState";
+
 import {likeBumped, likeEnqueued, likeFailed, likeRemoved} from "@/app/contexts/like/write/like.listener";
 
-const initialState : AppState["outboxQueue"]= [];
+const initialState : AppState["likeOutbox"]= []
 
-export const outboxReducer = createReducer(
+export const outboxLikeReducer = createReducer(
     initialState,
     (builder) => {
         builder
@@ -29,4 +29,4 @@ export const outboxReducer = createReducer(
     }
 )
 
-export const selectOutbox = (s:AppState) => s.outboxQueue;
+export const selectOutbox = (s:AppState) => s;

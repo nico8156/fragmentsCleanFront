@@ -3,11 +3,12 @@ import {
     createListenerMiddleware, isAnyOf,
     TypedStartListening,
 } from "@reduxjs/toolkit";
-import {AppState, CommandId, LikeCmd} from "@/app/store/appState";
+import {AppState} from "@/app/store/appState";
 import {nanoid} from "nanoid";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import {backoff} from "@/app/adapters/secondary/gateways/outBoxGateway/deps";
 import {AppDispatch} from "@/app/store/reduxStore";
+import {CommandId, LikeCmd} from "@/app/contexts/like/like.type";
 
 export const likeSetRequested= createAction<{ targetId: string; liked: boolean }>('Like.SetRequested');
 export const likeOptimisticApplied = createAction<{ targetId: string; liked: boolean; now: number }>('Like.OptimisticApplied');
@@ -52,7 +53,7 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
                 let { likeGateway } = deps;
                 if (!likeGateway) return;
 
-                const items = api.getState().outboxQueue
+                const items = api.getState().likeOutbox
                 for (const cmd of items) {
 
                     if (cmd.type !== "Like.Set")continue;

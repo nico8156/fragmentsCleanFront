@@ -13,7 +13,7 @@ import {
     OutboxCommand,
     CommentEditCmd,
     CommentDeleteCmd, CommentRetrieveJob
-} from "@/app/contexts/comment/domain/comment.type";
+} from "@/app/contexts/comment/comment.type";
 import {processOutboxOnce} from "@/app/adapters/secondary/gateways/comment/commentWL/commentGatewayWL";
 import {editLocal, markDeletedLocal, removeLocal} from "@/app/contexts/comment/reducer/comment.reducer";
 import {dropByPredicate} from "@/app/contexts/comment/reducer/outbox.reducer";

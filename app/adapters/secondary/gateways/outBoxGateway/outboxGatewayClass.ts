@@ -1,7 +1,7 @@
 import {OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
 import {jobRemoved, jobUpserted, selectSentJobs} from "@/app/core-logic/reducers/exchangesReducer";
 import {Store, Deps} from "@/app/core-logic/gateways/outBoxGateway"
-import {outboxBumped, outboxEnqueued, outboxFailed, outboxRemoved, outboxReplaced, selectOutbox} from "@/app/core-logic/reducers/outboxReducer";
+import {outboxBumped, outboxEnqueued, outboxFailed, outboxRemoved, outboxReplaced, selectOutbox} from "@/app/contexts/like/reducer/outboxReducer";
 
 export class OutboxGateway {
     private active = false;

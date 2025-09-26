@@ -1,14 +1,14 @@
 import {AppState} from "@/app/store/appState";
 import {createAction, createReducer} from "@reduxjs/toolkit";
 import {likeConfirmed, likeOptimisticApplied} from "@/app/contexts/like/write/like.listener";
-import {TargetId} from "@/app/contexts/like/write/like.type";
+import {TargetId} from "@/app/contexts/like/like.type";
 
 
 export const likeFailedReverted = createAction<{ targetId: TargetId; previousLiked: boolean }>('like/FAILED_REVERTED')
 export const likesHydrated = createAction<Array<{ targetId: TargetId; liked: boolean; count?: number }>>('like/HYDRATED')
 
 const initialState: AppState["likes"] = {
-    byId:{}
+    byId:{},
 }
 
 export const likeReducer = createReducer(

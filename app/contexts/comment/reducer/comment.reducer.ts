@@ -1,6 +1,6 @@
 import {AppState, CommentsState} from "@/app/store/appState";
 import {createAction, createReducer} from "@reduxjs/toolkit";
-import {TempId, Comment} from "@/app/contexts/comment/domain/comment.type";
+import {TempId, Comment} from "@/app/contexts/comment/comment.type";
 
 
 export const replaceTempWithServer = createAction<{ tempId: TempId; server: Omit<Comment, "_local" | "tempId"> }>('comment/replaceTempWithServer')
@@ -47,12 +47,6 @@ export const commentReducer= createReducer(
                 state.byPostId[server.postId] = list;
                 // remplace l'id dans la liste
                 list.ids = list.ids.map(x => (x === tempId ? server.id! : x));
-            })
-            .addCase(upsertOne, (state, action) => {
-                const c = action.payload; const key = c.id ?? c.tempId!;
-                state.byId[key] = c;
-                const list = (state.byPostId[c.postId] ??= { ids: [] });
-                if (!list.ids.includes(key)) list.ids.unshift(key);
             })
             .addCase(applyServerItems, (state, action) => {
                 const { postId, items, nextCursor, serverTime } = action.payload;

@@ -1,7 +1,7 @@
 import { Deps } from "@/app/contexts/comment/domain/commentWLGateway";
 import {CommentRoot} from "@/app/store/appState";
 import {computeBackoffMs, isNetworkOr5xx} from "@/app/contexts/comment/domain/helpers";
-import {OutboxCommand} from "@/app/contexts/comment/domain/comment.type";
+import {OutboxCommand} from "@/app/contexts/comment/comment.type";
 import {
     applyServerItems,
     markFailed,
@@ -9,7 +9,6 @@ import {
     upsertOne
 } from "@/app/contexts/comment/reducer/comment.reducer";
 import { popNext } from "@/app/contexts/comment/reducer/outbox.reducer";
-import {enqueue} from "@/app/contexts/comment/write/commentCreationRequested";
 
 
 export async function processOutboxOnce(deps: Deps, api: any) {
@@ -80,4 +79,9 @@ function scheduleRetry(cmd: OutboxCommand, api: any) {
     const next: OutboxCommand = { ...cmd, attempt: cmd.attempt + 1 } as any;
     const ms = computeBackoffMs(next.attempt, 1000, 60000);
     setTimeout(() => { api.dispatch(enqueue(next)); }, ms);
+}
+
+export function configureCommentsModule(deps: Deps) {
+    registerCommentUseCases(deps);
+    return listenerMiddleware.middleware; // à ajouter dans le middleware store
 }

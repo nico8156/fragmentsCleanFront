@@ -1,4 +1,3 @@
-// like.listener.spec.ts
 import { FakeLikeGateway } from "@/app/adapters/secondary/gateways/fake/fakeLikeGateway";
 import {
     likeSetRequested,
@@ -8,7 +7,7 @@ import {
     startLikeProcessing,
     onCoffeeLikeRequestedFactory,
 } from "@/app/contexts/like/write/like.listener";
-import type { AnyAction, Middleware } from "@reduxjs/toolkit";
+import type {AnyAction, Middleware} from "@reduxjs/toolkit";
 import { initReduxStore, ReduxStore } from "@/app/store/reduxStore";
 // 👈
 
@@ -36,13 +35,13 @@ describe("On coffee like requested", () => {
 
         // 2) Attendre qu’un item apparaisse (mise en file)
         await waitForState(
-            () => store.getState().outboxQueue,
+            () => store.getState().likeOutbox,
             (q) => Array.isArray(q) && q.length >= 1
         );
 
         // 3) Attendre la vidange de la file (traitement effectué)
         await waitForState(
-            () => store.getState().outboxQueue,
+            () => store.getState().likeOutbox,
             (q) => Array.isArray(q) && q.length === 0
         );
 
@@ -63,17 +62,17 @@ describe("On coffee like requested", () => {
 
         // attendre qu’un item soit présent
         await waitForState(
-            () => store.getState().outboxQueue,
+            () => store.getState().likeOutbox,
             (q) => Array.isArray(q) && q.length === 1
         );
 
         // attendre que le listener ait bumpé l'item (attempts >= 1)
         await waitForState(
-            () => store.getState().outboxQueue[0],
+            () => store.getState().likeOutbox[0],
             (cmd) => !!cmd && cmd.attempts >= 1
         );
 
-        const cmd = store.getState().outboxQueue[0];
+        const cmd = store.getState().likeOutbox[0];
         expect(cmd.attempts).toBeGreaterThanOrEqual(1);
     });
     it("non-retryable: 400 retire l'item de la file (rollback effectué)", async () => {
@@ -88,13 +87,13 @@ describe("On coffee like requested", () => {
 
         // item en file
         await waitForState(
-            () => store.getState().outboxQueue,
+            () => store.getState().likeOutbox,
             (q) => Array.isArray(q) && q.length === 1
         );
 
         // après traitement, l'item doit disparaître (échec non-retry → remove)
         await waitForState(
-            () => store.getState().outboxQueue,
+            () => store.getState().likeOutbox,
             (q) => Array.isArray(q) && q.length === 0
         );
 
@@ -131,7 +130,6 @@ describe("On coffee like requested", () => {
 
 
 });
-
     // helpers
     const capturedActions: AnyAction[] = [];
     const spyDispatch = (s: ReduxStore) => {
@@ -145,41 +143,6 @@ describe("On coffee like requested", () => {
     function makeCaptureMiddleware(bucket: AnyAction[]): Middleware {
         return () => (next) => (action: any) => { bucket.push(action); return next(action); };
     }
-
-    const createOnLikeSetRequestedListener = (
-        doExpectations: () => void,
-        resolve: (value: unknown) => void,
-        reject: (value: unknown) => void
-    ): Middleware => {
-        return onCoffeeLikeRequestedFactory(
-            { likeGateway },
-            () => {
-                try {
-                    doExpectations();
-                    resolve({});
-                } catch (e) {
-                    reject(e);
-                }
-            }
-        ).middleware; // on passe un Middleware au store
-    };
-
-    const createReduxStoreWithListener = (
-        doExpectations: () => void,
-        resolve: (value: unknown) => void,
-        reject: (value: unknown) => void
-    ) => {
-        const listeners = [
-            captureMw, // 👈 d’abord le capteur
-            createOnLikeSetRequestedListener(doExpectations, resolve, reject)
-        ];
-        const s = initReduxStore({
-            gateways: { likeGateway },                      // pas utilisé par le listener (fermeture), mais OK
-            listeners,                                      // style formateur: des Middleware
-        });
-        spyDispatch(s); // 👈 active la capture d’actions
-        return s;
-    };
 });
 
 export function waitForState<T>(

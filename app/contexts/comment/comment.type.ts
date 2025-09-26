@@ -1,10 +1,24 @@
 // Identifiants
+import {CommentsState} from "@/app/store/appState";
+
 export type CommentId = string;        // serverId
 export type TempId = string;           // uuid v4 local
 
 // Domain
 export type CommentStatus = "visible" | "deleted"; // côté serveur
 type LocalSyncState = "idle" | "pending" | "sent" | "failed"; // côté client
+
+
+export interface CommentRoot {
+    comments: CommentsState;
+    outbox: OutboxState;
+}
+
+
+export interface OutboxState {
+    queue: OutboxCommand[];
+    isSuspended: boolean;
+}
 
 export interface Comment {
     id?: CommentId;              // absent tant que non confirmé
