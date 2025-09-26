@@ -1,12 +1,11 @@
 import {Coffee} from "@/assets/data/coffee";
 import {LikeState, TargetId} from "@/app/contexts/like/write/like.type";
+import {CommentId, OutboxCommand, TempId, Comment} from "@/app/contexts/comment/domain/comment.type";
+
 
 export interface AppState {
     coffeeRetrieval: {
         data : Coffee[] | [];
-    },
-    commentRetrieval: {
-        data : Comment[] | [];
     },
     likeRetrieval: {
         data : Like[] | [];
@@ -14,6 +13,7 @@ export interface AppState {
     likes: {
       byId: Record<TargetId, LikeState>;
     },
+    comments: CommentRoot,
     authState: AuthState,
     ticketState: {
         byId: Record<string, TicketMeta>;
@@ -25,6 +25,22 @@ export interface AppState {
     outboxQueue: LikeCmd[],
     exchangesByKey: Record<string, Job>
 }
+
+export interface OutboxState {
+    queue: OutboxCommand[];
+    isSuspended: boolean;
+}
+
+export interface CommentsState {
+    byId: Record<string, Comment>; // key: commentId ou tempId
+    byPostId: Record<string, { ids: string[]; serverCursor?: string; lastServerTime?: string }>;
+    idMap: { tempToServer: Record<TempId, CommentId> };
+}
+
+export interface CommentRoot {
+    comments: CommentsState;
+    outbox: OutboxState;
+}
 export type CommandId = string;
 export type LikeCmd = { type: 'Like.Set'; commandId: CommandId; targetId: string; liked: boolean; attempts: number; error?: string };
 
@@ -32,12 +48,12 @@ export type UUID = string;
 
 export type Job = { correlationKey:string; jobId:string; status:'sent'|'failed'|'timeout' };
 
-export interface Comment {
-    id: string;
-    userId: string;
-    coffeeId: string;
-    content: string;
-}
+// export interface Comment {
+//     id: string;
+//     userId: string;
+//     coffeeId: string;
+//     content: string;
+// }
 export interface Like {
     id: string;
     userId: string;

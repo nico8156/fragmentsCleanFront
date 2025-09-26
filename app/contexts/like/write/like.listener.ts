@@ -1,14 +1,13 @@
 import {
-    Action,
     createAction,
     createListenerMiddleware, isAnyOf,
     TypedStartListening,
 } from "@reduxjs/toolkit";
 import {AppState, CommandId, LikeCmd} from "@/app/store/appState";
 import {nanoid} from "nanoid";
-import {ThunkDispatch} from "@reduxjs/toolkit";
 import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import {backoff} from "@/app/adapters/secondary/gateways/outBoxGateway/deps";
+import {AppDispatch} from "@/app/store/reduxStore";
 
 export const likeSetRequested= createAction<{ targetId: string; liked: boolean }>('Like.SetRequested');
 export const likeOptimisticApplied = createAction<{ targetId: string; liked: boolean; now: number }>('Like.OptimisticApplied');
@@ -20,7 +19,7 @@ export const likeFailed= createAction<{ commandId: CommandId; error: string }>('
 export const likeFailedReverted= createAction<{ targetId: string; previousLiked: boolean }>('Like.FailedReverted');
 export const startLikeProcessing = createAction('Like.StartProcessing');
 
-type AppDispatch = ThunkDispatch<AppState, any, Action>;
+
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -50,11 +49,9 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
             if (isProcessing) return;
             isProcessing = true;
             try {
-                //const gw = api.extra?.gateways.likeGateway;
                 let { likeGateway } = deps;
                 if (!likeGateway) return;
 
-                //const items = selectLikesOutbox(api.getState());
                 const items = api.getState().outboxQueue
                 for (const cmd of items) {
 
@@ -96,6 +93,5 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
             }
         }
     })
-
     return onCoffeeLikeRequested;
 };

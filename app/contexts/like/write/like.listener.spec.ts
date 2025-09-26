@@ -51,6 +51,56 @@ describe("On coffee like requested", () => {
             expect.objectContaining({ targetId: "t1", liked: true, commandId: expect.any(String) })
         );
     });
+    it("retry: ECONNRESET conserve l'item et incrémente attempts", async () => {
+        const likeGateway = new FakeLikeGateway();
+        jest.spyOn(likeGateway, "set").mockRejectedValue(new Error("ECONNRESET"));
+
+        const store = initReduxStore({
+            listeners: [onCoffeeLikeRequestedFactory({ likeGateway }).middleware],
+        });
+
+        store.dispatch(likeSetRequested({ targetId: "t1", liked: true }));
+
+        // attendre qu’un item soit présent
+        await waitForState(
+            () => store.getState().outboxQueue,
+            (q) => Array.isArray(q) && q.length === 1
+        );
+
+        // attendre que le listener ait bumpé l'item (attempts >= 1)
+        await waitForState(
+            () => store.getState().outboxQueue[0],
+            (cmd) => !!cmd && cmd.attempts >= 1
+        );
+
+        const cmd = store.getState().outboxQueue[0];
+        expect(cmd.attempts).toBeGreaterThanOrEqual(1);
+    });
+    it("non-retryable: 400 retire l'item de la file (rollback effectué)", async () => {
+        const likeGateway = new FakeLikeGateway();
+        jest.spyOn(likeGateway, "set").mockRejectedValue(new Error("400 Bad Request"));
+
+        const store = initReduxStore({
+            listeners: [onCoffeeLikeRequestedFactory({ likeGateway }).middleware],
+        });
+
+        store.dispatch(likeSetRequested({ targetId: "t1", liked: true }));
+
+        // item en file
+        await waitForState(
+            () => store.getState().outboxQueue,
+            (q) => Array.isArray(q) && q.length === 1
+        );
+
+        // après traitement, l'item doit disparaître (échec non-retry → remove)
+        await waitForState(
+            () => store.getState().outboxQueue,
+            (q) => Array.isArray(q) && q.length === 0
+        );
+
+        // (optionnel) si ton slice "likes" gère le revert, vérifie l'état ici avec ton sélecteur
+        // expect(selectLike(store.getState(), "t1").liked).toBe(false) // exemple
+    });
 
 
     it("optimistic + enqueue + gateway.set + confirmed", () => {
