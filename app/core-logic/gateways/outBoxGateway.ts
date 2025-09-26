@@ -21,11 +21,10 @@ export type OutboxItem =
 export type JobStatus = 'queued'|'sent'|'pending'|'done'|'failed';
 
 export interface JobEntry {
-    correlationKey: string; // p.ex. draftId pour Ticket.Verify
+    correlationKey: string;
     jobId: string;
     status: JobStatus;
 }
-
 
 export type VerifyGateway = {
     verifyById(draftId:string):Promise<{jobId:string}>;

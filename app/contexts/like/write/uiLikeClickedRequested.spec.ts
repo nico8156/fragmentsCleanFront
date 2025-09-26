@@ -6,7 +6,7 @@ import {
     likeConfirmed,
     startLikeProcessing,
     onCoffeeLikeRequestedFactory,
-} from "@/app/contexts/like/write/like.listener";
+} from "@/app/contexts/like/write/uiLikeClickedRequested";
 import type {AnyAction, Middleware} from "@reduxjs/toolkit";
 import { initReduxStore, ReduxStore } from "@/app/store/reduxStore";
 // 👈

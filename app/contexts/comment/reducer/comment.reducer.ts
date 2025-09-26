@@ -11,20 +11,21 @@ export const editLocal = createAction<{ idOrTemp: string; body: string; now: str
 export const removeLocal = createAction<{ idOrTemp: string }>('comment/removeLocal')
 export const markDeletedLocal = createAction<{ idOrTemp: string }>('comment/markDeletedLocal')
 
-const initialCommentsState: CommentsState = {
+const initialCommentsState: AppState["comments"] = {
     byId: {},
     byPostId: {},
     idMap: { tempToServer: {} },
 };
 
-const initialState: AppState["comments"]["comments"] = initialCommentsState;
+const initialState: AppState["comments"] = initialCommentsState;
 
 export const commentReducer= createReducer(
     initialState,
     (builder) => {
         builder
             .addCase(upsertOne, (state, action) => {
-                const c = action.payload; const key = c.id ?? c.tempId!;
+                const c = action.payload;
+                const key = c.id ?? c.tempId!;
                 state.byId[key] = c;
                 const list = (state.byPostId[c.postId] ??= { ids: [] });
                 if (!list.ids.includes(key)) list.ids.unshift(key);

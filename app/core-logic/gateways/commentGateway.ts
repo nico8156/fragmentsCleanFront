@@ -1,4 +1,4 @@
-import {Comment} from "@/app/store/appState";
+import {Comment} from "@/app/contexts/comment/comment.type";
 
 export interface CommentGateway {
     retrieveComment(): Promise<Comment[]>;

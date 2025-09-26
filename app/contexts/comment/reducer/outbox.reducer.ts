@@ -1,7 +1,7 @@
 import {AppState} from "@/app/store/appState";
 import {createAction, createReducer} from "@reduxjs/toolkit";
 import {CommentCreateCmd, CommentEditCmd, OutboxCommand} from "../comment.type";
-import {enqueue} from "@/app/contexts/comment/write/commentCreationRequested";
+import {enqueue} from "@/app/contexts/comment/write/uiCommentClickedRequested";
 
 export const popNext= createAction('comment/outbox/POP_NEXT')
 export const dropByPredicate= createAction<(c: OutboxCommand) => boolean>('comment/outbox/DROP_BY_PREDICATE')
@@ -12,7 +12,7 @@ export interface OutboxState {
 }
 const initialOutbox: OutboxState = { queue: [], isSuspended: false };
 
-const initialState: AppState["comments"]["outbox"] = initialOutbox;
+const initialState: AppState["commentOutbox"] = initialOutbox;
 
 export const outboxReducer= createReducer(
     initialState,

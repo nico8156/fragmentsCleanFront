@@ -3,11 +3,12 @@ import {
     createListenerMiddleware, isAnyOf,
     TypedStartListening,
 } from "@reduxjs/toolkit";
-import {AppState, CommentRoot} from "@/app/store/appState";
+import {AppState} from "@/app/store/appState";
 
 import {AppDispatch} from "@/app/store/reduxStore";
-import {Deps} from "@/app/contexts/comment/domain/commentWLGateway";
+import {Deps} from "@/app/core-logic/gateways/commentWLGateway";
 import {
+    CommentRoot,
     CommentCreateCmd,
     Comment,
     OutboxCommand,
@@ -43,7 +44,8 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
             api.dispatch(upsertOne({
                 tempId, postId: action.payload.postId, authorId,
                 body: action.payload.body, createdAt: now, updatedAt: now,
-                status: "visible", _local: { sync: "pending", version: 1 }
+                status: "visible",
+                _local: { sync: "pending", version: 1 }
             } as Comment));
 
             // 2) Outbox enqueue

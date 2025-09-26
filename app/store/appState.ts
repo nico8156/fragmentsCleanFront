@@ -1,6 +1,6 @@
 import {Coffee} from "@/assets/data/coffee";
 import {LikeRoot, LikeState, TargetId} from "@/app/contexts/like/like.type";
-import {CommentId, OutboxCommand, TempId, Comment, CommentRoot} from "@/app/contexts/comment/comment.type";
+import {CommentId, OutboxCommand, TempId, Comment, CommentRoot, OutboxState} from "@/app/contexts/comment/comment.type";
 
 
 export interface AppState {
@@ -14,7 +14,8 @@ export interface AppState {
         byId: Record<TargetId, LikeState>;
     }
     likeOutbox: LikeCmd[];
-    comments: CommentRoot,
+    comments: CommentsState,
+    commentOutbox: OutboxState;
     authState: AuthState,
     ticketState: {
         byId: Record<string, TicketMeta>;
@@ -23,7 +24,6 @@ export interface AppState {
         validCount: number;
         validatedIds: Record<string, true>;
     },
-
     exchangesByKey: Record<string, Job>
 }
 

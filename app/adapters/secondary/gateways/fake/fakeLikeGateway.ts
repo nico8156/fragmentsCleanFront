@@ -2,10 +2,11 @@ import {LikeGateway} from "@/app/core-logic/gateways/likeGateway";
 import { Like } from "@/app/store/appState";
 
 export class FakeLikeGateway implements LikeGateway{
+    nextLike: Like[] | [] = [];
+
     set({ targetId, liked, commandId }: { targetId: string; liked: boolean; commandId: string; }): Promise<any> {
         return Promise.resolve(5);
     }
-    nextLike: Like[] | [] = [];
 
     async retrieveLike(): Promise<Like[]> {
         return this.nextLike!;

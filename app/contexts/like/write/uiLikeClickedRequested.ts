@@ -36,8 +36,8 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
 
             const commandId = nanoid();
             api.dispatch(likeEnqueued({ type:'Like.Set', commandId, targetId: action.payload.targetId, liked: action.payload.liked }));
-            api.dispatch(startLikeProcessing()); // déclenche le processeur
-            // on stocke prev dans un map si tu préfères, ou on le recalcule côté reducer en cas d’échec
+            api.dispatch(startLikeProcessing());
+
             (api as any).prevLikedMap ??= new Map();
             (api as any).prevLikedMap.set(commandId, prev);
         },

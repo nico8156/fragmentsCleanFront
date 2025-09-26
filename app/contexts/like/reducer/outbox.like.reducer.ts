@@ -1,7 +1,7 @@
 import { createReducer} from "@reduxjs/toolkit";
 import {AppState} from "@/app/store/appState";
 
-import {likeBumped, likeEnqueued, likeFailed, likeRemoved} from "@/app/contexts/like/write/like.listener";
+import {likeBumped, likeEnqueued, likeFailed, likeRemoved} from "@/app/contexts/like/write/uiLikeClickedRequested";
 
 const initialState : AppState["likeOutbox"]= []
 

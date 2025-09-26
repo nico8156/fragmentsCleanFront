@@ -1,6 +1,4 @@
-import {CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
-import {CommentRoot} from "@/app/store/appState";
-
+import {CommentRoot, CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
 
 export interface CommentWLGateaway {
     createComment(params: {
@@ -28,7 +26,6 @@ export interface CommentWLGateaway {
         limit?: number;
     }): Promise<{ items: Omit<Comment, "_local" | "tempId">[]; nextCursor?: string; serverTime: string }>;
 }
-
 
 export interface Clock { nowISO(): string }
 export interface IdGen { newId(): string }

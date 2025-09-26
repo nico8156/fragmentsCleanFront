@@ -6,6 +6,10 @@ export class LikeApiGateway implements LikeGateway {
 
     constructor(private readonly likeApiHandler : LikeApiHandler ) {}
 
+    set({ targetId, liked, commandId }: { targetId: string; liked: boolean; commandId: string; }): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
     async retrieveLike(): Promise<Like[]> {
         const apiResponse = await this.likeApiHandler.loadLike();
         if (!apiResponse) {
