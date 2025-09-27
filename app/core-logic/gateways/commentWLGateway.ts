@@ -1,4 +1,5 @@
 import {CommentRoot, CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
+import {CommentsState} from "@/app/store/appState";
 
 export interface CommentWLGateaway {
     createComment(params: {
@@ -35,5 +36,5 @@ export interface Deps {
     api: CommentWLGateaway;
     clock: Clock;
     ids: IdGen;
-    selectCurrentUserId: (state: CommentRoot) => string;
+    selectCurrentUserId: (state: CommentsState) => string;
 }

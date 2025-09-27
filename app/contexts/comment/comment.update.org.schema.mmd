@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as UI
+    participant R as Reducer (comments)
+    participant L as Listener (comments)
+    participant O as Outbox (slice)
+    participant G as Gateway (API)
+    participant S as Snapshot Store
+
+    U->>UI: Edit content on comment(serverId)
+    UI->>R: dispatch commentEditOptimisticApplied(serverId, newContent)
+    R-->>UI: state: comment[serverId]{pending=true, content=newContent}
+    UI->>O: dispatch commentEditEnqueued(cmd: Edit(serverId, newContent))
+    O->>O: squash par serverId (garder dernière version)
+    UI->>L: (écoute) commentEditEnqueued
+
+    rect rgb(245,245,245)
+        L->>G: edit(serverId, newContent)
+        alt Happy path
+            G-->>L: 200 OK (content normalized)
+            L->>O: dequeue(cmd)
+            L->>R: commentEditSucceeded(serverId, payload)
+            R-->>UI: pending=false, content=payload.content
+        else Tricky (retryable)
+            G-->>L: error (timeout/5xx)
+            L->>O: attempts+=1, lastError=...
+        else Tricky (non-retryable)
+            G-->>L: error (4xx/409/404)
+            L->>O: dequeue(cmd)
+            L->>S: read(commandId) (oldContent)
+            L->>R: commentEditFailed(serverId, err) + revertOptimistic(oldContent)
+        end
+    end
+
+    UI->>S: save(commandId → {oldContent, meta})

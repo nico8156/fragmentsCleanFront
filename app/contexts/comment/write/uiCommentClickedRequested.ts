@@ -3,17 +3,16 @@ import {
     createListenerMiddleware, isAnyOf,
     TypedStartListening,
 } from "@reduxjs/toolkit";
-import {AppState} from "@/app/store/appState";
+import {AppState, CommentsState} from "@/app/store/appState";
 
 import {AppDispatch} from "@/app/store/reduxStore";
 import {Deps} from "@/app/core-logic/gateways/commentWLGateway";
 import {
-    CommentRoot,
     CommentCreateCmd,
     Comment,
     OutboxCommand,
     CommentEditCmd,
-    CommentDeleteCmd, CommentRetrieveJob
+    CommentDeleteCmd, CommentRetrieveJob, OutboxState
 } from "@/app/contexts/comment/comment.type";
 import {processOutboxOnce} from "@/app/adapters/secondary/gateways/comment/commentWL/commentGatewayWL";
 import {editLocal, markDeletedLocal, removeLocal} from "@/app/contexts/comment/reducer/comment.reducer";
@@ -38,7 +37,7 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
         effect: async (action, api) => {
             const tempId = deps.ids.newId();
             const now = deps.clock.nowISO();
-            const authorId = deps.selectCurrentUserId(api.getState().comments as CommentRoot);
+            const authorId = deps.selectCurrentUserId(api.getState().comments as CommentsState);
 
             // 1) État optimiste
             api.dispatch(upsertOne({
@@ -67,19 +66,20 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
         actionCreator:uiCommentEditClicked,
         effect: async (action, api) => {
             const now = deps.clock.nowISO();
-            const state = api.getState().comments as CommentRoot;
-            const c = state.comments.byId[action.payload.idOrTemp];
+            const state = api.getState().comments as CommentsState;
+            const outbox = api.getState().commentOutbox as OutboxState;
+            const c = state.byId[action.payload.idOrTemp];
             if (!c) return;
 
             // Optimiste
             api.dispatch(editLocal({ idOrTemp: action.payload.idOrTemp, body: action.payload.body, now }));
 
             // Si Create en attente -> squash dans Create
-            const createIdx = (state.outbox.queue || []).findIndex(x => x.type === "Comment.Create" && (x as CommentCreateCmd).tempId === c.tempId);
+            const createIdx = (outbox.queue || []).findIndex(x => x.type === "Comment.Create" && (x as CommentCreateCmd).tempId === c.tempId);
             if (createIdx >= 0) {
-                const create = (state.outbox.queue[createIdx] as CommentCreateCmd);
+                const create = (outbox.queue[createIdx] as CommentCreateCmd);
                 // mettre à jour le body du create existant
-                const newQueue = [...state.outbox.queue];
+                const newQueue = [...outbox.queue];
                 newQueue[createIdx] = { ...create, body: action.payload.body };
                 api.dispatch(dropByPredicate(() => true)); // clear all
                 for (const q of newQueue) api.dispatch(enqueue(q));
@@ -101,10 +101,11 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
     listener({
         actionCreator:uiCommentDeleteClicked,
         effect: async (action, api) => {
-            const state = api.getState().comments as CommentRoot;
-            const c = state.comments.byId[action.payload.idOrTemp]; if (!c) return;
+            const state = api.getState().comments as CommentsState;
+            const outbox = api.getState().commentOutbox as OutboxState;
+            const c = state.byId[action.payload.idOrTemp]; if (!c) return;
             // Delete sur Create pending -> annuler local + drop du Create
-            const idxCreate = state.outbox.queue.findIndex(x => x.type === "Comment.Create" && (x as CommentCreateCmd).tempId === c.tempId);
+            const idxCreate = outbox.queue.findIndex(x => x.type === "Comment.Create" && (x as CommentCreateCmd).tempId === c.tempId);
             if (idxCreate >= 0) {
                 api.dispatch(removeLocal({ idOrTemp: action.payload.idOrTemp }));
                 api.dispatch(dropByPredicate(cmd => cmd.type === "Comment.Create" && (cmd as CommentCreateCmd).tempId === c.tempId));
