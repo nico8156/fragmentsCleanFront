@@ -1,6 +1,6 @@
 import {AppState} from "@/app/store/appState";
 import {createAction, createReducer} from "@reduxjs/toolkit";
-import {CommentCreateCmd, CommentEditCmd, OutboxCommand} from "../comment.type";
+import {CommentCommandTypes, CommentCreateCmd, CommentEditCmd, OutboxCommand} from "../comment.type";
 import {enqueue} from "@/app/contexts/comment/write/uiCommentClickedRequested";
 
 export const popNext= createAction('comment/outbox/POP_NEXT')
@@ -19,24 +19,22 @@ export const outboxReducer= createReducer(
     (builder) => {
         builder
             .addCase(enqueue, (state, action) => {
-                // Squash basique: Edit sur même cible -> garder la dernière
                 const cmd = action.payload;
-                if (cmd.type === "Comment.Edit") {
-                    const idx = state.queue.findIndex(c => c.type === "Comment.Edit" && (
+                //interception avant d'ajouter à la queue
+                if (cmd.type === CommentCommandTypes.CommentEdit) {
+                    const idx = state.queue.findIndex(c => c.type === CommentCommandTypes.CommentEdit && (
                         (c as CommentEditCmd).commentId && (c as CommentEditCmd).commentId === cmd.commentId ||
                         (c as CommentEditCmd).tempId && (c as CommentEditCmd).tempId === cmd.tempId
                     ));
-                    if (idx >= 0) state.queue.splice(idx, 1);
+                    if (idx >= 0) state.queue.splice(idx, 1); // found => on le retire pour ensuite ajouter la command la plus recente
                 }
                 if (cmd.type === "Comment.Delete") {
-                    // si un Create existe pour le même tempId -> drop le Create et n'empile pas Delete
-                    const idxCreate = state.queue.findIndex(c => c.type === "Comment.Create" && (
+                    const idxCreate = state.queue.findIndex(c => c.type === CommentCommandTypes.CommentCreate && (
                         (c as CommentCreateCmd).tempId === cmd.tempId
                     ));
-                    if (idxCreate >= 0) { state.queue.splice(idxCreate, 1); return; }
+                    if (idxCreate >= 0) { state.queue.splice(idxCreate, 1); return; } // on a une deletion sur un create ... on retire le create et return
                 }
-                state.queue.push(cmd);
-
+                state.queue.push(cmd); // si tout est logique, on met à la queue
             })
             .addCase(popNext, (state, action) => {
                 state.queue.shift();

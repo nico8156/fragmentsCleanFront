@@ -1,4 +1,4 @@
-// boot/deps.ts
+
 export const now   = () => Date.now();
 export const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 export const backoff = (attempts: number) =>

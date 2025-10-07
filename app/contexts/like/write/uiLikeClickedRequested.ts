@@ -31,11 +31,13 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
     listener({
         actionCreator: likeSetRequested,
         effect: async (action, api) => {
+
             const prev = (api.getState() as any).likes?.byId?.[action.payload.targetId]?.liked ?? false;
             api.dispatch(likeOptimisticApplied({ targetId: action.payload.targetId, liked: action.payload.liked, now: Date.now() }));
 
             const commandId = nanoid();
             api.dispatch(likeEnqueued({ type:'Like.Set', commandId, targetId: action.payload.targetId, liked: action.payload.liked }));
+
             api.dispatch(startLikeProcessing());
 
             (api as any).prevLikedMap ??= new Map();
@@ -44,6 +46,7 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
     });
 
     let isProcessing = false;
+
     listener({
         matcher: isAnyOf(likeEnqueued, startLikeProcessing),
         effect: async (action, api) => {
@@ -53,7 +56,7 @@ export const onCoffeeLikeRequestedFactory = (deps: { likeGateway: LikeGateway },
                 let { likeGateway } = deps;
                 if (!likeGateway) return;
 
-                const items = api.getState().likeOutbox
+
                 for (const cmd of items) {
 
                     if (cmd.type !== "Like.Set")continue;

@@ -5,10 +5,9 @@ import {
     applyServerItems,
     markFailed,
     replaceTempWithServer,
-    upsertOne
 } from "@/app/contexts/comment/reducer/comment.reducer";
 import { popNext } from "@/app/contexts/comment/reducer/outbox.reducer";
-import {enqueue} from "@/app/contexts/comment/write/uiCommentClickedRequested";
+import {commentCreateOptimisticApplied, enqueue} from "@/app/contexts/comment/write/uiCommentClickedRequested";
 
 
 export async function processOutboxOnce(deps: Deps, api: any) {
@@ -22,7 +21,7 @@ export async function processOutboxOnce(deps: Deps, api: any) {
             case "Comment.Create": {
                 const res = await deps.api.createComment({ postId: cmd.postId, body: cmd.body, commandId: cmd.commandId, draftId: cmd.draftId });
                 // mapping temp->server
-                api.dispatch(replaceTempWithServer({ tempId: cmd.tempId, server: res.comment }));
+                api.dispatch(replaceTempWithServer());
                 api.dispatch(popNext());
                 break;
             }
@@ -34,7 +33,7 @@ export async function processOutboxOnce(deps: Deps, api: any) {
                     break;
                 }
                 const res = await deps.api.editComment({ id, body: cmd.body, commandId: cmd.commandId });
-                api.dispatch(upsertOne({ ...(res.comment as any), _local: { sync: "sent", version: (api.getState() as CommentRoot).comments.byId[id]._local.version } }));
+                api.dispatch(commentCreateOptimisticApplied({ ...(res.comment as any), _local: { sync: "sent", version: (api.getState() as CommentRoot).comments.byId[id]._local.version } }));
                 api.dispatch(popNext());
                 break;
             }
@@ -43,13 +42,13 @@ export async function processOutboxOnce(deps: Deps, api: any) {
                 if (!id) { scheduleRetry(cmd, api); break; }
                 const res = await deps.api.deleteComment({ id, commandId: cmd.commandId });
                 // marquer supprimé côté client
-                api.dispatch(upsertOne({ ...(api.getState() as CommentRoot).comments.byId[id], status: res.status, updatedAt: res.updatedAt } as any));
+                api.dispatch(commentCreateOptimisticApplied({ ...(api.getState() as CommentRoot).comments.byId[id], status: res.status, updatedAt: res.updatedAt } as any));
                 api.dispatch(popNext());
                 break;
             }
             case "Comment.Retrieve": {
-                const byPost = (api.getState() as CommentRoot).comments.byPostId[cmd.postId];
-                const since = byPost?.lastServerTime;
+
+
                 const res = await deps.api.retrieveForPost({ postId: cmd.postId, cursor: cmd.cursor, since, limit: 50 });
                 api.dispatch(applyServerItems({ postId: cmd.postId, items: res.items, nextCursor: res.nextCursor, serverTime: res.serverTime }));
                 api.dispatch(popNext());

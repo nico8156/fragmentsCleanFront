@@ -3,7 +3,7 @@ import {FakeLikeGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikeGa
 import {Like} from "@/app/store/appState";
 import {retrieveLike} from "@/app/core-logic/use-cases/socials/like/retrieveLike";
 
-describe('On like retrieval', () => {
+describe('On like0 retrieval', () => {
     let store: ReduxStore;
     let likeGateway: FakeLikeGateway;
 

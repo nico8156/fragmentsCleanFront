@@ -29,11 +29,12 @@ export interface AppState {
 
 export interface CommentsState {
     byId: Record<string, Comment>; // key: commentId ou tempId
-    byPostId: Record<string, { ids: string[]; serverCursor?: string; lastServerTime?: string }>;
+    //byPostId: Record<string, { ids: string[]; serverCursor?: string; lastServerTime?: string }>;
     idMap: { tempToServer: Record<TempId, CommentId> };
 }
 
 export type CommandId = string;
+
 export type LikeCmd = { type: 'Like.Set'; commandId: CommandId; targetId: string; liked: boolean; attempts: number; error?: string };
 
 export type UUID = string;

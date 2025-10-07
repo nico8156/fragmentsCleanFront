@@ -12,10 +12,14 @@ import {
     Comment,
     OutboxCommand,
     CommentEditCmd,
-    CommentDeleteCmd, CommentRetrieveJob, OutboxState
+    CommentDeleteCmd, CommentRetrieveJob, OutboxState, CommentStatuss, LocalSyncStates, CommentCommandTypes
 } from "@/app/contexts/comment/comment.type";
 import {processOutboxOnce} from "@/app/adapters/secondary/gateways/comment/commentWL/commentGatewayWL";
-import {editLocal, markDeletedLocal, removeLocal} from "@/app/contexts/comment/reducer/comment.reducer";
+import {
+    editLocal,
+    markDeletedLocal,
+    removeLocal
+} from "@/app/contexts/comment/reducer/comment.reducer";
 import {dropByPredicate} from "@/app/contexts/comment/reducer/outbox.reducer";
 
 
@@ -25,8 +29,9 @@ export const uiCommentDeleteClicked = createAction<{ idOrTemp: string }>("ui/com
 export const uiCommentsScreenOpened = createAction<{ postId: string }>("ui/comment/screenOpened");
 export const uiCommentsScreenClosed = createAction<{ postId: string }>("ui/comment/screenClosed");
 export const appBecameForeground    = createAction("app/foreground");
-export const upsertOne=createAction<Comment>('comments/upsertOne');
+export const commentCreateOptimisticApplied=createAction<Comment>('comments/upsertOne');
 export const enqueue=createAction<OutboxCommand>('outbox/enqueue');
+export const startCommentCreateProcessing = createAction('comments/startProcessing');
 
 export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void) => {
     const registerCommentUseCases = createListenerMiddleware();
@@ -35,21 +40,24 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
     listener({
         actionCreator: uiCommentCreateClicked,
         effect: async (action, api) => {
+
             const tempId = deps.ids.newId();
             const now = deps.clock.nowISO();
             const authorId = deps.selectCurrentUserId(api.getState().comments as CommentsState);
 
             // 1) État optimiste
-            api.dispatch(upsertOne({
-                tempId, postId: action.payload.postId, authorId,
+            api.dispatch(commentCreateOptimisticApplied({
+                tempId,
+                postId: action.payload.postId,
+                authorId,
                 body: action.payload.body, createdAt: now, updatedAt: now,
-                status: "visible",
-                _local: { sync: "pending", version: 1 }
+                status: CommentStatuss.CommentVisible,
+                _local: { sync: LocalSyncStates.Pending, version: 1 }
             } as Comment));
 
             // 2) Outbox enqueue
             const cmd: CommentCreateCmd = {
-                type: "Comment.Create",
+                type: CommentCommandTypes.CommentCreate,
                 commandId: deps.ids.newId(),
                 createdAt: now,
                 attempt: 0,
@@ -58,7 +66,8 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
                 body: action.payload.body,
             };
             api.dispatch(enqueue(cmd));
-
+            api.dispatch(startCommentCreateProcessing())
+            callback?.();
             await processOutboxOnce(deps, api);
         },
     });
@@ -124,6 +133,7 @@ export const registerCommentUseCasesFactory = (deps: Deps, callback?: () => void
                 tempId: c.tempId,
             };
             api.dispatch(enqueue(cmd));
+
             await processOutboxOnce(deps, api);
         }
     })

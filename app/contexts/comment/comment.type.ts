@@ -5,9 +5,20 @@ export type CommentId = string;        // serverId
 export type TempId = string;           // uuid v4 local
 
 // Domain
-export type CommentStatus = "visible" | "deleted"; // côté serveur
-type LocalSyncState = "idle" | "pending" | "sent" | "failed"; // côté client
-
+export const CommentStatuss = {
+    CommentVisible : "visible",
+    CommentDeleted : "deleted"
+} as const;// côté serveur
+// export const CommandTypes = { CommentCreate: "Comment.Create", LikeSet: "Like.Set" } as const;
+// export type CommandType = typeof CommandTypes[keyof typeof CommandTypes];
+export const LocalSyncStates = {
+    Idle: "idle",
+    Pending: "pending",
+    Sent: "sent",
+    Failed: "failed"
+}
+export type LocalSyncState = typeof LocalSyncStates[keyof typeof LocalSyncStates];
+export type CommentStatus = typeof CommentStatuss[keyof typeof CommentStatuss];
 
 export interface CommentRoot {
     comments: CommentsState;
@@ -43,8 +54,17 @@ type CommandBase = {
     attempt: number;
 };
 
+export const CommentCommandTypes = {
+    CommentCreate: "Comment.Create",
+    CommentEdit: "Comment.Edit",
+    CommentDelete: "Comment.Delete",
+    CommentRetrieve: "Comment.Retrieve"
+} as const
+
+export type CommentCommandType = typeof CommentCommandTypes[keyof typeof CommentCommandTypes];
+
 export type CommentCreateCmd = CommandBase & {
-    type: "Comment.Create";
+    type: CommentCommandType;
     tempId: TempId;
     postId: string;
     body: string;

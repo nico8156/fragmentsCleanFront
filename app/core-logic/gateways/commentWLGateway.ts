@@ -1,4 +1,4 @@
-import {CommentRoot, CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
+import { CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
 import {CommentsState} from "@/app/store/appState";
 
 export interface CommentWLGateaway {
@@ -7,7 +7,7 @@ export interface CommentWLGateaway {
         body: string;
         commandId: string;
         draftId?: string;
-    }): Promise<{ comment: Omit<Comment, "_local" | "tempId"> }>; // renvoie DTO serveur
+    }): Promise<void>; // renvoie DTO serveur
 
     editComment(params: {
         id: CommentId;
