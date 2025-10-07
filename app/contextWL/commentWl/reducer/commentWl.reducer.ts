@@ -21,7 +21,7 @@ export const commentWlReducer = createReducer(
             .addCase(addOptimisticCreated,(state, action) => {
                 const c = action.payload.entity
                 adapter.addOne(state.entities, c);
-                state.byTarget[c.targetId] ??= state.byTarget[c.targetId].ids = [];
+                state.byTarget[c.targetId] = state.byTarget[c.targetId] ?? { ids: [] };
                 state.byTarget[c.targetId].ids.unshift(c.id);
                 if (c.parentId) {
                     const parent = state.entities.entities[c.parentId];

@@ -1,4 +1,4 @@
-import {nanoid,createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
+import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {CommentEntity} from "@/app/contextWL/commentWl/commentWl.type";
@@ -19,8 +19,9 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
             const trimmed = body.trim();
             if (!trimmed) return; // rien à faire
             const me = deps.helpers.currentUserId?.() ?? "me";
-            const tempId = `cmt_tmp_${nanoid()}`;
-            const commandId = `cmd_${nanoid()}`;
+            //const tempId = `cmt_tmp_${nanoid()}`;
+            const tempId = deps.helpers.getIdForTests()
+            //const commandId = `cmd_${nanoid()}`;
             const createdAt = deps.helpers.nowIso ? deps.helpers.nowIso() : new Date().toISOString();
             api.dispatch(
                 addOptimisticCreated({

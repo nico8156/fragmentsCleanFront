@@ -9,6 +9,7 @@ export interface DependenciesWl {
     helpers: {
         nowIso: () => string;
         currentUserId: () => string;
+        getIdForTests: () => "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT";
     }
 
 }
