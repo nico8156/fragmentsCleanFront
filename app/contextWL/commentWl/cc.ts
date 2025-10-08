@@ -1,10 +1,12 @@
-import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
+import {createAction, createListenerMiddleware, TypedStartListening, nanoid} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-import {CommentEntity} from "@/app/contextWL/commentWl/commentWl.type";
+import {CommentEntity, moderationTypes} from "@/app/contextWL/commentWl/commentWl.type";
+import {commandKinds, OutboxItem} from "@/app/contextWL/outboxWl/outbox.type";
 
 export const ccAction = createAction<{ targetId: string, body: string, parentId?: string }>("UI/COMMENT/CREATE");
 export const addOptimisticCreated = createAction<{entity:CommentEntity}>('UI/COMMENT/ADD_OPTIMISTIC_CREATED');
+export const enqueueCommited = createAction<{id: string; item: OutboxItem; enqueuedAt: string }>('UI/COMMENT/ENQUEUE_COMMITED');
 
 export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () => void) => {
     const ccUseCase = createListenerMiddleware();
@@ -20,11 +22,14 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
             if (!trimmed) return; // rien à faire
             const me = deps.helpers.currentUserId?.() ?? "me";
             //const tempId = `cmt_tmp_${nanoid()}`;
-            const tempId = deps.helpers.getIdForTests()
-            //const commandId = `cmd_${nanoid()}`;
+            const tempId = deps.helpers.getCommentIdForTests()
+            //const outboxId = `obx_${nanoid()}`;
+            const outboxId = deps.helpers.getCommandIdForTests()
+            const commandId = `cmd_${nanoid()}`;
             const createdAt = deps.helpers.nowIso ? deps.helpers.nowIso() : new Date().toISOString();
-            api.dispatch(
-                addOptimisticCreated({
+            const enqueuedAt = createdAt;
+
+            api.dispatch(addOptimisticCreated({
                     entity: {
                         id: tempId,
                         targetId,
@@ -34,13 +39,21 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                         createdAt,
                         likeCount: 0,
                         replyCount: 0,
-                        moderation: "PUBLISHED",
+                        moderation: moderationTypes.PUBLISHED,
                         version: 0,
                         optimistic: true,
-                    },
+                    }
                 })
-            );
+            )
             //creation de la command
+            api.dispatch(enqueueCommited({
+                id: outboxId,
+                item: {
+                    command: { kind: commandKinds.CommentCreate, commandId, tempId, targetId, parentId, body: trimmed, createdAt },
+                    undo: { kind: commandKinds.CommentCreate, tempId, targetId, parentId },
+                },
+                enqueuedAt,
+            }))
 
             if (callback) {
                 callback();

@@ -27,4 +27,5 @@ export const commentWlReducer = createReducer(
                     const parent = state.entities.entities[c.parentId];
                     if (parent) parent.replyCount += 1;
                 }
-            })})
+            })
+    })

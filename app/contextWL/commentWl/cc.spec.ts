@@ -11,7 +11,6 @@ describe('On comment creation button pressed : ', () => {
         //commentGateway = new FakeCommentGateway()
     })
 
-
     it('should add optimistic comment and new command', () => {
         return new Promise((resolve, reject) => {
             store = createReduxStoreWithListener(
@@ -44,6 +43,12 @@ describe('On comment creation button pressed : ', () => {
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].body).toEqual("un commentaire");
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].optimistic).toEqual(true);
+        expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].targetId).toEqual("un id de cafe");
+        expect(store.getState().oState.byCommandId["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
+        expect(store.getState().oState.byId["obc_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
+        expect(store.getState().oState.byId["obc_tmp_Yffc7N3rOvXUYWMCLZnGT"].item.command.body).toEqual("un commentaire");
+        expect(store.getState().oState.queue.length).toEqual(1);
+        //expect an action to have been called:
     }
     const createOnccListener = (
         doExpectations: () => void,
@@ -55,7 +60,8 @@ describe('On comment creation button pressed : ', () => {
             helpers: {
                 nowIso: () => new Date().toISOString(),
                 currentUserId: () => "testUser",
-                getIdForTests: () => "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT",
+                getCommentIdForTests: () => "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT",
+                getCommandIdForTests: () => "obc_tmp_Yffc7N3rOvXUYWMCLZnGT"
             }
         }, () => {
             try {

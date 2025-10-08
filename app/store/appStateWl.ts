@@ -1,7 +1,9 @@
 import {CommentsStateWl} from "@/app/contextWL/commentWl/commentWl.type";
+import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
 
 export interface AppStateWl {
-    comments:CommentsStateWl
+    comments:CommentsStateWl;
+    outbox:OutboxStateWl
 }
 
 export interface DependenciesWl {
@@ -9,7 +11,8 @@ export interface DependenciesWl {
     helpers: {
         nowIso: () => string;
         currentUserId: () => string;
-        getIdForTests: () => "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT";
+        getCommentIdForTests: () => string;
+        getCommandIdForTests: () => string;
     }
 
 }
