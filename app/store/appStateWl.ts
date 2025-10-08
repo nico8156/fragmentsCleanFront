@@ -7,7 +7,7 @@ export interface AppStateWl {
 }
 
 export interface DependenciesWl {
-    gateways: any;
+    gateways: Partial<GatewaysWl>;
     helpers: Partial<helpersType>
 }
 
@@ -16,5 +16,13 @@ export type helpersType = {
     currentUserId: () => string;
     getCommentIdForTests: () => string;
     getCommandIdForTests: () => string;
+}
+
+export type GatewaysWl = {
+    comments: CommentsWlGateway;
+}
+
+export interface CommentsWlGateway{
+    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId: string, body: string}):Promise<void>
 }
 

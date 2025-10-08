@@ -23,12 +23,13 @@ export type OutboxItem = {
         body: string;
         createdAt: string;
     };
-    undo: { kind: "Comment.Create"; tempId: string; targetId: string; parentId?: string };
+    undo: { kind:CommandKind; tempId: string; targetId: string; parentId?: string };
 };
 
 export const commandKinds = {
     CommentCreate: "Comment.Create"
 } as const;
+
 export type CommandKind = typeof commandKinds[keyof typeof commandKinds];
 
 export const statusTypes = {
