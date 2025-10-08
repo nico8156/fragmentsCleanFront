@@ -1,6 +1,6 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {enqueueCommited} from "@/app/contextWL/commentWl/cc";
+import {enqueueCommited, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
 import {statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
 
 const initialState:AppStateWl["outbox"] = {
@@ -27,6 +27,9 @@ export const outboxWlReducer = createReducer(
                 };
                 state.queue.push(id);
                 state.byCommandId[cmdId] = id;
+            })
+            .addCase(outboxProcessOnce,(state, action)=> {
+                
             })
     }
 )

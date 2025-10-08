@@ -25,6 +25,23 @@ describe('On comment creation button pressed : ', () => {
 
         })
     })
+    it('should not add optimistic comment and command if body is empty', () => {
+        return new Promise((resolve, reject) => {
+            store = createReduxStoreWithListener(
+                () => {
+                    expect(store.getState().cState.entities.entities).toStrictEqual({})
+                    expect(store.getState().oState.queue.length).toEqual(0);
+                },
+                resolve,
+                reject,
+            );
+            store.dispatch(ccAction({
+                targetId:"un id de cafe",
+                body:"",
+            }))
+
+        })
+    })
     function createReduxStoreWithListener(
         doExpectations: () => void,
         resolve: (value: unknown) => void,
@@ -40,15 +57,11 @@ describe('On comment creation button pressed : ', () => {
     }
     function expectActualCommentAndOutbox() {
         expect(store.getState().cState.byTarget["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
-        expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].body).toEqual("un commentaire");
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].optimistic).toEqual(true);
         expect(store.getState().cState.entities.entities["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"].targetId).toEqual("un id de cafe");
-        expect(store.getState().oState.byCommandId["cmt_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
-        expect(store.getState().oState.byId["obc_tmp_Yffc7N3rOvXUYWMCLZnGT"]).not.toBeNull();
         expect(store.getState().oState.byId["obc_tmp_Yffc7N3rOvXUYWMCLZnGT"].item.command.body).toEqual("un commentaire");
         expect(store.getState().oState.queue.length).toEqual(1);
-        //expect an action to have been called:
     }
     const createOnccListener = (
         doExpectations: () => void,

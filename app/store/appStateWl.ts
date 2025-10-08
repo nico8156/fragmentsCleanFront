@@ -8,12 +8,13 @@ export interface AppStateWl {
 
 export interface DependenciesWl {
     gateways: any;
-    helpers: {
-        nowIso: () => string;
-        currentUserId: () => string;
-        getCommentIdForTests: () => string;
-        getCommandIdForTests: () => string;
-    }
+    helpers: Partial<helpersType>
+}
 
+export type helpersType = {
+    nowIso: () => string;
+    currentUserId: () => string;
+    getCommentIdForTests: () => string;
+    getCommandIdForTests: () => string;
 }
 
