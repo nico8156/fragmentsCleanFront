@@ -21,7 +21,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
         effect: async (action, api)=>{
 
             const {queue} = (api.getState() as any).oState
-            console.log(queue[0])// selon ton key réel
 
             // if (!outbox || !Array.isArray(outbox.queue)) return;
             //
@@ -57,18 +56,16 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             new Date(Date.now() + 30_000).toISOString(); // optionnel
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
-                        if (callback) {
-                            callback();
-                            return;
-                        }
+
                         // pas de reconcile ici
                         break;
                     }
                     default:
-                        // commande non supportée: on “fail & drop”
-                        api.dispatch(markFailed({ id, error: "Unsupported command" }));
+                        // commande non supportée: on “ drop”
                         api.dispatch(dropCommitted({ id }));
+                        api.dispatch(dequeueCommitted({ id }));
                 }
+
             } catch (e: any) {
                 // échec: rollback + fail + drop (simple pour l’instant)
                 const cmd = record.item.command;
@@ -83,6 +80,10 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 }
                 api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
                 api.dispatch(dequeueCommitted({ id }));
+            }
+            if (callback) {
+                callback();
+                return;
             }
         }
     })

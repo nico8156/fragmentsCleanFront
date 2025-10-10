@@ -28,7 +28,10 @@ export type OutboxItem = {
 };
 
 export const commandKinds = {
-    CommentCreate: "Comment.Create"
+    CommentCreate: "Comment.Create",
+    CommentEdit: "Comment.Edit",
+    CommentDelete: "Comment.Delete",
+    CommentRetrieve: "Comment.Retrieve"
 } as const;
 
 export type CommandKind = typeof commandKinds[keyof typeof commandKinds];
