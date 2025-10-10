@@ -5,6 +5,7 @@ export type OutboxRecord = {
     attempts: number;
     lastError?: string;
     enqueuedAt: string;
+    nextCheckAt?: string; // optionnel: pour timeout/cleanup
 };
 
 export type OutboxStateWl = {
@@ -19,7 +20,7 @@ export type OutboxItem = {
         commandId: string;
         tempId: string;
         targetId: string;
-        parentId?: string;
+        parentId?: string   ;
         body: string;
         createdAt: string;
     };
@@ -36,7 +37,9 @@ export const statusTypes = {
     queued: "queued",
     processing: "processing",
     succeeded: "succeeded",
-    failed: "failed"
+    failed: "failed",
+    awaitingAck: "awaitingAck"
+
 } as const;
 
 export type StatusType = typeof statusTypes[keyof typeof statusTypes];

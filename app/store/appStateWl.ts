@@ -23,6 +23,6 @@ export type GatewaysWl = {
 }
 
 export interface CommentsWlGateway{
-    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId: string, body: string}):Promise<void>
+    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string, body: string}):Promise<void>
 }
 

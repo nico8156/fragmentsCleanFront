@@ -2,7 +2,11 @@ import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {enqueueCommited, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
 import {statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
-import {markFailed, markProcessing, markSucceeded, removeFromQueue} from "@/app/contextWL/outboxWl/processOutbox";
+import {
+    dequeueCommitted, dropCommitted, markAwaitingAck,
+    markFailed,
+    markProcessing,
+} from "@/app/contextWL/outboxWl/processOutbox";
 
 const initialState:AppStateWl["outbox"] = {
     byId: {},
@@ -31,32 +35,33 @@ export const outboxWlReducer = createReducer(
             })
             .addCase(markProcessing, (state, action) => {
                 const r = state.byId[action.payload.id];
-                if (!r || r.status === "processing") return;
-                r.status = "processing";
+                if (!r || r.status === statusTypes.processing) return;
+                r.status = statusTypes.processing;
                 r.attempts += 1;
             })
             .addCase(markFailed, (state, action) => {
                 const {id, error} = action.payload
                 const r = state.byId[id];
                 if (!r) return;
-                r.status = "failed";
+                r.status = statusTypes.failed;
                 r.lastError = error;
             })
-            .addCase(markSucceeded, (state, action) => {
-                const r = state.byId[action.payload.id];
-                if (!r) return;
-                r.status = "succeeded";
-            })
-            .addCase(removeFromQueue, (state, action) => {
+            .addCase(dequeueCommitted, (state, action) => {
                 const {id} = action.payload;
+                state.queue = state.queue.filter((x) => x !== id);
+                })
+            .addCase(markAwaitingAck, (state, action) => {
+                const {id, ackBy} = action.payload;
                 const rec = state.byId[id];
                 if (!rec) return;
-                // retire de la queue
-                state.queue = state.queue.filter((x) => x !== id);
-                // nettoie index commandId
-                const cmdId = rec.item.command.commandId;
-                delete state.byCommandId[cmdId];
-                // option: garder l’historique ? ici on supprime
+                rec.status = statusTypes.awaitingAck
+                rec.nextCheckAt = ackBy;
+                })
+            .addCase(dropCommitted, (state, action) => {
+                const {id} = action.payload;
+                const r = state.byId[id];
+                if (!r) return;
                 delete state.byId[id];
+                delete state.byCommandId[r.item.command.commandId];
             })
     })
