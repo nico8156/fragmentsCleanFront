@@ -1,6 +1,6 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {enqueueCommited, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
+import {enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
 import {statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
 import {
     dequeueCommitted, dropCommitted, markAwaitingAck,
@@ -18,7 +18,7 @@ export const outboxWlReducer = createReducer(
     initialState,
     (builder) => {
         builder
-            .addCase(enqueueCommited, (state, action) => {
+            .addCase(enqueueCommitted, (state, action) => {
                 const {id, item, enqueuedAt} = action.payload;
                 const cmdId = item.command.commandId;
                 // dédup idempotente

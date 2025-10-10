@@ -1,9 +1,8 @@
-import {addOptimisticCreated, enqueueCommited, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
+import {addOptimisticCreated, enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/cc";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {DependenciesWl} from "@/app/store/appStateWl";
 import {processOutboxFactory} from "@/app/contextWL/outboxWl/processOutbox";
 import {commandKinds, statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
-import {CommentGatewayWl} from "@/app/core-logic/gateways/commentGatewayWl";
 import {FakeCommentGatewayWl} from "@/app/adapters/secondary/gateways/fake/fakeCommentGatewayWl";
 import {moderationTypes} from "@/app/contextWL/commentWl/commentWl.type";
 
@@ -14,7 +13,6 @@ describe('On outboxProcessOnce triggered : ', () => {
 
     beforeEach(() => {
         commentGateway = new FakeCommentGatewayWl()
-        jest.useFakeTimers();
     })
     afterEach(() => {
         commentGateway.willFailCode = false
@@ -27,11 +25,10 @@ describe('On outboxProcessOnce triggered : ', () => {
                 resolve,
                 reject,
             );
-            store.dispatch(enqueueCommited(outboxRecord))
+            store.dispatch(enqueueCommitted(outboxRecord))
             expect(store.getState().oState.queue.length).toEqual(1);
             store.dispatch(outboxProcessOnce())
-            jest.runAllTimers()
-
+            await flush()
         })
     })
     it('should, when invalid command, mark status as failed and update error , delete byId and byCommandId',() => {
@@ -41,13 +38,12 @@ describe('On outboxProcessOnce triggered : ', () => {
                 resolve,
                 reject,
             );
-            store.dispatch(enqueueCommited(outboxRecordInvalid))
+            store.dispatch(enqueueCommitted(outboxRecordInvalid))
             expect(store.getState().oState.queue.length).toEqual(1);
             expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
             expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
             store.dispatch(outboxProcessOnce())
-            jest.runAllTimers()
-
+            await flush()
         })
     })
     it('should, when gateway throw error, ... ',() => {
@@ -58,7 +54,7 @@ describe('On outboxProcessOnce triggered : ', () => {
                 resolve,
                 reject,
             );
-            store.dispatch(enqueueCommited(outboxRecord))
+            store.dispatch(enqueueCommitted(outboxRecord))
             store.dispatch(addOptimisticCreated({
                 entity:{
                     id: "cmt_tmp_aaa111",
@@ -72,7 +68,6 @@ describe('On outboxProcessOnce triggered : ', () => {
                     moderation: moderationTypes.PUBLISHED,
                     version: 0,
                     optimistic: true,
-
                 }
             }))
             expect(store.getState().oState.queue.length).toEqual(1);
@@ -81,9 +76,13 @@ describe('On outboxProcessOnce triggered : ', () => {
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("cmt_tmp_aaa111")
             store.dispatch(outboxProcessOnce())
-            jest.runAllTimers()
+            await flush()
         })
     })
+
+    const flush = () => new Promise<void>(r => setTimeout(r, 0));
+
+
     function expectActualOutbox() {
         expect(store.getState().oState.queue.length).toEqual(0);
         expect(store.getState().oState.byId["obx_0001"].status).toEqual(statusTypes.awaitingAck)
@@ -105,9 +104,7 @@ describe('On outboxProcessOnce triggered : ', () => {
         reject: () => void,
     ) {
         return initReduxStoreWl({
-            dependencies:{
-
-            },
+            dependencies:{},
             listeners:[
                 createOnprocessOutboxUseCaseListener(doExpectations, resolve, reject),
             ]
@@ -134,6 +131,7 @@ describe('On outboxProcessOnce triggered : ', () => {
             }
         }).middleware;
     }
+
     const outboxRecord = {
         id: "obx_0001",
         item: {
