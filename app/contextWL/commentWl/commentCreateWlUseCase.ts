@@ -1,7 +1,7 @@
 import {createAction, createListenerMiddleware, TypedStartListening, nanoid} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-import {CommentEntity, moderationTypes} from "@/app/contextWL/commentWl/commentWl.type";
+import {CommentEntity, moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {commandKinds, OutboxItem} from "@/app/contextWL/outboxWl/outbox.type";
 
 export const ccAction = createAction<{ targetId: string, body: string, parentId?: string }>("UI/COMMENT/CREATE");

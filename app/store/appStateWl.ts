@@ -1,4 +1,4 @@
-import {CommentsStateWl} from "@/app/contextWL/commentWl/commentWl.type";
+import {CommentsStateWl} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
 
 export interface AppStateWl {

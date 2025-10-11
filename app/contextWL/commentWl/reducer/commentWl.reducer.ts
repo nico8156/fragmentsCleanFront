@@ -1,7 +1,7 @@
 import {createEntityAdapter, createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {addOptimisticCreated} from "@/app/contextWL/commentWl/cc";
-import {CommentEntity} from "@/app/contextWL/commentWl/commentWl.type";
+import {addOptimisticCreated} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
+import {CommentEntity} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {createReconciled, createRollback} from "@/app/contextWL/outboxWl/processOutbox";
 
 

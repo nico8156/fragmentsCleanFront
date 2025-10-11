@@ -1,4 +1,4 @@
-import {ccAction, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/cc";
+import {ccAction, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {DependenciesWl} from "@/app/store/appStateWl";
 
