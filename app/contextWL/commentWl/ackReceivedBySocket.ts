@@ -14,6 +14,9 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             const { commandId, tempId, server } = action.payload;
 
             const outboxId = (api.getState()as any).oState.byCommandId?.[commandId];
+            //console.log("outboxId", outboxId)
+            const {queue} = (api.getState() as any).oState
+            //console.log("queue", queue)
             // Si pas trouvé, peut-être déjà traité (idempotent)
             if (outboxId) {
                 api.dispatch(
@@ -27,7 +30,7 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
                     callback();
                     return;
                 }
-                return
+
             } else {
                 // cas idempotent: faire seulement le reconcile si nécessaire
                 api.dispatch(createReconciled({ tempId, server }));

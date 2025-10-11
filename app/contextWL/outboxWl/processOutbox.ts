@@ -19,9 +19,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
     listener({
         actionCreator:outboxProcessOnce,
         effect: async (action, api)=>{
-
             const {queue} = (api.getState() as any).oState
-
             // if (!outbox || !Array.isArray(outbox.queue)) return;
             //
             // const queue: string[] = outbox.queue;
@@ -37,10 +35,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             // on ne traite que les "queued" (si déjà processing, on s'arrête)
             if (record.status !== statusTypes.queued) return;
             if(!deps.gateways.comments) return;
-
             api.dispatch(markProcessing({ id }));
-
-
             try {
                 const cmd = record.item.command;
                 switch (cmd.kind) {
@@ -56,7 +51,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             new Date(Date.now() + 30_000).toISOString(); // optionnel
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
-
                         // pas de reconcile ici
                         break;
                     }
@@ -65,7 +59,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         api.dispatch(dropCommitted({ id }));
                         api.dispatch(dequeueCommitted({ id }));
                 }
-
             } catch (e: any) {
                 // échec: rollback + fail + drop (simple pour l’instant)
                 const cmd = record.item.command;

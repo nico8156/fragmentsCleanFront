@@ -28,22 +28,26 @@ describe('On ack received from server : ', () => {
             );
             store.dispatch(enqueueCommitted(outboxRecord))
             store.dispatch(addOptimisticCreated({entity: commentEntity}))
+            expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
+            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
             store.dispatch(outboxProcessOnce())
+            await flush()
             store.dispatch(onCommentCreatedAck({
                 commandId:"cmd_aaa111",
                 tempId:"cmt_tmp_aaa111",
                 server:{
-                    id:"obx_0001",
+                    id:"newIdFromServer",
                     createdAt:"2025-10-10T07:00:01.000Z",
                     version:0,
                 }
             }))
-            expect(store.getState().oState.queue.length).toEqual(1);
-            //expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
-            //expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
-            expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("cmt_tmp_aaa111")
-            await flush()
+            expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("newIdFromServer")
+            expect(store.getState().oState.byId["obx_0001"]).toBeUndefined()
+            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeUndefined()
+            expect(store.getState().cState.entities.entities["newIdFromServer"]).toBeDefined()
+            expect(store.getState().cState.entities.entities["cmt_tmp_aaa111"]).toBeUndefined()
+            //TODO verify the flow ... all states after reconcile
         })
     });
 
