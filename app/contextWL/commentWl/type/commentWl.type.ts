@@ -1,9 +1,11 @@
 import {EntityState} from "@reduxjs/toolkit";
 
+type ISODate = string;
+
 export type CommentEntity = {
     id: string; targetId: string; parentId?: string;
     body: string; authorId: UserId;
-    createdAt: string; editedAt?: string; deletedAt?: string;
+    createdAt: ISODate; editedAt?: ISODate; deletedAt?: ISODate;
     likeCount: number; replyCount: number;
     moderation: ModerationType
     version: number;
@@ -11,14 +13,12 @@ export type CommentEntity = {
     optimistic?: boolean;
 }
 
-
 type CommentId = string;
-type CafeId = string;
+export type CafeId = string;
 type UserId = string;
 
 export type CommentsStateWl = {
     entities: EntityState<CommentEntity,CommentId>;
-
     // Vue par café : ordre d’affichage + pagination
     byTarget: {
         [targetId: string]: {
@@ -27,7 +27,8 @@ export type CommentsStateWl = {
             prevCursor?: string;
             loading: LoadingState;
             error?: string;
-            filters: { sort: "new" | "top"; mineOnly?: boolean };
+            filters: { sort: "new" | "top"; mineOnly?: boolean }; // a voir plus tard pour cacher des views et changer des vues rapidement par filtres !
+            anchor?: ISODate;
         };
     };
     byParent?: {
@@ -36,7 +37,6 @@ export type CommentsStateWl = {
             nextCursor?: string;
         };
     };
-
     ui: {
         composing: {
             targetId?: CafeId;
@@ -47,6 +47,24 @@ export type CommentsStateWl = {
         };
     };
 };
+
+export type CommentDTO = {
+    id: CommentId;
+    targetId: CafeId;
+    body: string;
+    createdAt: ISODate;
+    version: number;
+};
+export type ListCommentsParams = {
+    targetId: CafeId;
+    cursor?: string | null;
+    limit?: number; // ex: 50
+};
+export type ListCommentsResponse = {
+    items: CommentDTO[];
+    nextCursor?: string | null;
+};
+
 
 export const loadingStates = {
     IDLE: "IDLE",

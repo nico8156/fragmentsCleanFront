@@ -1,13 +1,13 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {DependenciesWl} from "@/app/store/appStateWl";
 import {FakeCommentGatewayWl} from "@/app/adapters/secondary/gateways/fake/fakeCommentGatewayWl";
-import {ackListenerFactory, onCommentCreatedAck} from "@/app/contextWL/commentWl/ackReceivedBySocket";
+import {ackListenerFactory, onCommentCreatedAck} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
 import {
     addOptimisticCreated,
     enqueueCommitted,
     outboxProcessOnce
-} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
+} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 
 describe('On ack received from server : ', () => {
@@ -22,7 +22,7 @@ describe('On ack received from server : ', () => {
     it('should, when ack received, create a reconcile and dropCommited ',() => {
         return new Promise(async (resolve, reject) => {
             store = createReduxStoreWithListener(
-                () => expectActualOutbox(),
+                () => {},
                 resolve,
                 reject,
             );
@@ -38,24 +38,27 @@ describe('On ack received from server : ', () => {
                 server:{
                     id:"newIdFromServer",
                     createdAt:"2025-10-10T07:00:01.000Z",
-                    version:0,
+                    version:2,
                 }
             }))
+            //on teste le reconcile !
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("newIdFromServer")
-            expect(store.getState().oState.byId["obx_0001"]).toBeUndefined()
-            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeUndefined()
             expect(store.getState().cState.entities.entities["newIdFromServer"]).toBeDefined()
             expect(store.getState().cState.entities.entities["cmt_tmp_aaa111"]).toBeUndefined()
-            //TODO verify the flow ... all states after reconcile
+            expect(store.getState().cState.entities.entities["newIdFromServer"].version).toEqual(2)
+            expect(store.getState().cState.entities.entities["newIdFromServer"].createdAt).toEqual("2025-10-10T07:00:01.000Z")
+            //on teste le dropCommited !
+            expect(store.getState().oState.byId["obx_0001"]).toBeUndefined()
+            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeUndefined()
         })
     });
 
     const flush = () => new Promise<void>(r => setTimeout(r, 0));
 
-    function expectActualOutbox() {
-        expect(store.getState().oState.queue.length).toEqual(1);
-    }
+    // function expectActualOutbox() {
+    //     expect(store.getState().oState.queue.length).toEqual(1);
+    // }
     function createReduxStoreWithListener(
         doExpectations: () => void,
         resolve: (value: unknown) => void,

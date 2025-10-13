@@ -1,4 +1,9 @@
-import {CommentsStateWl} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {
+    ApiResult,
+    CommentsStateWl,
+    ListCommentsParams,
+    ListCommentsResponse
+} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
 
 export interface AppStateWl {
@@ -23,6 +28,7 @@ export type GatewaysWl = {
 }
 
 export interface CommentsWlGateway{
+    list(params: ListCommentsParams, signal?: AbortSignal): Promise<ListCommentsResponse>;
     create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string, body: string}):Promise<void>
 }
 

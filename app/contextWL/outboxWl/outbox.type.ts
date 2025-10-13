@@ -42,7 +42,6 @@ export const statusTypes = {
     succeeded: "succeeded",
     failed: "failed",
     awaitingAck: "awaitingAck"
-
 } as const;
 
 export type StatusType = typeof statusTypes[keyof typeof statusTypes];

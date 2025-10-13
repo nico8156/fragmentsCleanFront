@@ -1,4 +1,4 @@
-import {addOptimisticCreated, enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
+import {addOptimisticCreated, enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {DependenciesWl} from "@/app/store/appStateWl";
 import {processOutboxFactory} from "@/app/contextWL/outboxWl/processOutbox";

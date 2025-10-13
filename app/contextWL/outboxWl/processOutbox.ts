@@ -1,7 +1,7 @@
 import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-import {outboxProcessOnce} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
+import {outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
 
 export const markProcessing = createAction<{id:string}>("OUTBOX/MARK_PROCESSING")

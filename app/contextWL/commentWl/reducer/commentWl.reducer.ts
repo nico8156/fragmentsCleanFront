@@ -1,18 +1,25 @@
 import {createEntityAdapter, createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {addOptimisticCreated} from "@/app/contextWL/commentWl/commentCreateWlUseCase";
+import {addOptimisticCreated} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {CommentEntity} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {createReconciled, createRollback} from "@/app/contextWL/outboxWl/processOutbox";
-
 
 const initialState:AppStateWl["comments"] = {
     byTarget: {}, entities: { ids: [], entities: {} }, ui: {composing: {draftBody: "", sending: false}}
 }
 
-
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
 });
+
+const ensureView = (state: CommentsState, targetId: CafeId) => {
+    return (state.byTarget[targetId] ??= { ids: [], loading: 'idle' as LoadingState });
+};
+
+const mergeUnique = (dst: CommentId[], ids: CommentId[]) => {
+    const seen = new Set(dst);
+    for (const id of ids) if (!seen.has(id)) { dst.push(id); seen.add(id); }
+};
 
 export const commentWlReducer = createReducer(
     initialState,

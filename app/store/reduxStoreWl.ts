@@ -41,7 +41,7 @@ export type ReduxStoreWl = ReturnType<typeof initReduxStoreWl>;
 export type AppThunk<ReturnType = void> = ThunkAction<
     ReturnType,
     AppStateWl,
-    Gateways,
+    DependenciesWl,
     Action
 >;
 
