@@ -5,7 +5,6 @@ import {
     ThunkAction,
     ThunkDispatch,
 } from "@reduxjs/toolkit";
-import {Gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import { commentWlReducer as cState } from "@/app/contextWL/commentWl/reducer/commentWl.reducer"
 import { outboxWlReducer as oState } from "@/app/contextWL/outboxWl/reducer/outboxWl.reducer"
@@ -24,7 +23,7 @@ export const initReduxStoreWl = (config: {
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({
                 thunk: {
-                    extraArgument: config.dependencies,
+                    extraArgument: config.dependencies?.gateways,
                 },
                 serializableCheck: false,
             });
@@ -36,13 +35,18 @@ export const initReduxStoreWl = (config: {
     });
 };
 
+// ========= Types DÉRIVÉS du store =========
 export type ReduxStoreWl = ReturnType<typeof initReduxStoreWl>;
+export type RootStateWl = ReturnType<ReduxStoreWl["getState"]>;
+export type AppDispatchWl = ReduxStoreWl["dispatch"];
 
-export type AppThunk<ReturnType = void> = ThunkAction<
+// L’extra arg réel est ce que tu passes ci-dessus : dependencies?.gateways
+export type ExtraArgWl = DependenciesWl["gateways"] | undefined;
+
+// Thunk “canonique” aligné
+export type AppThunkWl<ReturnType = void> = ThunkAction<
     ReturnType,
-    AppStateWl,
-    DependenciesWl,
-    Action
+    RootStateWl,
+    ExtraArgWl,
+    { type: string }
 >;
-
-export type AppDispatchWl = ThunkDispatch<AppStateWl,Gateways, Action>;

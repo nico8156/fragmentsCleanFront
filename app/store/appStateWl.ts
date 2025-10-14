@@ -1,8 +1,5 @@
 import {
-    CafeId,
-    CommentEntity,
-    CommentsStateWl, ISODate,
-    ListCommentsParams, Op,
+    CommentsStateWl, ListCommentsResult,
 } from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
 
@@ -33,14 +30,7 @@ export interface CommentsWlGateway{
         cursor: string;
         limit: number;
         signal: AbortSignal
-    }): Promise<{
-        targetId: CafeId;
-        op: Op;
-        items: CommentEntity[];
-        nextCursor?: string;
-        prevCursor?: string;
-        serverTime?: ISODate
-    }>;
+    }): Promise<ListCommentsResult>;
     create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string, body: string}):Promise<void>
 }
 
