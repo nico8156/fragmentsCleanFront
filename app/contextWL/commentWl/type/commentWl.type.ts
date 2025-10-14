@@ -13,7 +13,7 @@ export type CommentEntity = {
     optimistic?: boolean;
 }
 
-type CommentId = string;
+export type CommentId = string;
 export type CafeId = string;
 type UserId = string;
 
@@ -27,7 +27,7 @@ export type CommentsStateWl = {
             prevCursor?: string;
             loading: LoadingState;
             error?: string;
-            filters: { sort: "new" | "top"; mineOnly?: boolean }; // a voir plus tard pour cacher des views et changer des vues rapidement par filtres !
+            filters?: { sort: "new" | "top"; mineOnly?: boolean }; // a voir plus tard pour cacher des views et changer des vues rapidement par filtres !
             anchor?: ISODate;
         };
     };
@@ -62,14 +62,16 @@ export type ListCommentsParams = {
 };
 export type ListCommentsResponse = {
     items: CommentDTO[];
-    nextCursor?: string | null;
+    nextCursor: string | null;
+    serverTime: ISODate;
 };
 
 
 export const loadingStates = {
     IDLE: "IDLE",
     PENDING: "PENDING",
-    ERROR: "ERROR"
+    ERROR: "ERROR",
+    SUCCESS: "SUCCESS"
 } as const;
 
 export type LoadingState = typeof loadingStates[keyof typeof loadingStates]

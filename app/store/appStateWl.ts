@@ -1,5 +1,4 @@
 import {
-    ApiResult,
     CommentsStateWl,
     ListCommentsParams,
     ListCommentsResponse
