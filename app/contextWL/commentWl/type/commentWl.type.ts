@@ -1,6 +1,6 @@
 import {EntityState} from "@reduxjs/toolkit";
 
-type ISODate = string;
+export type ISODate = string;
 
 export type CommentEntity = {
     id: string; targetId: string; parentId?: string;
@@ -20,52 +20,36 @@ type UserId = string;
 export type CommentsStateWl = {
     entities: EntityState<CommentEntity,CommentId>;
     // Vue par café : ordre d’affichage + pagination
-    byTarget: {
-        [targetId: string]: {
-            ids: CommentId[];                 // newest → oldest (ou selon le tri courant)
-            nextCursor?: string;              // keyset pagination
-            prevCursor?: string;
-            loading: LoadingState;
-            error?: string;
-            filters?: { sort: "new" | "top"; mineOnly?: boolean }; // a voir plus tard pour cacher des views et changer des vues rapidement par filtres !
-            anchor?: ISODate;
-        };
-    };
-    byParent?: {
-        [parentId: string]: {
-            ids: CommentId[];                 // ordre local des réponses
-            nextCursor?: string;
-        };
-    };
-    ui: {
-        composing: {
-            targetId?: CafeId;
-            parentId?: CommentId;
-            draftBody: string;                // persistance AsyncStorage par (targetId+parentId)
-            sending: boolean;
-            error?: string;
-        };
-    };
+    byTarget: Record<CafeId, View>
 };
 
-export type CommentDTO = {
-    id: CommentId;
-    targetId: CafeId;
-    body: string;
-    createdAt: ISODate;
-    version: number;
+export type View = {
+    ids: CommentId[];                 // ordre matérialisé pour l’UI (newest→oldest si "new")
+    nextCursor?: string;              // pagination older
+    prevCursor?: string;              // si besoin
+    loading: LoadingState;
+    error?: string;
+    filters?: { sort: "new" | "top"; mineOnly?: boolean };
+    // Cohérence & fraicheur
+    anchor?: ISODate;                 // watermark serveur (snapshot)
+    lastFetchedAt?: ISODate;          // dernier rafraîchissement côté client
+    staleAfterMs?: number;            // TTL client (ex: 30s)
 };
+
 export type ListCommentsParams = {
     targetId: CafeId;
     cursor?: string | null;
     limit?: number; // ex: 50
 };
-export type ListCommentsResponse = {
-    items: CommentDTO[];
-    nextCursor: string | null;
-    serverTime: ISODate;
-};
 
+export type ListCommentsResult = {
+    targetId: CafeId;
+    op: Op;
+    items: CommentEntity[];
+    nextCursor?: string;
+    prevCursor?: string;
+    serverTime?: ISODate;
+};
 
 export const loadingStates = {
     IDLE: "IDLE",
@@ -84,3 +68,11 @@ export const moderationTypes = {
 } as const;
 
 export type ModerationType = typeof moderationTypes[keyof typeof moderationTypes]
+
+export const opTypes = {
+    RETRIEVE: "retrieve",
+    OLDER: "older",
+    REFRESH: "refresh"
+} as const
+
+export type Op = typeof opTypes[keyof typeof opTypes]
