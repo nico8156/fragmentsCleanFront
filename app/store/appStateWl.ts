@@ -24,6 +24,8 @@ export type GatewaysWl = {
     comments: CommentsWlGateway;
 }
 
+
+//PORT
 export interface CommentsWlGateway{
     list(params: {
         targetId: string;

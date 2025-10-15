@@ -55,7 +55,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         break;
                     }
                     case "Comment.Update":{
-                        //TODO check if valid + see reducers
                         await deps.gateways.comments.update({
                             commandId: cmd.commandId,
                             commentId: cmd.commentId,

@@ -18,16 +18,18 @@ export type OutboxItem = {
     command: {
         kind: CommandKind;
         commandId: string;
-        tempId: string;
-        targetId: string;
+        commentId?: string;
+        tempId?: string;
+        targetId?: string;
         parentId?: string;
         body?: string;
         createdAt: string;
     };
     undo: {
         kind:CommandKind;
-        tempId: string;
-        targetId: string;
+        tempId?: string;
+        commentId?: string;
+        targetId?: string;
         prevBody?: string;
         parentId?: string
     };
