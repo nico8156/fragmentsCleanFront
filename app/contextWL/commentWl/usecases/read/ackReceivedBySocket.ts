@@ -21,6 +21,9 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             } else {
                 api.dispatch(createReconciled({ tempId, server }))
             }
+            if (callback) {
+                callback();
+            }
         }
     })
     return ackReceivedBySocketUseCase

@@ -1,37 +1,27 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {DependenciesWl} from "@/app/store/appStateWl";
-import {FakeCommentGatewayWl} from "@/app/adapters/secondary/gateways/fake/fakeCommentGatewayWl";
 import {ackListenerFactory, onCommentCreatedAck} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
-import {
-    addOptimisticCreated,
-    enqueueCommitted,
-    outboxProcessOnce
-} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import {addOptimisticCreated, enqueueCommitted,} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 
 describe('On ack received from server : ', () => {
     let store: ReduxStoreWl
-    let dependencies: DependenciesWl
-    let commentGateway: FakeCommentGatewayWl
 
-    beforeEach(() => {
-        commentGateway = new FakeCommentGatewayWl()
-    })
-
-    it('should, when ack received, create a reconcile and dropCommited ',() => {
-        return new Promise(async (resolve, reject) => {
+    it('should, when ack received, create a reconcile and dropCommited ', () => {
+        return new Promise((resolve, reject) => {
             store = createReduxStoreWithListener(
                 () => {},
                 resolve,
                 reject,
             );
+            //simule enqueue + optimistic
             store.dispatch(enqueueCommitted(outboxRecord))
             store.dispatch(addOptimisticCreated({entity: commentEntity}))
+            // test if ok
             expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
+            expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
             expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
-            store.dispatch(outboxProcessOnce())
-            await flush()
+
             store.dispatch(onCommentCreatedAck({
                 commandId:"cmd_aaa111",
                 tempId:"cmt_tmp_aaa111",
@@ -41,14 +31,14 @@ describe('On ack received from server : ', () => {
                     version:2,
                 }
             }))
-            //on teste le reconcile !
+            //reconcile
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
             expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("newIdFromServer")
             expect(store.getState().cState.entities.entities["newIdFromServer"]).toBeDefined()
             expect(store.getState().cState.entities.entities["cmt_tmp_aaa111"]).toBeUndefined()
             expect(store.getState().cState.entities.entities["newIdFromServer"].version).toEqual(2)
             expect(store.getState().cState.entities.entities["newIdFromServer"].createdAt).toEqual("2025-10-10T07:00:01.000Z")
-            //on teste le dropCommited !
+            //dropCommited
             expect(store.getState().oState.byId["obx_0001"]).toBeUndefined()
             expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeUndefined()
         })
@@ -71,6 +61,7 @@ describe('On ack received from server : ', () => {
             ]
         })
     }
+
     const createOnprocessOutboxUseCaseListener = (
         doExpectations: () => void,
         resolve: (value: unknown) => void,

@@ -8,7 +8,11 @@ import {
     loadingStates, opTypes, View
 } from "@/app/contextWL/commentWl/type/commentWl.type";
 import {createReconciled, createRollback} from "@/app/contextWL/outboxWl/processOutbox";
-import {commentsRetrievalPending, commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
+import {
+    commentsRetrievalFailed,
+    commentsRetrievalPending,
+    commentsRetrieved
+} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
@@ -104,18 +108,21 @@ export const commentWlReducer = createReducer(
                 const v = ensureView(state, targetId);
                 // politique d’insertion selon l’opération
                 const newIds = items.map((i) => i.id);
+                const incomingIdsForTarget = items
+                    .filter(i => i.targetId === targetId)  // <- filtre indispensable
+                    .map(i => i.id);
 
                 if (op === opTypes.RETRIEVE) {
                     // replace (snapshot initiale)
                     v.ids = [];
-                    mergeUniqueAppend(v.ids, newIds); // ordre de la page reçue
+                    mergeUniqueAppend(v.ids, incomingIdsForTarget); // ordre de la page reçue
                     v.anchor ??= serverTime;          // set si jamais défini
                 } else if (op === opTypes.OLDER) {
                     // pagination vers le bas
-                    mergeUniqueAppend(v.ids, newIds); // append en bas
+                    mergeUniqueAppend(v.ids, incomingIdsForTarget); // append en bas
                 } else if (op === opTypes.REFRESH) {
                     // nouveaux items (plus récents que l’anchor)
-                    mergeUniquePrepend(v.ids, newIds); // prepend en haut
+                    mergeUniquePrepend(v.ids, incomingIdsForTarget); // prepend en haut
                     if (serverTime) v.anchor = serverTime; // avance la watermark
                 }
                 // cursors & flags
@@ -124,5 +131,11 @@ export const commentWlReducer = createReducer(
                 v.loading = loadingStates.SUCCESS;
                 v.error = undefined;
                 v.lastFetchedAt = new Date().toISOString();
+            })
+            .addCase(commentsRetrievalFailed,(state, action) => {
+                const {targetId, op, error} = action.payload;
+                const v = ensureView(state, targetId);
+                v.loading = loadingStates.ERROR;
+                v.error = error;
             })
     })

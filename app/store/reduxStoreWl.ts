@@ -1,11 +1,9 @@
 import {
-    Action,
     configureStore,
     Middleware,
     ThunkAction,
-    ThunkDispatch,
 } from "@reduxjs/toolkit";
-import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
+import { DependenciesWl} from "@/app/store/appStateWl";
 import { commentWlReducer as cState } from "@/app/contextWL/commentWl/reducer/commentWl.reducer"
 import { outboxWlReducer as oState } from "@/app/contextWL/outboxWl/reducer/outboxWl.reducer"
 

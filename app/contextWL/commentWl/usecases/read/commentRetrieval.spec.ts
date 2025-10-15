@@ -1,9 +1,8 @@
-import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
+import { initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
-import {AppStateWl} from "@/app/store/appStateWl";
 import {
     CommentEntity,
-    ListCommentsResult,
+    ListCommentsResult, loadingStates,
     moderationTypes,
     opTypes
 } from "@/app/contextWL/commentWl/type/commentWl.type";
@@ -12,6 +11,7 @@ import {commentRetrieval} from "@/app/contextWL/commentWl/usecases/read/commentR
 describe('On comment retrieval : ', () => {
     let store: ReduxStoreWl;
     let commentGateway: FakeCommentsWlGateway;
+
     beforeEach(() => {
         commentGateway = new FakeCommentsWlGateway();
         store = initReduxStoreWl({
@@ -22,18 +22,45 @@ describe('On comment retrieval : ', () => {
             }
         });
     })
+
+    afterEach(() => {
+        commentGateway.willFail=false;
+        commentGateway.nextCommentsResponse = null;
+    })
+
     it('should, before retrieving comment, no comment should be available ', () => {
-        expect(store.getState().cState).toEqual<AppStateWl["comments"]>({"byTarget": {}, "entities": {"entities": {}, "ids": []}});
+        expect(store.getState().cState).toEqual({"byTarget": {}, "entities": {"entities": {}, "ids": []}});
     });
-    it("should retrieve comment", async () => {
+    it("should, happy path, retrieve comment, create view with relevant states", async () => {
         commentGateway.nextCommentsResponse = aResponseFromServer
-        store.dispatch(commentRetrieval({
+        await store.dispatch(commentRetrieval({
             targetId: "post_42",
             op: opTypes.RETRIEVE,
             cursor:"cursor_0001",
             limit:20
-        }))
-        expect(store.getState().cState.entities.entities["cmt_0001"]).toBeDefined()
+        }) as any)
+        const { byTarget, entities } = store.getState().cState;
+        expect(entities.ids.length).toEqual(8)
+        expect(entities.entities["cmt_0001"]).toBeDefined()
+        expect(byTarget["post_42"].ids.every(id => entities.entities[id].targetId === "post_42")).toBe(true);
+        expect(byTarget["post_42"].ids.length).toEqual(5)
+        expect(byTarget["post_42"].loading).toEqual(loadingStates.SUCCESS)
+        expect(byTarget["post_42"].anchor).toEqual("2025-10-10T07:00:01.000Z")
+        //TODO verify good use of limit and cursor == false positive
+    })
+
+    it("should, with error, update state accordingly", async () => {
+        commentGateway.willFail = true
+        await store.dispatch(commentRetrieval({
+            targetId: "post_42",
+            op: opTypes.RETRIEVE,
+            cursor:"cursor_0001",
+            limit:20
+        }) as any)
+        expect(store.getState().cState.entities.ids.length).toEqual(0)
+        expect(store.getState().cState.byTarget["post_42"].ids.length).toEqual(0)
+        expect(store.getState().cState.byTarget["post_42"].loading).toEqual(loadingStates.ERROR)
+        expect(store.getState().cState.byTarget["post_42"].error).toEqual("Fake error from fakeCommentsWlGateway")
     })
 
     const commentListEntity: CommentEntity[] = [

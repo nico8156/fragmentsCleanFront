@@ -6,7 +6,7 @@ import {commandKinds, OutboxItem} from "@/app/contextWL/outboxWl/outbox.type";
 
 export const ccAction = createAction<{ targetId: string, body: string, parentId?: string }>("UI/COMMENT/CREATE");
 export const addOptimisticCreated = createAction<{entity:CommentEntity}>('UI/COMMENT/ADD_OPTIMISTIC_CREATED');
-export const enqueueCommitted = createAction<{id: string; item: OutboxItem; enqueuedAt: string }>('UI/COMMENT/ENQUEUE_COMMITED');
+export const enqueueCommitted = createAction<{id: string; item: OutboxItem; enqueuedAt: string }>('UI/COMMENT/ENQUEUE_COMMITTED');
 export const outboxProcessOnce = createAction("COMMENT/OUTBOXPROCESSONCE")
 
 export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () => void) => {

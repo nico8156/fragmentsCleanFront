@@ -32,6 +32,7 @@ export const outboxWlReducer = createReducer(
                 };
                 state.queue.push(id);
                 state.byCommandId[cmdId] = id;
+                return;
             })
             .addCase(markProcessing, (state, action) => {
                 const r = state.byId[action.payload.id];
