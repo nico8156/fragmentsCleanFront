@@ -40,7 +40,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 const cmd = record.item.command;
                 switch (cmd.kind) {
                     case "Comment.Create": {
-                        deps.gateways.comments.create({
+                        await deps.gateways.comments.create({
                                 commandId: cmd.commandId,
                                 targetId: cmd.targetId,
                                 parentId: cmd.parentId,
@@ -52,6 +52,22 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         // pas de reconcile ici
+                        break;
+                    }
+                    case "Comment.Update":{
+                        //TODO check if valid + see reducers
+                        await deps.gateways.comments.update({
+                            commandId: cmd.commandId,
+                            commentId: cmd.commentId,
+                            body: cmd.newBody,
+                            updatedAt: cmd.updatedAt,
+                        });
+                        const ackBy =
+                            deps.helpers?.nowIso?.() ??
+                            new Date(Date.now() + 30_000).toISOString();
+                        // succès REST → on attend l’ACK : awaitingAck + dequeue
+                        api.dispatch(markAwaitingAck({ id, ackBy}));
+                        api.dispatch(dequeueCommitted({ id }));
                         break;
                     }
                     default:

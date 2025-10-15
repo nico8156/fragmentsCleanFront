@@ -20,16 +20,22 @@ export type OutboxItem = {
         commandId: string;
         tempId: string;
         targetId: string;
-        parentId?: string   ;
-        body: string;
+        parentId?: string;
+        body?: string;
         createdAt: string;
     };
-    undo: { kind:CommandKind; tempId: string; targetId: string; parentId?: string };
+    undo: {
+        kind:CommandKind;
+        tempId: string;
+        targetId: string;
+        prevBody?: string;
+        parentId?: string
+    };
 };
 
 export const commandKinds = {
     CommentCreate: "Comment.Create",
-    CommentEdit: "Comment.Edit",
+    CommentUpdate: "Comment.Update",
     CommentDelete: "Comment.Delete",
     CommentRetrieve: "Comment.Retrieve"
 } as const;

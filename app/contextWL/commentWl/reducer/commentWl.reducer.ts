@@ -13,6 +13,7 @@ import {
     commentsRetrievalPending,
     commentsRetrieved
 } from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
+import {updateOptimisticApplied} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
@@ -137,5 +138,18 @@ export const commentWlReducer = createReducer(
                 const v = ensureView(state, targetId);
                 v.loading = loadingStates.ERROR;
                 v.error = error;
+            })
+            .addCase(updateOptimisticApplied,(state, action)=> {
+                const { commentId, newBody, clientEditedAt } = action.payload;
+                const cur = state.entities.entities[commentId];
+                if (!cur) return;
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        body: newBody,
+                        editedAt: clientEditedAt,
+                        optimistic: true, // on marque qu’un patch local est en vol
+                    },
+                });
             })
     })

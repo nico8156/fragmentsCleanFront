@@ -32,5 +32,6 @@ export interface CommentsWlGateway{
         signal: AbortSignal
     }): Promise<ListCommentsResult>;
     create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string, body: string}):Promise<void>
+    update({commandId, commentId, body, updatedAt}:{commandId: string, commentId:string, body:string, updatedAt:string}):Promise<void>
 }
 

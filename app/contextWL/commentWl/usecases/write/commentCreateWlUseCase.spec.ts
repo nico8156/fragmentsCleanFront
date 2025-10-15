@@ -1,6 +1,5 @@
 import {ccAction, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {DependenciesWl} from "@/app/store/appStateWl";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 
 describe('On comment creation button pressed : ', () => {
