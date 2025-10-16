@@ -12,6 +12,7 @@ export const markAwaitingAck = createAction<{id: string, ackBy?: string}>("OUTBO
 export const dequeueCommitted = createAction<{id: string}>("OUTBOX/DEQUEUE_COMMITTED")
 export const dropCommitted    = createAction<{ id: string }>("OUTBOX/DROP_COMMITTED")
 export const updateRollback= createAction<{ commentId: string; prevBody: string; prevVersion?: number }>("COMMENT/UPDATE_ROLLBACK");
+export const deleteRollback = createAction<{ commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string }>("COMMENT/DELETE_ROLLBACK");
 
 export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void) => {
     const processOutboxUseCase = createListenerMiddleware();
@@ -69,6 +70,21 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         api.dispatch(dequeueCommitted({ id }));
                         break;
                     }
+                    case commandKinds.CommentDelete: {
+                        await deps.gateways.comments.delete({
+                            commandId: cmd.commandId,
+                            commentId: cmd.commentId,
+                            deletedAt: cmd.deletedAt,
+                        });
+
+                        const ackBy =
+                            deps.helpers?.nowIso?.() ??
+                            new Date(Date.now() + 30_000).toISOString();
+                        // succès REST → on attend l’ACK : awaitingAck + dequeue
+                        api.dispatch(markAwaitingAck({ id, ackBy }));
+                        api.dispatch(dequeueCommitted({ id }));
+                        break;
+                    }
                     default:
                         // commande non supportée: on “ drop”
                         api.dispatch(dropCommitted({ id }));
@@ -90,6 +106,15 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         commentId: cmd.commentId,
                         prevBody:  cmd.undo.prevBody,
                         prevVersion: cmd.undo.prevVersion,
+                    }));
+                }
+                if (cmd.kind === commandKinds.CommentDelete) {
+                    const u = record.item.undo
+                    api.dispatch(deleteRollback({
+                        commentId: u.commentId,
+                        prevBody: u.prevBody,
+                        prevVersion: u.prevVersion,
+                        prevDeletedAt: u.prevDeletedAt,
                     }));
                 }
                 api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));

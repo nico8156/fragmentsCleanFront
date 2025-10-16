@@ -31,6 +31,8 @@ export type OutboxItem = {
         commentId?: string;
         targetId?: string;
         prevBody?: string;
+        prevVersion?: number;
+        prevDeletedAt?: string;
         parentId?: string
     };
 };

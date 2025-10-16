@@ -26,4 +26,7 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
     async update({ commandId, commentId, body, updatedAt }: { commandId: string; commentId: string; body: string; updatedAt: string; }): Promise<void> {
         return Promise.resolve();
     }
+    delete({ commandId, commentId, deletedAt }: { commandId: string; commentId: string;deletedAt:string }): Promise<void> {
+        return Promise.resolve();
+    }
 }

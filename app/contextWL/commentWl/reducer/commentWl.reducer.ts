@@ -7,14 +7,15 @@ import {
     CommentsStateWl,
     loadingStates, opTypes, View
 } from "@/app/contextWL/commentWl/type/commentWl.type";
-import {createReconciled, createRollback, updateRollback} from "@/app/contextWL/outboxWl/processOutbox";
+import {createReconciled, createRollback, deleteRollback, updateRollback} from "@/app/contextWL/outboxWl/processOutbox";
 import {
     commentsRetrievalFailed,
     commentsRetrievalPending,
     commentsRetrieved
 } from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 import {updateOptimisticApplied} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
-import {updateReconciled} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {deleteReconciled, updateReconciled} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {deleteOptimisticApplied} from "@/app/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
@@ -66,6 +67,37 @@ export const commentWlReducer = createReducer(
                 }
                 return
             })
+            .addCase(updateOptimisticApplied,(state, action)=> {
+                const { commentId, newBody, clientEditedAt } = action.payload;
+                const cur = state.entities.entities[commentId];
+                if (!cur) return;
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        body: newBody,
+                        editedAt: clientEditedAt,
+                        optimistic: true, // on marque qu’un patch local est en vol
+                    },
+                });
+            })
+            .addCase(deleteOptimisticApplied,(state, action)=> {
+                const { commentId, clientDeletedAt } = action.payload;
+                const c = state.entities.entities[commentId];
+                if (!c) return;
+
+                // Soft delete : on garde l'ID pour la cohérence des threads
+                // On met un "tombstone" (deletedAt + moderation SOFT_DELETED).
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        deletedAt: clientDeletedAt,
+                        moderation: "SOFT_DELETED",
+                        optimistic: true,
+                        // (option) tu peux masquer le body immédiatement côté UI,
+                        // mais garde-le en state pour pouvoir rollback (on n'efface pas ici).
+                    }
+                });
+            })
             .addCase(createReconciled,(state, action) => {
                 const { tempId, server } = action.payload;
                 const temp = state.entities.entities[tempId];
@@ -98,6 +130,36 @@ export const commentWlReducer = createReducer(
                         editedAt: server.editedAt,
                         version: server.version,
                         optimistic: false,
+                    },
+                });
+            })
+            .addCase(deleteReconciled, (state, { payload: { commentId, server } }) => {
+                const c = state.entities.entities[commentId];
+                if (!c) return;
+
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        deletedAt: server.deletedAt,
+                        version: server.version,
+                        optimistic: false,
+                        // (option) : blank body côté rendu si tu veux un "tombstone" visuel
+                        // body: c.body, // on ne touche pas au body ici si tu veux le garder pour modération interne
+                    },
+                });
+            })
+            .addCase(deleteRollback, (state, { payload: { commentId, prevBody, prevVersion, prevDeletedAt } }) => {
+                const c = state.entities.entities[commentId];
+                if (!c) return;
+
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        body: prevBody,
+                        version: prevVersion ?? c.version,
+                        deletedAt: prevDeletedAt, // souvent undefined (restaure)
+                        optimistic: false,
+                        moderation: c.moderation === "SOFT_DELETED" ? "PUBLISHED" : c.moderation,
                     },
                 });
             })
@@ -168,17 +230,5 @@ export const commentWlReducer = createReducer(
                 v.loading = loadingStates.ERROR;
                 v.error = error;
             })
-            .addCase(updateOptimisticApplied,(state, action)=> {
-                const { commentId, newBody, clientEditedAt } = action.payload;
-                const cur = state.entities.entities[commentId];
-                if (!cur) return;
-                adapter.updateOne(state.entities, {
-                    id: commentId,
-                    changes: {
-                        body: newBody,
-                        editedAt: clientEditedAt,
-                        optimistic: true, // on marque qu’un patch local est en vol
-                    },
-                });
-            })
+
     })
