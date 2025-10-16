@@ -21,9 +21,9 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         return this.nextCommentsResponse!;
     }
     async create({ commandId, targetId, parentId, body }: { commandId: string; targetId: string; parentId?: string; body: string; }): Promise<void> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve();
     }
     async update({ commandId, commentId, body, updatedAt }: { commandId: string; commentId: string; body: string; updatedAt: string; }): Promise<void> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve();
     }
 }

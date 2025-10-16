@@ -2,7 +2,7 @@ import {createAction, createListenerMiddleware, TypedStartListening} from "@redu
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds, statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
 
 export const markProcessing = createAction<{id:string}>("OUTBOX/MARK_PROCESSING")
 export const createReconciled = createAction<{ tempId: string; server: { id: string; createdAt: string; version: number }}>("COMMENT/CREATE_RECONCILED")
@@ -11,6 +11,7 @@ export const createRollback = createAction<{ tempId: string; targetId: string; p
 export const markAwaitingAck = createAction<{id: string, ackBy?: string}>("OUTBOX/MARK_AWAITING_ACK")
 export const dequeueCommitted = createAction<{id: string}>("OUTBOX/DEQUEUE_COMMITTED")
 export const dropCommitted    = createAction<{ id: string }>("OUTBOX/DROP_COMMITTED")
+export const updateRollback= createAction<{ commentId: string; prevBody: string; prevVersion?: number }>("COMMENT/UPDATE_ROLLBACK");
 
 export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void) => {
     const processOutboxUseCase = createListenerMiddleware();
@@ -21,7 +22,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
         effect: async (action, api)=>{
             const {queue} = (api.getState() as any).oState
             // if (!outbox || !Array.isArray(outbox.queue)) return;
-            //
             // const queue: string[] = outbox.queue;
             const id = queue[0];
             if (!id) return; // rien à faire
@@ -39,7 +39,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             try {
                 const cmd = record.item.command;
                 switch (cmd.kind) {
-                    case "Comment.Create": {
+                    case commandKinds.CommentCreate: {
                         await deps.gateways.comments.create({
                                 commandId: cmd.commandId,
                                 targetId: cmd.targetId,
@@ -54,7 +54,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         // pas de reconcile ici
                         break;
                     }
-                    case "Comment.Update":{
+                    case commandKinds.CommentUpdate:{
                         await deps.gateways.comments.update({
                             commandId: cmd.commandId,
                             commentId: cmd.commentId,
@@ -77,14 +77,20 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             } catch (e: any) {
                 // échec: rollback + fail + drop (simple pour l’instant)
                 const cmd = record.item.command;
-                if (cmd.kind === "Comment.Create") {
-                    api.dispatch(
-                        createRollback({
+                if (cmd.kind === commandKinds.CommentCreate) {
+                    api.dispatch(createRollback({
                             tempId: cmd.tempId,
                             targetId: cmd.targetId,
                             parentId: cmd.parentId,
                         })
                     );
+                }
+                if (cmd.kind === commandKinds.CommentUpdate) {
+                    api.dispatch(updateRollback({
+                        commentId: cmd.commentId,
+                        prevBody:  cmd.undo.prevBody,
+                        prevVersion: cmd.undo.prevVersion,
+                    }));
                 }
                 api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
                 api.dispatch(dequeueCommitted({ id }));

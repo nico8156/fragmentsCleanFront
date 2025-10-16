@@ -16,19 +16,27 @@ export const commentUpdateWlUseCase = (deps:DependenciesWl, callback?:()=> void)
         effect: async (action, api) => {
             const {commentId, newBody} = action.payload
             const trimmed = newBody.trim();
-            if (!trimmed) return;
+            if (!trimmed) {
+                if (callback) {
+                    callback();
+                }
+                return
+            };
 
             const state = api.getState() as any;
             const c = state.cState.entities.entities[commentId];
-            if (!c) return;
+            if (!c){
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
 
             const commandId = `cmd_${nanoid()}`;
             const outboxId  = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;
             const updatedAt = deps.helpers?.nowIso?.() ?? new Date().toISOString();
-
             // 1) optimistic
             api.dispatch(updateOptimisticApplied({ commentId, newBody: trimmed, clientEditedAt: updatedAt }));
-
             // 2) enqueue
             api.dispatch(enqueueCommitted({
                 id: outboxId,
@@ -38,7 +46,8 @@ export const commentUpdateWlUseCase = (deps:DependenciesWl, callback?:()=> void)
                 },
                 enqueuedAt: updatedAt,
             }));
-
+            //dispatch du process de l'outbox !
+            api.dispatch(outboxProcessOnce())
             if (callback) {
                 callback();
             }

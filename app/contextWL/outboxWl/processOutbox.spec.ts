@@ -5,17 +5,18 @@ import {processOutboxFactory} from "@/app/contextWL/outboxWl/processOutbox";
 import {commandKinds, statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
 import {FakeCommentGatewayWl} from "@/app/adapters/secondary/gateways/fake/fakeCommentGatewayWl";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 
 describe('On outboxProcessOnce triggered : ', () => {
     let store: ReduxStoreWl
     let dependencies: DependenciesWl
-    let commentGateway: FakeCommentGatewayWl
+    let commentGateway: FakeCommentsWlGateway
 
     beforeEach(() => {
-        commentGateway = new FakeCommentGatewayWl()
+        commentGateway = new FakeCommentsWlGateway()
     })
     afterEach(() => {
-        commentGateway.willFailCode = false
+        commentGateway.willFail = false
     })
     it('should, when happy path, mark status to awaitingAck and enqueue',() => {
         return new Promise(async (resolve, reject) => {
@@ -46,7 +47,7 @@ describe('On outboxProcessOnce triggered : ', () => {
         })
     })
     it('should, when gateway throw error, update comment and outbox state',() => {
-        commentGateway.willFailCode = true
+        commentGateway.willFail = true
         return new Promise(async (resolve, reject) => {
             store = createReduxStoreWithListener(
                 () => expectActualOutboxwithErrorThrown(),
@@ -141,7 +142,7 @@ describe('On outboxProcessOnce triggered : ', () => {
         id: "obx_0001",
         item: {
             command: {
-                kind: commandKinds.CommentEdit,
+                kind: commandKinds.CommentUpdate,
                 commandId: "cmd_aaa111",
                 tempId: "cmt_tmp_aaa111",
                 targetId: "cafe_fragments_rennes",
@@ -149,7 +150,7 @@ describe('On outboxProcessOnce triggered : ', () => {
                 createdAt: "2025-10-10T07:00:00.000Z",
             },
             undo: {
-                kind: commandKinds.CommentEdit,
+                kind: commandKinds.CommentUpdate,
                 tempId: "cmt_tmp_aaa111",
                 targetId: "cafe_fragments_rennes",
             },

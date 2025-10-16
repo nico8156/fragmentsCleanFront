@@ -43,6 +43,10 @@ describe('On ack received from server : ', () => {
             expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeUndefined()
         })
     });
+    it('should, on update comment, when ack received, create a reconcile and dropCommited ', () => {
+
+
+    })
 
     const flush = () => new Promise<void>(r => setTimeout(r, 0));
 

@@ -63,7 +63,6 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
             if (callback) {
                 callback();
             }
-
         }
     })
     return ccUseCase;

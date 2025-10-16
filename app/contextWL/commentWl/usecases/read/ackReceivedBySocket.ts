@@ -4,6 +4,11 @@ import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {createReconciled, dropCommitted} from "@/app/contextWL/outboxWl/processOutbox";
 
 export const onCommentCreatedAck = createAction<{commandId: string; tempId: string; server: { id: string; createdAt: string; version: number }}>("SERVER/COMMENT/ON_COMMENT_CREATED_ACK")
+export const onCommentUpdatedAck = createAction<{ commandId: string; commentId: string; server: { editedAt: string; version: number; body?: string } }>("SERVER/COMMENT/ON_COMMENT_UPDATED_ACK")
+export const updateReconciled = createAction<{ commentId: string; server: { editedAt: string; version: number; body?: string } }>("COMMENT/UPDATE_RECONCILED");
+
+const selectOutboxByCommandId = (s: AppStateWl, cmdId: string) =>
+    (s as any).oState?.byCommandId?.[cmdId];
 
 export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) => {
     const ackReceivedBySocketUseCase = createListenerMiddleware()
@@ -21,6 +26,21 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             } else {
                 api.dispatch(createReconciled({ tempId, server }))
             }
+            if (callback) {
+                callback();
+            }
+        }
+    })
+    listener({
+        actionCreator: onCommentUpdatedAck,
+        effect: async (action, api) => {
+
+            const { commandId, commentId, server } = action.payload;
+            // 1) reconcile
+            api.dispatch(updateReconciled({ commentId, server }));
+            // 2) drop outbox if present
+            const outboxId = selectOutboxByCommandId(api.getState(), commandId);
+            if (outboxId) api.dispatch(dropCommitted({ id: outboxId }));
             if (callback) {
                 callback();
             }

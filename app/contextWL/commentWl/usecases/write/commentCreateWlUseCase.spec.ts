@@ -29,7 +29,6 @@ describe('On comment creation button pressed : ', () => {
                 () => {
                     expect(store.getState().cState.entities.entities).toStrictEqual({})
                     expect(store.getState().cState.byTarget["un id de cafe"]).toBeUndefined()
-
                     expect(store.getState().oState.queue.length).toEqual(0);
                 },
                 resolve,
@@ -55,12 +54,12 @@ describe('On comment creation button pressed : ', () => {
             ]
         })
     }
+
     function expectActualCommentAndOutbox() {
         const tid  = "un id de cafe";
         const tmp  = "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT";
         const obx  = "obc_tmp_Yffc7N3rOvXUYWMCLZnGT";
         const s    = store.getState();
-        console.log(store.getState().cState.byTarget["un id de cafe"])
         // Vue par target
         expect(s.cState.byTarget[tid]).toBeDefined();
         expect(s.cState.byTarget[tid]!.ids[0]).toEqual(tmp); // prepend (tri "new")

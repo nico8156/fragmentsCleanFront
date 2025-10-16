@@ -7,13 +7,14 @@ import {
     CommentsStateWl,
     loadingStates, opTypes, View
 } from "@/app/contextWL/commentWl/type/commentWl.type";
-import {createReconciled, createRollback} from "@/app/contextWL/outboxWl/processOutbox";
+import {createReconciled, createRollback, updateRollback} from "@/app/contextWL/outboxWl/processOutbox";
 import {
     commentsRetrievalFailed,
     commentsRetrievalPending,
     commentsRetrieved
 } from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 import {updateOptimisticApplied} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import {updateReconciled} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
@@ -63,6 +64,7 @@ export const commentWlReducer = createReducer(
                     const parent = state.entities.entities[c.parentId];
                     if (parent) parent.replyCount += 1;
                 }
+                return
             })
             .addCase(createReconciled,(state, action) => {
                 const { tempId, server } = action.payload;
@@ -85,6 +87,20 @@ export const commentWlReducer = createReducer(
                     for (let i = 0; i < v.ids.length; i++) if (v.ids[i] === tempId) v.ids[i] = server.id;
                 }
             })
+            .addCase(updateReconciled, (state, action)=> {
+                const { commentId, server } = action.payload;
+                const cur = state.entities.entities[commentId];
+                if (!cur) return;
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        body: server.body ?? cur.body, // si le serveur renvoie un body modéré
+                        editedAt: server.editedAt,
+                        version: server.version,
+                        optimistic: false,
+                    },
+                });
+            })
             .addCase(createRollback,(state,action)=> {
                 const { tempId, targetId, parentId } = action.payload;
                 adapter.removeOne(state.entities, tempId);
@@ -94,6 +110,19 @@ export const commentWlReducer = createReducer(
                     const parent = state.entities.entities[parentId];
                     if (parent && parent.replyCount > 0) parent.replyCount -= 1;
                 }
+            })
+            .addCase(updateRollback,(state,action)=> {
+                const { commentId, prevBody, prevVersion } = action.payload;
+                const cur = state.entities.entities[commentId];
+                if (!cur) return;
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        body: prevBody,
+                        version: prevVersion ?? cur.version,
+                        optimistic: false,
+                    },
+                });
             })
             .addCase(commentsRetrievalPending,(state, action) => {
                 const {targetId} = action.payload;
