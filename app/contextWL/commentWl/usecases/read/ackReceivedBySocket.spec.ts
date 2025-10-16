@@ -1,5 +1,9 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {ackListenerFactory, onCommentCreatedAck} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {
+    ackListenerFactory,
+    onCommentCreatedAck,
+    onCommentUpdatedAck
+} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
 import {addOptimisticCreated, enqueueCommitted,} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
@@ -44,15 +48,34 @@ describe('On ack received from server : ', () => {
         })
     });
     it('should, on update comment, when ack received, create a reconcile and dropCommited ', () => {
-
-
+        return new Promise((resolve, reject) => {
+            store = createReduxStoreWithListener(
+                () => {
+                    expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
+                    expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids[0]).toEqual("cmt_tmp_aaa111")
+                    expect(store.getState().cState.entities.entities["cmt_tmp_aaa111"].body).toEqual("un commentaire modifié")
+                },
+                resolve,
+                reject,
+            );
+            //simule enqueue + optimistic
+            store.dispatch(enqueueCommitted(outboxRecord))
+            store.dispatch(addOptimisticCreated({entity: commentEntity}))
+            expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
+            expect(store.getState().cState.byTarget["cafe_fragments_rennes"].ids.length).toEqual(1)
+            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
+            store.dispatch(onCommentUpdatedAck({
+                commandId:"cmd_aaa111",
+                commentId:"cmt_tmp_aaa111",
+                server:{
+                    body:"un commentaire modifié",
+                    editedAt:"2025-10-10T07:00:01.000Z",
+                    version:2,
+                }
+            }))
+        })
     })
 
-    const flush = () => new Promise<void>(r => setTimeout(r, 0));
-
-    // function expectActualOutbox() {
-    //     expect(store.getState().oState.queue.length).toEqual(1);
-    // }
     function createReduxStoreWithListener(
         doExpectations: () => void,
         resolve: (value: unknown) => void,
