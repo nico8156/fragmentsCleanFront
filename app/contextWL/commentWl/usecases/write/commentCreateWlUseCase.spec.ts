@@ -1,4 +1,4 @@
-import {ccAction, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import {uiCommentCreateRequested, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 
@@ -17,7 +17,7 @@ describe('On comment creation button pressed : ', () => {
                 resolve,
                 reject,
             );
-            store.dispatch(ccAction({
+            store.dispatch(uiCommentCreateRequested({
                 targetId:"un id de cafe",
                 body:"un commentaire",
             }))
@@ -34,7 +34,7 @@ describe('On comment creation button pressed : ', () => {
                 resolve,
                 reject,
             );
-            store.dispatch(ccAction({
+            store.dispatch(uiCommentCreateRequested({
                 targetId:"un id de cafe",
                 body:"",
             }))

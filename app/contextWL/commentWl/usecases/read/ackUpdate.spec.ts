@@ -7,7 +7,7 @@ import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/comme
 import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
-describe("Update ACK (reconcile + drop outbox)", () => {
+describe("On Update ACK received (reconcile + drop outbox)", () => {
     let store: ReduxStoreWl;
     const flush = () => new Promise<void>(r => setTimeout(r, 0));
 

@@ -1,49 +1,64 @@
+// commentDelete.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
 import {
     commentDeleteUseCaseFactory,
     uiCommentDeleteRequested
 } from "@/app/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
 
 describe("On comment delete button pressed :", () => {
     let store: ReduxStoreWl;
 
-    it("should apply optimistic tombstone and enqueue delete command", () => {
-        return new Promise((resolve, reject) => {
-            store = createReduxStoreWithListener(
-                () => expectActualCommentAndOutbox(),
-                resolve,
-                reject,
-            );
-            store.dispatch(commentsRetrieved({
-                    targetId: "cafe_fragments_rennes",
-                    op: opTypes.RETRIEVE,
-                    items: [
-                        {
-                            id: "cmt_0001",
-                            targetId: "cafe_fragments_rennes",
-                            body: "Excellent flat white, ambiance au top.",
-                            authorId: "user_1",
-                            createdAt: "2025-10-10T07:00:00.000Z",
-                            likeCount: 0,
-                            replyCount: 0,
-                            moderation: moderationTypes.PUBLISHED,
-                            version: 1,
-                        },
-                    ],
-                    nextCursor: undefined,
-                    prevCursor: undefined,
-                    serverTime: "2025-10-10T07:00:01.000Z",
-                }) as any
-            );
-            store.dispatch(uiCommentDeleteRequested({ commentId: "cmt_0001" }));
-        })
+    beforeEach(() => {
+        // store avec listener Delete + helpers déterministes
+        store = initReduxStoreWl({
+            dependencies: {},
+            listeners: [
+                commentDeleteUseCaseFactory({
+                    gateways: {}, // pas de call réseau ici
+                    helpers: {
+                        nowIso: () => "2025-10-10T07:00:02.000Z",
+                        getCommandIdForTests: () => "obx_del_0001", // ← outboxId stable
+                    },
 
+                }).middleware,
+            ],
+        });
+
+        // Seed : simulons un retrieve serveur pour avoir un commentaire "réel" (non-optimistic)
+        store.dispatch(
+            commentsRetrieved({
+                targetId: "cafe_fragments_rennes",
+                op: opTypes.RETRIEVE,
+                items: [
+                    {
+                        id: "cmt_0001",
+                        targetId: "cafe_fragments_rennes",
+                        body: "Excellent flat white, ambiance au top.",
+                        authorId: "user_1",
+                        createdAt: "2025-10-10T07:00:00.000Z",
+                        likeCount: 0,
+                        replyCount: 0,
+                        moderation: moderationTypes.PUBLISHED,
+                        version: 1,
+                    },
+                ],
+                nextCursor: undefined,
+                prevCursor: undefined,
+                serverTime: "2025-10-10T07:00:01.000Z",
+            }) as any
+        );
     });
 
-    function expectActualCommentAndOutbox() {
+    it("should apply optimistic tombstone and enqueue delete command", () => {
+        // Sanity: le commentaire existe avant delete
+        expect(store.getState().cState.entities.entities["cmt_0001"]).toBeDefined();
+
+        // Act: on demande la suppression
+        store.dispatch(uiCommentDeleteRequested({ commentId: "cmt_0001" }));
+
         const s = store.getState();
 
         // 1) Optimistic tombstone sur l’entité
@@ -74,42 +89,5 @@ describe("On comment delete button pressed :", () => {
         // 3) La vue par target conserve l’ID (tombstone)
         const viewIds = s.cState.byTarget["cafe_fragments_rennes"].ids;
         expect(viewIds).toContain("cmt_0001"); // on garde l’ID pour la cohérence des threads
-    }
-
-    function createReduxStoreWithListener(
-        doExpectations: () => void,
-        resolve: (value: unknown) => void,
-        reject: () => void,
-    ) {
-        return initReduxStoreWl({
-            dependencies:{
-            },
-            listeners:[
-                createOncdListener(doExpectations, resolve, reject),
-            ]
-        })
-    }
-    const createOncdListener = (
-        doExpectations: () => void,
-        resolve: (value: unknown) => void,
-        reject: (reason?: unknown) => void,
-    )=>{
-        return commentDeleteUseCaseFactory({
-            gateways: {
-            },
-            helpers: {
-                nowIso: () => "2025-10-10T07:00:02.000Z",
-                currentUserId: () => "testUser",
-                getCommentIdForTests: () => "cmt_tmp_Yffc7N3rOvXUYWMCLZnGT",
-                getCommandIdForTests: () => "obx_del_0001"
-            }
-        }, () => {
-            try {
-                doExpectations();
-                resolve({});
-            } catch (error) {
-                reject(error);
-            }
-        }).middleware;
-    }
+    });
 });

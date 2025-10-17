@@ -23,7 +23,8 @@ export type OutboxItem = {
         targetId?: string;
         parentId?: string;
         body?: string;
-        createdAt: string;
+        createdAt?: string;
+        deletedAt?: string;
     };
     undo: {
         kind:CommandKind;
