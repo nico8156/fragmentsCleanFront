@@ -22,6 +22,7 @@ export class FakeLikesGateway {
 
     async add(_: { commandId: string; targetId: string; at: string }) {
         if (this.willFailAdd) throw new Error("likes add failed");
+        return Promise.resolve();
     }
 
     async remove(_: { commandId: string; targetId: string; at: string }) {
