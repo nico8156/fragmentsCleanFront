@@ -30,7 +30,7 @@ export interface TicketAggregate {
 }
 
 // Slice tickets
-export interface TkState {
+export interface TicketsStateWl {
     byId: Record<TicketId, TicketAggregate>;
 }
 

@@ -3,10 +3,12 @@ import {
 } from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
 import { LikesStateWl} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
+import {TicketsGateway, TicketsStateWl} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
 export interface AppStateWl {
     comments:CommentsStateWl;
     likes:LikesStateWl;
+    tickets:TicketsStateWl;
     outbox:OutboxStateWl
 }
 
@@ -24,7 +26,8 @@ export type helpersType = {
 
 export type GatewaysWl = {
     comments: CommentsWlGateway;
-    likes: LikeWlGateway
+    likes: LikeWlGateway;
+    tickets: TicketsGateway
 }
 //PORT === LIKE
 export interface LikeWlGateway{
