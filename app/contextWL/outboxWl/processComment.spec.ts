@@ -3,7 +3,8 @@ import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/contextWL/outboxWl/processOutbox";
 import { outboxProcessOnce } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commandKinds, statusTypes } from "@/app/contextWL/outboxWl/outbox.type";
-import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // si tu as une action dédiée
+import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway"; // si tu as une action dédiée
 // si tu n'as pas d'action 'enqueueCommitted' exportée, tu peux dispatcher directement un "hydrate" custom, ou muter le state via un reducer test-only.
 
 describe("processOutboxFactory", () => {
@@ -40,7 +41,8 @@ describe("processOutboxFactory", () => {
     // ---------- CREATE ----------
     it("CREATE — happy path: queued → processing → awaitingAck + dequeue", async () => {
         const comments = new FakeCommentsGateway();
-        store = initStore({ comments }, { nowIso: () => "2025-10-10T07:00:30.000Z" });
+        const likes = new FakeLikesGateway();
+        store = initStore({ comments, likes }, { nowIso: () => "2025-10-10T07:00:30.000Z" });
 
         // seed: record en queue
         store.dispatch(
@@ -77,8 +79,9 @@ describe("processOutboxFactory", () => {
 
     it("CREATE — error: rollback + failed + dequeue", async () => {
         const comments = new FakeCommentsGateway();
+        const likes = new FakeLikesGateway();
         comments.willFailCreate = true;
-        store = initStore({ comments });
+        store = initStore({ comments , likes});
 
         store.dispatch(
             enqueueCommitted({
@@ -112,7 +115,8 @@ describe("processOutboxFactory", () => {
     // ---------- UPDATE ----------
     it("UPDATE — happy path: queued → processing → awaitingAck + dequeue", async () => {
         const comments = new FakeCommentsGateway();
-        store = initStore({ comments }, { nowIso: () => "2025-10-10T07:00:31.000Z" });
+        const likes = new FakeLikesGateway();
+        store = initStore({ comments, likes }, { nowIso: () => "2025-10-10T07:00:31.000Z" });
 
         store.dispatch(
             enqueueCommitted({
@@ -148,8 +152,9 @@ describe("processOutboxFactory", () => {
 
     it("UPDATE — error: rollback + failed + dequeue", async () => {
         const comments = new FakeCommentsGateway();
+        const likes = new FakeLikesGateway();
         comments.willFailUpdate = true;
-        store = initStore({ comments });
+        store = initStore({ comments, likes });
 
         store.dispatch(
             enqueueCommitted({
@@ -186,7 +191,8 @@ describe("processOutboxFactory", () => {
     // ---------- DELETE ----------
     it("DELETE — happy path: queued → processing → awaitingAck + dequeue", async () => {
         const comments = new FakeCommentsGateway();
-        store = initStore({ comments }, { nowIso: () => "2025-10-10T07:00:32.000Z" });
+        const likes = new FakeLikesGateway();
+        store = initStore({ comments, likes }, { nowIso: () => "2025-10-10T07:00:32.000Z" });
 
         store.dispatch(
             enqueueCommitted({
@@ -222,8 +228,9 @@ describe("processOutboxFactory", () => {
 
     it("DELETE — error: rollback + failed + dequeue", async () => {
         const comments = new FakeCommentsGateway();
+        const likes = new FakeLikesGateway();
         comments.willFailDelete = true;
-        store = initStore({ comments });
+        store = initStore({ comments, likes });
 
         store.dispatch(
             enqueueCommitted({
@@ -260,7 +267,8 @@ describe("processOutboxFactory", () => {
     // ---------- UNSUPPORTED ----------
     it("Unsupported command — drop + dequeue (no fail)", async () => {
         const comments = new FakeCommentsGateway();
-        store = initStore({ comments });
+        const likes = new FakeLikesGateway();
+        store = initStore({ comments, likes });
 
         // Seed d'une commande inconnue
         store.dispatch(
