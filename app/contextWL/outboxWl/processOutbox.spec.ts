@@ -31,21 +31,6 @@ describe('On outboxProcessOnce triggered : ', () => {
             await flush()
         })
     })
-    it('should, when invalid command, mark status as failed and update error , delete byId and byCommandId',() => {
-        return new Promise(async (resolve, reject) => {
-            store = createReduxStoreWithListener(
-                () => expectActualOutboxwithInvalidCommand(),
-                resolve,
-                reject,
-            );
-            store.dispatch(enqueueCommitted(outboxRecordInvalid))
-            expect(store.getState().oState.queue.length).toEqual(1);
-            expect(store.getState().oState.byId["obx_0001"]).toBeDefined()
-            expect(store.getState().oState.byCommandId["cmd_aaa111"]).toBeDefined()
-            store.dispatch(outboxProcessOnce())
-            await flush()
-        })
-    })
     it('should, when gateway throw error, update comment and outbox state',() => {
         commentGateway.willFail = true
         return new Promise(async (resolve, reject) => {

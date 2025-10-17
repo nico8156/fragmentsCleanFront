@@ -159,8 +159,8 @@ describe("processOutboxFactory", () => {
                         kind: commandKinds.CommentUpdate,
                         commandId: "cmd_upd_002",
                         commentId: "cmt_0001",
-                        body: "new text 2",
-                        createdAt: "2025-10-10T07:00:12.000Z",
+                        newBody: "new text 2",
+                        updatedAt: "2025-10-10T07:00:12.000Z",
                     },
                     undo: {
                         kind: commandKinds.CommentUpdate,

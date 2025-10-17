@@ -18,6 +18,7 @@ export const commentsRetrievalFailed = createAction<{ targetId: CafeId; op: Op; 
 );
 
 const inflight = new Map<string, AbortController>();
+
 const keyOf = (targetId: string, op: Op) => `${op}:${targetId}`;
 
 export const commentRetrieval = ({ targetId, op, cursor, limit=20 }:{ targetId: CafeId; op: Op; cursor: string; limit: number }) : AppThunkWl<Promise<void>> =>

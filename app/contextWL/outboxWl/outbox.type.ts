@@ -23,8 +23,11 @@ export type OutboxItem = {
         targetId?: string;
         parentId?: string;
         body?: string;
+        newBody?: string;
+        version?: number;
         createdAt?: string;
         deletedAt?: string;
+        updatedAt?: string;
     };
     undo: {
         kind:CommandKind;
@@ -33,6 +36,8 @@ export type OutboxItem = {
         targetId?: string;
         prevBody?: string;
         prevVersion?: number;
+        prevCount?:number;
+        prevMe?: boolean;
         prevDeletedAt?: string;
         parentId?: string
     };
@@ -42,7 +47,9 @@ export const commandKinds = {
     CommentCreate: "Comment.Create",
     CommentUpdate: "Comment.Update",
     CommentDelete: "Comment.Delete",
-    CommentRetrieve: "Comment.Retrieve"
+    CommentRetrieve: "Comment.Retrieve",
+    LikeAdd:    "Like.Add",
+    LikeRemove: "Like.Remove",
 } as const;
 
 export type CommandKind = typeof commandKinds[keyof typeof commandKinds];

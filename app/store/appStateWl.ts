@@ -2,9 +2,11 @@ import {
     CommentsStateWl, ListCommentsResult,
 } from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/outbox.type";
+import { LikesStateWl} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
 
 export interface AppStateWl {
     comments:CommentsStateWl;
+    likes:LikesStateWl;
     outbox:OutboxStateWl
 }
 
@@ -22,10 +24,15 @@ export type helpersType = {
 
 export type GatewaysWl = {
     comments: CommentsWlGateway;
+    likes: LikeWlGateway
 }
-
-
-//PORT
+//PORT === LIKE
+export interface LikeWlGateway{
+    get({ targetId, signal}:{ targetId:string, signal:AbortSignal}):Promise<{ count: number; me: boolean; version: number; serverTime?: string}>
+    add({commandId, targetId, userId, at}:{commandId: string, targetId: string, userId: string, at: string}):Promise<void>
+    remove({commandId, targetId, userId, at}:{commandId: string, targetId: string, userId: string, at: string}):Promise<void>
+}
+//PORT === COMMENT
 export interface CommentsWlGateway{
     list(params: {
         targetId: string;
