@@ -10,10 +10,6 @@ import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
 describe("On comment delete button pressed :", () => {
     let store: ReduxStoreWl;
 
-    beforeEach(() => {
-
-    });
-
     it("should apply optimistic tombstone and enqueue delete command", () => {
         return new Promise((resolve, reject) => {
             store = createReduxStoreWithListener(
@@ -48,8 +44,6 @@ describe("On comment delete button pressed :", () => {
     });
 
     function expectActualCommentAndOutbox() {
-        //store.dispatch(uiCommentDeleteRequested({ commentId: "cmt_0001" }));
-
         const s = store.getState();
 
         // 1) Optimistic tombstone sur l’entité

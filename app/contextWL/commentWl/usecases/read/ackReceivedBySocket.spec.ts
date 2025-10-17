@@ -1,17 +1,22 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {
     ackListenerFactory,
-    onCommentCreatedAck,
+    onCommentCreatedAck, onCommentDeletedAck,
     onCommentUpdatedAck
 } from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
 import {addOptimisticCreated, enqueueCommitted,} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {moderationTypes, opTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
+
+const flush = () => new Promise<void>(r => setTimeout(r, 0));
 
 describe('On ack received from server : ', () => {
+
+    const flush = () => new Promise<void>(r => setTimeout(r, 0));
     let store: ReduxStoreWl
 
-    it('should, when ack received, create a reconcile and dropCommited ', () => {
+    it('should, on create comment, when ack received, create a reconcile and dropCommited ', () => {
         return new Promise((resolve, reject) => {
             store = createReduxStoreWithListener(
                 () => {},
@@ -75,6 +80,95 @@ describe('On ack received from server : ', () => {
             }))
         })
     })
+    it('should, on delete comment, when ack received, create a reconcile and dropCommited ', async () => {
+        store = initReduxStoreWl({
+            dependencies: {},
+            listeners: [ackListenerFactory({
+                gateways: {
+                },
+                helpers: {
+                    nowIso: () => new Date().toISOString(),
+                }
+            },
+                () => {}).middleware] // important: passer l'objet listener (pas .middleware si ton init le mappe déjà)
+        });
+        store.dispatch(
+            commentsRetrieved({
+                targetId: "cafe_fragments_rennes",
+                op: opTypes.RETRIEVE,
+                items: [
+                    {
+                        id: "cmt_0001",
+                        targetId: "cafe_fragments_rennes",
+                        body: "Excellent flat white, ambiance au top.",
+                        authorId: "user_1",
+                        createdAt: "2025-10-10T07:00:00.000Z",
+                        likeCount: 0,
+                        replyCount: 0,
+                        moderation: moderationTypes.PUBLISHED,
+                        version: 1,
+                    },
+                ],
+                nextCursor: undefined,
+                prevCursor: undefined,
+                serverTime: "2025-10-10T07:00:01.000Z",
+            }) as any
+        );
+
+        // Seed: un record outbox “delete” en attente (simulateur : already queued + byCommandId)
+        store.dispatch(
+            enqueueCommitted({
+                id: "obx_del_0001",
+                item: {
+                    command: {
+                        kind: commandKinds.CommentDelete,
+                        commandId: "cmd_del_123",
+                        commentId: "cmt_0001",
+                        createdAt: "2025-10-10T07:00:02.000Z",
+                    },
+                    undo: {
+                        kind: commandKinds.CommentDelete,
+                        commentId: "cmt_0001",
+                        prevBody: "Excellent flat white, ambiance au top.",
+                        prevVersion: 1,
+                    },
+                },
+                enqueuedAt: "2025-10-10T07:00:02.000Z",
+            })
+        );
+        store.dispatch(
+            onCommentDeletedAck({
+                commandId: "cmd_del_123",
+                commentId: "cmt_0001",
+                server: {
+                    deletedAt: "2025-10-10T07:05:00.000Z", // horodatage serveur
+                    version: 2,
+                },
+            })
+        );
+
+        await flush(); // laisser le listener agir
+
+        const s = store.getState();
+
+        // 1) Reconcile: l’entité est tombstonée avec les infos serveur et plus optimistic
+        const c = s.cState.entities.entities["cmt_0001"];
+        expect(c).toBeDefined();
+        expect(c.deletedAt).toBe("2025-10-10T07:05:00.000Z");
+        expect(c.version).toBe(2);
+        expect(c.optimistic).toBe(false);
+        // (optionnel) garder/modifier moderation
+        // expect(c.moderation).toBe(moderationTypes.SOFT_DELETED);
+
+        // 2) L’ID reste bien dans la vue (tombstone visible pour la cohérence du thread)
+        expect(s.cState.byTarget["cafe_fragments_rennes"].ids).toContain("cmt_0001");
+
+        // 3) Outbox: record supprimé + mapping commandId nettoyé
+        expect(s.oState.byCommandId["cmd_del_123"]).toBeUndefined();
+        expect(s.oState.byId["obx_del_0001"]).toBeUndefined();
+    })
+
+
 
     function createReduxStoreWithListener(
         doExpectations: () => void,
