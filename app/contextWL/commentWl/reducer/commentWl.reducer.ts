@@ -175,6 +175,7 @@ export const commentWlReducer = createReducer(
             })
             .addCase(updateRollback,(state,action)=> {
                 const { commentId, prevBody, prevVersion } = action.payload;
+                if(!commentId) return;
                 const cur = state.entities.entities[commentId];
                 if (!cur) return;
                 adapter.updateOne(state.entities, {
