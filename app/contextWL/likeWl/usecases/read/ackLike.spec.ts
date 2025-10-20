@@ -3,8 +3,7 @@ import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/contextWL/likeWl/usecases/read/aclLike";
 import {likesRetrieved} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
-import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
-import {ISODate} from "@/app/contextWL/likeWl/typeAction/likeWl.type"; // même action d'enqueue
+import {CommandId, commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 
 
@@ -38,9 +37,9 @@ describe("Likes ACK (reconcile + drop)", () => {
                 item: {
                     command: {
                         kind: commandKinds.LikeAdd,
-                        commandId: "cmd_like_001",
+                        commandId: "cmd_like_001" as CommandId,
                         targetId: "cafe_A",
-                        createdAt: "2025-10-10T07:02:00.000Z",
+                        at: "2025-10-10T07:02:00.000Z" as ISODate,
                     },
                     undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 10, prevMe: false, prevVersion: 1 },
                 },
@@ -88,9 +87,9 @@ describe("Likes ACK (reconcile + drop)", () => {
                 item: {
                     command: {
                         kind: commandKinds.LikeRemove,
-                        commandId: "cmd_unlike_001",
+                        commandId: "cmd_unlike_001" as CommandId,
                         targetId: "cafe_A",
-                        deletedAt: "2025-10-10T07:02:10.000Z",
+                        at: "2025-10-10T07:02:10.000Z" as ISODate,
                     },
                     undo: { kind: commandKinds.LikeRemove, targetId: "cafe_A", prevCount: 11, prevMe: true, prevVersion: 2 },
                 },

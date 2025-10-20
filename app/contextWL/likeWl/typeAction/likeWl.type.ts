@@ -1,7 +1,7 @@
 // likeWl.type.ts
-import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 
-export type ISODate = string & { __iso: true };
+
 export type TargetId = string;   // ex: cafeId / postId
 export type UserId   = string;
 

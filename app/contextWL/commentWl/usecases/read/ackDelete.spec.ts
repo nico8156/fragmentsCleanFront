@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // ou outbox actions directes
-import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {ackListenerFactory, onCommentDeletedAck} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
@@ -51,9 +51,9 @@ describe("On delete ACK received :", () => {
                 item: {
                     command: {
                         kind: commandKinds.CommentDelete,
-                        commandId: "cmd_del_123",
+                        commandId: "cmd_del_123" as CommandId,
                         commentId: "cmt_0001",
-                        createdAt: "2025-10-10T07:00:02.000Z",
+                        at: "2025-10-10T07:00:02.000Z" as ISODate,
                     },
                     undo: {
                         kind: commandKinds.CommentDelete,

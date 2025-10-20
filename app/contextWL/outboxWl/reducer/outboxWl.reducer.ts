@@ -59,10 +59,10 @@ export const outboxWlReducer = createReducer(
                 rec.nextCheckAt = ackBy;
                 })
             .addCase(dropCommitted, (state, action) => {
-                const {id} = action.payload;
-                const r = state.byId[id];
+                const {commandId} = action.payload;
+                const r = state.byCommandId[commandId];
                 if (!r) return;
-                delete state.byId[id];
-                delete state.byCommandId[r.item.command.commandId];
+                delete state.byId[r];
+                delete state.byCommandId[commandId];
             })
     })

@@ -21,7 +21,7 @@ export type CommentEditCommand = {
     commandId: CommandId;
     commentId: string;
     newBody: string;
-    version: number;
+    version?: number;
     at: ISODate;
 };
 export type CommentEditUndo = {
@@ -35,12 +35,13 @@ export type CommentDeleteCommand = {
     kind: typeof commandKinds.CommentDelete;
     commandId: CommandId;
     commentId: string;
-    version: number;
+    version?: number;
     at: ISODate;
 };
 export type CommentDeleteUndo = {
     kind: typeof commandKinds.CommentDelete;
     commentId: string;
+    prevBody:string
     prevDeletedAt?: ISODate; // soft delete
     prevVersion: number;
 };

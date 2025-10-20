@@ -6,8 +6,14 @@ import {
     uiLikeToggleRequested
 } from "@/app/contextWL/likeWl/usecases/write/likePressedUseCase";
 import {likesRetrieved} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
-import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
-import {ISODate} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
+import {commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
+
+import {
+    LikeAddCommand,
+    LikeAddUndo,
+    LikeRemoveCommand,
+    LikeRemoveUndo
+} from "@/app/contextWL/outboxWl/type/commandForLike.type";
 
 
 
@@ -55,11 +61,13 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
         const rec = s.oState.byId[obxId];
         expect(rec).toBeDefined();
         expect(s.oState.queue).toContain(obxId);
-        expect(rec.item.command.kind).toBe(commandKinds.LikeAdd);
-        expect(rec.item.command.targetId).toBe("cafe_A");
+        const command = rec.item.command as LikeAddCommand;
+        expect(command.kind).toBe(commandKinds.LikeAdd);
+        expect(command.targetId).toBe("cafe_A");
         // snapshot undo pour rollback
-        expect(rec.item.undo.prevCount).toBe(10);
-        expect(rec.item.undo.prevMe).toBe(false);
+        const undo = rec.item.undo as LikeAddUndo;
+        expect(undo.prevCount).toBe(10);
+        expect(undo.prevMe).toBe(false);
     });
 
     it("REMOVE: optimistic + outbox enqueued", () => {
@@ -109,8 +117,10 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
 
         const rec = s.oState.byId["obx_unlike_001"];
         expect(rec.item.command.kind).toBe(commandKinds.LikeRemove);
-        expect(rec.item.command.targetId).toBe("cafe_A");
-        expect(rec.item.undo.prevCount).toBe(11);
-        expect(rec.item.undo.prevMe).toBe(true);
+        const undo = rec.item.undo as LikeRemoveUndo
+        const command = rec.item.command as LikeRemoveCommand;
+        expect(command.targetId).toBe("cafe_A");
+        expect(undo.prevCount).toBe(11);
+        expect(undo.prevMe).toBe(true);
     });
 });

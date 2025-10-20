@@ -94,3 +94,28 @@ export interface TicketsGateway {
         at: ISODate;
     }): Promise<void>;
 }
+export interface TicketConfirmedAck {
+    commandId: CommandId;
+    ticketId: TicketId;
+    userId: UserId | string;
+    server: {
+        status: "CONFIRMED";
+        version: number;
+        amountCents: number;
+        currency: string;
+        ticketDate: ISODate;
+        updatedAt: ISODate;
+    };
+}
+
+export interface TicketRejectedAck {
+    commandId: CommandId;
+    ticketId: TicketId;
+    userId: UserId | string;
+    server: {
+        status: "REJECTED";
+        reason: string;
+        version: number;
+        updatedAt: ISODate;
+    };
+}

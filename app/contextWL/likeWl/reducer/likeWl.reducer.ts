@@ -11,6 +11,7 @@ import {
 
 import {AppStateWl} from "@/app/store/appStateWl";
 import {LikeAggregate, LikesStateWl, loadingStates, TargetId} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
+import {ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 
 const initialState: AppStateWl["likes"] = { byTarget: {} };
 
@@ -30,7 +31,7 @@ export const likeWlReducer = createReducer(
             v.count = count;
             v.me = me;
             v.version = version;
-            v.updatedAt = serverTime ?? v.updatedAt;
+            v.updatedAt = serverTime as ISODate?? v.updatedAt as ISODate;
             v.loading = loadingStates.SUCCESS;
             v.optimistic = false;
         });

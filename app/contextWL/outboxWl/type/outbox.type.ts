@@ -14,7 +14,6 @@ import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/contextWL/outboxWl/ty
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };
 
-
 // ===== Unions =====
 export type OutboxCommand =
     | LikeAddCommand

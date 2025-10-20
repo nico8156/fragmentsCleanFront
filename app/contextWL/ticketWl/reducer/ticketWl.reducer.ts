@@ -4,13 +4,15 @@ import {
     TicketRetrievedPayload,
     TicketStatus,
     TicketsStateWl,
-    ISODate
+    ISODate, TicketReconciledConfirmedPayload, TicketReconciledRejectedPayload
 } from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
 export const ticketRetrieved = createAction<TicketRetrievedPayload>("ticketRetrieved");
 export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>('ticketOptimisticCreated');
 export const ticketSetLoading = createAction<{ ticketId: TicketId }>('ticketSetLoading');
 export const ticketSetError = createAction<{ ticketId: TicketId; message: string }>('ticketSetError');
+export const ticketReconciledConfirmed = createAction<TicketReconciledConfirmedPayload>('ticketReconciledConfirmed');
+export const ticketReconciledRejected = createAction<TicketReconciledRejectedPayload>('ticketReconciledRejected');
 
 const initialState: TicketsStateWl = { byId: {} };
 
@@ -49,6 +51,45 @@ export const ticketWlReducer = createReducer(
                     optimistic: true,
                 }
             })
+            .addCase(ticketReconciledConfirmed, (state, { payload }: PayloadAction<TicketReconciledConfirmedPayload>) => {
+                const { ticketId, server } = payload;
+                const prev = state.byId[ticketId] ?? {
+                    ticketId,
+                    version: 0,
+                    createdAt: server.updatedAt,
+                };
+                state.byId[ticketId] = {
+                    ...prev,
+                    status: "CONFIRMED",
+                    version: server.version,
+                    updatedAt: server.updatedAt,
+                    amountCents: server.amountCents,
+                    currency: server.currency,
+                    ticketDate: server.ticketDate,
+                    optimistic: false,
+                    loading: "success",
+                    error: null,
+                };
+            })
+            .addCase(ticketReconciledRejected, (state, { payload }: PayloadAction<TicketReconciledRejectedPayload>) => {
+                const { ticketId, server } = payload;
+                const prev = state.byId[ticketId] ?? {
+                    ticketId,
+                    version: 0,
+                    createdAt: server.updatedAt,
+                };
+                state.byId[ticketId] = {
+                    ...prev,
+                    status: "REJECTED",
+                    version: server.version,
+                    updatedAt: server.updatedAt,
+                    rejectionReason: server.reason,
+                    optimistic: false,
+                    loading: "success",
+                    error: null,
+                };
+            })
+
             .addCase(ticketSetLoading, (state, { payload }: PayloadAction<{ ticketId: TicketId }>) => {
                 const t = state.byId[payload.ticketId];
                 if (t) t.loading = "loading";

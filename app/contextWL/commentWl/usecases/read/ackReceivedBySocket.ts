@@ -24,7 +24,7 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
 
             if (outboxId) {
                 api.dispatch(createReconciled({tempId, server}))
-                api.dispatch(dropCommitted({ id: outboxId }))
+                api.dispatch(dropCommitted({ commandId }))
             } else {
                 api.dispatch(createReconciled({ tempId, server }))
             }
@@ -42,7 +42,7 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             api.dispatch(updateReconciled({ commentId, server }));
             // 2) drop outbox if present
             const outboxId = selectOutboxByCommandId(api.getState(), commandId);
-            if (outboxId) api.dispatch(dropCommitted({ id: outboxId }));
+            if (outboxId) api.dispatch(dropCommitted({ commandId }));
             if (callback) {
                 callback();
             }
@@ -54,7 +54,7 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             api.dispatch(deleteReconciled({ commentId, server }));
             const outboxId =
                 (api.getState() as any).oState?.byCommandId?.[commandId];
-            if (outboxId) api.dispatch(dropCommitted({ id: outboxId }));
+            if (outboxId) api.dispatch(dropCommitted({ commandId }));
         },
     });
 

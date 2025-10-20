@@ -12,7 +12,7 @@ export const markFailed = createAction<{id: string, error: string}>("OUTBOX/MARK
 export const createRollback = createAction<{ tempId: string; targetId: string; parentId?: string }>("COMMENT/CREATE_ROLLBACK")
 export const markAwaitingAck = createAction<{id: string, ackBy?: string}>("OUTBOX/MARK_AWAITING_ACK")
 export const dequeueCommitted = createAction<{id: string}>("OUTBOX/DEQUEUE_COMMITTED")
-export const dropCommitted    = createAction<{ id: string }>("OUTBOX/DROP_COMMITTED")
+export const dropCommitted    = createAction<{ commandId: string }>("OUTBOX/DROP_COMMITTED")
 export const updateRollback= createAction<{ commentId?: string; prevBody?: string; prevVersion?: number }>("COMMENT/UPDATE_ROLLBACK");
 export const deleteRollback = createAction<{ commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string }>("COMMENT/DELETE_ROLLBACK");
 
@@ -108,7 +108,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                     }
                     default:
                         // commande non supportée: on “ drop”
-                        api.dispatch(dropCommitted({ id }));
+                        api.dispatch(dropCommitted({ commandId: cmd.commandId }));
                         api.dispatch(dequeueCommitted({ id }));
                 }
             } catch (e: any) {
@@ -127,6 +127,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                     );
                 }
                 if (cmd.command.kind === commandKinds.CommentUpdate) {
+
                     api.dispatch(updateRollback({
                         commentId: cmd.command.commentId,
                         prevBody:  cmd.undo.prevBody,

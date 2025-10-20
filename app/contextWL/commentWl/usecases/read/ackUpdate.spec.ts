@@ -4,7 +4,7 @@ import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/comment
 
 import { ackListenerFactory, onCommentUpdatedAck } from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
 describe("On Update ACK received (reconcile + drop outbox)", () => {
@@ -42,10 +42,10 @@ describe("On Update ACK received (reconcile + drop outbox)", () => {
             item: {
                 command: {
                     kind: commandKinds.CommentUpdate,
-                    commandId: "cmd_upd_123",
+                    commandId: "cmd_upd_123" as CommandId,
                     commentId: "cmt_0001",
-                    body: "Nouveau texte",
-                    createdAt: "2025-10-10T07:00:02.000Z",
+                    newBody: "Nouveau texte",
+                    at: "2025-10-10T07:00:02.000Z" as ISODate,
                 },
                 undo: {
                     kind: commandKinds.CommentUpdate,

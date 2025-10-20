@@ -1,9 +1,9 @@
 // commentCreate.ack.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { moderationTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
+import { moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 import { ackListenerFactory, onCommentCreatedAck } from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { enqueueCommitted, addOptimisticCreated } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 
 describe("Create ACK (reconcile + drop outbox)", () => {
     let store: ReduxStoreWl;
@@ -24,13 +24,13 @@ describe("Create ACK (reconcile + drop outbox)", () => {
             item: {
                 command: {
                     kind: commandKinds.CommentCreate,
-                    commandId: "cmd_abc",
+                    commandId: "cmd_abc" as CommandId,
                     tempId: "cmt_tmp_123",
                     targetId: "cafe_A",
                     body: "Un super café !",
-                    createdAt: "2025-10-10T07:00:00.000Z",
+                    at: "2025-10-10T07:00:00.000Z" as ISODate,
                 },
-                undo: { kind: commandKinds.CommentCreate, tempId: "cmt_tmp_123", targetId: "cafe_A" },
+                undo: { kind: commandKinds.CommentCreate, tempId: "cmt_tmp_123"},
             },
             enqueuedAt: "2025-10-10T07:00:00.000Z",
         }));
