@@ -36,12 +36,6 @@ export type View = {
     staleAfterMs?: number;            // TTL client (ex: 30s)
 };
 
-export type ListCommentsParams = {
-    targetId: CafeId;
-    cursor?: string | null;
-    limit?: number; // ex: 50
-};
-
 export type ListCommentsResult = {
     targetId: CafeId;
     op: Op;

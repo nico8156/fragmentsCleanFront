@@ -4,7 +4,7 @@ import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/comment
 
 import { ackListenerFactory, onCommentUpdatedAck } from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
 describe("On Update ACK received (reconcile + drop outbox)", () => {

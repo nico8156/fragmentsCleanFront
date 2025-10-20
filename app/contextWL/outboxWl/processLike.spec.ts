@@ -3,7 +3,7 @@ import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/contextWL/outboxWl/processOutbox";
 import { outboxProcessOnce, enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {FakeLikesGateway, flush} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
-import {commandKinds, statusTypes} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds, statusTypes} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 
 

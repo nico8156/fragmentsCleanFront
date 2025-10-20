@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/contextWL/outboxWl/processOutbox";
 import { outboxProcessOnce } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { commandKinds, statusTypes } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds, statusTypes } from "@/app/contextWL/outboxWl/type/outbox.type";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway"; // si tu as une action dédiée
 // si tu n'as pas d'action 'enqueueCommitted' exportée, tu peux dispatcher directement un "hydrate" custom, ou muter le state via un reducer test-only.

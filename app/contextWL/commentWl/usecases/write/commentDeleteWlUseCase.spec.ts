@@ -1,7 +1,7 @@
 // commentDelete.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
-import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
 import {
     commentDeleteUseCaseFactory,
     uiCommentDeleteRequested

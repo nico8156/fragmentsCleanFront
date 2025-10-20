@@ -6,7 +6,7 @@ import {
     uiLikeToggleRequested
 } from "@/app/contextWL/likeWl/usecases/write/likePressedUseCase";
 import {likesRetrieved} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {ISODate} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
 
 

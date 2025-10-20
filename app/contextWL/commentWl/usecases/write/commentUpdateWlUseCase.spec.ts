@@ -3,7 +3,7 @@ import {
     enqueueCommitted
 } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {commentUpdateWlUseCase, cuAction} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 

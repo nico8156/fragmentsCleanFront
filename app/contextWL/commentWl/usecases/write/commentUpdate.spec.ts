@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
 import { commentUpdateWlUseCase, cuAction } from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
-import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 
 describe("On Update Comment pressed button  (optimistic + enqueue)", () => {

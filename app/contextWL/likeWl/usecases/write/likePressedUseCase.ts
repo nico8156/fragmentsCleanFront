@@ -3,7 +3,7 @@ import { createListenerMiddleware, createAction, TypedStartListening } from "@re
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {likeOptimisticApplied, unlikeOptimisticApplied} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
 import {ISODate} from "@/app/contextWL/likeWl/typeAction/likeWl.type"; // réutilise ton action d'enqueue/process
 

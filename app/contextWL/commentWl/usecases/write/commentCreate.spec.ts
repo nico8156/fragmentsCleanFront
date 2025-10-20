@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
 import { uiCommentCreateRequested, createCommentUseCaseFactory } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
 
 describe("On Create button pressed (optimistic + enqueue)", () => {
     let store: ReduxStoreWl;

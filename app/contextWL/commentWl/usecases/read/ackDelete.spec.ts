@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/contextWL/commentWl/type/commentWl.type";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // ou outbox actions directes
-import { commandKinds } from "@/app/contextWL/outboxWl/outbox.type";
+import { commandKinds } from "@/app/contextWL/outboxWl/type/outbox.type";
 import {ackListenerFactory, onCommentDeletedAck} from "@/app/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
 

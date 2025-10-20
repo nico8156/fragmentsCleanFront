@@ -2,7 +2,7 @@ import {createAction, createListenerMiddleware, nanoid, TypedStartListening} fro
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 
 export const cuAction = createAction<{ commentId: string; newBody: string }>("UI/COMMENT/UPDATE")
 export const updateOptimisticApplied  = createAction<{ commentId: string; newBody: string; clientEditedAt: string; }>("COMMENT/UPDATE_OPTIMISTIC")

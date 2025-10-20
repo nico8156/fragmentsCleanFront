@@ -7,7 +7,6 @@ import {
     ISODate
 } from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
-
 export const ticketRetrieved = createAction<TicketRetrievedPayload>("ticketRetrieved");
 export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>('ticketOptimisticCreated');
 export const ticketSetLoading = createAction<{ ticketId: TicketId }>('ticketSetLoading');

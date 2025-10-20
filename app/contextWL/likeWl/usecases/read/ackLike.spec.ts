@@ -3,7 +3,7 @@ import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/contextWL/likeWl/usecases/read/aclLike";
 import {likesRetrieved} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
-import {commandKinds} from "@/app/contextWL/outboxWl/outbox.type";
+import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {ISODate} from "@/app/contextWL/likeWl/typeAction/likeWl.type"; // même action d'enqueue
 import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 
