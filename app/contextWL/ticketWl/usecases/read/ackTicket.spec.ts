@@ -14,7 +14,6 @@ describe("Tickets ACK (reconcile tkState + entitlements + drop outbox)", () => {
             dependencies: {},
             listeners: [ackTicketsListenerFactory()],
         });
-
         // seed outbox: la commande verify envoyée
         store.dispatch(
             enqueueCommitted({
@@ -52,7 +51,6 @@ describe("Tickets ACK (reconcile tkState + entitlements + drop outbox)", () => {
             })
         );
         await flush();
-
         // ticket reconcilié
         const tk = store.getState().tState.byId["tk_001" as TicketId];
         expect(tk.status).toBe("CONFIRMED");

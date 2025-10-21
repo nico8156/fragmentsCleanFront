@@ -6,6 +6,7 @@ import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {commentUpdateWlUseCase, cuAction} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import {CommentUpdateUndo} from "@/app/contextWL/outboxWl/type/commandForComment.type";
 
 describe('On comment update button pressed : ', () => {
     let store: ReduxStoreWl
@@ -72,7 +73,7 @@ describe('On comment update button pressed : ', () => {
             .toBe("2025-10-10T07:00:02.000Z");
         expect(store.getState().cState.entities.entities["cmt_tmp_aaa111"].optimistic)
             .toBe(true);
-        expect(store.getState().oState.byId["cmd_aaa123"].item.undo.prevBody).toBe("Excellent flat white, ambiance au top.");
+        expect((store.getState().oState.byId["cmd_aaa123"].item.undo as CommentUpdateUndo).prevBody).toBe("Excellent flat white, ambiance au top.");
         // la command est en queue, le body est modifié
     }
     const outboxRecord = {

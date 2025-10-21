@@ -53,7 +53,7 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
             api.dispatch(enqueueCommitted({
                 id: outboxId,
                 item: {
-                    command: { kind: commandKinds.CommentCreate, commandId, tempId, targetId, parentId, body: trimmed, createdAt },
+                    command: { kind: commandKinds.CommentCreate, commandId, tempId, targetId, parentId, body: trimmed, at:createdAt },
                     undo: { kind: commandKinds.CommentCreate, tempId, targetId, parentId },
                 },
                 enqueuedAt,

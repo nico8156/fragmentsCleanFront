@@ -1,4 +1,5 @@
 import {CommandId, commandKinds, ISODate} from "./outbox.type";
+import {TicketId} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
 // ===== Tickets =====
 export type TicketVerifyCommand = {
@@ -11,5 +12,5 @@ export type TicketVerifyCommand = {
 };
 export type TicketVerifyUndo = {
     kind: typeof commandKinds.TicketVerify;
-    ticketId: string;                // pour retirer l’agg optimistic
+    ticketId: TicketId | string;                // pour retirer l’agg optimistic
 };

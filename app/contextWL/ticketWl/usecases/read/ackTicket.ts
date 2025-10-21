@@ -10,8 +10,8 @@ export const outboxDropByCommandId = (payload: { commandId: string }) =>
     ({ type: "outbox/dropByCommandId", payload } as const);
 
 // Actions ACK (dispatchées par ton “transport” d’événements serveur)
-export const onTicketConfirmedAck = createAction<TicketConfirmedAck>("ticket/ackConfirmed");
-export const onTicketRejectedAck = createAction<TicketRejectedAck>("ticket/ackRejected");
+export const onTicketConfirmedAck = createAction<TicketConfirmedAck>("SERVER/TICKET/ON_TICKET_CONFIRMED_ACK");
+export const onTicketRejectedAck = createAction<TicketRejectedAck>("SERVER/TICKET/ON_TICKET_REJECTED_ACK");
 
 export const ackTicketsListenerFactory = () => {
     const lm = createListenerMiddleware();

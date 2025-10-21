@@ -7,30 +7,12 @@ import {
 import {
     CommentCreateCommand, CommentCreateUndo,
     CommentDeleteCommand, CommentDeleteUndo,
-    CommentEditCommand, CommentEditUndo
+    CommentUpdateCommand, CommentUpdateUndo
 } from "@/app/contextWL/outboxWl/type/commandForComment.type";
 import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/contextWL/outboxWl/type/commandForTicket.type";
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };
-
-// ===== Unions =====
-export type OutboxCommand =
-    | LikeAddCommand
-    | LikeRemoveCommand
-    | CommentCreateCommand
-    | CommentEditCommand
-    | CommentDeleteCommand
-    | TicketVerifyCommand;
-
-export type OutboxUndo =
-    | LikeAddUndo
-    | LikeRemoveUndo
-    | CommentCreateUndo
-    | CommentEditUndo
-    | CommentDeleteUndo
-    | TicketVerifyUndo;
-
 export type OutboxRecord = {
     id: string;                 // outboxId
     item: OutboxItem;           // { command, undo }
@@ -46,41 +28,27 @@ export type OutboxStateWl = {
     queue: string[];
     byCommandId: Record<string, string>;
 };
-// pour l'outboxItem, peut etre faire des types spe pour un comment ou ticket ou like ...
-// un outboxItem peut contenir soit un ticket, un comment ou un like ...
+
 export type OutboxItem = {
     command: OutboxCommand;
     undo: OutboxUndo;
 };
-// export type OutboxItem = {
-//     command: {
-//         kind: CommandKind;
-//         commandId: string;
-//         commentId?: string;
-//         ticketId?: string;
-//         tempId?: string;
-//         targetId?: string;
-//         parentId?: string;
-//         body?: string;
-//         newBody?: string;
-//         version?: number;
-//         createdAt?: string;
-//         deletedAt?: string;
-//         updatedAt?: string;
-//     };
-//     undo: {
-//         kind:CommandKind;
-//         tempId?: string;
-//         commentId?: string;
-//         targetId?: string;
-//         prevBody?: string;
-//         prevVersion?: number;
-//         prevCount?:number;
-//         prevMe?: boolean;
-//         prevDeletedAt?: string;
-//         parentId?: string
-//     };
-// };
+// ===== Unions =====
+export type OutboxCommand =
+    | LikeAddCommand
+    | LikeRemoveCommand
+    | CommentCreateCommand
+    | CommentUpdateCommand
+    | CommentDeleteCommand
+    | TicketVerifyCommand;
+
+export type OutboxUndo =
+    | LikeAddUndo
+    | LikeRemoveUndo
+    | CommentCreateUndo
+    | CommentUpdateUndo
+    | CommentDeleteUndo
+    | TicketVerifyUndo;
 
 export const commandKinds = {
     CommentCreate: "Comment.Create",

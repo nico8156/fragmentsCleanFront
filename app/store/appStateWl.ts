@@ -1,7 +1,7 @@
 import {CommentsStateWl, ListCommentsResult} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/type/outbox.type";
 import { LikesStateWl} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
-import {TicketsGateway, TicketsStateWl} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
+import {TicketsStateWl} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
 export interface AppStateWl {
     comments:CommentsStateWl;
@@ -25,7 +25,7 @@ export type helpersType = {
 export type GatewaysWl = {
     comments: CommentsWlGateway;
     likes: LikeWlGateway;
-    tickets: TicketsGateway
+    tickets: TicketsWlGateway;
 }
 //PORT === LIKE
 export interface LikeWlGateway{
@@ -36,7 +36,16 @@ export interface LikeWlGateway{
 //PORT === COMMENT
 export interface CommentsWlGateway{
     list(params: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<ListCommentsResult>;
-    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string, body: string}):Promise<void>
-    update({commandId, commentId, body, updatedAt}:{commandId: string, commentId:string, body:string, updatedAt:string}):Promise<void>
+    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string | null, body: string}):Promise<void>
+    update({commandId, commentId, body, updatedAt}:{commandId: string, commentId:string, body:string, updatedAt?:string}):Promise<void>
     delete({commandId, commentId, deletedAt}:{commandId: string, commentId:string, deletedAt: string}):Promise<void>
+}
+export interface TicketsWlGateway {
+    verify(input: {
+        commandId: string & { readonly __brand: "CommandId" };
+        ticketId: string | undefined;
+        imageRef: string | undefined;
+        ocrText: string | null;
+        at: string & { readonly __brand: "ISODate" }
+    }): Promise<void>;
 }

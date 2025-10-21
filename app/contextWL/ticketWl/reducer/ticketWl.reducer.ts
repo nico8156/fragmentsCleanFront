@@ -7,12 +7,13 @@ import {
     ISODate, TicketReconciledConfirmedPayload, TicketReconciledRejectedPayload
 } from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
-export const ticketRetrieved = createAction<TicketRetrievedPayload>("ticketRetrieved");
-export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>('ticketOptimisticCreated');
+export const ticketRetrieved = createAction<TicketRetrievedPayload>("SERVER/TICKET/RETRIEVED");
+export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>('UI/TICKET/CREATE_OPTIMISTIC_TICKET');
 export const ticketSetLoading = createAction<{ ticketId: TicketId }>('ticketSetLoading');
 export const ticketSetError = createAction<{ ticketId: TicketId; message: string }>('ticketSetError');
-export const ticketReconciledConfirmed = createAction<TicketReconciledConfirmedPayload>('ticketReconciledConfirmed');
-export const ticketReconciledRejected = createAction<TicketReconciledRejectedPayload>('ticketReconciledRejected');
+export const ticketReconciledConfirmed = createAction<TicketReconciledConfirmedPayload>('SERVER/TICKET/RECONCILED_CONFIRMED');
+export const ticketReconciledRejected = createAction<TicketReconciledRejectedPayload>('SERVER/TICKET/RECONCILED_REJECTED');
+export const ticketRollBack = createAction<{ticketId: TicketId | string}>('SERVER/TICKET/ROLLBACK_TICKET_RECONCILED_REJECTED');
 
 const initialState: TicketsStateWl = { byId: {} };
 
@@ -100,6 +101,9 @@ export const ticketWlReducer = createReducer(
                     t.loading = "error";
                     t.error = payload.message;
                 }
+            })
+            .addCase(ticketRollBack,(state, {payload}) => {
+                delete state.byId[payload.ticketId as TicketId];
             })
     }
 )

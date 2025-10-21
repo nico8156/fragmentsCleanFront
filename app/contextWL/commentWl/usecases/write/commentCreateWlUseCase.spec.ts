@@ -1,6 +1,7 @@
 import {uiCommentCreateRequested, createCommentUseCaseFactory} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
+import {CommentCreateCommand} from "@/app/contextWL/outboxWl/type/commandForComment.type";
 
 describe('On comment creation button pressed : ', () => {
     let store: ReduxStoreWl
@@ -72,7 +73,7 @@ describe('On comment creation button pressed : ', () => {
         // Outbox
         expect(s.oState.byCommandId[s.oState.byId[obx]!.item.command.commandId]).toBe(obx);
         expect(s.oState.byId[obx]).toBeDefined();
-        expect(s.oState.byId[obx]!.item.command.body).toEqual("un commentaire");
+        expect((s.oState.byId[obx]!.item.command as CommentCreateCommand).body).toEqual("un commentaire");
         expect(s.oState.byId[obx]!.status).toBe("queued");
         expect(s.oState.queue[0]).toBe(obx);
     }

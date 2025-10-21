@@ -3,9 +3,10 @@ import {CommandId, commandKinds, ISODate} from "./outbox.type";
 // ===== Likes =====
 export type LikeAddCommand = {
     kind: typeof commandKinds.LikeAdd;
-    commandId: CommandId;            // idempotence côté serveur
-    targetId: string;                // ex: cafeId
-    at: ISODate;
+    commandId: CommandId | string;            // idempotence côté serveur
+    targetId: string;
+    at: ISODate | string;
+    userId?: string;// ex: cafeId
 };
 export type LikeAddUndo = {
     kind: typeof commandKinds.LikeAdd;
@@ -17,9 +18,10 @@ export type LikeAddUndo = {
 
 export type LikeRemoveCommand = {
     kind: typeof commandKinds.LikeRemove;
-    commandId: CommandId;
+    commandId: CommandId | string;
     targetId: string;
-    at: ISODate;
+    at: ISODate | string;
+    userId?: string;
 };
 export type LikeRemoveUndo = {
     kind: typeof commandKinds.LikeRemove;
