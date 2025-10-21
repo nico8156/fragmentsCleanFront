@@ -8,6 +8,7 @@ import { commentWlReducer as cState } from "@/app/contextWL/commentWl/reducer/co
 import { outboxWlReducer as oState } from "@/app/contextWL/outboxWl/reducer/outboxWl.reducer"
 import { likeWlReducer as lState } from "@/app/contextWL/likeWl/reducer/likeWl.reducer"
 import { ticketWlReducer as tState } from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer"
+import {entitlementWlReducer as enState} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer"
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
@@ -20,6 +21,7 @@ export const initReduxStoreWl = (config: {
             oState,
             lState,
             tState,
+            enState,
             ...(config.extraReducers ?? {}), // 👈 ajoute ça
         },
         middleware: (getDefaultMiddleware) => {

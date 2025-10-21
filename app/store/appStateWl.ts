@@ -5,29 +5,31 @@ import {TicketsStateWl} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 import {LikeWlGateway} from "@/app/contextWL/likeWl/gateway/likeWl.gateway";
 import {TicketsWlGateway} from "@/app/contextWL/ticketWl/gateway/ticketWl.gateway";
 import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gateway";
+import {EntitlementStateWl} from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
 
 export interface AppStateWl {
-    comments:CommentsStateWl;
-    likes:LikesStateWl;
-    tickets:TicketsStateWl;
+    comments:CommentsStateWl
+    likes:LikesStateWl
+    tickets:TicketsStateWl
+    entitlement:EntitlementStateWl
     outbox:OutboxStateWl
 }
 
 export interface DependenciesWl {
-    gateways: Partial<GatewaysWl>;
+    gateways: Partial<GatewaysWl>
     helpers: Partial<helpersType>
 }
 
 export type helpersType = {
-    nowIso: () => string;
-    currentUserId: () => string;
-    getCommentIdForTests: () => string;
-    getCommandIdForTests: () => string;
+    nowIso: () => string
+    currentUserId: () => string
+    getCommentIdForTests: () => string
+    getCommandIdForTests: () => string
 }
 
 export type GatewaysWl = {
-    comments: CommentsWlGateway;
-    likes: LikeWlGateway;
-    tickets: TicketsWlGateway;
+    comments: CommentsWlGateway
+    likes: LikeWlGateway
+    tickets: TicketsWlGateway
 }
 

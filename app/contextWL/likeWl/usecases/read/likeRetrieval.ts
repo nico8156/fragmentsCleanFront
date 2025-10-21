@@ -19,6 +19,7 @@ export const likesRetrieval = ({ targetId }: { targetId: TargetId }): AppThunkWl
         dispatch(likesRetrievalPending({ targetId }));
         try {
             const res = await likeWlGateway.likes?.get({ targetId, signal: controller.signal }); // { count, me, version, serverTime? }
+
             if (inflight.get(targetId) !== controller) return;
             dispatch(likesRetrieved({ targetId, ...res }));
         } catch (e: any) {

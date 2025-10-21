@@ -3,7 +3,7 @@ import { TargetId} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
 import {ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 
 export const likesRetrievalPending  = createAction<{ targetId: TargetId }>("LIKES/RETRIEVAL_PENDING");
-export const likesRetrieved         = createAction<{ targetId: TargetId; count?: number; me?: boolean; version?: number; serverTime?: string }>("LIKES/RETRIEVED");
+export const likesRetrieved         = createAction<{ targetId: TargetId; count: number; me: boolean; version: number; serverTime?: string }>("LIKES/RETRIEVED");
 export const likesRetrievalFailed   = createAction<{ targetId: TargetId; error: string }>("LIKES/RETRIEVAL_FAILED");
 
 // actions optimistes

@@ -1,4 +1,5 @@
-import {ISODate, UserId} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
+import { UserId} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
+import { ISODate } from "../../outboxWl/type/outbox.type";
 
 export type Entitlement = "LIKE" | "COMMENT" | "SUBMIT_CAFE";
 
@@ -9,8 +10,9 @@ export interface UserEntitlements {
     updatedAt?: ISODate;
 }
 
-export interface EnState {
+export interface EntitlementStateWl {
     byUser: Record<string, UserEntitlements>;
+    thresholds: EntitlementsThresholds,
 }
 
 // Seuils (configurable via DI ou fichier)
