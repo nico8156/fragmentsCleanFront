@@ -1,12 +1,11 @@
-import {createAction, ListenerEffectAPI, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
+import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
 // ⚠️ adapte ce chemin vers TON action outbox existante
-import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import {enqueueCommitted, outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {TicketSubmitHelpers} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 import {ticketOptimisticCreated} from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer";
 import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-
 
 // Action UI (déclenchée depuis le composant)
 export const uiTicketSubmitRequested = createAction<{ imageRef?: string; ocrText?: string | null }>(
@@ -56,6 +55,7 @@ export const ticketSubmitUseCaseFactory = (deps: {
                     enqueuedAt: at,
                 })
             );
+            api.dispatch(outboxProcessOnce());
         },
     });
 

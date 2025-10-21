@@ -7,6 +7,7 @@ import {
     uiCommentDeleteRequested
 } from "@/app/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import {commentsRetrieved} from "@/app/contextWL/commentWl/usecases/read/commentRetrieval";
+import {CommentDeleteCommand, CommentDeleteUndo} from "@/app/contextWL/outboxWl/type/commandForComment.type";
 
 describe("On comment delete button pressed :", () => {
     let store: ReduxStoreWl;
@@ -76,12 +77,12 @@ describe("On comment delete button pressed :", () => {
 
         // commande
         expect(rec.item.command.kind).toBe(commandKinds.CommentDelete);
-        expect(rec.item.command.commentId).toBe("cmt_0001");
+        expect((rec.item.command as CommentDeleteCommand).commentId).toBe("cmt_0001");
         expect(typeof rec.item.command.commandId).toBe("string"); // on ne fige pas la valeur exacte ici
 
         // undo (pour rollback en cas d'échec)
-        expect(rec.item.undo.prevBody).toBe("Excellent flat white, ambiance au top.");
-        expect(rec.item.undo.prevVersion).toBe(1);
+        expect((rec.item.undo as CommentDeleteUndo).prevBody).toBe("Excellent flat white, ambiance au top.");
+        expect((rec.item.undo as CommentDeleteUndo).prevVersion).toBe(1);
 
         // statut
         expect(rec.status).toBe("queued");

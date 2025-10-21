@@ -1,5 +1,4 @@
 import { Like } from "@/app/store/appState";
-import {OutboxItem} from "@/app/core-logic/gateways/outBoxGateway";
 
 export interface LikeGateway {
     retrieveLike(): Promise<Like[]>;

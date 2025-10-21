@@ -41,7 +41,7 @@ export const commentUpdateWlUseCase = (deps:DependenciesWl, callback?:()=> void)
             api.dispatch(enqueueCommitted({
                 id: outboxId,
                 item: {
-                    command: { kind: commandKinds.CommentUpdate, commandId, commentId, body: trimmed, createdAt:updatedAt },
+                    command: { kind: commandKinds.CommentUpdate, commandId, commentId, newBody: trimmed, at:updatedAt },
                     undo:    { kind: commandKinds.CommentUpdate, commentId, prevBody: c.body },
                 },
                 enqueuedAt: updatedAt,

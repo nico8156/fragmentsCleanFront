@@ -1,7 +1,10 @@
-import {CommentsStateWl, ListCommentsResult} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {CommentsStateWl} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {OutboxStateWl} from "@/app/contextWL/outboxWl/type/outbox.type";
 import { LikesStateWl} from "@/app/contextWL/likeWl/typeAction/likeWl.type";
 import {TicketsStateWl} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
+import {LikeWlGateway} from "@/app/contextWL/likeWl/gateway/likeWl.gateway";
+import {TicketsWlGateway} from "@/app/contextWL/ticketWl/gateway/ticketWl.gateway";
+import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gateway";
 
 export interface AppStateWl {
     comments:CommentsStateWl;
@@ -27,25 +30,4 @@ export type GatewaysWl = {
     likes: LikeWlGateway;
     tickets: TicketsWlGateway;
 }
-//PORT === LIKE
-export interface LikeWlGateway{
-    get({ targetId, signal}:{ targetId:string, signal:AbortSignal}):Promise<{ count: number; me: boolean; version: number; serverTime?: string}>
-    add({commandId, targetId, userId, at}:{commandId: string, targetId: string, userId: string, at: string}):Promise<void>
-    remove({commandId, targetId, userId, at}:{commandId: string, targetId: string, userId: string, at: string}):Promise<void>
-}
-//PORT === COMMENT
-export interface CommentsWlGateway{
-    list(params: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<ListCommentsResult>;
-    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string | null, body: string}):Promise<void>
-    update({commandId, commentId, body, updatedAt}:{commandId: string, commentId:string, body:string, updatedAt?:string}):Promise<void>
-    delete({commandId, commentId, deletedAt}:{commandId: string, commentId:string, deletedAt: string}):Promise<void>
-}
-export interface TicketsWlGateway {
-    verify(input: {
-        commandId: string & { readonly __brand: "CommandId" };
-        ticketId: string | undefined;
-        imageRef: string | undefined;
-        ocrText: string | null;
-        at: string & { readonly __brand: "ISODate" }
-    }): Promise<void>;
-}
+

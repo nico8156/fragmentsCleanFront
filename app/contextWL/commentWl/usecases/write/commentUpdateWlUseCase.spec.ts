@@ -3,7 +3,7 @@ import {
     enqueueCommitted
 } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {commandKinds} from "@/app/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, OutboxItem, OutboxRecord} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
 import {commentUpdateWlUseCase, cuAction} from "@/app/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 import {CommentUpdateUndo} from "@/app/contextWL/outboxWl/type/commandForComment.type";
@@ -76,25 +76,28 @@ describe('On comment update button pressed : ', () => {
         expect((store.getState().oState.byId["cmd_aaa123"].item.undo as CommentUpdateUndo).prevBody).toBe("Excellent flat white, ambiance au top.");
         // la command est en queue, le body est modifié
     }
+    const itemForObRecord : OutboxItem= {
+        command: {
+            kind: commandKinds.CommentCreate,
+            commandId: "cmd_aaa111",
+            tempId: "cmt_tmp_aaa111",
+            targetId: "cafe_fragments_rennes",
+            body: "Excellent flat white, ambiance au top.",
+            at: "2025-10-10T07:00:00.000Z",
+        },
+        undo: {
+            kind: commandKinds.CommentCreate,
+            tempId: "cmt_tmp_aaa111",
+            targetId: "cafe_fragments_rennes",
+        }
+    }
+
     const outboxRecord = {
         id: "obx_0001",
-        item: {
-            command: {
-                kind: commandKinds.CommentCreate,
-                commandId: "cmd_aaa111",
-                tempId: "cmt_tmp_aaa111",
-                targetId: "cafe_fragments_rennes",
-                body: "Excellent flat white, ambiance au top.",
-                createdAt: "2025-10-10T07:00:00.000Z",
-            },
-            undo: {
-                kind: commandKinds.CommentCreate,
-                tempId: "cmt_tmp_aaa111",
-                targetId: "cafe_fragments_rennes",
-            }
-        },
+        item: itemForObRecord,
         enqueuedAt: "2025-10-10T07:00:01.000Z",
     }
+
     const commentEntity = {
         id: "cmt_tmp_aaa111",
         targetId:"cafe_fragments_rennes",

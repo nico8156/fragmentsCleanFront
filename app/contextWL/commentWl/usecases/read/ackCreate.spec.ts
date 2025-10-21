@@ -30,7 +30,7 @@ describe("Create ACK (reconcile + drop outbox)", () => {
                     body: "Un super café !",
                     at: "2025-10-10T07:00:00.000Z" as ISODate,
                 },
-                undo: { kind: commandKinds.CommentCreate, tempId: "cmt_tmp_123"},
+                undo: { kind: commandKinds.CommentCreate, tempId: "cmt_tmp_123", targetId:"cafe_A"},
             },
             enqueuedAt: "2025-10-10T07:00:00.000Z",
         }));

@@ -6,14 +6,12 @@ export interface TicketSubmitHelpers {
     newTicketIdForTests?: () => TicketId;     // tests
     getCommandIdForTests?: () => CommandId;   // tests
 }
-
-export interface TicketsGateway {
-    // Envoi de la commande de vérification (write). L’ACK arrive via un autre canal.
+export interface TicketsWlGateway {
     verify(input: {
-        commandId: CommandId;
-        ticketId?: TicketId;     // optionnel si le serveur assigne un id ; dans nos tests on le fixe
-        imageRef?: string;
-        ocrText?: string | null;
-        at: ISODate;
+        commandId: string & { readonly __brand: "CommandId" };
+        ticketId: string | undefined;
+        imageRef: string | undefined;
+        ocrText: string | null;
+        at: string & { readonly __brand: "ISODate" }
     }): Promise<void>;
 }

@@ -37,7 +37,7 @@ export const commentDeleteUseCaseFactory = (deps: DependenciesWl, callback?:()=>
             api.dispatch(enqueueCommitted({
                 id: outboxId,
                 item: {
-                    command: { kind: commandKinds.CommentDelete, commandId, commentId, createdAt:deletedAt },
+                    command: { kind: commandKinds.CommentDelete, commandId, commentId, at:deletedAt },
                     undo:    {
                         kind: commandKinds.CommentDelete,
                         commentId,

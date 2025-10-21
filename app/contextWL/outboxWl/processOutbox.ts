@@ -36,6 +36,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 api.dispatch(dequeueCommitted({ id }));
                 return;
             }
+
             // on ne traite que les "queued" (si déjà processing, on s'arrête)
             if (record.status !== statusTypes.queued) return;
 
@@ -58,7 +59,13 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             };
 
             const gw = need(cmd.kind as any);
-            if (!gw) return;
+
+            if (!gw) {
+                api.dispatch(markFailed({ id, error: "no GW" }));
+                api.dispatch(dequeueCommitted({ id }));
+                api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
+                return
+            }
 
             api.dispatch(markProcessing({ id }));
 
