@@ -1,4 +1,3 @@
-// app/contextWL/entitlementWl/usecases/read/ackEntitlements.ts
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import {onTicketConfirmedAck} from "@/app/contextWL/ticketWl/usecases/read/ackTicket";
 import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer";
@@ -14,7 +13,6 @@ export const ackEntitlementsListener = () => {
             const userId = String(action.payload.userId);
 
             const prev = state.enState?.byUser?.[userId];
-            console.log("prev in listener : ", prev);
             const confirmedTickets = (prev?.confirmedTickets ?? 0) + 1;
 
             // hydrate remplace/merge (on l’utilise aussi comme “upsert” simple)

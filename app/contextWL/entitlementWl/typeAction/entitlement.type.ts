@@ -6,7 +6,7 @@ export type Entitlement = "LIKE" | "COMMENT" | "SUBMIT_CAFE";
 export interface UserEntitlements {
     userId: UserId | string;
     confirmedTickets: number;
-    rights: Entitlement[]; // ex: ["LIKE", "COMMENT"]
+    rights: Entitlement[];
     updatedAt?: ISODate;
 }
 

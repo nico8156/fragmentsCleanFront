@@ -4,12 +4,12 @@ import { AppThunkWl } from "@/app/store/reduxStoreWl";
 import { TargetId } from "@/app/contextWL/likeWl/typeAction/likeWl.type";
 import {likesRetrievalFailed, likesRetrievalPending, likesRetrieved} from "../../typeAction/likeWl.action";
 
-const inflight = new Map<string, AbortController>();
+const inflight = new Map<string, AbortController>()
 
 export const likesRetrieval = ({ targetId }: { targetId: TargetId }): AppThunkWl<Promise<void>> =>
     async (dispatch, _get,  likeWlGateway ) => {
         if (!likeWlGateway) {
-            dispatch(likesRetrievalFailed({ targetId, error: "likes gateway not configured" }));
+            dispatch(likesRetrievalFailed({ targetId, error: "likes gateway not configured" }))
             return;
         }
         inflight.get(targetId)?.abort();
@@ -18,14 +18,14 @@ export const likesRetrieval = ({ targetId }: { targetId: TargetId }): AppThunkWl
 
         dispatch(likesRetrievalPending({ targetId }));
         try {
-            const res = await likeWlGateway.likes?.get({ targetId, signal: controller.signal }); // { count, me, version, serverTime? }
-
-            if (inflight.get(targetId) !== controller) return;
-            dispatch(likesRetrieved({ targetId, ...res }));
+            const res = await likeWlGateway.likes?.get({ targetId, signal: controller.signal })
+            if(!res) throw new Error("Failed to retrieve likes")
+            if (inflight.get(targetId) !== controller) return
+            dispatch(likesRetrieved({ targetId, ...res }))
         } catch (e: any) {
-            if (e?.name === "AbortError") return;
-            dispatch(likesRetrievalFailed({ targetId, error: String(e?.message ?? e) }));
+            if (e?.name === "AbortError") return
+            dispatch(likesRetrievalFailed({ targetId, error: String(e?.message ?? e) }))
         } finally {
-            if (inflight.get(targetId) === controller) inflight.delete(targetId);
+            if (inflight.get(targetId) === controller) inflight.delete(targetId)
         }
-    };
+    }

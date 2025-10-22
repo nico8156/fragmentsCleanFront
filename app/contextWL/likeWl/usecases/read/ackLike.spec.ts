@@ -1,10 +1,10 @@
 // likeWl/usecases/read/ackLikes.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/contextWL/likeWl/usecases/read/aclLike";
 import {likesRetrieved} from "@/app/contextWL/likeWl/typeAction/likeWl.action";
 import {CommandId, commandKinds, ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
+import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/contextWL/likeWl/usecases/read/ackLike";
 
 
 
