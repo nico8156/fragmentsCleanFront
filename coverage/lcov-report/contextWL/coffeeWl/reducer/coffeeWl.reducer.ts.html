@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.82% </span>
+                <span class="strong">93.1% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/29</span>
+                <span class='fraction'>27/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">21.42% </span>
+                <span class="strong">78.57% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/14</span>
+                <span class='fraction'>11/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/26</span>
+                <span class='fraction'>26/26</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -118,45 +118,45 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -180,30 +180,30 @@ const initialState: AppStateWl["coffees"] = {
     byCity: {},
 }
 &nbsp;
-function <span class="fstat-no" title="function not covered" >indexByCity(</span>state: CoffeeStateWl, coffee: Coffee) {
-    const city = <span class="cstat-no" title="statement not covered" >coffee.address?.city?.toLowerCase();</span>
-<span class="cstat-no" title="statement not covered" >    if (!city) <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >    state.byCity ??= {};</span>
-    const arr = <span class="cstat-no" title="statement not covered" >state.byCity[city] ?? [];</span>
-<span class="cstat-no" title="statement not covered" >    if (!arr.includes(String(coffee.id))) <span class="cstat-no" title="statement not covered" >arr.push(String(coffee.id));</span></span>
-<span class="cstat-no" title="statement not covered" >    state.byCity[city] = arr;</span>
+function indexByCity(state: CoffeeStateWl, coffee: Coffee) {
+    const city = coffee.address?.city?.toLowerCase();
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!city) <span class="cstat-no" title="statement not covered" >return;</span>
+    state.byCity ??= {};
+    const arr = state.byCity[city] ?? [];
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!arr.includes(String(coffee.id))) arr.push(String(coffee.id));
+    state.byCity[city] = arr;
 }
 &nbsp;
 export const coffeeWlReducer = createReducer(
     initialState,
     (builder) =&gt; {
         builder
-            .addCase(coffeeRetrieved, <span class="fstat-no" title="function not covered" >(s</span>tate, { payload }) =&gt; {
+            .addCase(coffeeRetrieved, (state, { payload }) =&gt; {
                 // upsert
-                const prev = <span class="cstat-no" title="statement not covered" >state.byId[String(payload.id)];</span>
-<span class="cstat-no" title="statement not covered" >                state.byId[String(payload.id)] = { ...(prev ?? {}), ...payload };</span>
-<span class="cstat-no" title="statement not covered" >                indexByCity(state, state.byId[String(payload.id)]);</span>
+                const prev = state.byId[String(payload.id)];
+                state.byId[String(payload.id)] = { ...(prev ?? {}), ...payload };
+                indexByCity(state, state.byId[String(payload.id)]);
             })
-            .addCase(coffeesHydrated, <span class="fstat-no" title="function not covered" >(s</span>tate, { payload }) =&gt; {
-<span class="cstat-no" title="statement not covered" >            for (const c of payload) {</span>
-                const prev = <span class="cstat-no" title="statement not covered" >state.byId[String(c.id)];</span>
-<span class="cstat-no" title="statement not covered" >                state.byId[String(c.id)] = { ...(prev ?? {}), ...c };</span>
-<span class="cstat-no" title="statement not covered" >                indexByCity(state, state.byId[String(c.id)]);</span>
+            .addCase(coffeesHydrated, (state, { payload }) =&gt; {
+            for (const c of payload) {
+                const prev = state.byId[String(c.id)];
+                state.byId[String(c.id)] = { ...(prev ?? {}), ...c };
+                indexByCity(state, state.byId[String(c.id)]);
             }})
             .addCase(coffeeSetLoading, (state, { payload }) =&gt; {
                 const c = state.byId[String(payload.id)];
@@ -223,7 +223,7 @@ export const coffeeWlReducer = createReducer(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-22T15:28:00.339Z
+                at 2025-10-22T15:42:53.819Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

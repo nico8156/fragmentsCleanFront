@@ -3,7 +3,7 @@ import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoff
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 
 
-describe("Coffee retrieval (single)", () => {
+describe("On Coffee retrieval (single) : ", () => {
     let store: ReduxStoreWl;
     let coffeeGateway: FakeCoffeeGateway;
 
@@ -11,11 +11,11 @@ describe("Coffee retrieval (single)", () => {
         coffeeGateway = new FakeCoffeeGateway();
         store = initReduxStoreWl({ dependencies: {
             gateways: {
-                coffees: new FakeCoffeeGateway()
+                coffees: coffeeGateway,
             }
             } });
     })
-    it("hydrates a coffeeGateway from gateway", async () => {
+    it("should hydrates a coffeeGateway from gateway", async () => {
         coffeeGateway.store.set("cafe_A", {
             id: "cafe_A",
             name: "Café La Plume",
@@ -27,7 +27,6 @@ describe("Coffee retrieval (single)", () => {
             updatedAt: "2025-10-10T08:00:00.000Z" as any,
         });
 
-
         await store.dispatch<any>(coffeeRetrieval({ id: "cafe_A" }));
 
         const c = store.getState().cfState.byId["cafe_A"];
@@ -36,13 +35,12 @@ describe("Coffee retrieval (single)", () => {
         expect(c?.address?.city).toBe("Rennes");
     });
 
-    it("sets error when gateway fails", async () => {
-        const coffee = new FakeCoffeeGateway();
-        coffee.willFailGet = true;
+    it("should sets error when gateway fails", async () => {
+        coffeeGateway.willFailGet = true;
 
         await store.dispatch<any>(coffeeRetrieval({ id: "missing" as any }));
         const c = (store.getState() as any).cfState.byId["missing"];
         expect(c?.loading).toBe("error");
-        expect(c?.error).toBe("coffeeGateway get failed");
+        expect(c?.error).toBe("coffee get failed");
     });
 });

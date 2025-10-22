@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">53.84% </span>
+                <span class="strong">92.3% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/13</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>1/4</span>
+                <span class='fraction'>12/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">50% </span>
-                <span class="quiet">Functions</span>
+                <span class="quiet">Branches</span>
                 <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.33% </span>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>4/4</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/12</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -110,25 +110,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { CoffeeGateway } from "../../gateway/coffeeWl.gateway";
@@ -150,7 +150,7 @@ export const coffeeRetrieval =
             try {
                 const { data } = await coffeeWlGateway!.coffees!.get({ id: String(id), ifNoneMatch });
                 // Pas d’optimisme ici : c’est pure read
-<span class="cstat-no" title="statement not covered" >                dispatch(coffeeRetrieved(data));</span>
+                dispatch(coffeeRetrieved(data));
             } catch (e: any) {
                 dispatch(coffeeSetError({ id, message: e?.message ?? <span class="branch-1 cbranch-no" title="branch not covered" >"coffee retrieval failed" </span>}));
             }
@@ -158,11 +158,11 @@ export const coffeeRetrieval =
 &nbsp;
 // Search (batch hydrate)
 export const coffeesSearch =
-<span class="fstat-no" title="function not covered" >    (i</span>nput: Parameters&lt;CoffeeGateway["search"]&gt;[0]) :AppThunkWl&lt;Promise&lt;void&gt;&gt; =&gt;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >        as</span>ync (dispatch, _, coffeeWlGateway) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >            if(!coffeeWlGateway?.coffees)<span class="cstat-no" title="statement not covered" >return</span></span>
-            const res = <span class="cstat-no" title="statement not covered" >await coffeeWlGateway.coffees.search(input);</span>
-<span class="cstat-no" title="statement not covered" >            dispatch(coffeesHydrated(res.items));</span>
+    (input: Parameters&lt;CoffeeGateway["search"]&gt;[0]) :AppThunkWl&lt;Promise&lt;void&gt;&gt; =&gt;
+        async (dispatch, _, coffeeWlGateway) =&gt; {
+            <span class="missing-if-branch" title="if path not taken" >I</span>if(!coffeeWlGateway?.coffees)<span class="cstat-no" title="statement not covered" >return</span>
+            const res = await coffeeWlGateway.coffees.search(input);
+            dispatch(coffeesHydrated(res.items));
             //return res.nextCursor;
         };
 &nbsp;</pre></td></tr></table></pre>
@@ -172,7 +172,7 @@ export const coffeesSearch =
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-22T15:28:00.339Z
+                at 2025-10-22T15:42:53.819Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
