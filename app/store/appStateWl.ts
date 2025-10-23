@@ -8,7 +8,7 @@ import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gat
 import {EntitlementStateWl} from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
 import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import {CoffeeStateWl} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {CoffeeGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
+import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 
 export interface AppStateWl {
     coffees:CoffeeStateWl
@@ -32,7 +32,7 @@ export type helpersType = {
 }
 
 export type GatewaysWl = {
-    coffees: CoffeeGateway
+    coffees: CoffeeWlGateway
     comments: CommentsWlGateway
     likes: LikeWlGateway
     tickets: TicketsWlGateway

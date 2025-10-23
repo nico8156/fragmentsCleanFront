@@ -1,10 +1,12 @@
-import {CoffeeGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
+import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 import { Coffee } from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
-export class FakeCoffeeGateway implements CoffeeGateway {
+export class FakeCoffeeGateway implements CoffeeWlGateway {
+
     willFailGet = false;
     willFailSearch = false;
 
+    nextItems = new Array<Coffee>();
     store = new Map<string, Coffee>();
     nextCursor?: string;
 
@@ -13,6 +15,9 @@ export class FakeCoffeeGateway implements CoffeeGateway {
         const data = this.store.get(id);
         if (!data) throw new Error("coffee not found");
         return { data, etag: undefined };
+    }
+    async getAllSummaries(input?: { ifNoneMatch?: string; }): Promise<{ etag?: string; items: Coffee[]; }> {
+        return { items: this.nextItems as Coffee[]};
     }
 
     async search({ query, bbox, city, limit = 50 }: any) {

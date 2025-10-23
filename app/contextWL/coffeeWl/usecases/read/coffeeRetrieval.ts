@@ -1,4 +1,4 @@
-import { CoffeeGateway } from "../../gateway/coffeeWl.gateway";
+import { CoffeeWlGateway } from "../../gateway/coffeeWl.gateway";
 import { CoffeeId } from "../../typeAction/coffeeWl.type";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
 import {
@@ -25,7 +25,7 @@ export const coffeeRetrieval =
 
 // Search (batch hydrate)
 export const coffeesSearch =
-    (input: Parameters<CoffeeGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
+    (input: Parameters<CoffeeWlGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
         async (dispatch, _, coffeeWlGateway) => {
             if(!coffeeWlGateway?.coffees)return
             const res = await coffeeWlGateway.coffees.search(input);

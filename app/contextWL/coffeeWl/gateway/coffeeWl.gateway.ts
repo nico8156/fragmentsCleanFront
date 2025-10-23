@@ -1,9 +1,10 @@
 import {Coffee} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
-export interface CoffeeGateway {
-    /** Récupère un café par id. */
+export interface CoffeeWlGateway {
+    /** Récupère un café par id. On ne va pas l'utiliser celui-ci pour l'instant */
     get(input: { id: string; ifNoneMatch?: string }): Promise<{ etag?: string; data: Coffee }>;
-
+    /** Récupère tous les café pour ensutie les normaliser. */
+    getAllSummaries(input?: { ifNoneMatch?: string }): Promise<{ etag?: string; items: Coffee[] }>;
     /** Recherche (par texte et/ou bounding box). Les deux critères peuvent être combinés. */
     search(input: {
         query?: string;                 // ex: "espresso", "Lomi", ...
