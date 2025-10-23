@@ -9,8 +9,10 @@ import {EntitlementStateWl} from "@/app/contextWL/entitlementWl/typeAction/entit
 import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import {CoffeeStateWl} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
+import {AppRuntimeState} from "@/app/contextWL/appWl/typeAction/appWl.type";
 
 export interface AppStateWl {
+    app:AppRuntimeState
     coffees:CoffeeStateWl
     comments:CommentsStateWl
     likes:LikesStateWl
