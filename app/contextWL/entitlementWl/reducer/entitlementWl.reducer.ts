@@ -1,13 +1,13 @@
-import {createAction, createReducer} from "@reduxjs/toolkit";
+import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {
-    Entitlement,
+    Entitlement, entitlements,
     EntitlementsThresholds,
-    UserEntitlements
 } from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
-
-export const entitlementsSetThresholds = createAction<Partial<EntitlementsThresholds>>("SERVER/ENTITLEMENT/SET_THRESHOLDS")
-export const entitlementsHydrated = createAction<Omit<UserEntitlements, "rights">>('SERVER/ENTITLEMENT/HYDRATED')
+import {
+    entitlementsHydrated,
+    entitlementsSetThresholds
+} from "@/app/contextWL/entitlementWl/typeAction/entitlement.action";
 
 const defaultThresholds: EntitlementsThresholds = { likeAt: 1, commentAt: 3, submitCafeAt: 5 };
 
@@ -18,9 +18,9 @@ const initialState: AppStateWl["entitlement"] = {
 // util interne : recalcul des droits
 function computeRights(count: number, th: EntitlementsThresholds): Entitlement[] {
     const r: Entitlement[] = [];
-    if (count >= th.likeAt) r.push("LIKE");
-    if (count >= th.commentAt) r.push("COMMENT");
-    if (count >= th.submitCafeAt) r.push("SUBMIT_CAFE");
+    if (count >= th.likeAt) r.push(entitlements.LIKE);
+    if (count >= th.commentAt) r.push(entitlements.COMMENT);
+    if (count >= th.submitCafeAt) r.push(entitlements.SUBMIT_CAFE);
     return r;
 }
 

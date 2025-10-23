@@ -1,6 +1,7 @@
-import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer";
+
 import {ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
+import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/typeAction/entitlement.action";
 
 export const entitlementsRetrieval =
     (input: { userId: string }) :  AppThunkWl<Promise<void>> =>

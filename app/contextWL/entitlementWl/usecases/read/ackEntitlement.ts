@@ -1,6 +1,6 @@
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import {onTicketConfirmedAck} from "@/app/contextWL/ticketWl/usecases/read/ackTicket";
-import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer";
+import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/typeAction/entitlement.action";
 
 export const ackEntitlementsListener = () => {
     const lm = createListenerMiddleware();
