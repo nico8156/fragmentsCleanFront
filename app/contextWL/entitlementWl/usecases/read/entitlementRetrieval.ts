@@ -17,7 +17,7 @@ export const entitlementsRetrieval =
                 return;
             }
             try{
-                const res = await entitlementWlGateway.entitlements.get({ authorId: input.userId})
+                const res = await entitlementWlGateway.entitlements.get({ userId: input.userId})
                 dispatch(
                     entitlementsHydrated({
                         userId: input.userId,

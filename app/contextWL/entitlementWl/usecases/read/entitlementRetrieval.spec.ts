@@ -4,6 +4,7 @@ import {entitlementsRetrieval} from "@/app/contextWL/entitlementWl/usecases/read
 import {UserEntitlements} from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
 import {ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
 
+
 describe("On Entitlements retrieval, ", () => {
     let store: ReduxStoreWl;
     let entitlementsGateway: FakeEntitlementWlGateway;
@@ -17,14 +18,14 @@ describe("On Entitlements retrieval, ", () => {
     it("should hydrates from gateway", async () => {
         entitlementsGateway.store.set("user_test", entitlementForTest)
 
-        await store.dispatch<any>(entitlementsRetrieval({ authorId: "user_test" }));
+        await store.dispatch<any>(entitlementsRetrieval({ userId: "user_test" }));
 
         const ue = store.getState().enState.byUser["user_test"];
         expect(ue.confirmedTickets).toBe(4);
         expect(ue.rights).toEqual(["LIKE", "COMMENT"]);
     });
     const entitlementForTest :UserEntitlements = {
-        authorId: "user_test",
+        userId: "user_test",
         confirmedTickets: 4,
         rights: ["LIKE", "COMMENT"],
         updatedAt: "2025-10-10T07:10:00.000Z" as ISODate,
