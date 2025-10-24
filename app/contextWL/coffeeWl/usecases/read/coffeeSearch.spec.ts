@@ -19,12 +19,12 @@ describe("On Coffees search (batch hydrate)", () => {
     it("should hydrates list filtered by city and query", async () => {
 
         coffeeGateway.store.set("a", {
-            id: "a", name: "Lomi", location: { lat: 48.889, lon: 2.358 },
-            address: { city: "Paris", country: "FR" }, tags: ["roaster"], version: 1, updatedAt: "2025-10-10T08:05:00.000Z" as any,
+            id: "a",googleId:"nfsmqn5s4<q1", name: "Lomi", location: { lat: 48.889, lon: 2.358 },
+            address: { city: "Paris", country: "FR" },phoneNumber:"014256897452", tags: ["roaster"], version: 1, updatedAt: "2025-10-10T08:05:00.000Z" as any,
         });
         coffeeGateway.store.set("b", {
-            id: "b", name: "Café Joyeux", location: { lat: 48.114, lon: -1.678 },
-            address: { city: "Rennes", country: "FR" }, tags: ["espresso"], version: 2, updatedAt: "2025-10-10T08:06:00.000Z" as any,
+            id: "b",googleId:"chsqmu=bhcfqsu", name: "Café Joyeux", location: { lat: 48.114, lon: -1.678 },
+            address: { city: "Rennes", country: "FR" },phoneNumber:"014287549832", tags: ["espresso"], version: 2, updatedAt: "2025-10-10T08:06:00.000Z" as any,
         });
 
         await store.dispatch<any>(coffeesSearch({ city: "Rennes", query: "espresso" }));

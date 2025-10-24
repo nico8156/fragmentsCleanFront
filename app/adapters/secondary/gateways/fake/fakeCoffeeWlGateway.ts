@@ -1,5 +1,7 @@
 import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 import { Coffee } from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {coffeeData} from "@/assets/data/coffeeFromOldServer";
+import {coffeeDataConverter} from "@/assets/helpers/coffeeDataConverter";
 
 export class FakeCoffeeGateway implements CoffeeWlGateway {
 
@@ -17,6 +19,8 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
         return { data, etag: undefined };
     }
     async getAllSummaries(input?: { ifNoneMatch?: string; }): Promise<{ etag?: string; items: Coffee[]; }> {
+        if (this.willFailGet) throw new Error("coffee get failed");
+        this.nextItems = coffeeData.map(c => coffeeDataConverter(c))
         return { items: this.nextItems as Coffee[]};
     }
 

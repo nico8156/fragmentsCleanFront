@@ -15,9 +15,9 @@ describe('On unlike coffee', () => {
     it('should unlike coffee', async () => {
         likeGateway.nextLike = alike;
         await store.dispatch(retrieveLike());
-        await store.dispatch(unlikeCoffee({id: "2", userId: "u2", coffeeId: "c2"}))
+        await store.dispatch(unlikeCoffee({id: "2", authorId: "u2", coffeeId: "c2"}))
         expect(store.getState().likeRetrieval.data).toEqual(alike.filter(like => like.id !== "2"));
         expect(store.getState().likeRetrieval.data.length).toEqual(2);
     });
-    const alike :Like[] = [{id: "1", userId: "u1", coffeeId: "c1"}, {id: "2", userId: "u2", coffeeId: "c2"}, {id: "3", userId: "u3", coffeeId: "c3"}];
+    const alike :Like[] = [{id: "1", authorId: "u1", coffeeId: "c1"}, {id: "2", authorId: "u2", coffeeId: "c2"}, {id: "3", authorId: "u3", coffeeId: "c3"}];
 })

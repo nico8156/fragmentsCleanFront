@@ -14,6 +14,7 @@ import {coffeeWlReducer as cfState} from "@/app/contextWL/coffeeWl/reducer/coffe
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
     listeners?: Middleware[];
+    extraMiddlewares?: Middleware[];
     extraReducers?: Record<string, any>;
 }) => {
     return configureStore({
@@ -24,7 +25,7 @@ export const initReduxStoreWl = (config: {
             tState,
             enState,
             cfState,
-            ...(config.extraReducers ?? {}), // 👈 ajoute ça
+            ...(config.extraReducers ?? {})
         },
         middleware: (getDefaultMiddleware) => {
             const middleware = getDefaultMiddleware({
@@ -33,9 +34,9 @@ export const initReduxStoreWl = (config: {
                 },
                 serializableCheck: false,
             });
-            return config.listeners
-                ? middleware.prepend(...config.listeners)
-                : middleware;
+            const withMiddleware = config.listeners ? middleware.prepend(...config.listeners) : middleware;
+            const withCustomMiddleware = config.extraMiddlewares ? withMiddleware.prepend(...config.extraMiddlewares) : withMiddleware;
+            return withCustomMiddleware;
         },
         devTools: true,
     });
@@ -46,10 +47,10 @@ export type ReduxStoreWl = ReturnType<typeof initReduxStoreWl>;
 export type RootStateWl = ReturnType<ReduxStoreWl["getState"]>;
 export type AppDispatchWl = ReduxStoreWl["dispatch"];
 
-// L’extra arg réel est ce que tu passes ci-dessus : dependencies?.gateways
+
 export type ExtraArgWl = DependenciesWl["gateways"] | undefined;
 
-// Thunk “canonique” aligné
+// Thunk “canonique”
 export type AppThunkWl<ReturnType = void> = ThunkAction<
     ReturnType,
     RootStateWl,

@@ -39,7 +39,7 @@ export const entitlementWlReducer = createReducer(
         builder.addCase(entitlementsHydrated, (state, { payload }) => {
             const rights = computeRights(payload.confirmedTickets, state.thresholds);
             state.byUser[String(payload.userId)] = {
-                userId: payload.userId,
+                authorId: payload.userId,
                 confirmedTickets: payload.confirmedTickets,
                 rights,
                 updatedAt: payload.updatedAt,

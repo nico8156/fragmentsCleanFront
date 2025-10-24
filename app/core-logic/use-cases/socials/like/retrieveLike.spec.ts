@@ -19,5 +19,5 @@ describe('On like0 retrieval', () => {
         expect(store.getState().likeRetrieval.data.length).toEqual(2);
     })
 
-    const alike: Like[] = [{id: "1", userId: "u1", coffeeId: "c1"}, {id: "2", userId: "u2", coffeeId: "c2"}];
+    const alike: Like[] = [{id: "1", authorId: "u1", coffeeId: "c1"}, {id: "2", authorId: "u2", coffeeId: "c2"}];
 })

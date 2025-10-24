@@ -1,11 +1,11 @@
 import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 
 
 export class FakeCoffeeGateway implements CoffeeGateway {
-    nextCoffees: Coffee[] | null = null;
+    nextCoffees: CoffeeFromOldServer[] | null = null;
 
-    async retrieveCoffee(): Promise<Coffee[]> {
+    async retrieveCoffee(): Promise<CoffeeFromOldServer[]> {
         return this.nextCoffees!;
     }
 }

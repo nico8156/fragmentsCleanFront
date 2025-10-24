@@ -1,8 +1,9 @@
-import {entitlementsSetThresholds} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer";
+
 import {onTicketConfirmedAck} from "@/app/contextWL/ticketWl/usecases/read/ackTicket";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {ackEntitlementsListener} from "@/app/contextWL/entitlementWl/usecases/read/ackEntitlement";
 import {CommandId} from "@/app/contextWL/outboxWl/type/outbox.type";
+import {entitlementsSetThresholds} from "@/app/contextWL/entitlementWl/typeAction/entitlement.action";
 
 describe("Entitlements projection on TicketConfirmed ACK", () => {
     let store : ReduxStoreWl;
@@ -39,8 +40,6 @@ describe("Entitlements projection on TicketConfirmed ACK", () => {
         ack(1);
         let ue = store.getState().enState.byUser["user_test"];
         let threshold = store.getState().enState.thresholds;
-        console.log({ue});
-        console.log({threshold});
         expect(ue.confirmedTickets).toBe(1);
         expect(ue.rights).toContain("LIKE");
         expect(ue.rights).not.toContain("COMMENT");

@@ -2,6 +2,10 @@
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CoffeeId = string & { readonly __brand: "CoffeeId" };
 
+export function parseToISODate(date: string): ISODate {
+    return date as ISODate;
+}
+
 // Géo & adresse minimalistes
 export interface GeoPoint {
     lat: number;
@@ -18,9 +22,12 @@ export interface Address {
 // Entité Café (read model)
 export interface Coffee {
     id: CoffeeId | string;
+    googleId:string;
     name: string;
-    location?: GeoPoint;
-    address?: Address;
+    location: GeoPoint;
+    address: Address;
+    phoneNumber:string;
+    website?:string;
     rating?: number;     // optionnel (avg)
     tags?: string[];     // ex: ["espresso", "filter", "roaster"]
     version: number;     // version serveur

@@ -1,5 +1,5 @@
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 
 export interface CoffeeApiLoader {
-    loadCoffee(): Promise<Coffee[]>;
+    loadCoffee(): Promise<CoffeeFromOldServer[]>;
 }

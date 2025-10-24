@@ -22,6 +22,18 @@ export const coffeeRetrieval =
                 dispatch(coffeeSetError({ id, message: e?.message ?? "coffee retrieval failed" }));
             }
         };
+export const coffeeGlobalRetrieval =
+    () :AppThunkWl<Promise<void>> =>
+        async (dispatch, _, coffeeWlGateway ) => {
+            try {
+                const { items } = await coffeeWlGateway!.coffees!.getAllSummaries();
+                // Pas d’optimisme ici : c’est pure read
+                dispatch(coffeesHydrated(items));
+            } catch (e: any) {
+                throw new Error("Error loading coffee global");
+                //TODO create action error without params?
+            }
+        };
 
 // Search (batch hydrate)
 export const coffeesSearch =

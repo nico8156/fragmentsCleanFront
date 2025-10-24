@@ -11,7 +11,7 @@ import {
 } from "@/app/contextWL/appWl/typeAction/appWl.action";
 import {entitlementsRetrieval} from "@/app/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import {outboxProcessOnce} from "@/app/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {coffeeRetrieval} from "@/app/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
+import {coffeeGlobalRetrieval} from "@/app/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 
 export const runtimeListenerFactory =
     (deps:DependenciesWl, callback?:()=> void) => {
@@ -25,12 +25,12 @@ export const runtimeListenerFactory =
                         api.dispatch(appHydrationDone());
 
                         // Warmup (fetch global léger)
-                        await api.dispatch<any>(coffeeRetrieval());
+                        await api.dispatch<any>(coffeeGlobalRetrieval());
                         // Entitlements de l’utilisateur si connu (facultatif)
                         const uid = (api.getState() as any).auth?.userId;
-                        if (uid) await api.dispatch<any>(entitlementsRetrieval({ userId: uid }));
+                        if (uid) await api.dispatch<any>(entitlementsRetrieval({ authorId: uid }));
 
-                        api.dispatch(appWarmupDone());
+                        api.dispatch(appWarmupDone({message: "Warmup OK"}));
                         api.dispatch(appBootSucceeded());
 
                         // À la fin du boot, traiter l’outbox si offline->online

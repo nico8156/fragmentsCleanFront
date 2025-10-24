@@ -2,7 +2,7 @@ import {initReduxStore, ReduxStore} from "@/app/store/reduxStore";
 import {AppState} from "@/app/store/appState";
 import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeGateway";
 import {retrieveCoffee} from "@/app/core-logic/use-cases/coffee/retrieveCoffee";
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 
 describe('coffee retrieval', () => {
     let store: ReduxStore;
@@ -26,7 +26,7 @@ describe('coffee retrieval', () => {
         >({data: aCoffees});
     });
 
-    const aCoffees: Coffee[] = [
+    const aCoffees: CoffeeFromOldServer[] = [
         {
             "id": "07dae867-1273-4d0f-b1dd-f206b290626b",
             "google_id": "ChIJB8tVJh3eDkgRrbxiSh2Jj3c",

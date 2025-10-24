@@ -1,4 +1,4 @@
-export type Coffee = {
+export type CoffeeFromOldServer = {
     id: string,
     google_id: string,
     display_name: string,
@@ -9,7 +9,7 @@ export type Coffee = {
     longitude: number,
 }
 
-export const coffeeData: Coffee[] =[
+export const coffeeData: CoffeeFromOldServer[] =[
     {
         "id": "07dae867-1273-4d0f-b1dd-f206b290626b",
         "google_id": "ChIJB8tVJh3eDkgRrbxiSh2Jj3c",

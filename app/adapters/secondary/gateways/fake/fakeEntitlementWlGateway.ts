@@ -12,7 +12,7 @@ export class FakeEntitlementWlGateway implements EntitlementWlGateway {
         const data =
             this.store.get(userId) ??
             ({
-                userId,
+                userId: authorId,
                 confirmedTickets: 0,
                 updatedAt: new Date(0).toISOString(),
             } as UserEntitlements);

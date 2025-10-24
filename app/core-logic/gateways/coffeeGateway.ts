@@ -1,6 +1,6 @@
-import { Coffee } from "@/assets/data/coffee";
+import { CoffeeFromOldServer } from "@/assets/data/coffeeFromOldServer";
 
 
 export interface CoffeeGateway {
-    retrieveCoffee(): Promise<Coffee[]>;
+    retrieveCoffee(): Promise<CoffeeFromOldServer[]>;
 }

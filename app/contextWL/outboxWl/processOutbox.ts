@@ -76,7 +76,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         await deps.gateways.likes!.add({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId: (cmd as any).userId,
+                            authorId: (cmd as any).userId,
                             at: cmd.at,
                         });
                         const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
@@ -88,7 +88,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         await deps.gateways.likes!.remove({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId: (cmd as any).userId,
+                            authorId: (cmd as any).userId,
                             at: cmd.at,
                         });
                         const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();

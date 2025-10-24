@@ -1,5 +1,5 @@
 import { createReducer } from "@reduxjs/toolkit";
-import {AppState, Coffee} from "@/app/store/appState";
+import {AppState, CoffeeFromOldServer} from "@/app/store/appState";
 import {coffeeRetrieved} from "@/app/core-logic/use-cases/coffee/retrieveCoffee";
 
 const initialState: AppState["coffeeRetrieval"] = {

@@ -1,11 +1,11 @@
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 import {LikeRoot, LikeState, TargetId} from "@/app/contexts/like/like.type";
 import {CommentId, OutboxCommand, TempId, Comment, CommentRoot, OutboxState} from "@/app/contexts/comment/comment.type";
 
 
 export interface AppState {
     coffeeRetrieval: {
-        data : Coffee[] | [];
+        data : CoffeeFromOldServer[] | [];
     },
     likeRetrieval: {
         data : Like[] | [];

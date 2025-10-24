@@ -1,9 +1,9 @@
 import { createAction } from "@reduxjs/toolkit";
 
 import {AppThunk} from "@/app/store/reduxStore";
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 
-export const coffeeRetrieved = createAction<Coffee[]>("COFFEE_RETRIEVED");
+export const coffeeRetrieved = createAction<CoffeeFromOldServer[]>("COFFEE_RETRIEVED");
 
 export const retrieveCoffee =
     (): AppThunk<Promise<void>> =>

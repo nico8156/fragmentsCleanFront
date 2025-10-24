@@ -1,16 +1,16 @@
 import {CoffeeGateway} from "@/app/core-logic/gateways/coffeeGateway";
 
 import {CoffeeApiLoader} from "@/app/adapters/secondary/gateways/coffee/coffeeApiLoader";
-import {Coffee} from "@/assets/data/coffee";
+import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 
 export class CoffeeApiGateway implements CoffeeGateway {
 
     constructor(private readonly coffeeLoader: CoffeeApiLoader) {}
 
-    async retrieveCoffee(): Promise<Coffee[]> {
+    async retrieveCoffee(): Promise<CoffeeFromOldServer[]> {
         const apiResponse = await this.coffeeLoader.loadCoffee();
         if (!apiResponse) {
-            return []as Coffee[];
+            return []as CoffeeFromOldServer[];
         }
         return apiResponse;
     }
