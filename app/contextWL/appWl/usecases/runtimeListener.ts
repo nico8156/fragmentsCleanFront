@@ -28,7 +28,7 @@ export const runtimeListenerFactory =
                         await api.dispatch<any>(coffeeGlobalRetrieval());
                         // Entitlements de l’utilisateur si connu (facultatif)
                         const uid = (api.getState() as any).auth?.userId;
-                        if (uid) await api.dispatch<any>(entitlementsRetrieval({ authorId: uid }));
+                        if (uid) await api.dispatch<any>(entitlementsRetrieval({ userId: uid }));
 
                         api.dispatch(appWarmupDone({message: "Warmup OK"}));
                         api.dispatch(appBootSucceeded());

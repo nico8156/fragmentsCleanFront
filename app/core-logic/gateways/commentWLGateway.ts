@@ -1,5 +1,5 @@
-import { CommentId, CommentStatus, Comment} from "@/app/contexts/comment/comment.type";
-import {CommentsState} from "@/app/store/appState";
+import {CommentId, CommentsStateWl} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {StatusType} from "@/app/contextWL/outboxWl/type/outbox.type";
 
 export interface CommentWLGateaway {
     createComment(params: {
@@ -18,7 +18,7 @@ export interface CommentWLGateaway {
     deleteComment(params: {
         id: CommentId;
         commandId: string;
-    }): Promise<{ id: CommentId; status: CommentStatus; updatedAt: string }>;
+    }): Promise<{ id: CommentId; status: StatusType; updatedAt: string }>;
 
     retrieveForPost(params: {
         postId: string;
@@ -36,5 +36,5 @@ export interface Deps {
     api: CommentWLGateaway;
     clock: Clock;
     ids: IdGen;
-    selectCurrentUserId: (state: CommentsState) => string;
+    selectCurrentUserId: (state: CommentsStateWl) => string;
 }

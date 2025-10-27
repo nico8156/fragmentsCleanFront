@@ -1,6 +1,7 @@
 import {coffeeGlobalRetrieval, coffeeRetrieval} from "./coffeeRetrieval";
-import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
+import {FakeCoffeeGateway} from "../../../../adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
+import {initReduxStoreWl, ReduxStoreWl} from "../../../../store/reduxStoreWl";
+import {AppStateWl} from "../../../../store/appStateWl";
 
 
 describe("On Coffee retrieval (single) : ", () => {
@@ -31,7 +32,7 @@ describe("On Coffee retrieval (single) : ", () => {
 
         await store.dispatch<any>(coffeeRetrieval({ id: "cafe_A" }));
 
-        const c = store.getState().cfState.byId["cafe_A"];
+        const c = (store.getState().cfState as AppStateWl["coffees"]).byId["cafe_A"];
         expect(c?.name).toBe("Café La Plume");
         expect(c?.version).toBe(3);
         expect(c?.address?.city).toBe("Rennes");

@@ -4,9 +4,12 @@ import {initReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {useEffect} from "react";
 import {mountAppStateAdapter} from "@/app/adapters/primary/react/gateways-config/appState.adapter";
 import {mountNetInfoAdapter} from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
+import {gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 
 const store = initReduxStoreWl({
-    dependencies:{}
+    dependencies:{
+        gateways
+    }
 })
 
 export default function RootLayout() {
