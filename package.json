@@ -10,10 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest --clearCache && jest"
-  },
-  "jest": {
-    "preset": "react-native"
-  },
+  }
+  ,
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-community/netinfo": "^11.4.1",

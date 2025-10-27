@@ -1,4 +1,3 @@
-import {AppThunk} from "@/app/store/reduxStore";
 import {ISODate, TicketId, TicketStatus} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
 
 import {ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer";
@@ -16,7 +15,7 @@ export const ticketRetrieval =
             currency?: string;
             ticketDate?: ISODate;
         };
-    }): AppThunk =>
+    })  =>
         async (dispatch, getState, dependencies: any) => {
             const ticketId = input.ticketId as TicketId;
             dispatch(ticketSetLoading({ ticketId }));

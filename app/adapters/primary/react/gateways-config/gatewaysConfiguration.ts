@@ -8,6 +8,9 @@ import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoff
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {FakeTicketsGateway} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import {FakeEntitlementWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
+import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
+import {PhoneLocationProvider} from "@/app/adapters/secondary/gateways/fake/phoneLocationProvider";
+import {FakeLocationWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -15,6 +18,7 @@ export type GatewaysWl = {
     likes: LikeWlGateway
     tickets: TicketsWlGateway
     entitlements: EntitlementWlGateway
+    locations: LocationWlGateway
 }
 
 const coffees = new FakeCoffeeGateway()
@@ -22,7 +26,11 @@ const comments = new FakeCommentsWlGateway()
 const likes = new FakeLikesGateway()
 const tickets = new FakeTicketsGateway()
 const entitlements = new FakeEntitlementWlGateway()
+const locations = new FakeLocationWlGateway(
+    new PhoneLocationProvider
+)
+
 
 export const gateways: GatewaysWl = {
-    coffees, comments,likes,tickets,entitlements
+    coffees, comments,likes,tickets,entitlements, locations
 };
