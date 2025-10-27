@@ -34,12 +34,26 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="coffeeMap"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'CoffeeMap',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.circle" color={color} />,
         }}
       />
+    <Tabs.Screen
+        name="tour"
+        options={{
+            title: 'Tour',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist.checked" color={color} />,
+        }}
+    />
+    <Tabs.Screen
+        name="profile"
+        options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="airpod.gen3.left" color={color} />,
+        }}
+    />
     </Tabs>
   );
 }
