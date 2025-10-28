@@ -37,6 +37,8 @@ export const coffeeWlReducer = createReducer(
             for (const c of payload) {
                 const prev = state.byId[String(c.id)];
                 state.byId[String(c.id)] = { ...(prev ?? {}), ...c };
+                const prevIds = state.ids;
+                if (!prevIds.includes(String(c.id))) state.ids.push(String(c.id));
                 indexByCity(state, state.byId[String(c.id)]);
             }})
             .addCase(coffeeSetLoading, (state, { payload }) => {
