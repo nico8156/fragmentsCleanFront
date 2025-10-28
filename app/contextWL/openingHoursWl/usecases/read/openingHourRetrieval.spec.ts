@@ -1,7 +1,6 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 import {onOpeningHourRetrieval} from "@/app/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
-import {openingHoursReducer as ohState} from "@/app/contextWL/openingHoursWl/reducer/openinghours.reducer";
 import {AppStateWl} from "@/app/store/appStateWl";
 
 describe('On OpeningHourRetrieval', () => {

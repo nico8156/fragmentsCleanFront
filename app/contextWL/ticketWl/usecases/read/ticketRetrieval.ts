@@ -1,6 +1,6 @@
 import {ISODate, TicketId, TicketStatus} from "@/app/contextWL/ticketWl/typeAction/ticket.type";
-
 import {ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer";
+import {AppThunkWl} from "@/app/store/reduxStoreWl";
 
 
 export const ticketRetrieval =
@@ -15,8 +15,8 @@ export const ticketRetrieval =
             currency?: string;
             ticketDate?: ISODate;
         };
-    })  =>
-        async (dispatch, getState, dependencies: any) => {
+    }) :AppThunkWl<Promise<void>> =>
+        async (dispatch,_, gateways) => {
             const ticketId = input.ticketId as TicketId;
             dispatch(ticketSetLoading({ ticketId }));
 
