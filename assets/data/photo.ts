@@ -1,10 +1,6 @@
-export type Photo = {
-    id: string,
-    coffee_id: string,
-    photo_uri: string,
-}
+import {PhotoURI} from "@/app/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
 
-export const photoData: Photo[] = [
+export const photoData: PhotoURI[] = [
     {
         "id": "00720bc4-227f-4ec2-a86d-0392c5b2845f",
         "coffee_id": "15626614-f66d-4a41-b119-e27c9f963ab1",

@@ -3,17 +3,20 @@ import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gat
 import {LikeWlGateway} from "@/app/contextWL/likeWl/gateway/likeWl.gateway";
 import {TicketsWlGateway} from "@/app/contextWL/ticketWl/gateway/ticketWl.gateway";
 import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
+import {CfPhotoGateway} from "@/app/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
+import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {FakeTicketsGateway} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import {FakeEntitlementWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
-import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
 import {PhoneLocationProvider} from "@/app/adapters/secondary/gateways/fake/phoneLocationProvider";
 import {FakeLocationWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
+import {FakeCfPhotoWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
+    cfPhotos: CfPhotoGateway
     comments: CommentsWlGateway
     likes: LikeWlGateway
     tickets: TicketsWlGateway
@@ -22,6 +25,7 @@ export type GatewaysWl = {
 }
 
 const coffees = new FakeCoffeeGateway()
+const cfPhotos = new FakeCfPhotoWlGateway()
 const comments = new FakeCommentsWlGateway()
 const likes = new FakeLikesGateway()
 const tickets = new FakeTicketsGateway()
@@ -32,5 +36,5 @@ const locations = new FakeLocationWlGateway(
 
 
 export const gateways: GatewaysWl = {
-    coffees, comments,likes,tickets,entitlements, locations
+    coffees,cfPhotos, comments,likes,tickets,entitlements, locations
 };

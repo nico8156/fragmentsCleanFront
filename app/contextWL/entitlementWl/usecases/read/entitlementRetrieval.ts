@@ -5,8 +5,8 @@ import {entitlementsHydrated} from "@/app/contextWL/entitlementWl/typeAction/ent
 
 export const entitlementsRetrieval =
     (input: { userId: string }) :  AppThunkWl<Promise<void>> =>
-        async (dispatch, _, entitlementWlGateway) => {
-            if(!entitlementWlGateway?.entitlements){
+        async (dispatch, _, gateways) => {
+            if(!gateways?.entitlements){
                 dispatch(
                     entitlementsHydrated({
                         userId: input.userId,
@@ -17,7 +17,7 @@ export const entitlementsRetrieval =
                 return;
             }
             try{
-                const res = await entitlementWlGateway.entitlements.get({ userId: input.userId})
+                const res = await gateways.entitlements.get({ userId: input.userId})
                 dispatch(
                     entitlementsHydrated({
                         userId: input.userId,

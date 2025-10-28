@@ -6,10 +6,12 @@ import {EntitlementStateWl} from "@/app/contextWL/entitlementWl/typeAction/entit
 import {CoffeeStateWl, GeoPoint} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {AppRuntimeState} from "@/app/contextWL/appWl/typeAction/appWl.type";
 import {GatewaysWl} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+import {CfPhotoStateWl} from "@/app/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
 
 export interface AppStateWl {
     app:AppRuntimeState
     coffees:CoffeeStateWl
+    cfPhotos: CfPhotoStateWl
     comments:CommentsStateWl
     likes:LikesStateWl
     tickets:TicketsStateWl
