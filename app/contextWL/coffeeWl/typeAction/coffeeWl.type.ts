@@ -6,6 +6,10 @@ export function parseToISODate(date: string): ISODate {
     return date as ISODate;
 }
 
+export function parseToCoffeeId(id: string): CoffeeId {
+    return id as CoffeeId;
+}
+
 // Géo & adresse minimalistes
 export interface GeoPoint {
     lat: number;

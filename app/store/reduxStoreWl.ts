@@ -53,7 +53,6 @@ export type ReduxStoreWl = ReturnType<typeof initReduxStoreWl>;
 export type RootStateWl = ReturnType<ReduxStoreWl["getState"]>;
 export type AppDispatchWl = ReduxStoreWl["dispatch"];
 
-
 export type ExtraArgWl = DependenciesWl["gateways"] | undefined;
 
 // Thunk “canonique”
