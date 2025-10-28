@@ -1,8 +1,4 @@
-export type OpeningHours = {
-    id: string,
-    coffee_id: string,
-    weekday_description: string,
-}
+import {OpeningHours} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
 
 export const openingHoursData: OpeningHours[] =[
     {

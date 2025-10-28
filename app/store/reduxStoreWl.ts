@@ -12,6 +12,7 @@ import {entitlementWlReducer as enState} from "@/app/contextWL/entitlementWl/red
 import {coffeeWlReducer as cfState} from "@/app/contextWL/coffeeWl/reducer/coffeeWl.reducer"
 import { locationReducer as lcState } from "@/app/contextWL/locationWl/reducer/location.reducer"
 import { cfPhotoReducer as pState} from "@/app/contextWL/cfPhotosWl/reducer/cfPhoto.reducer"
+import {openingHoursReducer as ohState} from"@/app/contextWL/openingHoursWl/reducer/openinghours.reducer"
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
@@ -29,6 +30,7 @@ export const initReduxStoreWl = (config: {
             cfState,
             lcState,
             pState,
+            ohState,
             ...(config.extraReducers ?? {})
         },
         middleware: (getDefaultMiddleware) => {

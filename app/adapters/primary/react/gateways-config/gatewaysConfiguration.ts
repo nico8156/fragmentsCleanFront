@@ -13,10 +13,13 @@ import {FakeEntitlementWlGateway} from "@/app/adapters/secondary/gateways/fake/f
 import {PhoneLocationProvider} from "@/app/adapters/secondary/gateways/fake/phoneLocationProvider";
 import {FakeLocationWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
 import {FakeCfPhotoWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
+import {OpeningHoursGateway} from "@/app/contextWL/openingHoursWl/gateway/openingHours.gateway";
+import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
     cfPhotos: CfPhotoGateway
+    openingHours: OpeningHoursGateway
     comments: CommentsWlGateway
     likes: LikeWlGateway
     tickets: TicketsWlGateway
@@ -26,6 +29,7 @@ export type GatewaysWl = {
 
 const coffees = new FakeCoffeeGateway()
 const cfPhotos = new FakeCfPhotoWlGateway()
+const openingHours = new FakeOpeningHoursWlGateway()
 const comments = new FakeCommentsWlGateway()
 const likes = new FakeLikesGateway()
 const tickets = new FakeTicketsGateway()
@@ -36,5 +40,5 @@ const locations = new FakeLocationWlGateway(
 
 
 export const gateways: GatewaysWl = {
-    coffees,cfPhotos, comments,likes,tickets,entitlements, locations
+    coffees,cfPhotos,openingHours, comments,likes,tickets,entitlements, locations
 };
