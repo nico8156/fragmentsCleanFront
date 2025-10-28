@@ -37,6 +37,7 @@ export interface Coffee {
 // Slice state
 export interface CoffeeStateWl {
     byId: Record<string, Coffee>;
+    ids: string[]; // ordre global par défaut
     // (optionnel) indexes simples
     byCity?: Record<string, string[]>; // city -> [ids]
 }

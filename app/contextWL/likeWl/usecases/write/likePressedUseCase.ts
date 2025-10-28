@@ -1,4 +1,3 @@
-// usecases/write/likeToggleWlUseCase.ts
 import { createListenerMiddleware, createAction, TypedStartListening } from "@reduxjs/toolkit";
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";

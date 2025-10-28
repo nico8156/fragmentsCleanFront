@@ -10,6 +10,7 @@ export const coffeeSetError   = createAction<{ id: CoffeeId | string; message: s
 
 const initialState: AppStateWl["coffees"] = {
     byId: {},
+    ids: [],
     byCity: {},
 }
 
