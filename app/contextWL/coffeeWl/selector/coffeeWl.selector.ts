@@ -42,3 +42,6 @@ export const selectCoordinatesForCoffee = (id:CoffeeId) => createSelector(
     (s:RootStateWl) => selectLocationForCoffee(id)(s),
     (location) => location
 )
+
+//TODO handle opening hours : indicator OPEN / CLOSE
+//TODO calculate distance coffee == user

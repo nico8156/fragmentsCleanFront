@@ -10,10 +10,10 @@ type Props = {
 
 const CoffeeInfoBoard = (props:Props) => {
 
-    const {coffeeId} = props;
-    const {coffee} = useCafeFull(parseToCoffeeId(coffeeId))
+    const coffeeId = parseToCoffeeId(props.coffeeId);
+    const {coffee} = useCafeFull(coffeeId)
 
-    return (
+    return coffee &&(
     <Callout>
         <View style={{height:250, width:300}}>
             <Text>
@@ -22,7 +22,7 @@ const CoffeeInfoBoard = (props:Props) => {
             <Text>
                 {coffee.address.city}
             </Text>
-            <Image source={coffee.photos[0]} style={{height:150, width:150, borderRadius:75}}  />
+            <Image source={coffee.photos[0]} style={{height:150, width:150}}  />
         </View>
     </Callout>
     )

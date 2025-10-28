@@ -1,4 +1,4 @@
-// Types "brandés" (facultatif)
+// Types "brandés"
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CoffeeId = string & { readonly __brand: "CoffeeId" };
 
