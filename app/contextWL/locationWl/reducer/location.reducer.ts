@@ -1,20 +1,45 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {getLocationSuccess} from "@/app/contextWL/locationWl/typeAction/location.action";
+import {
+    getLocationSuccess,
+    locationUpdated,
+    permissionUpdated, watchError, watchStarted, watchStopped
+} from "@/app/contextWL/locationWl/typeAction/location.action";
 
 
-const intialState:AppStateWl["location"] = {
-    lat:0,
-    lon:0
-}
+const initialState: AppStateWl["location"] = {
+    coords: null,
+    lastUpdated: null,
+    status: 'idle',
+    permission: 'undetermined',
+    isWatching: false
+};
 
 export const locationReducer = createReducer(
-    intialState,
+    initialState,
     (builder) => {
         builder
-            .addCase(getLocationSuccess, (s, { payload }) => {
-                s.lat = payload.coordinates.lat
-                s.lon = payload.coordinates.lon;
+            .addCase(permissionUpdated,(s, a) => {
+                s.permission = a.payload.granted ? 'granted' : 'denied'
+                if (s.status === 'error' && a.payload.granted) s.status = 'idle'
+            })
+            .addCase(locationUpdated, (s, a) => {
+                s.coords = a.payload.coords
+                s.lastUpdated = a.payload.at
+                s.status = s.isWatching ? 'watching' : 'idle'
+                s.error = undefined
+            })
+            .addCase(watchStarted, (s, a) => {
+                s.isWatching = true
+                s.status = 'watching'
+            })
+            .addCase(watchStopped,(s,a)=> {
+                s.isWatching = false
+                s.status = 'paused'
+            })
+            .addCase(watchError,(s,a)=> {
+                s.status = 'error'
+                s.error = a.payload.message
             })
     }
 )

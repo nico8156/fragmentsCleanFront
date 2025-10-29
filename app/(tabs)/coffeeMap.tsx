@@ -1,19 +1,21 @@
 import { StyleSheet,View} from "react-native";
 import MapView from "react-native-maps";
-import {useSelector} from "react-redux";
 import CoffeeSelection from "@/app/adapters/primary/react/components/coffeeSelection/coffeeSelection";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
 import {useRef} from "react";
+import {useUserLocationFromStore} from "@/app/adapters/secondary/viewModel/useUserLocation";
 
 const CoffeeMap = () => {
 
-    const {lat,lon} = useSelector((s:any) => s.lcState)
+    const {coords,refresh} = useUserLocationFromStore()
+
     const mapRef = useRef<MapView>(null)
 
     const localizeMe = () => {
+        refresh()
         mapRef.current?.animateToRegion({
-            latitude: lat || 0,
-            longitude: lon || 0,
+            latitude: coords?.lat || 0,
+            longitude: coords?.lng || 0,
             latitudeDelta: 0.025,
             longitudeDelta: 0.025,
         });
@@ -25,8 +27,8 @@ const CoffeeMap = () => {
                     style={styles.map}
                     showsMyLocationButton={true}
                     initialRegion={{
-                        latitude:  lat,
-                        longitude: lon,
+                        latitude:  coords!.lat,
+                        longitude: coords!.lng,
                         latitudeDelta: 0.0922,
                         longitudeDelta: 0.0421,
                     }}

@@ -5,8 +5,8 @@ import {useEffect} from "react";
 import {mountAppStateAdapter} from "@/app/adapters/primary/react/gateways-config/appState.adapter";
 import {mountNetInfoAdapter} from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
 import {gateways} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
-import {listenerLocationRequestedFactory} from "@/app/contextWL/locationWl/usecases/userLocationRequested";
 import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
+import {userLocationListenerFactory} from "@/app/contextWL/locationWl/usecases/userLocationFactory";
 
 export default function RootLayout() {
     const store = initReduxStoreWl({
@@ -14,7 +14,9 @@ export default function RootLayout() {
             gateways,
             helpers:{}
         },
-        listeners:[listenerLocationRequestedFactory({gateways,helpers:{}})]
+        listeners:[userLocationListenerFactory({gateways,helpers:{}}),
+
+        ]
     })
     useEffect(() => {
         const unmountNetInfo = mountNetInfoAdapter(store);

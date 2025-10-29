@@ -6,15 +6,21 @@ import {getLocationSuccess, userLocationRequested} from "@/app/contextWL/locatio
 
 export const listenerLocationRequestedFactory =
     (deps:DependenciesWl) => {
+
     const mw = createListenerMiddleware()
-    const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
+    const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>
 
     listen({
         actionCreator:userLocationRequested,
         effect: async (_, api) => {
             if(!deps.gateways.locations) return
-            const coordinates = await deps.gateways.locations.get()
-            api.dispatch(getLocationSuccess({coordinates}))
+            const coordinates = await deps.gateways.locations.getCurrentPosition({ accuracy: "balanced"})
+            api.dispatch(getLocationSuccess({
+                coordinates:{
+                    lat:coordinates.lat,
+                    lon:coordinates.lng,
+                }
+            }))
         }
     })
 

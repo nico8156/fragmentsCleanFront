@@ -8,6 +8,7 @@ import {AppRuntimeState} from "@/app/contextWL/appWl/typeAction/appWl.type";
 import {GatewaysWl} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {CfPhotoStateWl} from "@/app/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
 import {ohStateWl} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {LocationStateWl} from "@/app/contextWL/locationWl/typeAction/location.type";
 
 
 export interface AppStateWl {
@@ -20,7 +21,7 @@ export interface AppStateWl {
     tickets:TicketsStateWl
     entitlement:EntitlementStateWl
     outbox:OutboxStateWl
-    location:GeoPoint
+    location:LocationStateWl
 }
 
 export interface DependenciesWl {
