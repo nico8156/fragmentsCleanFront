@@ -9,14 +9,13 @@ import AppInitializer from "@/app/adapters/primary/react/components/appInitializ
 import {userLocationListenerFactory} from "@/app/contextWL/locationWl/usecases/userLocationFactory";
 
 export default function RootLayout() {
+
     const store = initReduxStoreWl({
         dependencies:{
             gateways,
             helpers:{}
         },
-        listeners:[userLocationListenerFactory({gateways,helpers:{}}),
-
-        ]
+        listeners:[userLocationListenerFactory({gateways,helpers:{}}),]
     })
     useEffect(() => {
         const unmountNetInfo = mountNetInfoAdapter(store);

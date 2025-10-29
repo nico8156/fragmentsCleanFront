@@ -1,11 +1,9 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {
-    getLocationSuccess,
     locationUpdated,
     permissionUpdated, watchError, watchStarted, watchStopped
 } from "@/app/contextWL/locationWl/typeAction/location.action";
-
 
 const initialState: AppStateWl["location"] = {
     coords: null,
@@ -20,8 +18,8 @@ export const locationReducer = createReducer(
     (builder) => {
         builder
             .addCase(permissionUpdated,(s, a) => {
-                s.permission = a.payload.granted ? 'granted' : 'denied'
-                if (s.status === 'error' && a.payload.granted) s.status = 'idle'
+                s.permission = a.payload.status ? 'granted' : 'denied'
+                if (s.status === 'error' && a.payload.status) s.status = 'idle'
             })
             .addCase(locationUpdated, (s, a) => {
                 s.coords = a.payload.coords

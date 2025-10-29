@@ -10,9 +10,9 @@ import { likeWlReducer as lState } from "@/app/contextWL/likeWl/reducer/likeWl.r
 import { ticketWlReducer as tState } from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer"
 import {entitlementWlReducer as enState} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer"
 import {coffeeWlReducer as cfState} from "@/app/contextWL/coffeeWl/reducer/coffeeWl.reducer"
-import { locationReducer as lcState } from "@/app/contextWL/locationWl/reducer/location.reducer"
 import { cfPhotoReducer as pState} from "@/app/contextWL/cfPhotosWl/reducer/cfPhoto.reducer"
 import {openingHoursReducer as ohState} from"@/app/contextWL/openingHoursWl/reducer/openinghours.reducer"
+import {locationReducer as lcState} from "@/app/contextWL/locationWl/reducer/location.reducer";
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
