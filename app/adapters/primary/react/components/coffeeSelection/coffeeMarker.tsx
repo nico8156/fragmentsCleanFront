@@ -14,7 +14,7 @@ const CoffeeMarker = (props:Props) => {
 
     const id = parseToCoffeeId(props.id);
     const {lat, lon} = useCoffeeCoordinates(id)
-    const markerRef = useRef<Marker>(null)
+    const markerRef = useRef<any>(null)
 
     const handleClose = () => {
         markerRef.current?.hideCallout()
