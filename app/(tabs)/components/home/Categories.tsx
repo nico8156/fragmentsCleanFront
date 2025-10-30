@@ -56,19 +56,17 @@ export function Categories({ categories, onSelect }: Props) {
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 24,
-        paddingVertical: 24,
     },
     categoryBlock: {
     },
     categorySpacing: {
-        marginBottom: 32,
+        marginTop: 24,
     },
     categoryHeader: {
         marginBottom: 12,
     },
     categoryTitle: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: "700",
         color: "#1F1F1F",
     },

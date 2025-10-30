@@ -6,7 +6,8 @@ import {ArticlePreviewVM} from "@/app/adapters/secondary/viewModel/useArticlesHo
 const { width } = Dimensions.get("window");
 
 const CARD_WIDTH = width;
-const CARD_HEIGHT = Math.round(width * 0.72);
+const CARD_HEIGHT = Math.round(width);
+
 
 type Props = {
     articles: ArticlePreviewVM[];
@@ -53,6 +54,8 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                         />
                         <View style={styles.overlay} />
                         <View style={styles.content}>
+                            <Text style={styles.title}>{item.title}</Text>
+                            <Text style={styles.subtitle}>{item.intro}</Text>
                             <View style={styles.tagsContainer}>
                                 {item.tags.map((tag) => (
                                     <View key={tag} style={styles.tag}>
@@ -60,8 +63,6 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                                     </View>
                                 ))}
                             </View>
-                            <Text style={styles.title}>{item.title}</Text>
-                            <Text style={styles.subtitle}>{item.intro}</Text>
                         </View>
                     </Pressable>
                 )}
@@ -93,16 +94,13 @@ const styles = StyleSheet.create({
     },
     backgroundImage: {
         ...StyleSheet.absoluteFillObject,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
         backgroundColor: "rgba(0, 0, 0, 0.45)",
     },
     content: {
+        gap:10,
         paddingHorizontal: 24,
         paddingBottom: 42,
     },
@@ -110,7 +108,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 8,
-        marginBottom: 16,
     },
     tag: {
         backgroundColor: "rgba(255, 255, 255, 0.18)",
@@ -141,11 +138,11 @@ const styles = StyleSheet.create({
     },
     pagination: {
         position: "absolute",
-        bottom: 16,
-        left: 24,
+        bottom: 0,
         flexDirection: "row",
+        left:width/2 - 37,
         gap: 6,
-        alignItems: "center",
+        marginBottom:10
     },
     dot: {
         width: 8,
@@ -155,6 +152,6 @@ const styles = StyleSheet.create({
     },
     dotActive: {
         backgroundColor: "#FFFFFF",
-        width: 18,
+        width: 12,
     },
 });
