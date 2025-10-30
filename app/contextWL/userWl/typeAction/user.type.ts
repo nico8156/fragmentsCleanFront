@@ -92,12 +92,16 @@ export interface AuthSession {
     establishedAt: number;       // epoch ms
 }
 
+export type AuthSessionSnapshot = Omit<AuthSession, "tokens"> & {
+    tokens: Pick<AuthTokens, "expiresAt" | "issuedAt" | "tokenType" | "scope">;
+};
+
 // État global Auth côté UI (read model)
 export type AuthStatus = "signedOut" | "loading" | "signedIn" | "error";
 
 export interface AuthState {
     status: AuthStatus;
-    session?: AuthSession;       // présent uniquement si signedIn
+    session?: AuthSessionSnapshot;       // présent uniquement si signedIn (tokens tronqués)
     currentUser?: AppUser;       // read model hydraté (peut arriver async après sign-in)
     error?: string;
 }

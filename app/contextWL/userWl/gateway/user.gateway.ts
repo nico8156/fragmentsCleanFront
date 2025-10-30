@@ -30,3 +30,10 @@ export interface UserRepo {
     getById(id: UserId): Promise<AppUser | null>;
     // extension: getCurrent() si le backend déduit via token
 }
+
+export interface AuthServerGateway {
+    refreshSession(session: AuthSession): Promise<{
+        session: AuthSession;
+        user?: AppUser;
+    }>;
+}

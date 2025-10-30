@@ -10,6 +10,7 @@ import {CfPhotoStateWl} from "@/app/contextWL/cfPhotosWl/typeAction/cfPhoto.type
 import {ohStateWl} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
 import {LocationStateWl} from "@/app/contextWL/locationWl/typeAction/location.type";
 import {ArticleStateWl} from "@/app/contextWL/articleWl/typeAction/article.type";
+import {AuthState} from "@/app/contextWL/userWl/typeAction/user.type";
 
 
 export interface AppStateWl {
@@ -24,6 +25,7 @@ export interface AppStateWl {
     outbox:OutboxStateWl
     location:LocationStateWl
     articles: ArticleStateWl
+    authState: AuthState
 }
 
 export interface DependenciesWl {
