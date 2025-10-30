@@ -7,15 +7,16 @@ type Props = {
     name:SFSymbols6_0;
     color:string;
     localizeMe:() => void;
+    isFollowing?: boolean;
 }
 
 const LocalisationButton = (props:Props) => {
 
-    const {size, name,color, localizeMe} = props;
+    const {size, name,color, localizeMe, isFollowing} = props;
 
     return (
-        <View style={styles.container}>
-            <Pressable onPress={localizeMe}>
+        <View style={[styles.container, isFollowing ? styles.following : styles.idle]}>
+            <Pressable onPress={localizeMe} hitSlop={8}>
                 <SymbolView name={name} size={size} tintColor={color}/>
             </Pressable>
         </View>
@@ -27,13 +28,23 @@ export default LocalisationButton;
 const styles = StyleSheet.create({
     container:{
         position:"absolute",
-        bottom:100,
-        right:15,
-        width:50,
-        height:50,
-        backgroundColor:"rgba(60, 60, 67, 0.08)",
-        borderRadius:25,
+        bottom:75,
+        right:24,
+        width:56,
+        height:56,
+        borderRadius:28,
         alignItems:"center",
-        justifyContent:"center"
+        justifyContent:"center",
+        shadowColor:'#000',
+        shadowOpacity:0.1,
+        shadowRadius:10,
+        shadowOffset:{width:0,height:6},
+        elevation:4
+    },
+    following:{
+        backgroundColor:"#FFFFFF",
+    },
+    idle:{
+        backgroundColor:"rgba(60, 60, 67, 0.08)",
     }
 })
