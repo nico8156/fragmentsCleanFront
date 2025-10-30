@@ -6,6 +6,7 @@ import {
     ProviderUserId,
     toIdentityId,
 } from "@/app/contextWL/userWl/typeAction/user.type";
+import {parseToISODate} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const buildIdentity = (
     provider: ProviderId,
@@ -15,8 +16,8 @@ const buildIdentity = (
     provider,
     providerUserId,
     email: `demo.${provider}@example.com`,
-    createdAt: new Date().toISOString(),
-    lastAuthAt: new Date().toISOString(),
+    createdAt: parseToISODate(new Date().toISOString()),
+    lastAuthAt: parseToISODate(new Date().toISOString()),
 });
 
 export class DemoUserRepo implements UserRepo {
@@ -26,7 +27,7 @@ export class DemoUserRepo implements UserRepo {
         if (!this.cache.has(id)) {
             const [provider, providerUserId] = id.split(":");
             const identity = buildIdentity(provider as ProviderId, providerUserId as ProviderUserId);
-            const now = new Date().toISOString();
+            const now = parseToISODate(new Date().toISOString());
             this.cache.set(id, {
                 id,
                 createdAt: now,

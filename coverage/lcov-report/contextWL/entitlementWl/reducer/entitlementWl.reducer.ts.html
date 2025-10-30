@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">26.31% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/21</span>
+                <span class='fraction'>5/19</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.88% </span>
+                <span class="strong">31.25% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/18</span>
+                <span class='fraction'>5/16</span>
             </div>
         
             
@@ -119,12 +119,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -137,10 +137,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -149,7 +149,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -159,16 +159,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {createAction, createReducer} from "@reduxjs/toolkit";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {
-    Entitlement,
+    Entitlement, entitlements,
     EntitlementsThresholds,
-    UserEntitlements
 } from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
-&nbsp;
-export const entitlementsSetThresholds = createAction&lt;Partial&lt;EntitlementsThresholds&gt;&gt;("SERVER/ENTITLEMENT/SET_THRESHOLDS")
-export const entitlementsHydrated = createAction&lt;Omit&lt;UserEntitlements, "rights"&gt;&gt;('SERVER/ENTITLEMENT/HYDRATED')
+import {
+    entitlementsHydrated,
+    entitlementsSetThresholds
+} from "@/app/contextWL/entitlementWl/typeAction/entitlement.action";
 &nbsp;
 const defaultThresholds: EntitlementsThresholds = { likeAt: 1, commentAt: 3, submitCafeAt: 5 };
 &nbsp;
@@ -179,9 +179,9 @@ const initialState: AppStateWl["entitlement"] = {
 // util interne : recalcul des droits
 function <span class="fstat-no" title="function not covered" >computeRights(</span>count: number, th: EntitlementsThresholds): Entitlement[] {
     const r: Entitlement[] = <span class="cstat-no" title="statement not covered" >[];</span>
-<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.likeAt) <span class="cstat-no" title="statement not covered" >r.push("LIKE");</span></span>
-<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.commentAt) <span class="cstat-no" title="statement not covered" >r.push("COMMENT");</span></span>
-<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.submitCafeAt) <span class="cstat-no" title="statement not covered" >r.push("SUBMIT_CAFE");</span></span>
+<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.likeAt) <span class="cstat-no" title="statement not covered" >r.push(entitlements.LIKE);</span></span>
+<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.commentAt) <span class="cstat-no" title="statement not covered" >r.push(entitlements.COMMENT);</span></span>
+<span class="cstat-no" title="statement not covered" >    if (count &gt;= th.submitCafeAt) <span class="cstat-no" title="statement not covered" >r.push(entitlements.SUBMIT_CAFE);</span></span>
 <span class="cstat-no" title="statement not covered" >    return r;</span>
 }
 &nbsp;
@@ -214,7 +214,7 @@ export const entitlementWlReducer = createReducer(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-22T15:42:53.819Z
+                at 2025-10-30T21:21:35.063Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

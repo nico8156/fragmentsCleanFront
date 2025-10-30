@@ -9,21 +9,16 @@ import { FakeAuthSecureStore } from "@/app/adapters/secondary/gateways/fake/fake
 import { FakeUserRepo, makeDemoUser } from "@/app/adapters/secondary/gateways/fake/fakeUserRepo";
 import { FakeAuthServerGateway } from "@/app/adapters/secondary/gateways/fake/fakeAuthServerGateway";
 import { AuthSession } from "@/app/contextWL/userWl/typeAction/user.type";
+import {initReduxStoreWl} from "@/app/store/reduxStoreWl";
+import any = jasmine.any;
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const createTestStore = (deps: any) => {
-    const middleware = authListenerFactory(deps);
-    return configureStore({
-        reducer: { authState: authReducer },
-        middleware: (getDefaultMiddleware) =>
-            getDefaultMiddleware({
-                thunk: { extraArgument: deps.gateways },
-                serializableCheck: false,
-            }).prepend(middleware),
-        preloadedState: {
-            authState: { status: "loading" },
-        },
+
+    return initReduxStoreWl({
+        dependencies: deps,
+        listeners: [authListenerFactory(deps)],
     });
 };
 
@@ -40,10 +35,10 @@ describe("auth flow", () => {
         };
         const store = createTestStore(deps);
 
-        store.dispatch(signInWithProvider({ provider: "google" }));
+        store.dispatch<any>(signInWithProvider({ provider: "google" }));
         await flush();
 
-        const state = store.getState().authState;
+        const state = store.getState().aState;
         expect(state.status).toBe("signedIn");
         expect(state.session?.provider).toBe("google");
         expect(state.session?.tokens).toEqual(
@@ -79,10 +74,10 @@ describe("auth flow", () => {
         };
         const store = createTestStore(deps);
 
-        store.dispatch(initializeAuth());
+        store.dispatch<any>(initializeAuth());
         await flush();
 
-        const state = store.getState().authState;
+        const state = store.getState().aState;
         expect(state.status).toBe("signedIn");
         expect(state.session?.provider).toBe("google");
         expect(state.currentUser?.id).toBe(session.userId);
@@ -114,11 +109,11 @@ describe("auth flow", () => {
         };
         const store = createTestStore(deps);
 
-        store.dispatch(initializeAuth());
+        store.dispatch<any>(initializeAuth());
         await flush();
         await flush();
 
-        const state = store.getState().authState;
+        const state = store.getState().aState;
         expect(state.status).toBe("signedIn");
         expect(secureStore.snapshot()?.tokens.expiresAt).toBeGreaterThan(session.tokens.expiresAt);
     });
@@ -135,13 +130,13 @@ describe("auth flow", () => {
         };
         const store = createTestStore(deps);
 
-        store.dispatch(signInWithProvider({ provider: "google" }));
+        store.dispatch<any>(signInWithProvider({ provider: "google" }));
         await flush();
 
-        store.dispatch(signOut());
+        store.dispatch<any>(signOut());
         await flush();
 
-        const state = store.getState().authState;
+        const state = store.getState().aState;
         expect(state.status).toBe("signedOut");
         expect(secureStore.snapshot()).toBeUndefined();
     });

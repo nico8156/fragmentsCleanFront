@@ -37,3 +37,10 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+#coverage
+coverage/
+.nyc_output/
+*.lcov
+coverage-final.json
+junit.xml

@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
 
-export const selectAuthState = (state: RootStateWl) => state.authState;
+export const selectAuthState = (state: RootStateWl) => state.aState;
 
 export const selectAuthStatus = createSelector(selectAuthState, (state) => state.status);
 
