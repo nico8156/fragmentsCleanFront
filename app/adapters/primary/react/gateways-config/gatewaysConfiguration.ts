@@ -15,7 +15,7 @@ import {FakeCfPhotoWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeC
 import {OpeningHoursGateway} from "@/app/contextWL/openingHoursWl/gateway/openingHours.gateway";
 import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 import {ExpoLocationGateway} from "@/app/adapters/secondary/gateways/locationGateway/expoLocationGateway";
-import {FakeArticleWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeArticleWlGateway";
+import {StaticArticleWlGateway} from "@/app/adapters/secondary/gateways/articles/staticArticleWlGateway";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -37,7 +37,7 @@ const likes = new FakeLikesGateway()
 const tickets = new FakeTicketsGateway()
 const entitlements = new FakeEntitlementWlGateway()
 const locations = new ExpoLocationGateway()
-const articles = new FakeArticleWlGateway()
+const articles = new StaticArticleWlGateway()
 
 
 export const gateways: GatewaysWl = {
