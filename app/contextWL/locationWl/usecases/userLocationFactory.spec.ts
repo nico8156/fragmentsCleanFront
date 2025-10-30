@@ -10,74 +10,9 @@ import {
 } from "@/app/contextWL/locationWl/typeAction/location.action";
 import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
 import {AccuracyKey, LocationCoords} from "@/app/contextWL/locationWl/typeAction/location.type";
+import {FakeLocationGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-class FakeLocationGateway implements LocationWlGateway {
-    permissionStatus: 'granted' | 'denied' | 'undetermined' = 'granted';
-    requestPermissionStatus: 'granted' | 'denied' = 'granted';
-    nextCoords: LocationCoords = { lat: 48.8566, lng: 2.3522, accuracy: 5, heading: null, speed: null };
-
-    permissionErrorMessage = 'permission check failed';
-    requestPermissionErrorMessage = 'permission request failed';
-    getCurrentPositionErrorMessage = 'current position failed';
-    watchFailureMessage = 'watch failed to start';
-
-    getPermissionShouldFail = false;
-    requestPermissionShouldFail = false;
-    getCurrentPositionShouldFail = false;
-    watchShouldFail = false;
-
-    lastGetCurrentOptions?: { accuracy?: AccuracyKey };
-    lastWatchOptions?: { accuracy?: 'balanced'; distanceInterval?: number; timeInterval?: number };
-    private watchUpdateHandler?: (coords: LocationCoords) => void;
-    private watchErrorHandler?: (err: unknown) => void;
-    watchRemoveSpy = jest.fn();
-
-    getPermissionStatus = jest.fn(async () => {
-        if (this.getPermissionShouldFail) {
-            throw new Error(this.permissionErrorMessage);
-        }
-        return this.permissionStatus;
-    });
-
-    requestPermission = jest.fn(async () => {
-        if (this.requestPermissionShouldFail) {
-            throw new Error(this.requestPermissionErrorMessage);
-        }
-        return this.requestPermissionStatus;
-    });
-
-    getCurrentPosition = jest.fn(async (options?: { accuracy?: AccuracyKey }) => {
-        this.lastGetCurrentOptions = options;
-        if (this.getCurrentPositionShouldFail) {
-            throw new Error(this.getCurrentPositionErrorMessage);
-        }
-        return this.nextCoords;
-    });
-
-    watchPosition = jest.fn(async (
-        options: { accuracy?: 'balanced'; distanceInterval?: number; timeInterval?: number },
-        onUpdate: (coords: LocationCoords) => void,
-        onError?: (err: unknown) => void,
-    ) => {
-        this.lastWatchOptions = options;
-        this.watchUpdateHandler = onUpdate;
-        this.watchErrorHandler = onError;
-        if (this.watchShouldFail) {
-            throw new Error(this.watchFailureMessage);
-        }
-        return { remove: this.watchRemoveSpy };
-    });
-
-    emitWatchUpdate(coords: LocationCoords = this.nextCoords) {
-        this.watchUpdateHandler?.(coords);
-    }
-
-    emitWatchError(error: unknown = 'watch callback error') {
-        this.watchErrorHandler?.(error);
-    }
-}
 
 describe('userLocationListenerFactory', () => {
     let store: ReduxStoreWl;
@@ -174,11 +109,11 @@ describe('userLocationListenerFactory', () => {
     it('should start watching the position and propagate updates', async () => {
         const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(10);
 
-        store.dispatch(startWatchRequested({ accuracy: 'high', distanceInterval: 25, timeInterval: 2000 }));
+        store.dispatch(startWatchRequested({ accuracy: 'balanced', distanceInterval: 25, timeInterval: 2000 }));
         await flush();
 
         expect(gateway.watchPosition).toHaveBeenCalledTimes(1);
-        expect(gateway.lastWatchOptions).toEqual({ accuracy: 'high', distanceInterval: 25, timeInterval: 2000 });
+        expect(gateway.lastWatchOptions).toEqual({ accuracy: 'balanced', distanceInterval: 25, timeInterval: 2000 });
         expect(getLocationState().isWatching).toBe(true);
         expect(getLocationState().status).toBe('watching');
 
@@ -209,7 +144,7 @@ describe('userLocationListenerFactory', () => {
     });
 
     it('should expose an error coming from the watch callback', async () => {
-        store.dispatch(startWatchRequested());
+        store.dispatch(startWatchRequested({accuracy:"balanced"}));
         await flush();
 
         gateway.emitWatchError('network lost');
@@ -220,7 +155,7 @@ describe('userLocationListenerFactory', () => {
     });
 
     it('should stop the watch and remove the subscription', async () => {
-        store.dispatch(startWatchRequested());
+        store.dispatch(startWatchRequested({accuracy:"balanced"}));
         await flush();
 
         store.dispatch(stopWatchRequested());
