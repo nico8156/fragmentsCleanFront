@@ -80,7 +80,9 @@ const upsertArticle = (state: ArticleStateWl, article: Article) => {
     delete state.errors.bySlug[slug];
 };
 
-export const articleWlReducer = createReducer(initialState, (builder) => {
+export const articleWlReducer = createReducer(
+    initialState,
+    (builder) => {
     builder
         .addCase(articleRequested, (state, { payload }) => {
             updateReferenceState(state, payload.target, articleLoadingStates.PENDING);
