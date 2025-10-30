@@ -5,6 +5,7 @@ import {TicketsWlGateway} from "@/app/contextWL/ticketWl/gateway/ticketWl.gatewa
 import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import {CfPhotoGateway} from "@/app/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
 import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
+import {ArticleWlGateway} from "@/app/contextWL/articleWl/gateway/articleWl.gateway";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
@@ -14,6 +15,7 @@ import {FakeCfPhotoWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeC
 import {OpeningHoursGateway} from "@/app/contextWL/openingHoursWl/gateway/openingHours.gateway";
 import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 import {ExpoLocationGateway} from "@/app/adapters/secondary/gateways/locationGateway/expoLocationGateway";
+import {FakeArticleWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeArticleWlGateway";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -24,6 +26,7 @@ export type GatewaysWl = {
     tickets: TicketsWlGateway
     entitlements: EntitlementWlGateway
     locations: LocationWlGateway
+    articles: ArticleWlGateway
 }
 
 const coffees = new FakeCoffeeGateway()
@@ -34,8 +37,9 @@ const likes = new FakeLikesGateway()
 const tickets = new FakeTicketsGateway()
 const entitlements = new FakeEntitlementWlGateway()
 const locations = new ExpoLocationGateway()
+const articles = new FakeArticleWlGateway()
 
 
 export const gateways: GatewaysWl = {
-    coffees,cfPhotos,openingHours, comments,likes,tickets,entitlements, locations
+    coffees,cfPhotos,openingHours, comments,likes,tickets,entitlements, locations, articles
 };
