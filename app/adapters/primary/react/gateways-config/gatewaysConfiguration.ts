@@ -16,6 +16,15 @@ import {OpeningHoursGateway} from "@/app/contextWL/openingHoursWl/gateway/openin
 import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 import {ExpoLocationGateway} from "@/app/adapters/secondary/gateways/locationGateway/expoLocationGateway";
 import {StaticArticleWlGateway} from "@/app/adapters/secondary/gateways/articles/staticArticleWlGateway";
+import {
+    AuthSecureStore,
+    OAuthGateway,
+    UserRepo,
+    AuthServerGateway,
+} from "@/app/contextWL/userWl/gateway/user.gateway";
+import {DemoOAuthGateway} from "@/app/adapters/secondary/gateways/auth/demoOAuthGateway";
+import {ExpoSecureAuthSessionStore} from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
+import {DemoUserRepo} from "@/app/adapters/secondary/gateways/auth/demoUserRepo";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -27,6 +36,12 @@ export type GatewaysWl = {
     entitlements: EntitlementWlGateway
     locations: LocationWlGateway
     articles: ArticleWlGateway
+    auth: {
+        oauth: OAuthGateway
+        secureStore: AuthSecureStore
+        userRepo: UserRepo
+        server?: AuthServerGateway
+    }
 }
 
 const coffees = new FakeCoffeeGateway()
@@ -38,8 +53,13 @@ const tickets = new FakeTicketsGateway()
 const entitlements = new FakeEntitlementWlGateway()
 const locations = new ExpoLocationGateway()
 const articles = new StaticArticleWlGateway()
+const auth = {
+    oauth: new DemoOAuthGateway(),
+    secureStore: new ExpoSecureAuthSessionStore(),
+    userRepo: new DemoUserRepo(),
+} as const
 
 
 export const gateways: GatewaysWl = {
-    coffees,cfPhotos,openingHours, comments,likes,tickets,entitlements, locations, articles
+    coffees,cfPhotos,openingHours, comments,likes,tickets,entitlements, locations, articles, auth
 };

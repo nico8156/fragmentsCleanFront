@@ -14,6 +14,7 @@ import { cfPhotoReducer as pState} from "@/app/contextWL/cfPhotosWl/reducer/cfPh
 import {openingHoursReducer as ohState} from"@/app/contextWL/openingHoursWl/reducer/openinghours.reducer"
 import {locationReducer as lcState} from "@/app/contextWL/locationWl/reducer/location.reducer";
 import {articleWlReducer as arState} from "@/app/contextWL/articleWl/reducer/articleWl.reducer";
+import {authReducer} from "@/app/contextWL/userWl/reducer/user.reducer";
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
@@ -33,6 +34,7 @@ export const initReduxStoreWl = (config: {
             pState,
             ohState,
             arState,
+            authState: authReducer,
             ...(config.extraReducers ?? {})
         },
         middleware: (getDefaultMiddleware) => {
