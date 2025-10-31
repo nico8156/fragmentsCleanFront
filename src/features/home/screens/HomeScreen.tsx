@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import {SyntheticEvent, useCallback, useMemo, useRef, useState} from "react";
 import {
     Animated,
     LayoutAnimation,
@@ -97,8 +97,8 @@ export function HomeScreen() {
 
     const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
         useNativeDriver: false,
-        listener: ({ nativeEvent }) => {
-            setShowIcons(nativeEvent.contentOffset.y < 50);
+        listener: ({ nativeEvent }:{nativeEvent: any}) => {
+            setShowIcons(nativeEvent.contentOffset.y< 50 );
         },
     });
 
