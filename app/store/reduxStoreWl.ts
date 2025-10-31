@@ -4,17 +4,17 @@ import {
     ThunkAction,
 } from "@reduxjs/toolkit";
 import { DependenciesWl} from "@/app/store/appStateWl";
-import { commentWlReducer as cState } from "@/app/contextWL/commentWl/reducer/commentWl.reducer"
-import { outboxWlReducer as oState } from "@/app/contextWL/outboxWl/reducer/outboxWl.reducer"
-import { likeWlReducer as lState } from "@/app/contextWL/likeWl/reducer/likeWl.reducer"
-import { ticketWlReducer as tState } from "@/app/contextWL/ticketWl/reducer/ticketWl.reducer"
-import {entitlementWlReducer as enState} from "@/app/contextWL/entitlementWl/reducer/entitlementWl.reducer"
-import {coffeeWlReducer as cfState} from "@/app/contextWL/coffeeWl/reducer/coffeeWl.reducer"
-import { cfPhotoReducer as pState} from "@/app/contextWL/cfPhotosWl/reducer/cfPhoto.reducer"
-import {openingHoursReducer as ohState} from"@/app/contextWL/openingHoursWl/reducer/openinghours.reducer"
-import {locationReducer as lcState} from "@/app/contextWL/locationWl/reducer/location.reducer";
-import {articleWlReducer as arState} from "@/app/contextWL/articleWl/reducer/articleWl.reducer";
-import {authReducer as aState} from "@/app/contextWL/userWl/reducer/user.reducer";
+import { commentWlReducer as cState } from "@/app/core-logic/contextWL/commentWl/reducer/commentWl.reducer"
+import { outboxWlReducer as oState } from "@/app/core-logic/contextWL/outboxWl/reducer/outboxWl.reducer"
+import { likeWlReducer as lState } from "@/app/core-logic/contextWL/likeWl/reducer/likeWl.reducer"
+import { ticketWlReducer as tState } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer"
+import {entitlementWlReducer as enState} from "@/app/core-logic/contextWL/entitlementWl/reducer/entitlementWl.reducer"
+import {coffeeWlReducer as cfState} from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer"
+import { cfPhotoReducer as pState} from "@/app/core-logic/contextWL/cfPhotosWl/reducer/cfPhoto.reducer"
+import {openingHoursReducer as ohState} from "@/app/core-logic/contextWL/openingHoursWl/reducer/openinghours.reducer"
+import {locationReducer as lcState} from "@/app/core-logic/contextWL/locationWl/reducer/location.reducer";
+import {articleWlReducer as arState} from "@/app/core-logic/contextWL/articleWl/reducer/articleWl.reducer";
+import {authReducer as aState} from "@/app/core-logic/contextWL/userWl/reducer/user.reducer";
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;

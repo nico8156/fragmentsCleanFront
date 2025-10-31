@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import { useSelector } from "react-redux";
-import { selectAuthStatus } from "@/app/contextWL/userWl/selector/user.selector";
+import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 export default function Index() {
 

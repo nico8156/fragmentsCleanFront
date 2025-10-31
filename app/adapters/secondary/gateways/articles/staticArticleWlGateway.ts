@@ -1,5 +1,5 @@
-import {ArticleWlGateway} from "@/app/contextWL/articleWl/gateway/articleWl.gateway";
-import {Article, Locale} from "@/app/contextWL/articleWl/typeAction/article.type";
+import {ArticleWlGateway} from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
+import {Article, Locale} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import {specialtyArticles} from "@/assets/data/articles";
 
 const sortByMostRecent = (items: Article[]) =>

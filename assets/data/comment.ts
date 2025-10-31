@@ -1,6 +1,6 @@
 
 
-import {CommentEntity, ModerationType, moderationTypes} from "@/app/contextWL/commentWl/type/commentWl.type";
+import {CommentEntity, ModerationType, moderationTypes} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 
 export type ISODate = string;
 export type UserId = string;

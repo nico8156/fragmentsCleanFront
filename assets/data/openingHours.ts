@@ -1,4 +1,4 @@
-import {OpeningHours} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {OpeningHours} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 
 export const openingHoursData: OpeningHours[] =[
     {

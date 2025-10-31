@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useSelector } from "react-redux";
-import { selectAuthStatus } from "@/app/contextWL/userWl/selector/user.selector";
+import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 const AUTH_GROUP = "(auth)";
 

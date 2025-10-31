@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
-import { AuthSecureStore } from "@/app/contextWL/userWl/gateway/user.gateway";
-import { AuthSession } from "@/app/contextWL/userWl/typeAction/user.type";
+import { AuthSecureStore } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 const SESSION_KEY = "app.auth.session";
 

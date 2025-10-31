@@ -1,5 +1,5 @@
-import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
-import {AccuracyKey, LocationCoords} from "@/app/contextWL/locationWl/typeAction/location.type";
+import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
+import {AccuracyKey, LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
 
 export class FakeLocationGateway implements LocationWlGateway {
     permissionStatus: 'granted' | 'denied' | 'undetermined' = 'granted';

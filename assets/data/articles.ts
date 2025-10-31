@@ -1,5 +1,5 @@
-import {Article, ArticleId, ImageRef, Slug, UserId} from "@/app/contextWL/articleWl/typeAction/article.type";
-import {ISODate} from "@/app/contextWL/outboxWl/type/outbox.type";
+import {Article, ArticleId, ImageRef, Slug, UserId} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
 
 const toArticleId = (value: string) => value as ArticleId;
 const toSlug = (value: string) => value as Slug;

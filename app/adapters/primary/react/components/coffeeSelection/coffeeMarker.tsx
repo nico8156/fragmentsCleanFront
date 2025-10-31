@@ -1,5 +1,5 @@
 import { Marker } from "react-native-maps";
-import { parseToCoffeeId } from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeInfoBoard from "@/app/adapters/primary/react/components/coffeeSelection/coffeeInfoBoard";
 import {useCoffeeCoordinates} from "@/app/adapters/secondary/viewModel/useCoffeeCoordinates";
 import { useRef } from "react";

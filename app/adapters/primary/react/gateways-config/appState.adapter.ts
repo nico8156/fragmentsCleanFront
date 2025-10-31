@@ -1,6 +1,6 @@
 import { AppState, AppStateStatus } from "react-native";
 import type { Store } from "@reduxjs/toolkit";
-import {appBecameActive, appBecameBackground, appBecameInactive} from "@/app/contextWL/appWl/typeAction/appWl.action";
+import {appBecameActive, appBecameBackground, appBecameInactive} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 export function mountAppStateAdapter(store: Store) {
     let mounted = true;

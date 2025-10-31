@@ -1,9 +1,9 @@
 import {Callout} from "react-native-maps";
 import {View, Text, StyleSheet, Pressable, GestureResponderEvent} from "react-native";
 import {Image} from "expo-image";
-import {CoffeeId, parseToCoffeeId} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
-import {CafeFullVM} from "@/app/contextWL/coffeeWl/selector/coffeeWl.selector";
+import {CafeFullVM} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import {SymbolView} from "expo-symbols";

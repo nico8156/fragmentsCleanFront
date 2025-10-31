@@ -5,12 +5,12 @@ import {
     selectLocationPermission,
     selectLocationStatus,
     selectUserCoords
-} from "@/app/contextWL/locationWl/selector/location.selector";
+} from "@/app/core-logic/contextWL/locationWl/selector/location.selector";
 import {
     getOnceRequested,
     permissionCheckRequested, requestPermission,
     stopWatchRequested
-} from "@/app/contextWL/locationWl/typeAction/location.action";
+} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 
 
 export function useUserLocationFromStore() {

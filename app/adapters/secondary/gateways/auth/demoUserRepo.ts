@@ -1,12 +1,12 @@
-import { UserRepo } from "@/app/contextWL/userWl/gateway/user.gateway";
+import { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import {
     AppUser,
     LinkedIdentity,
     ProviderId,
     ProviderUserId,
     toIdentityId,
-} from "@/app/contextWL/userWl/typeAction/user.type";
-import {parseToISODate} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const buildIdentity = (
     provider: ProviderId,

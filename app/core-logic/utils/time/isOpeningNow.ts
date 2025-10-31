@@ -1,4 +1,4 @@
-import {DayWindow} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {DayWindow} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 
 export function isOpenNowFromWindows(windows: DayWindow[], now = new Date()): boolean {
     const dayIdx = ((now.getDay() + 6) % 7) as DayWindow['day'];

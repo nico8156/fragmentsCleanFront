@@ -2,8 +2,8 @@ import {useSelector} from "react-redux";
 import {
     selectArticleBySlug,
     selectArticleStatusBySlug,
-} from "@/app/contextWL/articleWl/selector/articleWl.selector";
-import {articleLoadingStates} from "@/app/contextWL/articleWl/typeAction/article.type";
+} from "@/app/core-logic/contextWL/articleWl/selector/articleWl.selector";
+import {articleLoadingStates} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 
 export function useArticle(slug: string) {
     const article = useSelector(selectArticleBySlug(slug));

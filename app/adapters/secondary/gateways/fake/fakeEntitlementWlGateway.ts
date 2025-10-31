@@ -1,5 +1,5 @@
-import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
-import { UserEntitlements } from "@/app/contextWL/entitlementWl/typeAction/entitlement.type";
+import {EntitlementWlGateway} from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
+import { UserEntitlements } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 
 export class FakeEntitlementWlGateway implements EntitlementWlGateway {
     willFailGet = false;

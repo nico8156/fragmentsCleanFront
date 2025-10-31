@@ -1,4 +1,4 @@
-import {PhotoURI} from "@/app/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
+import {PhotoURI} from "@/app/core-logic/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
 
 export const photoData: PhotoURI[] = [
     {

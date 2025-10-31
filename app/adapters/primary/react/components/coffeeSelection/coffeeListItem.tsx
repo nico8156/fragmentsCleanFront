@@ -1,9 +1,9 @@
 import {Pressable, StyleSheet, Text, View} from "react-native";
 import {Image} from "expo-image";
 import {SymbolView} from "expo-symbols";
-import {CoffeeId} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
-import {CafeFullVM} from "@/app/contextWL/coffeeWl/selector/coffeeWl.selector";
+import {CafeFullVM} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 import {useRouter} from "expo-router";

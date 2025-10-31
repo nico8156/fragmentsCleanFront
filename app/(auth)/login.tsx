@@ -1,7 +1,7 @@
 import { ActivityIndicator, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { signInWithProvider } from "@/app/contextWL/userWl/usecases/auth/authUsecases";
-import { selectAuthError, selectAuthStatus } from "@/app/contextWL/userWl/selector/user.selector";
+import { signInWithProvider } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
+import { selectAuthError, selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 export default function Login() {
     const dispatch = useDispatch<any>();

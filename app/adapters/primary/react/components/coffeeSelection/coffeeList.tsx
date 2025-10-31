@@ -1,7 +1,7 @@
 import {FlatList, StyleSheet, Text, View} from "react-native";
 import {useSelector} from "react-redux";
 import {AppStateWl} from "@/app/store/appStateWl";
-import {CoffeeId, parseToCoffeeId} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeListItem from "@/app/adapters/primary/react/components/coffeeSelection/coffeeListItem";
 
 type Props = {

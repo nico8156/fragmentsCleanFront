@@ -12,7 +12,7 @@ import {
 import {Image} from "expo-image";
 import {SymbolView} from "expo-symbols";
 import {useMemo, useState} from "react";
-import {parseToCoffeeId} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 

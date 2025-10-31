@@ -1,5 +1,5 @@
-import { AuthSecureStore } from "@/app/contextWL/userWl/gateway/user.gateway";
-import { AuthSession } from "@/app/contextWL/userWl/typeAction/user.type";
+import { AuthSecureStore } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export class FakeAuthSecureStore implements AuthSecureStore {
     private session?: AuthSession;

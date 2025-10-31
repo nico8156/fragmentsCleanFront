@@ -1,5 +1,5 @@
-import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
-import {AccuracyKey, LocationCoords, LocationSubscription} from "@/app/contextWL/locationWl/typeAction/location.type";
+import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
+import {AccuracyKey, LocationCoords, LocationSubscription} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
 import * as ExpoLocation from 'expo-location';
 
 export class ExpoLocationGateway implements LocationWlGateway {

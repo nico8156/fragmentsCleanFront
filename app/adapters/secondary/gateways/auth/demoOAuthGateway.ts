@@ -1,10 +1,10 @@
-import { OAuthGateway } from "@/app/contextWL/userWl/gateway/user.gateway";
+import { OAuthGateway } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import {
     AuthTokens,
     OAuthProfile,
     ProviderId,
     toProviderUserId,
-} from "@/app/contextWL/userWl/typeAction/user.type";
+} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 const randomToken = () => Math.random().toString(36).slice(2);
 

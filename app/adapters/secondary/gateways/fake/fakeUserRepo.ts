@@ -1,6 +1,6 @@
-import { UserRepo } from "@/app/contextWL/userWl/gateway/user.gateway";
-import { AppUser, toUserId } from "@/app/contextWL/userWl/typeAction/user.type";
-import {parseToISODate} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { AppUser, toUserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 export class FakeUserRepo implements UserRepo {
     public users: Map<string, AppUser> = new Map();

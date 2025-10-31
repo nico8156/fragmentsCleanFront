@@ -1,5 +1,5 @@
-import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
-import { Coffee } from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {CoffeeWlGateway} from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
+import { Coffee } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {coffeeData} from "@/assets/data/coffeeFromOldServer";
 import {coffeeDataConverter} from "@/assets/helpers/coffeeDataConverter";
 

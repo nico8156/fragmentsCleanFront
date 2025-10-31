@@ -1,18 +1,18 @@
-import {CoffeeWlGateway} from "@/app/contextWL/coffeeWl/gateway/coffeeWl.gateway";
-import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gateway";
-import {LikeWlGateway} from "@/app/contextWL/likeWl/gateway/likeWl.gateway";
-import {TicketsWlGateway} from "@/app/contextWL/ticketWl/gateway/ticketWl.gateway";
-import {EntitlementWlGateway} from "@/app/contextWL/entitlementWl/gateway/entitlementWl.gateway";
-import {CfPhotoGateway} from "@/app/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
-import {LocationWlGateway} from "@/app/contextWL/locationWl/gateway/location.gateway";
-import {ArticleWlGateway} from "@/app/contextWL/articleWl/gateway/articleWl.gateway";
+import {CoffeeWlGateway} from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
+import {CommentsWlGateway} from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
+import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
+import {TicketsWlGateway} from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
+import {EntitlementWlGateway} from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
+import {CfPhotoGateway} from "@/app/core-logic/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
+import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
+import {ArticleWlGateway} from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {FakeTicketsGateway} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import {FakeEntitlementWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import {FakeCfPhotoWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
-import {OpeningHoursGateway} from "@/app/contextWL/openingHoursWl/gateway/openingHours.gateway";
+import {OpeningHoursGateway} from "@/app/core-logic/contextWL/openingHoursWl/gateway/openingHours.gateway";
 import {FakeOpeningHoursWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 import {ExpoLocationGateway} from "@/app/adapters/secondary/gateways/locationGateway/expoLocationGateway";
 import {StaticArticleWlGateway} from "@/app/adapters/secondary/gateways/articles/staticArticleWlGateway";
@@ -21,7 +21,7 @@ import {
     OAuthGateway,
     UserRepo,
     AuthServerGateway,
-} from "@/app/contextWL/userWl/gateway/user.gateway";
+} from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import {DemoOAuthGateway} from "@/app/adapters/secondary/gateways/auth/demoOAuthGateway";
 import {ExpoSecureAuthSessionStore} from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
 import {DemoUserRepo} from "@/app/adapters/secondary/gateways/auth/demoUserRepo";

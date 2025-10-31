@@ -1,13 +1,13 @@
 import {useEffect, useMemo} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {selectArticlesForLocale} from "@/app/contextWL/articleWl/selector/articleWl.selector";
+import {selectArticlesForLocale} from "@/app/core-logic/contextWL/articleWl/selector/articleWl.selector";
 import {
     Article,
     articleLoadingStates,
     ImageRef,
     Locale,
-} from "@/app/contextWL/articleWl/typeAction/article.type";
-import {articlesListRetrieval} from "@/app/contextWL/articleWl/usecases/read/articleRetrieval";
+} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import {articlesListRetrieval} from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 
 export type ArticlePreviewVM = {
     id: string;

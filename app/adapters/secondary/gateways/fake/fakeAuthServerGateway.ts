@@ -1,5 +1,5 @@
-import { AuthServerGateway } from "@/app/contextWL/userWl/gateway/user.gateway";
-import { AppUser, AuthSession } from "@/app/contextWL/userWl/typeAction/user.type";
+import { AuthServerGateway } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { AppUser, AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export class FakeAuthServerGateway implements AuthServerGateway {
     public refreshed?: AuthSession;

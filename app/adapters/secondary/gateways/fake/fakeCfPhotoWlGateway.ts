@@ -1,4 +1,4 @@
-import {CfPhotoGateway} from "@/app/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
+import {CfPhotoGateway} from "@/app/core-logic/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
 import {photoData} from "@/assets/data/photo";
 
 export class FakeCfPhotoWlGateway implements CfPhotoGateway {

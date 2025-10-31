@@ -6,8 +6,8 @@ import {Ionicons} from "@expo/vector-icons";
 import {useDispatch} from "react-redux";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {useArticle} from "@/app/adapters/secondary/viewModel/useArticle";
-import {articleRetrievalBySlug} from "@/app/contextWL/articleWl/usecases/read/articleRetrieval";
-import {articleLoadingStates} from "@/app/contextWL/articleWl/typeAction/article.type";
+import {articleRetrievalBySlug} from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
+import {articleLoadingStates} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 
 const formatDate = (value?: string) => {
     if (!value) return undefined;

@@ -3,11 +3,11 @@ import { useDispatch } from "react-redux";
 import {
     getOnceRequested,
     permissionCheckRequested,
-} from "@/app/contextWL/locationWl/typeAction/location.action";
-import { coffeeGlobalRetrieval } from "@/app/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
-import { onCfPhotoRetrieval } from "@/app/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
-import { onOpeningHourRetrieval } from "@/app/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
-import { initializeAuth } from "@/app/contextWL/userWl/usecases/auth/authUsecases";
+} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
+import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
+import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
+import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
+import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 
 const AppInitializer = () => {
     const dispatch = useDispatch<any>();

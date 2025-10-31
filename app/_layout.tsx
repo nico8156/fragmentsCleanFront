@@ -6,8 +6,8 @@ import { mountAppStateAdapter } from "@/app/adapters/primary/react/gateways-conf
 import { mountNetInfoAdapter } from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
 import { gateways } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
-import { userLocationListenerFactory } from "@/app/contextWL/locationWl/usecases/userLocationFactory";
-import { authListenerFactory } from "@/app/contextWL/userWl/usecases/auth/authListenersFactory";
+import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
+import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { AuthRouterGate } from "@/app/adapters/primary/react/components/authRouterGate";
 
 export default function RootLayout() {

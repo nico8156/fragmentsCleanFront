@@ -1,5 +1,5 @@
-import { Op, CommentEntity} from "@/app/contextWL/commentWl/type/commentWl.type";
-import {CommentsWlGateway} from "@/app/contextWL/commentWl/gateway/commentWl.gateway";
+import { Op, CommentEntity} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {CommentsWlGateway} from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 
 
 export class FakeCommentsWlGateway implements CommentsWlGateway {

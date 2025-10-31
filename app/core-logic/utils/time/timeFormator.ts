@@ -1,4 +1,4 @@
-import {DayWindow, HoursByDayVM} from "@/app/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {DayWindow, HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 
 const toHHmm = (m: number) => {
     const hh = Math.floor(m / 60);
