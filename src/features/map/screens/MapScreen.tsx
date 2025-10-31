@@ -1,57 +1,69 @@
-import { StyleSheet, View, Text, Pressable, SafeAreaView } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import MapView, { Region } from "react-native-maps";
+import { useNavigation } from "@react-navigation/native";
+import { SymbolView } from "expo-symbols";
 import CoffeeSelection from "@/app/adapters/primary/react/components/coffeeSelection/coffeeSelection";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
 import CoffeeList from "@/app/adapters/primary/react/components/coffeeSelection/coffeeList";
-import { useMemo, useRef, useState, useCallback } from "react";
-import {useUserLocationFromStore} from "@/app/adapters/secondary/viewModel/useUserLocation";
-import { SymbolView } from "expo-symbols";
+import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
+import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
+import { RootStackNavigationProp } from "@/src/navigation/types";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const CoffeeMap = () => {
-
-    const {coords,refresh} = useUserLocationFromStore()
-
-    const mapRef = useRef<MapView>(null)
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
-    const [isFollowingUser, setIsFollowingUser] = useState(true)
+export function MapScreen() {
+    const navigation = useNavigation<RootStackNavigationProp>();
+    const insets = useSafeAreaInsets();
+    const { coords, refresh } = useUserLocationFromStore();
+    const mapRef = useRef<MapView>(null);
+    const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+    const [isFollowingUser, setIsFollowingUser] = useState(true);
 
     const initialRegion = useMemo<Region>(() => ({
         latitude: coords?.lat ?? 48.8566,
         longitude: coords?.lng ?? 2.3522,
         latitudeDelta: 0.035,
         longitudeDelta: 0.035,
-    }), [coords?.lat, coords?.lng])
+    }), [coords?.lat, coords?.lng]);
 
     const toggleViewMode = () => {
-        setViewMode((mode) => (mode === 'map' ? 'list' : 'map'))
-    }
+        setViewMode((mode) => (mode === 'map' ? 'list' : 'map'));
+    };
 
     const updateFollowingState = useCallback((region: Region) => {
-        if (!coords) return
-        const latDiff = Math.abs(region.latitude - coords.lat)
-        const lngDiff = Math.abs(region.longitude - coords.lng)
-        const threshold = 0.0008
-        setIsFollowingUser(latDiff < threshold && lngDiff < threshold)
-    }, [coords])
+        if (!coords) return;
+        const latDiff = Math.abs(region.latitude - coords.lat);
+        const lngDiff = Math.abs(region.longitude - coords.lng);
+        const threshold = 0.0008;
+        setIsFollowingUser(latDiff < threshold && lngDiff < threshold);
+    }, [coords]);
 
     const handleRegionChangeComplete = (region: Region) => {
-        updateFollowingState(region)
-    }
+        updateFollowingState(region);
+    };
 
     const handlePanDrag = () => {
-        setIsFollowingUser(false)
-    }
+        setIsFollowingUser(false);
+    };
 
     const localizeMe = () => {
-        refresh()
-        setIsFollowingUser(true)
+        refresh();
+        setIsFollowingUser(true);
         mapRef.current?.animateToRegion({
             latitude: coords?.lat ?? initialRegion.latitude,
             longitude: coords?.lng ?? initialRegion.longitude,
             latitudeDelta: 0.015,
             longitudeDelta: 0.015,
         });
-    }
+    };
+
+    const openScanModal = () => {
+        navigation.navigate("ScanTicketModal");
+    };
+
+    const openCafeDetails = (id: string) => {
+        navigation.navigate("CafeDetails", { id });
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -62,9 +74,13 @@ const CoffeeMap = () => {
                         <Text style={styles.subtitle}>Autour de vous</Text>
                     </View>
                     <Pressable
-                        accessibilityRole={'button'}
                         onPress={toggleViewMode}
-                        style={styles.toggleButton}
+                        style={({ pressed }) => [
+                            styles.toggleButton,
+                            pressed && styles.toggleButtonPressed,
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={viewMode === 'map' ? 'Afficher la liste' : 'Afficher la carte'}
                     >
                         <SymbolView
                             name={viewMode === 'map' ? 'list.bullet.rectangle' : 'map.fill'}
@@ -85,7 +101,7 @@ const CoffeeMap = () => {
                                 onRegionChangeComplete={handleRegionChangeComplete}
                                 onPanDrag={handlePanDrag}
                             >
-                                <CoffeeSelection/>
+                                <CoffeeSelection />
                             </MapView>
                             <LocalisationButton
                                 localizeMe={localizeMe}
@@ -96,13 +112,15 @@ const CoffeeMap = () => {
                             />
                         </View>
                     ) : (
-                        <CoffeeList/>
+                        <CoffeeList onSelectCoffee={(id) => openCafeDetails(String(id))} />
                     )}
                 </View>
             </View>
+            <ScanTicketFab onPress={openScanModal} insetBottom={insets.bottom} />
         </SafeAreaView>
-    )
+    );
 }
+
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -138,6 +156,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    toggleButtonPressed: {
+        opacity: 0.75,
+    },
     body: {
         flex: 1,
     },
@@ -156,5 +177,6 @@ const styles = StyleSheet.create({
         flex: 1,
         borderRadius: 28,
     },
-})
-export default CoffeeMap;
+});
+
+export default MapScreen;

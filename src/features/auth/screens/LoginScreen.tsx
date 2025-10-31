@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { signInWithProvider } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import { selectAuthError, selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
-export default function Login() {
+export function LoginScreen() {
     const dispatch = useDispatch<any>();
     const status = useSelector(selectAuthStatus);
     const error = useSelector(selectAuthError);
@@ -87,3 +87,5 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
 });
+
+export default LoginScreen;
