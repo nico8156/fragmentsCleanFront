@@ -67,7 +67,7 @@ export function HomeScreen() {
             <AnimatedScrollView
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-                contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 70 }]}
+                contentContainerStyle={[styles.scrollContent, { }]}
             >
                 <View style={styles.heroSection}>
                     <MasterHeader articles={sliderArticles} onArticlePress={openArticle} />
@@ -87,7 +87,6 @@ export function HomeScreen() {
                     </Pressable>
                 </View>
             ) : null}
-            <ScanTicketFab onPress={openScanModal} insetBottom={insets.bottom} />
         </View>
     );
 }
@@ -95,10 +94,9 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: palette.background,
     },
     scrollContent: {
-        paddingBottom: 160,
+
     },
     header: {
         position: "absolute",
@@ -127,6 +125,7 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
     },
     heroSection: {
+        backgroundColor: "pink",
         marginBottom: 40,
     },
     sectionSpacing: {

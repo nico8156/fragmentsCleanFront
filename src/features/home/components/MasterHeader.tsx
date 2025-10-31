@@ -7,7 +7,7 @@ import { palette } from "@/constants/colors";
 const { width } = Dimensions.get("window");
 
 const CARD_WIDTH = width;
-const CARD_HEIGHT = Math.round(width * 1.05);
+const CARD_HEIGHT = Math.round(width * 1.3);
 
 
 type Props = {
@@ -57,14 +57,14 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                             <View style={styles.overlay} />
                         </View>
                         <View style={styles.content}>
+                            <Text style={styles.title} numberOfLines={2}>
+                                {item.title}
+                            </Text>
                             {item.tags.length > 0 ? (
                                 <View style={styles.tag}>
                                     <Text style={styles.tagText}>{item.tags[0]}</Text>
                                 </View>
                             ) : null}
-                            <Text style={styles.title} numberOfLines={2}>
-                                {item.title}
-                            </Text>
                             <Text style={styles.subtitle} numberOfLines={2}>
                                 {item.intro}
                             </Text>
@@ -92,6 +92,7 @@ const styles = StyleSheet.create({
         height: CARD_HEIGHT,
     },
     card: {
+        backgroundColor: "red",
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         paddingHorizontal: 24,
@@ -99,8 +100,6 @@ const styles = StyleSheet.create({
     },
     imageWrapper: {
         ...StyleSheet.absoluteFillObject,
-        marginHorizontal: 24,
-        borderRadius: 32,
         overflow: "hidden",
         backgroundColor: palette.surface,
     },
@@ -110,19 +109,19 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(8, 5, 4, 0.55)",
+        backgroundColor: "rgba(8, 5, 4, 0.15)",
     },
     content: {
         gap: 16,
         paddingBottom: 54,
-        paddingHorizontal: 36,
+        paddingHorizontal: 5,
     },
     tag: {
         alignSelf: "flex-start",
-        backgroundColor: palette.accent,
+        backgroundColor: palette.success,
         paddingVertical: 6,
         paddingHorizontal: 14,
-        borderRadius: 12,
+
         shadowColor: "#000",
         shadowOpacity: 0.25,
         shadowRadius: 10,
@@ -143,7 +142,7 @@ const styles = StyleSheet.create({
         lineHeight: 34,
     },
     subtitle: {
-        color: palette.textSecondary,
+        color: palette.textPrimary,
         fontSize: 15,
         lineHeight: 22,
     },
@@ -163,6 +162,6 @@ const styles = StyleSheet.create({
     },
     dotActive: {
         backgroundColor: "#FFFFFF",
-        width: 18,
+        width: 12,
     },
 });
