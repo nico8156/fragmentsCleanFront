@@ -1,4 +1,4 @@
-import { NavigationContainer, DefaultTheme, LinkingOptions } from "@react-navigation/native";
+import {NavigationContainer, DefaultTheme, LinkingOptions, NavigationIndependentTree} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useMemo } from "react";
@@ -120,8 +120,10 @@ export function RootNavigator() {
     }, [status]);
 
     return (
-        <NavigationContainer linking={linking} theme={theme}>
-            {content}
-        </NavigationContainer>
+        <NavigationIndependentTree>
+            <NavigationContainer linking={linking} theme={theme}>
+                {content}
+            </NavigationContainer>
+        </NavigationIndependentTree>
     );
 }
