@@ -28,7 +28,7 @@ export default LocalisationButton;
 const styles = StyleSheet.create({
     container:{
         position:"absolute",
-        bottom:75,
+        bottom:120,
         right:24,
         width:56,
         height:56,
@@ -36,15 +36,18 @@ const styles = StyleSheet.create({
         alignItems:"center",
         justifyContent:"center",
         shadowColor:'#000',
-        shadowOpacity:0.1,
-        shadowRadius:10,
-        shadowOffset:{width:0,height:6},
-        elevation:4
+        shadowOpacity:0.22,
+        shadowRadius:12,
+        shadowOffset:{width:0,height:8},
+        elevation:6,
+        borderWidth:StyleSheet.hairlineWidth,
     },
     following:{
-        backgroundColor:"#FFFFFF",
+        backgroundColor:"rgba(32, 24, 19, 0.9)",
+        borderColor:"rgba(255,255,255,0.12)",
     },
     idle:{
-        backgroundColor:"rgba(60, 60, 67, 0.08)",
+        backgroundColor:"rgba(21, 16, 12, 0.7)",
+        borderColor:"rgba(255,255,255,0.06)",
     }
 })

@@ -1,8 +1,9 @@
-import {FlatList, StyleSheet, Text, View} from "react-native";
-import {useSelector} from "react-redux";
-import {AppStateWl} from "@/app/store/appStateWl";
-import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useSelector } from "react-redux";
+import { AppStateWl } from "@/app/store/appStateWl";
+import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeListItem from "@/app/adapters/primary/react/components/coffeeSelection/coffeeListItem";
+import { palette } from "@/constants/colors";
 
 type Props = {
     onSelectCoffee?: (id: CoffeeId) => void;
@@ -37,6 +38,7 @@ const styles = StyleSheet.create({
     listContent: {
         paddingVertical: 12,
         paddingHorizontal: 4,
+        gap: 16,
     },
     emptyContent: {
         flexGrow: 1,
@@ -51,12 +53,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
     emptySubtitle: {
         fontSize: 14,
         textAlign: 'center',
-        color: '#6E6E73',
+        color: palette.textMuted,
         lineHeight: 20,
     },
 })

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { palette } from "@/constants/colors";
 
 type Props = {
     onPress: () => void;
@@ -23,7 +24,7 @@ export const ScanTicketFab = memo(({ onPress, insetBottom = 0 }: Props) => {
                 accessibilityRole="button"
                 accessibilityLabel="Scanner un ticket"
             >
-                <MaterialIcons name="document-scanner" size={24} color="#FFFFFF" />
+                <MaterialIcons name="document-scanner" size={24} color="#1C0E08" />
                 <Text style={styles.label}>Scanner</Text>
             </Pressable>
         </View>
@@ -43,7 +44,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         flexDirection: "row",
         gap: 8,
-        backgroundColor: "#1C1C1E",
+        backgroundColor: palette.accent,
         paddingHorizontal: 28,
         paddingVertical: Platform.select({ ios: 14, default: 12 }),
         borderRadius: 32,
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     label: {
-        color: "#FFFFFF",
+        color: "#1C0E08",
         fontWeight: "600",
         fontSize: 16,
     },

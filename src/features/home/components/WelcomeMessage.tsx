@@ -1,68 +1,69 @@
-import {StyleSheet, Text, View} from "react-native";
-import {MaterialIcons} from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { palette } from "@/constants/colors";
 
 export function WelcomeMessage() {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Gagne des badges en savourant tes cafés préférés ! ☕🏅</Text>
+            <Text style={styles.title}>Bienvenue dans l’univers caféiné</Text>
             <Text style={styles.paragraph}>
-                Chez <Text style={styles.highlight}>Fragments</Text>, chaque visite dans un café, c’est plus qu’une simple pause café —
-                c’est aussi l’occasion de collectionner des badges !
+                Découvre les maisons de torréfaction, les coffee-shops de caractère et les baristas passionnés près de toi.
             </Text>
-            <Text style={styles.paragraph}>Comment ça marche ? C’est simple :</Text>
-            <Text style={styles.list}>💡 À chaque fois que tu dégustes un café, garde ton ticket d’achat.</Text>
-            <Text style={styles.list}>
-                📸 Scanne-le directement depuis l’application en cliquant sur l’icône :{' '}
-                <MaterialIcons name="document-scanner" size={18} color="#6B6B6B" />
-            </Text>
-            <Text style={styles.list}>✨ Plus tu cumules de tickets, plus tu débloques des badges exclusifs !</Text>
-            <Text style={styles.paragraph}>
-                Une façon fun de marquer ta passion pour les bons cafés et de découvrir de nouveaux endroits.
-            </Text>
-            <Text style={styles.cta}>Alors, prêt·e à transformer tes moments café en trophées ? Commence ta collection dès aujourd’hui !</Text>
+            <View style={styles.row}>
+                <MaterialIcons name="document-scanner" size={22} color={palette.accent} />
+                <View style={styles.rowText}>
+                    <Text style={styles.highlight}>Scanne ton ticket</Text>
+                    <Text style={styles.caption}>Transforme chaque dégustation en badge et avantages exclusifs.</Text>
+                </View>
+            </View>
+            <View style={styles.row}>
+                <MaterialIcons name="local-cafe" size={22} color={palette.accent} />
+                <View style={styles.rowText}>
+                    <Text style={styles.highlight}>Explore les pépites locales</Text>
+                    <Text style={styles.caption}>Une carte curatée pour voyager de tasse en tasse.</Text>
+                </View>
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 24,
-        padding: 24,
+        backgroundColor: palette.elevated,
+        borderRadius: 28,
+        padding: 28,
         marginHorizontal: 24,
-        marginBottom: 48,
-        shadowColor: "#000000",
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
+        marginBottom: 80,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
+        gap: 16,
     },
     title: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: "#1F1F1F",
-        marginBottom: 16,
+        fontSize: 22,
+        fontWeight: "800",
+        color: palette.textPrimary,
     },
     paragraph: {
         fontSize: 14,
-        lineHeight: 20,
-        color: "#454545",
-        marginBottom: 12,
+        lineHeight: 22,
+        color: palette.textSecondary,
     },
     highlight: {
         fontWeight: "700",
-        color: "#4F46E5",
+        color: palette.textPrimary,
     },
-    list: {
-        fontSize: 14,
+    row: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 16,
+    },
+    rowText: {
+        flex: 1,
+        gap: 6,
+    },
+    caption: {
+        fontSize: 13,
         lineHeight: 20,
-        color: "#2D2D2D",
-        marginBottom: 8,
-    },
-    cta: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#1F2937",
-        marginTop: 12,
+        color: palette.textMuted,
     },
 });

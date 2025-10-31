@@ -6,6 +6,7 @@ import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { palette } from "@/constants/colors";
 
 export function RewardsScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
@@ -119,10 +120,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusStyles: Record<string, { backgroundColor: string; color: string }> = {
-    ANALYZING: { backgroundColor: 'rgba(255,204,0,0.16)', color: '#B8860B' },
-    CONFIRMED: { backgroundColor: 'rgba(52,199,89,0.16)', color: '#1B9C45' },
-    CAPTURED: { backgroundColor: 'rgba(90,200,250,0.16)', color: '#0077B6' },
-    REJECTED: { backgroundColor: 'rgba(255,59,48,0.16)', color: '#C0392B' },
+    ANALYZING: { backgroundColor: 'rgba(244,185,70,0.16)', color: '#F4B946' },
+    CONFIRMED: { backgroundColor: 'rgba(79,178,142,0.18)', color: palette.success },
+    CAPTURED: { backgroundColor: 'rgba(112,162,220,0.18)', color: '#6FA7FF' },
+    REJECTED: { backgroundColor: 'rgba(224,92,75,0.18)', color: palette.danger },
 };
 
 function formatDate(value?: string) {
@@ -166,61 +167,55 @@ function PlaceholderList({ items }: PlaceholderListProps) {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: palette.background,
     },
     container: {
         paddingBottom: 160,
         gap: 32,
-        paddingHorizontal: 20,
-        paddingTop: 16,
+        paddingHorizontal: 24,
+        paddingTop: 24,
     },
     section: {
-        gap: 12,
+        gap: 16,
     },
     sectionTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
     sectionSubtitle: {
         fontSize: 14,
-        color: '#6E6E73',
+        color: palette.textSecondary,
         lineHeight: 20,
     },
     emptyState: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 24,
-        gap: 8,
-        shadowColor: '#000000',
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 8 },
-        elevation: 3,
+        backgroundColor: palette.elevated,
+        borderRadius: 24,
+        padding: 28,
+        gap: 12,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1F1F1F',
+        color: palette.textPrimary,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#6E6E73',
+        color: palette.textMuted,
         lineHeight: 20,
     },
     ticketList: {
         gap: 16,
     },
     ticketCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 16,
-        gap: 8,
-        shadowColor: '#000000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 2,
+        backgroundColor: palette.elevated,
+        borderRadius: 20,
+        padding: 18,
+        gap: 10,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     ticketHeader: {
         flexDirection: 'row',
@@ -230,18 +225,18 @@ const styles = StyleSheet.create({
     ticketTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
         flex: 1,
         marginRight: 12,
     },
     ticketMeta: {
         fontSize: 13,
-        color: '#6E6E73',
+        color: palette.textMuted,
     },
     ticketAmount: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#1B9C45',
+        color: palette.success,
     },
     statusBadge: {
         borderRadius: 999,
@@ -253,15 +248,12 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     placeholderList: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 16,
+        backgroundColor: palette.elevated,
+        borderRadius: 20,
+        padding: 18,
         gap: 12,
-        shadowColor: '#000000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     placeholderItem: {
         flexDirection: 'row',
@@ -272,22 +264,19 @@ const styles = StyleSheet.create({
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#4F46E5',
+        backgroundColor: palette.accent,
     },
     placeholderText: {
         fontSize: 14,
-        color: '#1F1F1F',
+        color: palette.textPrimary,
     },
     statsCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 16,
+        backgroundColor: palette.elevated,
+        borderRadius: 20,
+        padding: 20,
         gap: 16,
-        shadowColor: '#000000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     statsRow: {
         flexDirection: 'row',
@@ -296,12 +285,12 @@ const styles = StyleSheet.create({
     },
     statsLabel: {
         fontSize: 14,
-        color: '#3A3A3C',
+        color: palette.textSecondary,
     },
     statsValue: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
 });
 

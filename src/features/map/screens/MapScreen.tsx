@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import { SymbolView } from "expo-symbols";
@@ -10,6 +10,8 @@ import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/use
 import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CafeBottomSheet } from "@/src/features/map/components/CafeBottomSheet";
+import { palette } from "@/constants/colors";
 
 export function MapScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
@@ -18,6 +20,8 @@ export function MapScreen() {
     const mapRef = useRef<MapView>(null);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
     const [isFollowingUser, setIsFollowingUser] = useState(true);
+    const [selectedCoffeeId, setSelectedCoffeeId] = useState<string | null>(null);
+    const [region, setRegion] = useState<Region>();
 
     const initialRegion = useMemo<Region>(() => ({
         latitude: coords?.lat ?? 48.8566,
@@ -27,7 +31,13 @@ export function MapScreen() {
     }), [coords?.lat, coords?.lng]);
 
     const toggleViewMode = () => {
-        setViewMode((mode) => (mode === 'map' ? 'list' : 'map'));
+        setViewMode((mode) => {
+            if (mode === 'map') {
+                setSelectedCoffeeId(null);
+                return 'list';
+            }
+            return 'map';
+        });
     };
 
     const updateFollowingState = useCallback((region: Region) => {
@@ -38,8 +48,9 @@ export function MapScreen() {
         setIsFollowingUser(latDiff < threshold && lngDiff < threshold);
     }, [coords]);
 
-    const handleRegionChangeComplete = (region: Region) => {
-        updateFollowingState(region);
+    const handleRegionChangeComplete = (nextRegion: Region) => {
+        setRegion(nextRegion);
+        updateFollowingState(nextRegion);
     };
 
     const handlePanDrag = () => {
@@ -65,117 +76,129 @@ export function MapScreen() {
         navigation.navigate("CafeDetails", { id });
     };
 
+    const zoomLevel = region?.latitudeDelta ?? initialRegion.latitudeDelta;
+
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <View style={styles.safeArea}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.title}>Carte des cafés</Text>
-                        <Text style={styles.subtitle}>Autour de vous</Text>
-                    </View>
-                    <Pressable
-                        onPress={toggleViewMode}
-                        style={({ pressed }) => [
-                            styles.toggleButton,
-                            pressed && styles.toggleButtonPressed,
-                        ]}
-                        accessibilityRole="button"
-                        accessibilityLabel={viewMode === 'map' ? 'Afficher la liste' : 'Afficher la carte'}
-                    >
-                        <SymbolView
-                            name={viewMode === 'map' ? 'list.bullet.rectangle' : 'map.fill'}
-                            size={22}
-                            tintColor={'#1C1C1E'}
-                        />
-                    </Pressable>
-                </View>
-                <View style={styles.body}>
-                    {viewMode === 'map' ? (
-                        <View style={styles.mapCard}>
-                            <MapView
-                                ref={mapRef}
-                                style={styles.map}
-                                showsMyLocationButton={false}
-                                initialRegion={initialRegion}
-                                showsUserLocation={true}
-                                onRegionChangeComplete={handleRegionChangeComplete}
-                                onPanDrag={handlePanDrag}
-                            >
-                                <CoffeeSelection />
-                            </MapView>
-                            <LocalisationButton
-                                localizeMe={localizeMe}
-                                name={isFollowingUser ? 'location.circle.fill' : 'location'}
-                                size={28}
-                                color={isFollowingUser ? '#0A84FF' : '#3A3A3C'}
-                                isFollowing={isFollowingUser}
+                {viewMode === 'map' ? (
+                    <>
+                        <MapView
+                            ref={mapRef}
+                            style={styles.map}
+                            showsMyLocationButton={false}
+                            initialRegion={initialRegion}
+                            showsUserLocation={true}
+                            onRegionChangeComplete={handleRegionChangeComplete}
+                            onPanDrag={handlePanDrag}
+                            onPress={() => setSelectedCoffeeId(null)}
+                            showsPointsOfInterest={false}
+                        >
+                            <CoffeeSelection
+                                onSelect={(id) => setSelectedCoffeeId(id)}
+                                selectedId={selectedCoffeeId}
+                                zoomLevel={zoomLevel}
                             />
+                        </MapView>
+                        <View style={[styles.overlayHeader, { paddingTop: insets.top + 18 }]}>
+                            <View>
+                                <Text style={styles.overlayLabel}>Explorer</Text>
+                                <Text style={styles.overlayTitle}>Cafés de spécialité</Text>
+                            </View>
+                            <Pressable
+                                onPress={toggleViewMode}
+                                style={styles.overlayToggle}
+                                accessibilityRole="button"
+                                accessibilityLabel="Afficher la liste"
+                            >
+                                <SymbolView name={'list.bullet.rectangle'} size={22} tintColor={palette.textPrimary} />
+                            </Pressable>
                         </View>
-                    ) : (
+                        <LocalisationButton
+                            localizeMe={localizeMe}
+                            name={isFollowingUser ? 'location.circle.fill' : 'location'}
+                            size={28}
+                            color={isFollowingUser ? palette.accent : palette.textSecondary}
+                            isFollowing={isFollowingUser}
+                        />
+                        <CafeBottomSheet coffeeId={selectedCoffeeId} onRequestClose={() => setSelectedCoffeeId(null)} />
+                    </>
+                ) : (
+                    <View style={[styles.listWrapper, { paddingTop: insets.top + 16 }]}>
+                        <View style={styles.listHeader}>
+                            <Text style={styles.listTitle}>Tous les cafés</Text>
+                            <Pressable onPress={toggleViewMode} style={styles.overlayToggle} accessibilityRole="button">
+                                <SymbolView name={'map.fill'} size={22} tintColor={palette.textPrimary} />
+                            </Pressable>
+                        </View>
                         <CoffeeList onSelectCoffee={(id) => openCafeDetails(String(id))} />
-                    )}
-                </View>
+                    </View>
+                )}
             </View>
             <ScanTicketFab onPress={openScanModal} insetBottom={insets.bottom} />
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F5F5F7',
+        backgroundColor: palette.background,
     },
     container: {
         flex: 1,
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        gap: 16,
     },
-    header: {
+    map: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    overlayHeader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 24,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    title: {
-        fontSize: 24,
-        fontWeight: '600',
-        color: '#1C1C1E',
-        letterSpacing: -0.5,
+    overlayLabel: {
+        color: palette.textMuted,
+        letterSpacing: 1.4,
+        textTransform: 'uppercase',
+        fontSize: 12,
     },
-    subtitle: {
-        marginTop: 4,
-        fontSize: 14,
-        color: '#6E6E73',
+    overlayTitle: {
+        marginTop: 6,
+        fontSize: 26,
+        fontWeight: '800',
+        color: palette.textPrimary,
     },
-    toggleButton: {
+    overlayToggle: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(118,118,128,0.12)',
+        backgroundColor: 'rgba(33, 24, 19, 0.8)',
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.06)',
     },
-    toggleButtonPressed: {
-        opacity: 0.75,
-    },
-    body: {
+    listWrapper: {
         flex: 1,
+        paddingHorizontal: 20,
+        gap: 20,
+        backgroundColor: palette.background,
     },
-    mapCard: {
-        flex: 1,
-        borderRadius: 28,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 12 },
-        elevation: 6,
-        backgroundColor: '#FFFFFF',
+    listHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
-    map: {
-        flex: 1,
-        borderRadius: 28,
+    listTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: palette.textPrimary,
     },
 });
 
