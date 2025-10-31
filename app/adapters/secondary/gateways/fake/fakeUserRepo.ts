@@ -1,5 +1,6 @@
 import { UserRepo } from "@/app/contextWL/userWl/gateway/user.gateway";
 import { AppUser, toUserId } from "@/app/contextWL/userWl/typeAction/user.type";
+import {parseToISODate} from "@/app/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 export class FakeUserRepo implements UserRepo {
     public users: Map<string, AppUser> = new Map();
@@ -20,8 +21,8 @@ export class FakeUserRepo implements UserRepo {
 
 export const makeDemoUser = (): AppUser => ({
     id: toUserId("google:fake-user"),
-    createdAt: new Date(2024, 0, 1).toISOString(),
-    updatedAt: new Date(2024, 0, 1).toISOString(),
+    createdAt: parseToISODate(new Date(2024, 0, 1).toISOString()),
+    updatedAt: parseToISODate(new Date(2024, 0, 1).toISOString()),
     displayName: "Fake User",
     avatarUrl: "https://i.pravatar.cc/150?u=fake-user",
     identities: [],

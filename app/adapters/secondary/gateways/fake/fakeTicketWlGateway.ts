@@ -1,8 +1,8 @@
-// tests/testUtils/fakeTicketsGateway.ts
 export class FakeTicketsGateway {
     willFailVerify = false;
 
     // Simule l’API write: on envoie la commande "verify" et on attend un ACK ailleurs
+
     async verify(_: {
         commandId: string;
         imageRef?: string;

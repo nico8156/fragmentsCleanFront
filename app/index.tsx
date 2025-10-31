@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { selectAuthStatus } from "@/app/contextWL/userWl/selector/user.selector";
 
 export default function Index() {
+
     const status = useSelector(selectAuthStatus);
 
     if (status === "loading") {
