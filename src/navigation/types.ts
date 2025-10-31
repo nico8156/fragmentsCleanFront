@@ -13,6 +13,7 @@ export type RootStackParamList = {
     CafeDetails: { id: string };
     Article: { slug: string };
     ScanTicketModal: undefined;
+    Search: undefined;
     Login: undefined;
 };
 

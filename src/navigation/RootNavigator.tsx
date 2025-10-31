@@ -14,6 +14,8 @@ import { CafeDetailsScreen } from "@/src/features/cafes/screens/CafeDetailsScree
 import { ArticleScreen } from "@/src/features/articles/screens/ArticleScreen";
 import { ScanTicketScreen } from "@/src/features/scan/screens/ScanTicketScreen";
 import { LoginScreen } from "@/src/features/auth/screens/LoginScreen";
+import { SearchScreen } from "@/src/features/search/screens/SearchScreen";
+import { palette } from "@/constants/colors";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();
@@ -39,9 +41,15 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 const theme = {
     ...DefaultTheme,
+    dark: true,
     colors: {
         ...DefaultTheme.colors,
-        background: "#FFFFFF",
+        primary: palette.accent,
+        background: palette.background,
+        card: palette.surface,
+        text: palette.textPrimary,
+        border: palette.border,
+        notification: palette.accent,
     },
 };
 
@@ -50,10 +58,18 @@ function TabsNavigator() {
         <Tabs.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarActiveTintColor: "#1C1C1E",
-                tabBarInactiveTintColor: "#A1A1A6",
+                tabBarActiveTintColor: palette.accent,
+                tabBarInactiveTintColor: palette.textMuted,
                 tabBarLabelStyle: {
                     fontWeight: "600",
+                    fontSize: 12,
+                },
+                tabBarStyle: {
+                    backgroundColor: palette.surface,
+                    borderTopColor: palette.border,
+                    paddingTop: 8,
+                    paddingBottom: 10,
+                    height: 70,
                 },
                 tabBarIcon: ({ color, size }) => {
                     const iconMap: Record<keyof RootTabsParamList, keyof typeof Ionicons.glyphMap> = {
@@ -77,7 +93,11 @@ function TabsNavigator() {
 
 function SignedInNavigator() {
     return (
-        <Stack.Navigator>
+        <Stack.Navigator
+            screenOptions={{
+                contentStyle: { backgroundColor: palette.background },
+            }}
+        >
             <Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
             <Stack.Screen
                 name="CafeDetails"
@@ -93,6 +113,11 @@ function SignedInNavigator() {
                 name="ScanTicketModal"
                 component={ScanTicketScreen}
                 options={{ presentation: "modal", title: "Scanner un ticket" }}
+            />
+            <Stack.Screen
+                name="Search"
+                component={SearchScreen}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );

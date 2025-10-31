@@ -1,7 +1,8 @@
-import {memo} from "react";
-import {FlatList, Pressable, StyleSheet, Text, View} from "react-native";
-import {Image} from "expo-image";
-import {HomeCategoryItemVM, HomeCategoryVM} from "@/app/adapters/secondary/viewModel/useArticlesHome";
+import { memo } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { HomeCategoryItemVM, HomeCategoryVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
+import { palette } from "@/constants/colors";
 
 type Props = {
     categories: HomeCategoryVM[];
@@ -56,53 +57,66 @@ export function Categories({ categories, onSelect }: Props) {
 
 const styles = StyleSheet.create({
     container: {
+        gap: 32,
     },
     categoryBlock: {
+        gap: 16,
     },
     categorySpacing: {
-        marginTop: 24,
+        marginTop: 32,
     },
     categoryHeader: {
-        marginBottom: 12,
+        marginBottom: 4,
+        gap: 6,
     },
     categoryTitle: {
-        fontSize: 24,
-        fontWeight: "700",
-        color: "#1F1F1F",
+        fontSize: 22,
+        fontWeight: "800",
+        color: palette.accent,
+        textTransform: "uppercase",
+        letterSpacing: 0.6,
     },
     categorySubtitle: {
-        color: "#6B6B6B",
+        color: palette.textMuted,
         fontSize: 14,
-        lineHeight: 20,
+        lineHeight: 18,
     },
     listContent: {
-        paddingRight: 24,
+        paddingRight: 16,
+        gap: 16,
     },
     separator: {
         width: 16,
     },
     itemContainer: {
-        width: 120,
-        marginRight: 4,
+        width: 132,
+        padding: 14,
+        borderRadius: 22,
+        backgroundColor: palette.elevated,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
+        gap: 12,
     },
     logoWrapper: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
+        width: 92,
+        height: 92,
+        borderRadius: 20,
         overflow: "hidden",
-        backgroundColor: "#F1F1F1",
+        backgroundColor: palette.surface,
         alignItems: "center",
         justifyContent: "center",
         alignSelf: "flex-start",
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: "rgba(255,255,255,0.06)",
     },
     logo: {
         width: "100%",
         height: "100%",
     },
     itemTitle: {
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 18,
-        color: "#2D2D2D",
+        color: palette.textPrimary,
         fontWeight: "600",
     },
 });
