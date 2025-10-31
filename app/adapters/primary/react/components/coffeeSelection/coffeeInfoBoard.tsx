@@ -7,7 +7,8 @@ import {CafeFullVM} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.
 import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import {SymbolView} from "expo-symbols";
-import {useRouter} from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigationProp } from "@/src/navigation/types";
 
 type Props = {
     coffeeId:CoffeeId;
@@ -20,15 +21,12 @@ const CoffeeInfoBoard = (props:Props) => {
     const {coffee}:{coffee:CafeFullVM|undefined} = useCafeFull(coffeeId)
     const distance = useDistanceToPoint(coffee ? {lat:coffee.location.lat,lng:coffee.location.lon} : undefined)
     const isOpen = useCafeOpenNow(coffeeId)
-    const router = useRouter()
+    const navigation = useNavigation<RootStackNavigationProp>();
 
     if(!coffee) return null
 
     const handleNavigate = () => {
-        router.push({
-            pathname: '/coffee/[id]',
-            params: { id: coffee.id.toString() }
-        })
+        navigation.navigate("CafeDetails", { id: coffee.id.toString() })
     }
 
     const handleClose = (event: GestureResponderEvent) => {

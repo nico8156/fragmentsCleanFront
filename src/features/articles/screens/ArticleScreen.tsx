@@ -1,13 +1,22 @@
-import {useEffect, useMemo} from "react";
-import {ActivityIndicator, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from "react-native";
-import {useRouter, useLocalSearchParams} from "expo-router";
-import {Image} from "expo-image";
-import {Ionicons} from "@expo/vector-icons";
-import {useDispatch} from "react-redux";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {useArticle} from "@/app/adapters/secondary/viewModel/useArticle";
-import {articleRetrievalBySlug} from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
-import {articleLoadingStates} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import { useEffect, useMemo } from "react";
+import {
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
+import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { useArticle } from "@/app/adapters/secondary/viewModel/useArticle";
+import { articleRetrievalBySlug } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
+import { articleLoadingStates } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import { RootStackParamList, RootStackNavigationProp } from "@/src/navigation/types";
 
 const formatDate = (value?: string) => {
     if (!value) return undefined;
@@ -18,10 +27,10 @@ const formatDate = (value?: string) => {
     }
 };
 
-export default function ArticleScreen() {
-    const { slug } = useLocalSearchParams<{ slug?: string | string[] }>();
-    const normalizedSlug = useMemo(() => (Array.isArray(slug) ? slug[0] : slug) ?? "", [slug]);
-    const router = useRouter();
+export function ArticleScreen() {
+    const { params } = useRoute<RouteProp<RootStackParamList, 'Article'>>();
+    const navigation = useNavigation<RootStackNavigationProp>();
+    const normalizedSlug = useMemo(() => params.slug, [params.slug]);
     const insets = useSafeAreaInsets();
     const dispatch = useDispatch<any>();
     const { article, status } = useArticle(normalizedSlug);
@@ -36,11 +45,7 @@ export default function ArticleScreen() {
     const publishedOn = formatDate(article?.publishedAt ?? article?.updatedAt);
 
     const goBack = () => {
-        if (router.canGoBack()) {
-            router.back();
-        } else {
-            router.push("/(tabs)/explore");
-        }
+        navigation.goBack();
     };
 
     return (
@@ -159,12 +164,12 @@ const styles = StyleSheet.create({
         backgroundColor: "#F3F4F6",
         paddingVertical: 6,
         paddingHorizontal: 12,
-        borderRadius: 999,
+        borderRadius: 20,
         marginRight: 8,
-        marginBottom: 8,
+        marginTop: 8,
     },
     tagText: {
-        color: "#374151",
+        color: "#4B5563",
         fontSize: 12,
         fontWeight: "600",
     },
@@ -172,63 +177,61 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: "700",
         color: "#111827",
-        lineHeight: 34,
         marginTop: 16,
     },
     intro: {
         fontSize: 16,
+        color: "#4B5563",
+        marginTop: 12,
         lineHeight: 24,
-        color: "#374151",
-        marginTop: 8,
     },
     block: {
         marginTop: 24,
+        gap: 12,
     },
     blockHeading: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: "700",
         color: "#111827",
+    },
+    blockParagraph: {
+        fontSize: 16,
+        color: "#374151",
+        lineHeight: 24,
     },
     blockImage: {
         width: "100%",
         height: 220,
         borderRadius: 16,
-        marginTop: 12,
-    },
-    blockParagraph: {
-        fontSize: 15,
-        lineHeight: 22,
-        color: "#4B5563",
-        marginTop: 12,
     },
     conclusion: {
-        marginTop: 12,
+        marginTop: 32,
         fontSize: 16,
+        color: "#111827",
         lineHeight: 24,
         fontWeight: "600",
-        color: "#1F2937",
-        marginBottom: 32,
     },
     backButton: {
         position: "absolute",
         left: 16,
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.92)",
-        paddingHorizontal: 14,
+        gap: 4,
+        zIndex: 10,
         paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: "rgba(255,255,255,0.85)",
         borderRadius: 999,
         shadowColor: "#000000",
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 2,
-        zIndex: 100,
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
     },
     backText: {
-        marginLeft: 4,
-        color: "#2F2F2F",
+        fontSize: 14,
         fontWeight: "600",
-        fontSize: 13,
+        color: "#111827",
     },
 });
+
+export default ArticleScreen;
