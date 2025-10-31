@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { Pressable } from "react-native";
 import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
+import { palette } from "@/constants/colors";
 
 export function ProfileScreen() {
     const dispatch = useDispatch<any>();
@@ -17,6 +18,9 @@ export function ProfileScreen() {
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
+                    <View style={styles.avatar}>
+                        <Text style={styles.avatarInitial}>{user?.profile?.name?.[0]?.toUpperCase() ?? 'F'}</Text>
+                    </View>
                     <Text style={styles.name}>{user?.profile?.name ?? 'Invité·e'}</Text>
                     <Text style={styles.email}>{user?.email ?? 'Non renseigné'}</Text>
                 </View>
@@ -45,43 +49,41 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: palette.background,
     },
     container: {
-        padding: 24,
-        gap: 24,
+        padding: 28,
+        gap: 28,
     },
     header: {
-        gap: 4,
+        gap: 12,
+        alignItems: 'center',
     },
     name: {
         fontSize: 26,
         fontWeight: '700',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
     email: {
         fontSize: 14,
-        color: '#6E6E73',
+        color: palette.textMuted,
     },
     card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 20,
-        gap: 16,
-        shadowColor: '#000000',
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 8 },
-        elevation: 3,
+        backgroundColor: palette.elevated,
+        borderRadius: 28,
+        padding: 24,
+        gap: 20,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     cardTitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: '#1F1F1F',
+        color: palette.textPrimary,
     },
     cardSubtitle: {
         fontSize: 14,
-        color: '#6E6E73',
+        color: palette.textSecondary,
         lineHeight: 20,
     },
     row: {
@@ -92,14 +94,14 @@ const styles = StyleSheet.create({
     rowTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
     rowSubtitle: {
         fontSize: 14,
-        color: '#6E6E73',
+        color: palette.textMuted,
     },
     signOutButton: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: palette.accent,
         borderRadius: 30,
         paddingVertical: 16,
         alignItems: 'center',
@@ -108,9 +110,24 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     signOutLabel: {
-        color: '#FFFFFF',
+        color: '#1C0E08',
         fontSize: 16,
         fontWeight: '600',
+    },
+    avatar: {
+        width: 84,
+        height: 84,
+        borderRadius: 42,
+        backgroundColor: palette.overlay,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
+    },
+    avatarInitial: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: palette.textPrimary,
     },
 });
 

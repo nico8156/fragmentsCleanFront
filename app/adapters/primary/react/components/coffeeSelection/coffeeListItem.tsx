@@ -1,13 +1,14 @@
-import {Pressable, StyleSheet, Text, View} from "react-native";
-import {Image} from "expo-image";
-import {SymbolView} from "expo-symbols";
-import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
-import {CafeFullVM} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
-import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
-import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { SymbolView } from "expo-symbols";
+import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
+import { CafeFullVM } from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
+import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
+import { useDistanceToPoint } from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/src/navigation/types";
+import { palette } from "@/constants/colors";
 
 type Props = {
     id: CoffeeId;
@@ -31,7 +32,7 @@ const CoffeeListItem = ({id, onPress}: Props) => {
         navigation.navigate("CafeDetails", { id: coffee.id.toString() })
     }
 
-    const openColor = isOpen ? '#34C759' : '#FF3B30'
+    const openColor = isOpen ? palette.success : palette.danger
 
     return (
         <Pressable style={styles.card} onPress={handlePress}>
@@ -49,7 +50,7 @@ const CoffeeListItem = ({id, onPress}: Props) => {
                     <Text style={styles.addressSecondary}>{coffee.address.city}</Text>
                 ) : null}
                 <View style={styles.metaRow}>
-                    <View style={[styles.badge, {backgroundColor: isOpen ? 'rgba(52,199,89,0.16)' : 'rgba(255,59,48,0.16)'}]}>
+                    <View style={[styles.badge, {backgroundColor: isOpen ? 'rgba(79,178,142,0.18)' : 'rgba(224,92,75,0.18)'}]}>
                         <SymbolView name={isOpen ? 'sun.max.fill' : 'moon.zzz'} size={14} tintColor={openColor} />
                         <Text style={[styles.badgeText, {color: openColor}]}>{isOpen ? 'Ouvert' : 'Fermé'}</Text>
                     </View>
@@ -67,24 +68,25 @@ export default CoffeeListItem;
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
+        backgroundColor: palette.elevated,
+        borderRadius: 22,
         overflow: 'hidden',
-        padding: 12,
+        padding: 14,
         gap: 12,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.16,
         shadowRadius: 12,
-        shadowOffset: {width: 0, height: 8},
-        elevation: 3,
-        marginBottom: 16,
+        shadowOffset: {width: 0, height: 10},
+        elevation: 4,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
     },
     cover: {
         width: 64,
         height: 64,
         borderRadius: 16,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: palette.overlay,
     },
     details: {
         flex: 1,
@@ -93,15 +95,15 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1C1C1E',
+        color: palette.textPrimary,
     },
     address: {
         fontSize: 13,
-        color: '#6E6E73',
+        color: palette.textSecondary,
     },
     addressSecondary: {
         fontSize: 12,
-        color: '#8E8E93',
+        color: palette.textMuted,
     },
     metaRow: {
         marginTop: 8,
@@ -123,6 +125,6 @@ const styles = StyleSheet.create({
     },
     distance: {
         fontSize: 12,
-        color: '#6E6E73',
+        color: palette.textMuted,
     },
 })

@@ -1,12 +1,13 @@
-import {useCallback, useRef, useState} from "react";
-import {Dimensions, FlatList, Pressable, StyleSheet, Text, View, ViewToken} from "react-native";
-import {Image} from "expo-image";
-import {ArticlePreviewVM} from "@/app/adapters/secondary/viewModel/useArticlesHome";
+import { useCallback, useRef, useState } from "react";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, View, ViewToken } from "react-native";
+import { Image } from "expo-image";
+import { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
+import { palette } from "@/constants/colors";
 
 const { width } = Dimensions.get("window");
 
 const CARD_WIDTH = width;
-const CARD_HEIGHT = Math.round(width);
+const CARD_HEIGHT = Math.round(width * 1.05);
 
 
 type Props = {
@@ -46,23 +47,27 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <Pressable style={styles.card} onPress={() => handlePress(item.slug)}>
-                        <Image
-                            source={{ uri: item.cover.url }}
-                            style={styles.backgroundImage}
-                            contentFit="cover"
-                            cachePolicy="memory-disk"
-                        />
-                        <View style={styles.overlay} />
+                        <View style={styles.imageWrapper}>
+                            <Image
+                                source={{ uri: item.cover.url }}
+                                style={styles.backgroundImage}
+                                contentFit="cover"
+                                cachePolicy="memory-disk"
+                            />
+                            <View style={styles.overlay} />
+                        </View>
                         <View style={styles.content}>
-                            <Text style={styles.title}>{item.title}</Text>
-                            <Text style={styles.subtitle}>{item.intro}</Text>
-                            <View style={styles.tagsContainer}>
-                                {item.tags.map((tag) => (
-                                    <View key={tag} style={styles.tag}>
-                                        <Text style={styles.tagText}>{tag}</Text>
-                                    </View>
-                                ))}
-                            </View>
+                            {item.tags.length > 0 ? (
+                                <View style={styles.tag}>
+                                    <Text style={styles.tagText}>{item.tags[0]}</Text>
+                                </View>
+                            ) : null}
+                            <Text style={styles.title} numberOfLines={2}>
+                                {item.title}
+                            </Text>
+                            <Text style={styles.subtitle} numberOfLines={2}>
+                                {item.intro}
+                            </Text>
                         </View>
                     </Pressable>
                 )}
@@ -89,69 +94,75 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
-        position: "relative",
+        paddingHorizontal: 24,
         justifyContent: "flex-end",
     },
-    backgroundImage: {
+    imageWrapper: {
         ...StyleSheet.absoluteFillObject,
+        marginHorizontal: 24,
+        borderRadius: 32,
+        overflow: "hidden",
+        backgroundColor: palette.surface,
+    },
+    backgroundImage: {
+        width: "100%",
+        height: "100%",
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.45)",
+        backgroundColor: "rgba(8, 5, 4, 0.55)",
     },
     content: {
-        gap:10,
-        paddingHorizontal: 24,
-        paddingBottom: 42,
-    },
-    tagsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
+        gap: 16,
+        paddingBottom: 54,
+        paddingHorizontal: 36,
     },
     tag: {
-        backgroundColor: "rgba(255, 255, 255, 0.18)",
+        alignSelf: "flex-start",
+        backgroundColor: palette.accent,
         paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 999,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgba(255,255,255,0.45)",
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 6 },
     },
     tagText: {
-        color: "#F5F5F5",
-        fontWeight: "600",
+        color: "#1A0D08",
+        fontWeight: "700",
         fontSize: 12,
-        letterSpacing: 0.4,
+        letterSpacing: 0.6,
         textTransform: "uppercase",
     },
     title: {
-        color: "#FFFFFF",
-        fontSize: 26,
-        fontWeight: "700",
+        color: palette.textPrimary,
+        fontSize: 28,
+        fontWeight: "800",
         letterSpacing: 0.2,
-        marginBottom: 12,
+        lineHeight: 34,
     },
     subtitle: {
-        color: "#EAEAEA",
-        fontSize: 14,
-        lineHeight: 20,
+        color: palette.textSecondary,
+        fontSize: 15,
+        lineHeight: 22,
     },
     pagination: {
         position: "absolute",
         bottom: 0,
         flexDirection: "row",
-        left:width/2 - 37,
+        left: width / 2 - 37,
         gap: 6,
-        marginBottom:10
+        marginBottom: 18,
     },
     dot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: "rgba(255, 255, 255, 0.4)",
+        backgroundColor: "rgba(255, 255, 255, 0.35)",
     },
     dotActive: {
         backgroundColor: "#FFFFFF",
-        width: 12,
+        width: 18,
     },
 });
