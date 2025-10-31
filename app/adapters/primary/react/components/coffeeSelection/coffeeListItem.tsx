@@ -6,7 +6,8 @@ import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
 import {CafeFullVM} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
-import {useRouter} from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigationProp } from "@/src/navigation/types";
 
 type Props = {
     id: CoffeeId;
@@ -18,7 +19,7 @@ const CoffeeListItem = ({id, onPress}: Props) => {
     const {coffee}:{coffee:CafeFullVM|undefined} = useCafeFull(id)
     const isOpen = useCafeOpenNow(id)
     const distance = useDistanceToPoint(coffee ? {lat: coffee.location.lat, lng: coffee.location.lon} : undefined)
-    const router = useRouter()
+    const navigation = useNavigation<RootStackNavigationProp>();
 
     if(!coffee) return null
 
@@ -27,10 +28,7 @@ const CoffeeListItem = ({id, onPress}: Props) => {
             onPress(id)
             return
         }
-        router.push({
-            pathname: '/coffee/[id]',
-            params: {id: coffee.id.toString()}
-        })
+        navigation.navigate("CafeDetails", { id: coffee.id.toString() })
     }
 
     const openColor = isOpen ? '#34C759' : '#FF3B30'

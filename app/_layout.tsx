@@ -1,4 +1,3 @@
-import { Stack } from "expo-router";
 import { Provider } from "react-redux";
 import { useEffect, useMemo } from "react";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
@@ -8,21 +7,38 @@ import { gateways } from "@/app/adapters/primary/react/gateways-config/gatewaysC
 import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
-import { AuthRouterGate } from "@/app/adapters/primary/react/components/authRouterGate";
+import { ticketSubmitUseCaseFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase";
+import { RootNavigator } from "@/src/navigation/RootNavigator";
+import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+
+let storeRef: ReduxStoreWl | null = null;
 
 export default function RootLayout() {
     const store = useMemo(
         () =>
-            initReduxStoreWl({
-                dependencies: {
+            {
+                const ticketSubmitMiddleware = ticketSubmitUseCaseFactory({
                     gateways,
-                    helpers: {},
-                },
-                listeners: [
-                    authListenerFactory({ gateways, helpers: {} }),
-                    userLocationListenerFactory({ gateways, helpers: {} }),
-                ],
-            }),
+                    helpers: {
+                        nowIso: () => new Date().toISOString() as any,
+                        currentUserId: () => storeRef?.getState().aState.currentUser?.id ?? "anonymous",
+                    },
+                });
+
+                const createdStore = initReduxStoreWl({
+                    dependencies: {
+                        gateways,
+                        helpers: {},
+                    },
+                    listeners: [
+                        ticketSubmitMiddleware,
+                        authListenerFactory({ gateways, helpers: {} }),
+                        userLocationListenerFactory({ gateways, helpers: {} }),
+                    ],
+                });
+                storeRef = createdStore;
+                return createdStore;
+            },
         [],
     );
 
@@ -37,8 +53,7 @@ export default function RootLayout() {
 
     return (
         <Provider store={store}>
-            <AuthRouterGate />
-            <Stack screenOptions={{ headerShown: false }} />
+            <RootNavigator />
             <AppInitializer />
         </Provider>
     );
