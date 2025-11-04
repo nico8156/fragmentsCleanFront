@@ -145,7 +145,7 @@ export function MapScreen() {
                             >
                                 {estOuvert &&
                                 <ScrollView style={styles.sheetContent}>
-                                    <BottomSheetHeader/>
+                                    <BottomSheetHeader name={coffee?.name}/>
                                     <BottomSheetCat/>
                                     <BottomSheetActions/>
                                     <BottomSheetPhotos/>
@@ -170,8 +170,10 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     sheetContent: {
-        padding: 16,
-        gap: 12,
+        backgroundColor: palette.textPrimary_1,
+        flex: 1,
+        paddingLeft: 16,
+        paddingTop: 16,
     },
     sheetTitle: {
         fontSize: 20,
