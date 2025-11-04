@@ -25,7 +25,6 @@ export const ScanTicketFab = memo(({ onPress, insetBottom = 0 }: Props) => {
                 accessibilityLabel="Scanner un ticket"
             >
                 <MaterialIcons name="document-scanner" size={24} color="#1C0E08" />
-                <Text style={styles.label}>Scanner</Text>
             </Pressable>
         </View>
     );

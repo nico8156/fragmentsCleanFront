@@ -6,29 +6,29 @@ import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNo
 import { View, StyleSheet, Text } from "react-native";
 import { SymbolView } from "expo-symbols";
 import { palette } from "@/constants/colors";
+import {CafeFullVM, CoffeeOnMap} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 
 type Props = {
-    id: string;
+    coffee: CoffeeOnMap ;
     onSelect?: (id: string) => void;
     selected?: boolean;
     zoomLevel: number;
 };
 
-const CoffeeMarker = ({ id, onSelect, selected = false, zoomLevel }: Props) => {
-    const coffeeId = parseToCoffeeId(id);
-    const { lat, lon } = useCoffeeCoordinates(coffeeId);
-    const { coffee } = useCafeFull(coffeeId);
-    const isOpen = useCafeOpenNow(coffeeId);
-
-    const showExpanded = zoomLevel <= 0.03;
-    const likesCount = coffee?.rating ? Math.round(coffee.rating * 20) : undefined;
-
+const CoffeeMarker = (props: Props) => {
+    const { coffee, selected, zoomLevel, onSelect } = props;
+    const showExpanded = zoomLevel <= 0.015;
+    //const likesCount = coffee?.rating ? Math.round(coffee.rating * 20) : undefined;
+    const isOpen = useCafeOpenNow(parseToCoffeeId(coffee.id))
+    const onpress = () => {
+        onSelect?.(coffee.id)
+    }
     return (
         <Marker
-            coordinate={{ latitude: lat, longitude: lon }}
+            coordinate={{ latitude: coffee.location.lat, longitude: coffee.location.lon }}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
-            onPress={() => onSelect?.(id)}
+            onPress={onpress}
         >
             <View style={styles.wrapper}>
                 <View
@@ -38,22 +38,25 @@ const CoffeeMarker = ({ id, onSelect, selected = false, zoomLevel }: Props) => {
                         showExpanded ? styles.markerBodyExpanded : undefined,
                     ]}
                 >
-                    <SymbolView
-                        name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
-                        size={18}
-                        tintColor="#F4EDE6"
-                    />
+                    <View style={styles.iconWrapper}>
+                        <SymbolView
+                            name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
+                            size={20}
+                            tintColor="#F4EDE6"
+                        />
+                    </View>
                     {showExpanded ? (
-                        <View style={styles.likesPill}>
-                            <SymbolView name="heart.fill" size={14} tintColor={palette.accent} />
-                            <Text style={styles.likesText}>{likesCount ?? 0}</Text>
+                        <View style={{flexDirection:"row", gap:8, marginLeft:8}}>
+                            <Text style={styles.likesText}>{ 72}</Text>
+                            <SymbolView name="heart.fill" size={18} tintColor={palette.accent} />
                         </View>
                     ) : null}
                 </View>
-                <View style={[styles.tip, selected ? styles.tipSelected : undefined]} />
-                <Text style={styles.label} numberOfLines={1}>
-                    {coffee?.name ?? "Café"}
-                </Text>
+                <View style={styles.textCard}>
+                    <Text style={styles.label} numberOfLines={1}>
+                        {coffee?.name ?? "Café"}
+                    </Text>
+                </View>
             </View>
         </Marker>
     );
@@ -69,9 +72,8 @@ const styles = StyleSheet.create({
     markerBody: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 3,
+        paddingVertical: 3,
         borderRadius: 999,
         backgroundColor: "rgba(28, 21, 17, 0.92)",
         borderWidth: StyleSheet.hairlineWidth,
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     markerBodyExpanded: {
-        paddingHorizontal: 18,
+
     },
     markerBodySelected: {
         backgroundColor: palette.accentMuted,
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
     },
     likesText: {
-        fontSize: 12,
+        fontSize: 16,
         fontWeight: "600",
         color: palette.textPrimary,
     },
@@ -117,11 +119,23 @@ const styles = StyleSheet.create({
         backgroundColor: palette.accentMuted,
         borderColor: palette.accent,
     },
+    iconWrapper:{
+        backgroundColor:palette.success,
+        padding:4,
+        borderRadius:999
+    },
+    textCard:{
+        justifyContent:"center",
+        alignItems:"center",
+        padding:5,
+        borderRadius:6,
+        backgroundColor:'rgba(244, 237, 230, 0.5)'
+    },
     label: {
         maxWidth: 160,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: "600",
-        color: palette.textPrimary,
+        color: palette.elevated,
         textAlign: "center",
     },
 });

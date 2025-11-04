@@ -28,7 +28,7 @@ export default LocalisationButton;
 const styles = StyleSheet.create({
     container:{
         position:"absolute",
-        bottom:120,
+        bottom:50,
         right:24,
         width:56,
         height:56,

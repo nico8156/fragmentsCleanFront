@@ -1,27 +1,40 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StatusBar, StyleSheet, useWindowDimensions, View, Text} from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import { SymbolView } from "expo-symbols";
 import CoffeeSelection from "@/app/adapters/primary/react/components/coffeeSelection/coffeeSelection";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
-import CoffeeList from "@/app/adapters/primary/react/components/coffeeSelection/coffeeList";
 import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
-import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CafeBottomSheet } from "@/src/features/map/components/CafeBottomSheet";
 import { palette } from "@/constants/colors";
+import ListViewForCoffees from "@/src/features/map/screens/ListViewForCoffees";
+import ActionButtonsWrapper from "@/src/features/map/components/ActionButtonsWrapper";
+import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {BottomSheet, Host} from "@expo/ui/swift-ui";
+import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
+import CoffeeBottomSheet from "@/src/features/map/components/CoffeeBottomSheet";
+import {useCafeForMarkers} from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
+import CoffeeMarker from "@/app/adapters/primary/react/components/coffeeSelection/coffeeMarker";
 
 export function MapScreen() {
+    const {width} = useWindowDimensions()
+    const {coffees} = useCafeForMarkers()
+
     const navigation = useNavigation<RootStackNavigationProp>();
-    const insets = useSafeAreaInsets();
+
     const { coords, refresh } = useUserLocationFromStore();
     const mapRef = useRef<MapView>(null);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
     const [isFollowingUser, setIsFollowingUser] = useState(true);
-    const [selectedCoffeeId, setSelectedCoffeeId] = useState<string | null>(null);
     const [region, setRegion] = useState<Region>();
+
+    const [isSheetOpened, setIsSheetOpened] = useState(false);
+    const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
+    const {coffee} = useCafeFull(selectedCoffeeId)
+    const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+
 
     const initialRegion = useMemo<Region>(() => ({
         latitude: coords?.lat ?? 48.8566,
@@ -33,7 +46,8 @@ export function MapScreen() {
     const toggleViewMode = () => {
         setViewMode((mode) => {
             if (mode === 'map') {
-                setSelectedCoffeeId(null);
+                // setSelectedCoffeeId(null);
+                // setIsBottomSheetOpen(false);
                 return 'list';
             }
             return 'map';
@@ -68,80 +82,111 @@ export function MapScreen() {
         });
     };
 
-    const openScanModal = () => {
-        navigation.navigate("ScanTicketModal");
-    };
-
-    const openCafeDetails = (id: string) => {
-        navigation.navigate("CafeDetails", { id });
-    };
+    const [estOuvert, setestOuvert] = useState(false);
+    const doSmthgWithCoffee = async (id:string) => {
+        setestOuvert(prevState => !prevState)
+        const coffeeId = parseToCoffeeId(id);
+        if (!coffeeId) return;
+        setSelectedCoffeeId(coffeeId);
+    }
 
     const zoomLevel = region?.latitudeDelta ?? initialRegion.latitudeDelta;
 
+    const toggleSheet = () => {
+        console.log("toggle sheet")
+        setestOuvert(prevState => !prevState)
+    };
+
     return (
         <View style={styles.safeArea}>
-            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
             <View style={styles.container}>
                 {viewMode === 'map' ? (
                     <>
                         <MapView
                             ref={mapRef}
-                            style={styles.map}
+                            style={StyleSheet.absoluteFill}
                             showsMyLocationButton={false}
                             initialRegion={initialRegion}
                             showsUserLocation={true}
                             onRegionChangeComplete={handleRegionChangeComplete}
                             onPanDrag={handlePanDrag}
-                            onPress={() => setSelectedCoffeeId(null)}
                             showsPointsOfInterest={false}
                         >
-                            <CoffeeSelection
-                                onSelect={(id) => setSelectedCoffeeId(id)}
-                                selectedId={selectedCoffeeId}
-                                zoomLevel={zoomLevel}
-                            />
+                            {coffees.map(c=> (
+                                <CoffeeMarker
+                                    key={c.id}
+                                    coffee={c}
+                                    zoomLevel={zoomLevel}
+                                    onSelect={() => doSmthgWithCoffee(c.id)}/>
+                            ))}
                         </MapView>
-                        <View style={[styles.overlayHeader, { paddingTop: insets.top + 18 }]}>
-                            <View>
-                                <Text style={styles.overlayLabel}>Explorer</Text>
-                                <Text style={styles.overlayTitle}>Cafés de spécialité</Text>
-                            </View>
-                            <Pressable
-                                onPress={toggleViewMode}
-                                style={styles.overlayToggle}
-                                accessibilityRole="button"
-                                accessibilityLabel="Afficher la liste"
+                        <Host
+                            style={[
+                                StyleSheet.absoluteFill,
+                                {
+                                    width,
+                                    pointerEvents: "none", // laisse passer les interactions hors de la sheet
+                                },
+                            ]}
+                        >
+                            <BottomSheet
+                                isOpened={estOuvert}
+                                onIsOpenedChange={(isOpened) => {
+                                    setestOuvert(isOpened)
+                                }}
+                                presentationDetents={["medium", "large"]}
+                                presentationDragIndicator="visible"
                             >
-                                <SymbolView name={'list.bullet.rectangle'} size={22} tintColor={palette.textPrimary} />
-                            </Pressable>
-                        </View>
-                        <LocalisationButton
-                            localizeMe={localizeMe}
-                            name={isFollowingUser ? 'location.circle.fill' : 'location'}
-                            size={28}
-                            color={isFollowingUser ? palette.accent : palette.textSecondary}
-                            isFollowing={isFollowingUser}
-                        />
-                        <CafeBottomSheet coffeeId={selectedCoffeeId} onRequestClose={() => setSelectedCoffeeId(null)} />
+                                {estOuvert &&
+                                <View style={styles.sheetContent}>
+                                    <Text style={styles.sheetTitle}>Hello depuis la BottomSheet 👋</Text>
+                                    <Text>Tu peux fermer en swipant vers le bas, ou avec le bouton ci-dessous.</Text>
+                                    {selectedCoffeeId != null ?
+                                        <Text>{coffee?.name}</Text> : <Text> NON pas de cafe</Text>
+                                    }
+                                    <Pressable onPress={toggleSheet} style={styles.innerButton}>
+                                        <Text style={styles.innerButtonText}>Fermer</Text>
+                                    </Pressable>
+                                </View>
+                                }
+                            </BottomSheet>
+                        </Host>
+                        <ActionButtonsWrapper/>
                     </>
                 ) : (
-                    <View style={[styles.listWrapper, { paddingTop: insets.top + 16 }]}>
-                        <View style={styles.listHeader}>
-                            <Text style={styles.listTitle}>Tous les cafés</Text>
-                            <Pressable onPress={toggleViewMode} style={styles.overlayToggle} accessibilityRole="button">
-                                <SymbolView name={'map.fill'} size={22} tintColor={palette.textPrimary} />
-                            </Pressable>
-                        </View>
-                        <CoffeeList onSelectCoffee={(id) => openCafeDetails(String(id))} />
-                    </View>
+                    <ListViewForCoffees/>
                 )}
             </View>
-            <ScanTicketFab onPress={openScanModal} insetBottom={insets.bottom} />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    buttonText: {
+        color: "white",
+        fontWeight: "600",
+    },
+    sheetContent: {
+        padding: 16,
+        gap: 12,
+    },
+    sheetTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+    },
+    innerButton: {
+        marginTop: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        backgroundColor: "black",
+        alignSelf: "flex-start",
+    },
+    innerButtonText: {
+        color: "white",
+        fontWeight: "600",
+    },
     safeArea: {
         flex: 1,
         backgroundColor: palette.background,
@@ -184,22 +229,18 @@ const styles = StyleSheet.create({
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: 'rgba(255,255,255,0.06)',
     },
-    listWrapper: {
-        flex: 1,
-        paddingHorizontal: 20,
-        gap: 20,
-        backgroundColor: palette.background,
+    buttonContainer: {
+        position: "absolute",
+        top: 60,
+        right: 20,
     },
-    listHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+    button: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: "rgba(0,0,0,0.8)",
     },
-    listTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: palette.textPrimary,
-    },
+
 });
 
 export default MapScreen;

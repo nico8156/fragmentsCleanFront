@@ -5,10 +5,13 @@ import {isOpenNowFromWindows} from "@/app/core-logic/utils/time/isOpeningNow";
 import {
     selectOpeningHoursForCoffeeId
 } from "@/app/core-logic/contextWL/openingHoursWl/selector/openingHours.selector";
+import {RootStateWl} from "@/app/store/reduxStoreWl";
 
 export function useCafeOpenNow(id: CoffeeId) {
+    const windows = useSelector((state: RootStateWl) =>
+        selectOpeningHoursForCoffeeId(id, state)
+    );
 
-    const windows = useSelector(selectOpeningHoursForCoffeeId(id))
     const [now, setNow] = useState(() => new Date())
 
     useEffect(() => {
@@ -16,5 +19,5 @@ export function useCafeOpenNow(id: CoffeeId) {
         return () => clearInterval(t)
         }, []);
 
-    return useMemo(() => isOpenNowFromWindows(windows, now), [windows, now])
+    return useMemo(() => isOpenNowFromWindows(windows ?? [], now), [windows, now])
 }

@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { RootStackParamList, RootTabsParamList } from "@/src/navigation/types";
 import { HomeScreen } from "@/src/features/home/screens/HomeScreen";
-import { MapScreen } from "@/src/features/map/screens/MapScreen";
+import {MapScreen} from "@/src/features/map/screens/MapScreen";
 import { RewardsScreen } from "@/src/features/rewards/screens/RewardsScreen";
 import { ProfileScreen } from "@/src/features/profile/screens/ProfileScreen";
 import { CafeDetailsScreen } from "@/src/features/cafes/screens/CafeDetailsScreen";
