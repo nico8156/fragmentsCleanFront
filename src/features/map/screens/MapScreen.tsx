@@ -17,6 +17,11 @@ import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
 import CoffeeBottomSheet from "@/src/features/map/components/CoffeeBottomSheet";
 import {useCafeForMarkers} from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
 import CoffeeMarker from "@/app/adapters/primary/react/components/coffeeSelection/coffeeMarker";
+import BottomSheetHeader from "@/src/features/map/components/BottomSheetHeader";
+import BottomSheetCat from "@/src/features/map/components/BottomSheetCat";
+import BottomSheetActions from "@/src/features/map/components/BottomSheetActions";
+import BottomSheetPhotos from "@/src/features/map/components/BottomSheetPhotos";
+import BottomSheetGeneral from "@/src/features/map/components/BottomSheetGeneral";
 
 export function MapScreen() {
     const {width} = useWindowDimensions()
@@ -139,16 +144,13 @@ export function MapScreen() {
                                 presentationDragIndicator="visible"
                             >
                                 {estOuvert &&
-                                <View style={styles.sheetContent}>
-                                    <Text style={styles.sheetTitle}>Hello depuis la BottomSheet 👋</Text>
-                                    <Text>Tu peux fermer en swipant vers le bas, ou avec le bouton ci-dessous.</Text>
-                                    {selectedCoffeeId != null ?
-                                        <Text>{coffee?.name}</Text> : <Text> NON pas de cafe</Text>
-                                    }
-                                    <Pressable onPress={toggleSheet} style={styles.innerButton}>
-                                        <Text style={styles.innerButtonText}>Fermer</Text>
-                                    </Pressable>
-                                </View>
+                                <ScrollView style={styles.sheetContent}>
+                                    <BottomSheetHeader/>
+                                    <BottomSheetCat/>
+                                    <BottomSheetActions/>
+                                    <BottomSheetPhotos/>
+                                    <BottomSheetGeneral/>
+                                </ScrollView>
                                 }
                             </BottomSheet>
                         </Host>
