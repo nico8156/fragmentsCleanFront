@@ -24,6 +24,7 @@ import BottomSheetPhotos from "@/src/features/map/components/BottomSheetPhotos";
 import BottomSheetGeneral from "@/src/features/map/components/BottomSheetGeneral";
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import CommentsArea from "@/src/features/map/components/CommentsArea";
+import Separator from "@/src/features/map/components/Separator";
 
 export function MapScreen() {
     const {width} = useWindowDimensions()
@@ -153,6 +154,7 @@ export function MapScreen() {
                                     <BottomSheetActions/>
                                     <BottomSheetPhotos photos={coffee?.photos}/>
                                     <BottomSheetGeneral/>
+                                    <Separator/>
                                     <CommentsArea/>
                                 </ScrollView>
                                 }
