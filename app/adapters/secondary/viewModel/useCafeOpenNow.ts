@@ -8,8 +8,11 @@ import {
 import {RootStateWl} from "@/app/store/reduxStoreWl";
 
 export function useCafeOpenNow(id: CoffeeId) {
-    const windows = useSelector((state: RootStateWl) =>
+
+    const windows = useSelector((state: RootStateWl) =>{
+
         selectOpeningHoursForCoffeeId(id, state)
+    }
     );
 
     const [now, setNow] = useState(() => new Date())

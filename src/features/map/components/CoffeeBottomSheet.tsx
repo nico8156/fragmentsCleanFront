@@ -8,7 +8,7 @@ import {
     View,
 } from "react-native";
 import { BottomSheet, Host } from "@expo/ui/swift-ui";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 interface Props {
     id: CoffeeId |null;

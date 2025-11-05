@@ -1,6 +1,6 @@
 import {View, Text, StyleSheet} from "react-native";
 import {SymbolView} from "expo-symbols";
-import {palette} from "@/constants/colors";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 const BottomSheetActions = () => {
 

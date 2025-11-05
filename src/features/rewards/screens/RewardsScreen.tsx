@@ -6,7 +6,7 @@ import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 export function RewardsScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();

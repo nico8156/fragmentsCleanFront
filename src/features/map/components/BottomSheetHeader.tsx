@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet} from "react-native";
 import {CoffeeLogoCupSteam} from "./svgs/CoffeeLogos"
 import {SymbolView} from "expo-symbols";
-import {palette} from "@/constants/colors";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 
 type Props = {
@@ -19,11 +19,11 @@ const {name} = props;
               <Text style={styles.name}>{name}</Text>
               <View style={styles.socialsContainer}>
                   <View style={styles.socialContainer}>
-                      <SymbolView name={'heart.fill'} size={30} colors={[palette.textPrimary_30]}  tintColor={"grey"}/>
+                      <SymbolView name={'heart.fill'} size={30}   tintColor={"lightgray"}/>
                       <Text style={styles.legend}>45</Text>
                   </View>
                   <View style={styles.socialContainer}>
-                      <SymbolView name={'bubble.fill'} size={30} colors={["primaire"]} tintColor={"grey"}/>
+                      <SymbolView name={'bubble.fill'} size={30}  tintColor={"lightgray"}/>
                       <Text style={styles.legend}>23</Text>
                   </View>
               </View>
@@ -62,7 +62,5 @@ const styles = StyleSheet.create({
       fontSize: 18,
         fontWeight: 'bold',
     },
-    legend:{
-      fontSize: 14,
-    }
+    legend:palette.font14
 })

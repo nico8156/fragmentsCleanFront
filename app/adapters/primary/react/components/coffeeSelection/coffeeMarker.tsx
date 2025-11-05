@@ -5,7 +5,7 @@ import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import { View, StyleSheet, Text } from "react-native";
 import { SymbolView } from "expo-symbols";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import {CafeFullVM, CoffeeOnMap} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 
 type Props = {

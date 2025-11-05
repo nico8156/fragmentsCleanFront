@@ -2,7 +2,7 @@ import { memo } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { HomeCategoryItemVM, HomeCategoryVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 type Props = {
     categories: HomeCategoryVM[];

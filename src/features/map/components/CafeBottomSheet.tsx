@@ -3,7 +3,7 @@ import { Animated, Dimensions, PanResponder, Pressable, StyleSheet, Text, View }
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";

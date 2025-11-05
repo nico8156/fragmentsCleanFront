@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View, ViewToken } from "react-native";
 import { Image } from "expo-image";
 import { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 const { width } = Dimensions.get("window");
 

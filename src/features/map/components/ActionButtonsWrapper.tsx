@@ -1,6 +1,6 @@
 import {Pressable, View, StyleSheet} from "react-native";
 import {SymbolView} from "expo-symbols";
-import {palette} from "@/constants/colors";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
 
 

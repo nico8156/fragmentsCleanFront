@@ -38,11 +38,15 @@ export const palette = {
   textPrimary_60: "hsla(30, 39%, 93%, 0.6)",
   textPrimary_30: "hsla(30, 39%, 93%, 0.3)",
 
-
   textMuted_1:    "hsla(21, 11%, 49%, 1)",
   textMuted_80:   "hsla(21, 11%, 49%, 0.8)",
   textMuted_60:   "hsla(21, 11%, 49%, 0.6)",
   textMuted_30:   "hsla(21, 11%, 49%, 0.3)",
+
+  font12 : 12,
+  font14 : {fontSize: 14},
+  font16 : {fontSize: 16},
+  font18 : {fontSize: 18},
 
 
 

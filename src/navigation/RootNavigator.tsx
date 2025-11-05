@@ -15,7 +15,7 @@ import { ArticleScreen } from "@/src/features/articles/screens/ArticleScreen";
 import { ScanTicketScreen } from "@/src/features/scan/screens/ScanTicketScreen";
 import { LoginScreen } from "@/src/features/auth/screens/LoginScreen";
 import { SearchScreen } from "@/src/features/search/screens/SearchScreen";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();

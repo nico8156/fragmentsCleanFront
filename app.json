@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nico8156.fragmentsCleanFront",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "L'application utilise votre localisation pour afficher les cafés près de vous."
       }
     },
     "android": {

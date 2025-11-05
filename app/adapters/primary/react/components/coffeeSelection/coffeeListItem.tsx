@@ -8,7 +8,7 @@ import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNo
 import { useDistanceToPoint } from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/src/navigation/types";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 type Props = {
     id: CoffeeId;

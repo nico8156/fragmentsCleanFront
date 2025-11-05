@@ -4,7 +4,7 @@ import {
     CafeFullVM,
     selectCoffeeFullVM,
 } from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
-import {RootStateWl} from "@/app/store/reduxStoreWl";
+
 import {useMemo} from "react";
 
 export function useCafeFull(id:CoffeeId | null) {

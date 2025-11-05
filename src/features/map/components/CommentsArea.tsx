@@ -1,15 +1,17 @@
 import {Text, View, StyleSheet} from "react-native";
 
-const BottomSheetGeneral = () => {
+const CommentsArea = () => {
+
     return(
         <View>
             <Text>
-                General
+                Commentaires
             </Text>
         </View>
     )
+
 }
-export default BottomSheetGeneral;
+export default CommentsArea;
 
 const styles = StyleSheet.create({
 

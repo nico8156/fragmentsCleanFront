@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { Pressable } from "react-native";
 import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 export function ProfileScreen() {
     const dispatch = useDispatch<any>();

@@ -1,6 +1,6 @@
 import {Pressable, StyleSheet, Text, View} from "react-native";
 import {SymbolView} from "expo-symbols";
-import {palette} from "@/constants/colors";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 import CoffeeList from "@/app/adapters/primary/react/components/coffeeSelection/coffeeList";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {useState} from "react";

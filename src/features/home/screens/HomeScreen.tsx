@@ -9,7 +9,7 @@ import { Categories } from "@/src/features/home/components/Categories";
 import { WelcomeMessage } from "@/src/features/home/components/WelcomeMessage";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 

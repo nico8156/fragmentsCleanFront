@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { AppStateWl } from "@/app/store/appStateWl";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeListItem from "@/app/adapters/primary/react/components/coffeeSelection/coffeeListItem";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 
 type Props = {
     onSelectCoffee?: (id: CoffeeId) => void;

@@ -8,7 +8,7 @@ import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSe
 import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import ListViewForCoffees from "@/src/features/map/screens/ListViewForCoffees";
 import ActionButtonsWrapper from "@/src/features/map/components/ActionButtonsWrapper";
 import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
@@ -22,6 +22,8 @@ import BottomSheetCat from "@/src/features/map/components/BottomSheetCat";
 import BottomSheetActions from "@/src/features/map/components/BottomSheetActions";
 import BottomSheetPhotos from "@/src/features/map/components/BottomSheetPhotos";
 import BottomSheetGeneral from "@/src/features/map/components/BottomSheetGeneral";
+import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
+import CommentsArea from "@/src/features/map/components/CommentsArea";
 
 export function MapScreen() {
     const {width} = useWindowDimensions()
@@ -38,6 +40,7 @@ export function MapScreen() {
     const [isSheetOpened, setIsSheetOpened] = useState(false);
     const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
     const {coffee} = useCafeFull(selectedCoffeeId)
+
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
 
@@ -146,10 +149,11 @@ export function MapScreen() {
                                 {estOuvert &&
                                 <ScrollView style={styles.sheetContent}>
                                     <BottomSheetHeader name={coffee?.name}/>
-                                    <BottomSheetCat/>
+                                    <BottomSheetCat isOpen={true}/>
                                     <BottomSheetActions/>
-                                    <BottomSheetPhotos/>
+                                    <BottomSheetPhotos photos={coffee?.photos}/>
                                     <BottomSheetGeneral/>
+                                    <CommentsArea/>
                                 </ScrollView>
                                 }
                             </BottomSheet>

@@ -1,9 +1,9 @@
 import {View, Text, StyleSheet} from "react-native";
-import {palette} from "@/constants/colors";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 import {SymbolView} from "expo-symbols";
 
 type Props = {
-    isOpen: boolean;
+    isOpen: boolean | undefined;
 }
 
 const BottomSheetCat = (props:Props) => {
@@ -36,7 +36,7 @@ export default BottomSheetCat;
 
 const styles = StyleSheet.create({
     wrapper:{
-        marginTop: 5,
+        marginTop: 20,
     },
     containerCat: {
         flexDirection: 'row',

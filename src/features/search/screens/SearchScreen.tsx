@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
-import { palette } from "@/constants/colors";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import CoffeeListItem from "@/app/adapters/primary/react/components/coffeeSelection/coffeeListItem";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import { RootStackNavigationProp } from "@/src/navigation/types";
