@@ -2,6 +2,8 @@ import {View, Text, StyleSheet} from "react-native";
 import {CoffeeLogoCupSteam} from "./svgs/CoffeeLogos"
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
+import SvgComponent from "@/src/features/map/components/SvgComponent";
+
 
 
 type Props = {
@@ -9,11 +11,13 @@ type Props = {
 }
 
 const BottomSheetHeader = (props:Props) => {
+
 const {name} = props;
+
   return (
       <View style={styles.container}>
           <View style={styles.border}>
-            <CoffeeLogoCupSteam width={70} height={70}/>
+            <SvgComponent />
           </View>
           <View style={{marginLeft: 5}}>
               <Text style={styles.name}>{name}</Text>

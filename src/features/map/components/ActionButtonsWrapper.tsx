@@ -21,12 +21,12 @@ const ActionButtonsWrapper = (props:Props) => {
       <View style={styles.buttonContainer}>
           <Pressable onPress={toggleViewMode}>
               <View style={styles.buttonAppearance}>
-                <SymbolView name={'list.bullet.rectangle'} size={28} tintColor={palette.textPrimary} />
+                <SymbolView name={'list.bullet.rectangle'} size={28} tintColor={palette.accent} />
               </View>
           </Pressable>
           <Pressable onPress={openScanModal}>
               <View style={styles.buttonAppearance}>
-                <SymbolView name={'barcode.viewfinder'} size={28} tintColor={palette.success} />
+                <SymbolView name={'barcode.viewfinder'} size={28} tintColor={palette.accent} />
               </View>
           </Pressable>
       </View>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
         elevation:6
     },
     buttonAppearance:{
-        backgroundColor:palette.background,
+        backgroundColor:palette.bg_light_90,
         padding:10,
         borderRadius:25,
         borderWidth:1,

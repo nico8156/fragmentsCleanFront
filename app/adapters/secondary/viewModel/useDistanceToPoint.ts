@@ -15,7 +15,7 @@ export function useDistanceToPoint(target?: LatLng | undefined, locale = 'fr-FR'
         const text = formatDistance(km, locale); // ex: "1,2 km" ou "230 m"
         return { km, text };
     }, [coords?.lat, coords?.lng, target?.lat, target?.lng, locale]);
-    console.log("useDistanceToPoint", value);
+
     return {
         hasLocation: Boolean(coords && target),
         km: value.km,            // number | null

@@ -58,18 +58,16 @@ function TabsNavigator() {
         <Tabs.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarActiveTintColor: palette.accent,
-                tabBarInactiveTintColor: palette.textMuted,
+                tabBarActiveTintColor: palette.primary_90,
+                tabBarInactiveTintColor: palette.primary_50,
                 tabBarLabelStyle: {
                     fontWeight: "600",
                     fontSize: 12,
                 },
                 tabBarStyle: {
-                    backgroundColor: palette.surface,
-                    borderTopColor: palette.border,
-                    paddingTop: 8,
-                    paddingBottom: 10,
-                    height: 70,
+                    backgroundColor: palette.bg_light_90,
+                    borderTopColor: palette.bg_light_90,
+                    paddingTop: 5,
                 },
                 tabBarIcon: ({ color, size }) => {
                     const iconMap: Record<keyof RootTabsParamList, keyof typeof Ionicons.glyphMap> = {
@@ -95,7 +93,7 @@ function SignedInNavigator() {
     return (
         <Stack.Navigator
             screenOptions={{
-                contentStyle: { backgroundColor: palette.background },
+                contentStyle: { backgroundColor: palette.bg_light_90 },
             }}
         >
             <Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
