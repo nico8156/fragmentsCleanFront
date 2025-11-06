@@ -30,7 +30,8 @@ export default BottomSheetPhotos;
 const styles = StyleSheet.create({
     container:{
         flexDirection: 'row',
-        marginTop:30
+        marginTop:30,
+        paddingLeft: 10,
     },
     photoList: {
         paddingVertical: 12,

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
     getOnceRequested,
-    permissionCheckRequested,
+    permissionCheckRequested, requestPermission,
 } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
@@ -14,7 +14,7 @@ const AppInitializer = () => {
 
     useEffect(() => {
         dispatch(initializeAuth());
-        dispatch(permissionCheckRequested());
+        dispatch(requestPermission());
         dispatch(getOnceRequested({ accuracy: "high" }));
         dispatch(coffeeGlobalRetrieval());
         dispatch(onCfPhotoRetrieval());

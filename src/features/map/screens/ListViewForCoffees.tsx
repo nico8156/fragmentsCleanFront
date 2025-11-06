@@ -7,21 +7,16 @@ import {useState} from "react";
 import {useNavigation} from "@react-navigation/native";
 import {RootStackNavigationProp} from "@/src/navigation/types";
 
-const ListViewForCoffees = () => {
+type Props = {
+    toggleViewMode: () => void;
+}
 
-    const [selectedCoffeeId, setSelectedCoffeeId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+const ListViewForCoffees = (props:Props) => {
+
+const {toggleViewMode} = props;
+
     const navigation = useNavigation<RootStackNavigationProp>();
     const insets = useSafeAreaInsets();
-    const toggleViewMode = () => {
-        setViewMode((mode) => {
-            if (mode === 'map') {
-                setSelectedCoffeeId(null);
-                return 'list';
-            }
-            return 'map';
-        });
-    };
 
     const openCafeDetails = (id: string) => {
         navigation.navigate("CafeDetails", { id });

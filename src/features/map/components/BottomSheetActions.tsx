@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
         flexDirection:"row",
         gap: 10,
+        padding: 10,
     },
     box:{
         borderWidth: 2,

@@ -1,20 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StatusBar, StyleSheet, useWindowDimensions, View, Text} from "react-native";
-import MapView, { Region } from "react-native-maps";
-import { useNavigation } from "@react-navigation/native";
-import { SymbolView } from "expo-symbols";
-import CoffeeSelection from "@/app/adapters/primary/react/components/coffeeSelection/coffeeSelection";
+import { ScrollView, StatusBar, StyleSheet, useWindowDimensions, View} from "react-native";
+import MapView, { Region} from "react-native-maps";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
 import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
-import { RootStackNavigationProp } from "@/src/navigation/types";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import ListViewForCoffees from "@/src/features/map/screens/ListViewForCoffees";
 import ActionButtonsWrapper from "@/src/features/map/components/ActionButtonsWrapper";
 import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {BottomSheet, Host} from "@expo/ui/swift-ui";
 import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
-import CoffeeBottomSheet from "@/src/features/map/components/CoffeeBottomSheet";
 import {useCafeForMarkers} from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
 import CoffeeMarker from "@/app/adapters/primary/react/components/coffeeSelection/coffeeMarker";
 import BottomSheetHeader from "@/src/features/map/components/BottomSheetHeader";
@@ -25,25 +19,32 @@ import BottomSheetGeneral from "@/src/features/map/components/BottomSheetGeneral
 import {useCafeOpenNow} from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import CommentsArea from "@/src/features/map/components/CommentsArea";
 import Separator from "@/src/features/map/components/Separator";
+import GeneralComponent from "@/src/features/map/components/GeneralComponent";
+import TagComponent from "@/src/features/map/components/TagComponent";
+import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
+
+type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type LatLng = { lat: number; lng: number };
 
 export function MapScreen() {
-    const {width} = useWindowDimensions()
-    const {coffees} = useCafeForMarkers()
-
-    const navigation = useNavigation<RootStackNavigationProp>();
-
-    const { coords, refresh } = useUserLocationFromStore();
-    const mapRef = useRef<MapView>(null);
+    const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-    const [isFollowingUser, setIsFollowingUser] = useState(true);
     const [region, setRegion] = useState<Region>();
 
-    const [isSheetOpened, setIsSheetOpened] = useState(false);
-    const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
+    const {width} = useWindowDimensions()
+    const {coffees} = useCafeForMarkers()
     const {coffee} = useCafeFull(selectedCoffeeId)
+    const isOpen = useCafeOpenNow(selectedCoffeeId);
+    const { coords, refresh } = useUserLocationFromStore();
 
-    const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+    const mapRef = useRef<MapView>(null);
+    //label for today's hours
+    const todayIndex = ((new Date().getDay() + 6) % 7) as DayIndex;
+    const todayHoursLabel = coffee?.hours?.[todayIndex]?.label ?? 'Horaires non disponibles';
+    //String for distance
+    const {text} = useDistanceToPoint({lat:coffee?.location.lat,lng:coffee?.location.lon} as LatLng)
 
+    const [isFollowingUser, setIsFollowingUser] = useState(false);
 
     const initialRegion = useMemo<Region>(() => ({
         latitude: coords?.lat ?? 48.8566,
@@ -92,6 +93,7 @@ export function MapScreen() {
     };
 
     const [estOuvert, setestOuvert] = useState(false);
+
     const doSmthgWithCoffee = async (id:string) => {
         setestOuvert(prevState => !prevState)
         const coffeeId = parseToCoffeeId(id);
@@ -101,10 +103,6 @@ export function MapScreen() {
 
     const zoomLevel = region?.latitudeDelta ?? initialRegion.latitudeDelta;
 
-    const toggleSheet = () => {
-        console.log("toggle sheet")
-        setestOuvert(prevState => !prevState)
-    };
 
     return (
         <View style={styles.safeArea}>
@@ -131,6 +129,8 @@ export function MapScreen() {
                             ))}
                         </MapView>
                         <Host
+
+                            matchContents={true}
                             style={[
                                 StyleSheet.absoluteFill,
                                 {
@@ -150,20 +150,31 @@ export function MapScreen() {
                                 {estOuvert &&
                                 <ScrollView style={styles.sheetContent}>
                                     <BottomSheetHeader name={coffee?.name}/>
-                                    <BottomSheetCat isOpen={true}/>
+                                    <BottomSheetCat openingHoursToday={todayHoursLabel} isOpen={isOpen} distance={text}/>
                                     <BottomSheetActions/>
                                     <BottomSheetPhotos photos={coffee?.photos}/>
                                     <BottomSheetGeneral/>
+                                    <Separator/>
+                                    <GeneralComponent isOpen={isOpen} address={coffee?.address} openingTodayHours={todayHoursLabel}/>
+                                    <Separator/>
+                                    <TagComponent/>
                                     <Separator/>
                                     <CommentsArea/>
                                 </ScrollView>
                                 }
                             </BottomSheet>
                         </Host>
-                        <ActionButtonsWrapper/>
+                        <ActionButtonsWrapper toggleViewMode={toggleViewMode}/>
+                        <LocalisationButton
+                            localizeMe={localizeMe}
+                            name={isFollowingUser ? 'location.circle.fill' : 'location'}
+                            size={28}
+                            color={isFollowingUser ? palette.accent : palette.textSecondary}
+                            isFollowing={isFollowingUser}
+                        />
                     </>
                 ) : (
-                    <ListViewForCoffees/>
+                    <ListViewForCoffees toggleViewMode={toggleViewMode}/>
                 )}
             </View>
         </View>
@@ -176,10 +187,8 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     sheetContent: {
-        backgroundColor: palette.textPrimary_1,
         flex: 1,
-        paddingLeft: 16,
-        paddingTop: 16,
+        backgroundColor: palette.textPrimary_1,
     },
     sheetTitle: {
         fontSize: 20,

@@ -2,29 +2,33 @@ import {Pressable, View, StyleSheet} from "react-native";
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
 import LocalisationButton from "@/app/adapters/primary/react/components/coffeeSelection/localisationButton";
+import {RootStackNavigationProp} from "@/src/navigation/types";
+import {useNavigation} from "@react-navigation/native";
 
+type Props = {
+    toggleViewMode:()=>void;
+}
 
-const ActionButtonsWrapper = () => {
+const ActionButtonsWrapper = (props:Props) => {
+    const {toggleViewMode} = props;
 
+    const navigation = useNavigation<RootStackNavigationProp>();
+
+    const openScanModal = () => {
+        navigation.navigate("ScanTicketModal");
+    };
   return(
       <View style={styles.buttonContainer}>
-          <Pressable >
+          <Pressable onPress={toggleViewMode}>
               <View style={styles.buttonAppearance}>
                 <SymbolView name={'list.bullet.rectangle'} size={28} tintColor={palette.textPrimary} />
               </View>
           </Pressable>
-          <Pressable>
+          <Pressable onPress={openScanModal}>
               <View style={styles.buttonAppearance}>
                 <SymbolView name={'barcode.viewfinder'} size={28} tintColor={palette.success} />
               </View>
           </Pressable>
-          {/*<LocalisationButton*/}
-          {/*      localizeMe={()=>{}}*/}
-          {/*      name={ 'location.circle.fill' }*/}
-          {/*      size={28}*/}
-          {/*      color={ palette.textSecondary}*/}
-          {/*      isFollowing={true}*/}
-          {/*  />*/}
       </View>
   //     <>
   //     <View style={[styles.overlayHeader, { paddingTop: insets.top + 18 }]}>

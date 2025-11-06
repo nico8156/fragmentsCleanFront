@@ -13,13 +13,14 @@ const BottomSheetGeneral = () => {
 export default BottomSheetGeneral;
 
 const styles = StyleSheet.create({
-    titleText:{
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: palette.success_1,
-    },
     container:{
         marginTop: 30,
-    }
+        padding: 10,
+    },
+    titleText:{
+        fontSize: 18,
+        fontWeight: 'semibold',
+        color: palette.success_1,
+    },
 
 })

@@ -17,6 +17,7 @@ import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/
 import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import { RootStackParamList, RootStackNavigationProp } from "@/src/navigation/types";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -237,6 +238,9 @@ const styles = StyleSheet.create({
         paddingTop: 12,
     },
     closeButton: {
+        marginBottom:10,
+        borderWidth:1,
+        borderColor:palette.primary_90,
         width: 40,
         height: 40,
         borderRadius: 20,
@@ -249,7 +253,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
     },
     heroCard: {
-        marginTop: -20,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
         overflow: 'hidden',

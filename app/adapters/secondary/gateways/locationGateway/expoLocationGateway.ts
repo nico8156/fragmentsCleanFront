@@ -11,6 +11,7 @@ export class ExpoLocationGateway implements LocationWlGateway {
     }
     async requestPermission(): Promise<"granted" | "denied"> {
         const s = await ExpoLocation.requestForegroundPermissionsAsync();
+        console.log("from request permission",s);
         return s.granted ? 'granted' : 'denied';
     }
     async getCurrentPosition(options?: { accuracy?:AccuracyKey }): Promise<LocationCoords> {

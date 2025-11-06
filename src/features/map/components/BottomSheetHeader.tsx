@@ -19,11 +19,11 @@ const {name} = props;
               <Text style={styles.name}>{name}</Text>
               <View style={styles.socialsContainer}>
                   <View style={styles.socialContainer}>
-                      <SymbolView name={'heart.fill'} size={30}   tintColor={"lightgray"}/>
+                      <SymbolView name={'heart.fill'} size={25}   tintColor={"lightgray"}/>
                       <Text style={styles.legend}>45</Text>
                   </View>
                   <View style={styles.socialContainer}>
-                      <SymbolView name={'bubble.fill'} size={30}  tintColor={"lightgray"}/>
+                      <SymbolView name={'bubble.fill'} size={25}  tintColor={"lightgray"}/>
                       <Text style={styles.legend}>23</Text>
                   </View>
               </View>
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
       backgroundColor: palette.textPrimary_1 ,
       flexDirection: 'row',
       alignItems: 'center',
+      padding: 10,
   },
     border:{
       borderWidth: 1,
@@ -59,8 +60,8 @@ const styles = StyleSheet.create({
         color: palette.textPrimary_30,
     },
     name:{
-      fontSize: 18,
-        fontWeight: 'bold',
+      fontSize: 16,
+        fontWeight: '700',
     },
     legend:palette.font14
 })
