@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
         marginBottom:12
     },
     heroSection: {
-        backgroundColor: "pink",
+        backgroundColor: palette.surface,
         marginBottom: 40,
     },
     sectionSpacing: {

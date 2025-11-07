@@ -57,7 +57,7 @@ export function Categories({ categories, onSelect }: Props) {
 
 const styles = StyleSheet.create({
     container: {
-        gap: 32,
+        gap: 30,
     },
     categoryBlock: {
         gap: 20,
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
         marginTop: 32,
     },
     categoryHeader: {
-        marginBottom: 4,
+        marginBottom: 10,
         gap: 6,
     },
     categoryTitle: {
