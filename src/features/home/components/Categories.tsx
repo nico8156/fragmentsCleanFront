@@ -10,6 +10,9 @@ type Props = {
 };
 
 const CategoryItem = memo(({ item, onSelect }: { item: HomeCategoryItemVM; onSelect: (slug: string) => void }) => (
+
+
+
     <Pressable style={styles.itemContainer} onPress={() => onSelect(item.slug)}>
         <View style={styles.logoWrapper}>
             <Image

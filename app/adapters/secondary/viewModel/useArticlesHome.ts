@@ -51,6 +51,12 @@ const toPreview = (article: Article): ArticlePreviewVM => {
     };
 };
 
+const toCoffeePackPreview = () => {
+    return {
+
+    }
+}
+
 const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
     if (previews.length === 0) return [];
 
@@ -68,7 +74,7 @@ const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
         },
         {
             id: "popular",
-            title: "Cafés les plus visités",
+            title: "Articles consultés",
             subtitle: "Les adresses plébiscitées par les fragments",
             items: previews.slice(1, 4).map((preview) => ({
                 id: preview.id,
@@ -79,7 +85,7 @@ const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
         },
         {
             id: "fresh",
-            title: "Nouveautés",
+            title: "Des cafés d'exception",
             subtitle: "Les derniers cafés à explorer sans tarder",
             items: previews.slice(-3).map((preview) => ({
                 id: preview.id,
