@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {FlatList, ImageSourcePropType, Pressable, StyleSheet, Text, View} from "react-native";
 import { Image } from "expo-image";
 import { HomeCategoryItemVM, HomeCategoryVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -9,14 +9,21 @@ type Props = {
     onSelect: (slug: string) => void;
 };
 
+const resolveImageSource = (image: string | ImageSourcePropType): ImageSourcePropType => {
+    if (typeof image === "string") {
+        // On suppose que c’est une URL distante
+        return { uri: image };
+    }
+    // Sinon c’est un require(...) ou autre ImageSourcePropType
+    return image;
+};
+
 const CategoryItem = memo(({ item, onSelect }: { item: HomeCategoryItemVM; onSelect: (slug: string) => void }) => (
-
-
 
     <Pressable style={styles.itemContainer} onPress={() => onSelect(item.slug)}>
         <View style={styles.logoWrapper}>
             <Image
-                source={{ uri: item.image.url }}
+                source={resolveImageSource(item.image.url)}
                 style={styles.logo}
                 contentFit="cover"
                 cachePolicy="memory-disk"
@@ -103,7 +110,7 @@ const styles = StyleSheet.create({
     },
     logoWrapper: {
         width: "100%",
-        height: 92,
+        height: 120,
         overflow: "hidden",
         backgroundColor: palette.surface,
         alignItems: "center",

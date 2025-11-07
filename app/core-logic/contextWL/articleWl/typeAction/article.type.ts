@@ -1,6 +1,7 @@
 // Value Objects (brands) — réutilise tes ISODate/CoffeeId
 import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
 import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {ImageSourcePropType} from "react-native";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Value Objects & helpers
@@ -29,7 +30,7 @@ export type ArticleReference =
 // ─────────────────────────────────────────────────────────────────────────────
 // Médias
 export interface ImageRef {
-    url: string;
+    url: string | ImageSourcePropType;
     width: number;
     height: number;
     alt?: string;

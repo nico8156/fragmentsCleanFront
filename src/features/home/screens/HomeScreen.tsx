@@ -9,6 +9,7 @@ import { Categories } from "@/src/features/home/components/Categories";
 import { WelcomeMessage } from "@/src/features/home/components/WelcomeMessage";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import {dataForPacks} from "@/assets/data/coffeePack";
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
@@ -73,6 +74,9 @@ export function HomeScreen() {
                 </View>
                 <View style={styles.sectionSpacing}>
                     <Categories categories={categories} onSelect={openArticle} />
+                </View>
+                <View style={styles.sectionSpacing}>
+                    <Categories categories={dataForPacks} onSelect={()=> {}} />
                 </View>
                 <WelcomeMessage />
             </AnimatedScrollView>
