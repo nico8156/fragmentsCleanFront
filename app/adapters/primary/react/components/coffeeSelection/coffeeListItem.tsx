@@ -36,11 +36,6 @@ const CoffeeListItem = ({id, onPress}: Props) => {
 
     return (
         <Pressable style={styles.card} onPress={handlePress}>
-            <Image
-                source={coffee.photos[0]}
-                style={styles.cover}
-                contentFit={'cover'}
-            />
             <View style={styles.details}>
                 <Text style={styles.name} numberOfLines={1}>{coffee.name}</Text>
                 {coffee.address.line1 ? (
@@ -59,6 +54,11 @@ const CoffeeListItem = ({id, onPress}: Props) => {
                     ) : null}
                 </View>
             </View>
+            <Image
+                source={coffee.photos[0]}
+                style={styles.cover}
+                contentFit={'cover'}
+            />
         </Pressable>
     )
 }
@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         backgroundColor: palette.elevated,
-        borderRadius: 22,
         overflow: 'hidden',
         padding: 14,
         gap: 12,
@@ -83,9 +82,9 @@ const styles = StyleSheet.create({
         borderColor: palette.border,
     },
     cover: {
-        width: 64,
-        height: 64,
-        borderRadius: 16,
+        width: 90,
+        height: 90,
+        borderRadius: 5,
         backgroundColor: palette.overlay,
     },
     details: {

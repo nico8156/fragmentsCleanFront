@@ -37,7 +37,7 @@ export default CoffeeList;
 const styles = StyleSheet.create({
     listContent: {
         paddingVertical: 12,
-        paddingHorizontal: 4,
+
         gap: 16,
     },
     emptyContent: {

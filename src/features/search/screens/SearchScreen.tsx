@@ -9,13 +9,14 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import CoffeeListItem from "@/app/adapters/primary/react/components/coffeeSelection/coffeeListItem";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import { RootStackNavigationProp } from "@/src/navigation/types";
+import {selectCoffeesList} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 
 export function SearchScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
     const inset = useSafeAreaInsets();
     const [query, setQuery] = useState("");
 
-    const coffees = useSelector((state: RootStateWl) => state.cfState.ids.map((id) => state.cfState.byId[id]));
+    const coffees = useSelector(selectCoffeesList)
 
     const filtered = useMemo(() => {
         const normalized = query.trim().toLowerCase();
@@ -35,7 +36,7 @@ export function SearchScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-            <View style={[styles.header, { paddingTop: inset.top + 8 }]}>
+            <View style={[styles.header]}>
                 <Pressable onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityRole="button">
                     <Ionicons name="chevron-back" size={22} color={palette.textPrimary} />
                 </Pressable>
@@ -44,7 +45,7 @@ export function SearchScreen() {
                     <TextInput
                         value={query}
                         onChangeText={setQuery}
-                        placeholder="Rechercher un café, une ville, un style"
+                        placeholder="Rechercher un café ..."
                         placeholderTextColor={palette.textMuted}
                         style={styles.input}
                         autoFocus
@@ -83,8 +84,10 @@ const styles = StyleSheet.create({
         backgroundColor: palette.background,
     },
     header: {
-        paddingHorizontal: 20,
-        gap: 20,
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 20,
+        gap:20
     },
     iconButton: {
         width: 40,
@@ -93,22 +96,24 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "rgba(36, 27, 22, 0.8)",
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: "rgba(255,255,255,0.06)",
+        borderWidth: 1,
+        borderColor: palette.secondary_90,
+        marginLeft:16
     },
     searchWrapper: {
+        flexGrow:1,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
         paddingHorizontal: 18,
         paddingVertical: 14,
         borderRadius: 22,
+        marginRight:16,
         backgroundColor: palette.elevated,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
     },
     input: {
-        flex: 1,
         color: palette.textPrimary,
         fontSize: 16,
     },

@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     listTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: palette.textPrimary,
+        color: palette.primary_90,
     },
     overlayToggle: {
         width: 44,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(33, 24, 19, 0.8)',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: 'rgba(255,255,255,0.06)',
+        borderWidth:1,
+        borderColor:palette.secondary_90,
     },
 })

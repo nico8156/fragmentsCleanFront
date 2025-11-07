@@ -1,25 +1,18 @@
-import { useMemo } from "react";
 import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSelector } from "react-redux";
-import { RootStateWl } from "@/app/store/reduxStoreWl";
 import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/src/navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import {selectSortedTickets} from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+
 
 export function RewardsScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
     const inset = useSafeAreaInsets();
-    const tickets = useSelector((state: RootStateWl) => Object.values(state.tState.byId));
 
-    const sortedTickets = useMemo(() => {
-        return [...tickets].sort((a, b) => {
-            const dateA = new Date(a.createdAt ?? a.updatedAt ?? 0).getTime();
-            const dateB = new Date(b.createdAt ?? b.updatedAt ?? 0).getTime();
-            return dateB - dateA;
-        });
-    }, [tickets]);
+    const sortedTickets = useSelector(selectSortedTickets);
 
     return (
         <SafeAreaView style={styles.safeArea}>

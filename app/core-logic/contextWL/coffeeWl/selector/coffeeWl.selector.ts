@@ -1,5 +1,5 @@
 import {
-    Address,
+    Address, Coffee,
     CoffeeId,
     GeoPoint,
     parseToCoffeeId
@@ -76,6 +76,11 @@ export const selectCoordinatesForCoffee = (id:CoffeeId) => createSelector(
     (s:RootStateWl) => selectLocationForCoffee(id)(s),
     (location) => location
 )
+
+export const selectCoffeesList = createSelector(
+    [allById],
+    (byId): Coffee[] => Object.values(byId)
+);
 
 //TODO handle opening hours : indicator OPEN / CLOSE => domain = pure = NO CHANGE
 //TODO calculate distance coffee == user
