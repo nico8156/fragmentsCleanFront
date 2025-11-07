@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
         gap: 32,
     },
     categoryBlock: {
-        gap: 16,
+        gap: 20,
     },
     categorySpacing: {
         marginTop: 32,
@@ -86,21 +86,21 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     separator: {
-        width: 16,
+        width: 2,
     },
     itemContainer: {
         width: 132,
-        padding: 14,
-        borderRadius: 22,
+        height: 180,
+        padding: 5,
+        alignItems: "center",
         backgroundColor: palette.elevated,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
         gap: 12,
     },
     logoWrapper: {
-        width: 92,
+        width: "100%",
         height: 92,
-        borderRadius: 20,
         overflow: "hidden",
         backgroundColor: palette.surface,
         alignItems: "center",

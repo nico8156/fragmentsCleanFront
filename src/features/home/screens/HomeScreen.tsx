@@ -8,7 +8,6 @@ import { MasterHeader } from "@/src/features/home/components/MasterHeader";
 import { Categories } from "@/src/features/home/components/Categories";
 import { WelcomeMessage } from "@/src/features/home/components/WelcomeMessage";
 import { RootStackNavigationProp } from "@/src/navigation/types";
-import { ScanTicketFab } from "@/src/features/scan/components/ScanTicketFab";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
@@ -55,7 +54,7 @@ export function HomeScreen() {
                 translucent
                 backgroundColor="transparent"
             />
-            <Animated.View style={[styles.header, { paddingTop: insets.top + 6, opacity: headerOpacity }] }>
+            <Animated.View style={[styles.header, { paddingTop: insets.top , opacity: headerOpacity,borderBottomWidth: 1, borderBottomColor:palette.secondary_90 }] }>
                 <Pressable onPress={openSearch} style={styles.headerIcon} accessibilityRole="button">
                     <Ionicons name="search" size={21} color={palette.textPrimary} />
                 </Pressable>
@@ -118,11 +117,12 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     logoText: {
-        fontSize: 22,
+        fontSize: 26,
         fontWeight: "700",
         color: palette.textPrimary,
         letterSpacing: 1.2,
         textTransform: "uppercase",
+        marginBottom:12
     },
     heroSection: {
         backgroundColor: "pink",
