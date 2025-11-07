@@ -17,6 +17,8 @@ import { useArticle } from "@/app/adapters/secondary/viewModel/useArticle";
 import { articleRetrievalBySlug } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 import { articleLoadingStates } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import { RootStackParamList, RootStackNavigationProp } from "@/src/navigation/types";
+import {SymbolView} from "expo-symbols";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 const formatDate = (value?: string) => {
     if (!value) return undefined;
@@ -112,8 +114,7 @@ type AnimatedBackButtonProps = {
 function AnimatedBackButton({ onPress, topInset }: AnimatedBackButtonProps) {
     return (
         <Pressable onPress={onPress} style={[styles.backButton, { top: topInset + 12 }]}>
-            <Ionicons name="chevron-back" size={22} color="#2F2F2F" />
-            <Text style={styles.backText}>Retour</Text>
+            <SymbolView name="chevron.left" size={18} tintColor="#1C1C1E    " />
         </Pressable>
     );
 }
@@ -139,7 +140,8 @@ const styles = StyleSheet.create({
     },
     coverImage: {
         width: "100%",
-        height: 280,
+        height: 450,
+        marginBottom:10
     },
     articleContent: {
         paddingHorizontal: 24,
@@ -154,11 +156,14 @@ const styles = StyleSheet.create({
     dateText: {
         fontSize: 12,
         color: "#9A9A9A",
+        marginTop: 8,
+        marginBottom: 16,
     },
     tagsContainer: {
         flexDirection: "row",
         flexWrap: "wrap",
         marginTop: 4,
+        marginBottom: 16,
     },
     tag: {
         backgroundColor: "#F3F4F6",
@@ -212,15 +217,18 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     backButton: {
+        width: 48,
+        height: 48,
         position: "absolute",
         left: 16,
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
         gap: 4,
         zIndex: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
         backgroundColor: "rgba(255,255,255,0.85)",
+        borderWidth: 1,
+        borderColor: palette.primary_90,
         borderRadius: 999,
         shadowColor: "#000000",
         shadowOpacity: 0.12,

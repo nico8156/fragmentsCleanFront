@@ -1,22 +1,41 @@
-import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+// openingHours.selector.ts
 import {RootStateWl} from "@/app/store/reduxStoreWl";
-import {toHoursByDayVM} from "@/app/core-logic/utils/time/timeFormator";
+import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {createSelector} from "@reduxjs/toolkit";
-import {DayWindow} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {toHoursByDayVM} from "@/app/core-logic/utils/time/timeFormator";
+import {DayWindow, HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 
-export const selectOpeningHoursForCoffeeId = (id:CoffeeId,state:RootStateWl) =>
-    state.ohState.byCoffeeIdDayWindow[id];
 
-export const selectOpeningHoursForCoffeeIdDayWindow =(id:CoffeeId) => createSelector(
-    [
-        (s:RootStateWl) => selectOpeningHoursForCoffeeId(id, s),
-    ],
-    (hours) :DayWindow[] => hours ?? [] as DayWindow[]
-)
+// input selector : slice opening hours
+const selectOhState = (state: RootStateWl) => state.ohState;
 
+// toutes les fenêtres, non filtrées
+const selectByCoffeeIdDayWindow = (state: RootStateWl) =>
+    selectOhState(state).byCoffeeIdDayWindow;
+
+// input selector avec props (coffeeId)
+const selectDayWindowsForCoffee = (
+    state: RootStateWl,
+    coffeeId: CoffeeId | null
+): DayWindow[] | undefined => {
+    if (coffeeId == null) return undefined;
+    return selectByCoffeeIdDayWindow(state)[coffeeId];
+};
+
+// DayWindow[] pour un café
+export const selectOpeningHoursForCoffeeIdDayWindow = createSelector(
+    [selectDayWindowsForCoffee],
+    (hours): DayWindow[] => {
+        if (!hours) return [];
+        // on renvoie une nouvelle référence pour éviter le warning Reselect
+        return [...hours];
+    }
+);
+
+// HoursByDayVM pour un café
 export const selectHoursByDayVM = createSelector(
-    [
-        (id: CoffeeId, state: RootStateWl ) => selectOpeningHoursForCoffeeId(id, state),
-    ],
-    (hours) => toHoursByDayVM(hours ?? [])
-)
+    [selectDayWindowsForCoffee],
+    (hours): HoursByDayVM => {
+        return toHoursByDayVM(hours ?? []);
+    }
+);

@@ -1,32 +1,27 @@
+// useCafeOpenNow.ts
 import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {useSelector} from "react-redux";
 import {useEffect, useMemo, useState} from "react";
-import {isOpenNowFromWindows} from "@/app/core-logic/utils/time/isOpeningNow";
-import {
-    selectOpeningHoursForCoffeeId, selectOpeningHoursForCoffeeIdDayWindow
-} from "@/app/core-logic/contextWL/openingHoursWl/selector/openingHours.selector";
+import {useSelector} from "react-redux";
 import {RootStateWl} from "@/app/store/reduxStoreWl";
-import {DayWindow} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
+import {
+    selectOpeningHoursForCoffeeIdDayWindow
+} from "@/app/core-logic/contextWL/openingHoursWl/selector/openingHours.selector";
+import {isOpenNowFromWindows} from "@/app/core-logic/utils/time/isOpeningNow";
 
-export function useCafeOpenNow(id: CoffeeId |null) {
-    const selector = useMemo(() => {
-        if (id == null) {
-            return () => undefined as DayWindow[] | undefined;
-        }
-        return selectOpeningHoursForCoffeeIdDayWindow(id)
-    }, [id])
-    const data = useSelector(selector)
-    // const windows = useSelector((state: RootStateWl) =>{
-    //
-    //     selectOpeningHoursForCoffeeId(id, state)
-    // })
+export function useCafeOpenNow(id: CoffeeId | null) {
+    const [now, setNow] = useState(() => new Date());
 
-    const [now, setNow] = useState(() => new Date())
+    const windows = useSelector((state: RootStateWl) =>
+        selectOpeningHoursForCoffeeIdDayWindow(state, id)
+    );
 
     useEffect(() => {
-        const t = setInterval(()=>setNow(new Date()), 60_000)
-        return () => clearInterval(t)
-        }, []);
+        const t = setInterval(() => setNow(new Date()), 60_000);
+        return () => clearInterval(t);
+    }, []);
 
-    return useMemo(() => isOpenNowFromWindows(data ??[] , now), [data, now])
+    return useMemo(
+        () => isOpenNowFromWindows(windows, now),
+        [windows, now]
+    );
 }

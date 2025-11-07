@@ -41,7 +41,7 @@ const allById = (state: RootStateWl) => state.cfState.byId
 export const selectCoffeeFullVM = (id:CoffeeId) => createSelector(
     [(s:RootStateWl) => selectCoffeeForId(id,s),
     (s:RootStateWl) => selectPhotosForCoffeeId(id,s),
-    (s:RootStateWl) => selectHoursByDayVM(id, s)],
+    (s:RootStateWl) => selectHoursByDayVM(s,id )],
     (coffee, photos, openingHours) :CafeFullVM |undefined=> {
         if(!coffee) return undefined;
         const photosVM = photos ?? ["https://images.unsplash.com/photo-1761026532879-0b5301cca459?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzOXx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=900"]

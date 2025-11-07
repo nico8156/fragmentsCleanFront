@@ -8,6 +8,7 @@ import ListViewForCoffees from "@/src/features/map/screens/ListViewForCoffees";
 import ActionButtonsWrapper from "@/src/features/map/components/ActionButtonsWrapper";
 import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {BottomSheet, Host} from "@expo/ui/swift-ui";
+import {Clusterer, Supercluster} from "react-native-clusterer";
 import {useCafeFull} from "@/app/adapters/secondary/viewModel/useCafeFull";
 import {useCafeForMarkers} from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
 import CoffeeMarker from "@/app/adapters/primary/react/components/coffeeSelection/coffeeMarker";
@@ -22,6 +23,7 @@ import Separator from "@/src/features/map/components/Separator";
 import GeneralComponent from "@/src/features/map/components/GeneralComponent";
 import TagComponent from "@/src/features/map/components/TagComponent";
 import {useDistanceToPoint} from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
+import {specialData} from "@/src/features/map/data";
 
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type LatLng = { lat: number; lng: number };
@@ -120,7 +122,7 @@ export function MapScreen() {
                             onPanDrag={handlePanDrag}
                             showsPointsOfInterest={false}
                         >
-                            {coffees.map(c=> (
+                            {coffees.map((c) => (
                                 <CoffeeMarker
                                     key={c.id}
                                     coffee={c}
@@ -261,5 +263,7 @@ const styles = StyleSheet.create({
     },
 
 });
+
+
 
 export default MapScreen;
