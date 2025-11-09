@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { LatLng, Marker } from "react-native-maps";
 import { SymbolView } from "expo-symbols";
@@ -7,6 +6,8 @@ import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { CoffeeOnMap } from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
+import {CoffeeMarkerBubble} from "@/app/adapters/primary/react/components/coffeeSelection/CoffeeMarkerBubble";
+import {CoffeeMarkerLabel} from "@/app/adapters/primary/react/components/coffeeSelection/CoffeeMarkerLabel";
 
 type Props = {
     coffee: CoffeeOnMap;
@@ -16,7 +17,7 @@ type Props = {
     coordinate: LatLng;          // 🔹 fourni par le clusterer
 };
 
-function CoffeeMarkerComponent(props: Props) {
+function CoffeeMarker(props: Props) {
     const { coffee, selected, zoomLevel, onSelect, coordinate } = props;
 
     const showExpanded = zoomLevel <= 0.015;
@@ -33,42 +34,13 @@ function CoffeeMarkerComponent(props: Props) {
             tracksViewChanges={false}
             onPress={handlePress}
         >
-            <View style={styles.wrapper}>
-                <View
-                    style={[
-                        styles.markerBody,
-                        selected ? styles.markerBodySelected : undefined,
-                        showExpanded ? styles.markerBodyExpanded : undefined,
-                    ]}
-                >
-                    <View style={styles.iconWrapper}>
-                        <SymbolView
-                            name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
-                            size={20}
-                            tintColor="#F4EDE6"
-                        />
-                    </View>
-
-                    {showExpanded ? (
-                        <View style={{ flexDirection: "row", gap: 8, marginLeft: 8 }}>
-                            <Text style={styles.likesText}>{72}</Text>
-                            <SymbolView name="heart.fill" size={18} tintColor={palette.accent} />
-                        </View>
-                    ) : null}
-                </View>
-
-                <View style={styles.textCard}>
-                    <Text style={styles.label} numberOfLines={1}>
-                        {coffee?.name ?? "Café"}
-                    </Text>
-                </View>
-            </View>
+            <CoffeeMarkerBubble isOpen={isOpen} showExpanded={showExpanded} selected={selected} />
+            <CoffeeMarkerLabel name={coffee?.name ?? "Café"} />
         </Marker>
     );
 }
 
 // 🔹 composant mémoïsé
-const CoffeeMarker = memo(CoffeeMarkerComponent);
 export default CoffeeMarker;
 
 const styles = StyleSheet.create({
