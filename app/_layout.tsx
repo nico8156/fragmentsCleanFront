@@ -8,7 +8,7 @@ import AppInitializer from "@/app/adapters/primary/react/components/appInitializ
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { ticketSubmitUseCaseFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase";
-import { RootNavigator } from "@/src/navigation/RootNavigator";
+import { RootNavigator } from "@/app/adapters/primary/react/navigation/RootNavigator";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
 let storeRef: ReduxStoreWl | null = null;
