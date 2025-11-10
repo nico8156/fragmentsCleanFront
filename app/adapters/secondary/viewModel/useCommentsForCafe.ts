@@ -11,6 +11,8 @@ import {
     opTypes,
 } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import {uiCommentCreateRequested} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const AVATAR_BASE_URL = "https://i.pravatar.cc/120";
 
@@ -63,6 +65,10 @@ const formatRelativeTime = (isoDate: string): string => {
 export function useCommentsForCafe(targetId?: CafeId) {
     const dispatch = useDispatch<any>();
 
+    const uiViaHookCreateComment = ({targetId, body}:{targetId:CoffeeId, body:string}) => {
+        dispatch(uiCommentCreateRequested({targetId, body}))
+    }
+
     const selector = useMemo(() => {
         if (!targetId) {
             return () => ({
@@ -103,12 +109,12 @@ export function useCommentsForCafe(targetId?: CafeId) {
         const isStale = Date.now() - lastFetchTime > staleAfterMs;
 
         if (!hasFetchedOnce) {
-            dispatch(commentRetrieval({ targetId, op: opTypes.RETRIEVE, cursor: "" }));
+            dispatch(commentRetrieval({ targetId, op: opTypes.RETRIEVE, cursor: "",limit:10 }));
             return;
         }
 
         if (isStale) {
-            dispatch(commentRetrieval({ targetId, op: opTypes.REFRESH, cursor: "" }));
+            dispatch(commentRetrieval({ targetId, op: opTypes.REFRESH, cursor: "",limit:10 }));
         }
     }, [dispatch, targetId, loading, lastFetchedAt, staleAfterMs]);
 
@@ -120,5 +126,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
         isLoading,
         error,
         isRefreshing,
+        uiViaHookCreateComment
     } as const;
 }

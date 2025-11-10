@@ -306,7 +306,7 @@ export function MapScreen() {
                                     keyboardShouldPersistTaps="handled"
                                     contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT + 16 }}
                                 >
-                                    <BottomSheetHeader name={coffee?.name} />
+                                    <BottomSheetHeader name={coffee?.name} coffeeId={selectedCoffeeId ?? undefined}/>
                                     <BottomSheetCat
                                         openingHoursToday={todayHoursLabel}
                                         isOpen={isOpen}

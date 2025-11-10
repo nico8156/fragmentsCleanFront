@@ -3,16 +3,21 @@ import {CoffeeLogoCupSteam} from "./svgs/CoffeeLogos"
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
 import SvgComponent from "@/app/adapters/primary/react/features/map/components/SvgComponent";
+import {useCommentsForCafe} from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
+import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 
 
 type Props = {
     name: string | undefined;
+    coffeeId:CoffeeId | undefined;
 }
 
 const BottomSheetHeader = (props:Props) => {
 
-const {name} = props;
+const {name, coffeeId} = props;
+const {comments} = useCommentsForCafe(coffeeId)
+
 
   return (
       <View style={styles.container}>
@@ -28,7 +33,7 @@ const {name} = props;
                   </View>
                   <View style={styles.socialContainer}>
                       <SymbolView name={'bubble.fill'} size={25}  tintColor={"lightgray"}/>
-                      <Text style={styles.legend}>23</Text>
+                      <Text style={styles.legend}>{comments.length}</Text>
                   </View>
               </View>
           </View>

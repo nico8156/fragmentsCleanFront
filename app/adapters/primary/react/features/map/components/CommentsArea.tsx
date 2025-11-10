@@ -1,13 +1,12 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useDispatch } from "react-redux";
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
-import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { CafeId } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 type CommentsAreaProps = {
     coffeeId?: CafeId | null;
@@ -16,10 +15,10 @@ type CommentsAreaProps = {
 };
 
 const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaProps) => {
-    const dispatch = useDispatch<any>();
+
     const [text, setText] = useState("");
 
-    const { comments, isLoading, error, isRefreshing } = useCommentsForCafe(coffeeId ?? undefined);
+    const { comments, isLoading, error, isRefreshing, uiViaHookCreateComment } = useCommentsForCafe(coffeeId ?? undefined);
 
     const canSubmit = useMemo(() => {
         if (!coffeeId) return false;
@@ -30,16 +29,11 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
     const handleSubmit = useCallback(() => {
         if (!canSubmit || !coffeeId) return;
 
-        dispatch(
-            uiCommentCreateRequested({
-                targetId: coffeeId,
-                body: text.trim(),
-            })
-        );
+        uiViaHookCreateComment({targetId:parseToCoffeeId(coffeeId), body:text.trim()})
 
         Keyboard.dismiss();
         setText("");
-    }, [canSubmit, coffeeId, dispatch, text]);
+    }, [canSubmit, coffeeId, text]);
 
     return (
         <View style={styles.container}>
