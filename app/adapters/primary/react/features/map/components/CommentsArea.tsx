@@ -1,107 +1,82 @@
-import {
-    Text,
-    View,
-    StyleSheet,
-    TextInput,
-    Pressable,
-    KeyboardAvoidingView,
-    Platform,
-    TouchableWithoutFeedback, Keyboard, Button
-} from "react-native";
-import {palette} from "@/app/adapters/primary/react/css/colors";
-import {useState} from "react";
+import React, { useState } from "react";
+import { View, Text, Pressable, StyleSheet, Keyboard, TextInput } from "react-native";
 
-const CommentsArea = () => {
-    const [text, onChangeText] = useState('');
-    return(
+
+type CommentsAreaProps = {
+    onFocusComment?: () => void;
+    onBlurComment?: () => void;
+};
+
+
+const CommentsArea = ({ onFocusComment, onBlurComment }: CommentsAreaProps) => {
+    const [text, setText] = useState("");
+
+    const handleSubmit = () => {
+        if (!text.trim()) return;
+
+        // TODO: envoyer le commentaire
+
+        Keyboard.dismiss();
+        setText("");
+    };
+
+    return (
         <View style={styles.container}>
-            <KeyboardAvoidingView
-                style={styles.wrapper}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <TextInput
-                        style={styles.inputText}
-                        placeholder={"Ecrivez votre commentaire ici"}
-                        onChangeText={onChangeText}
-                        value={text}
-                        keyboardType={"web-search"}
-                        multiline={true}
-                        numberOfLines={4}
-                        maxLength={250}>
-                    </TextInput>
-                </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-            <Pressable style={[styles.buttonInput, text.length > 0 && styles.buttonInputActive ]}>
+            <TextInput
+                style={styles.inputText}
+                placeholder="Écrivez votre commentaire ici"
+                onChangeText={setText}
+                value={text}
+                keyboardType="default"
+                multiline
+                numberOfLines={4}
+                maxLength={250}
+                onFocus={onFocusComment}
+                onBlur={onBlurComment}
+            />
+
+            <Pressable
+                style={[
+                    styles.buttonInput,
+                    text.length > 0 && styles.buttonInputActive,
+                ]}
+                onPress={handleSubmit}
+            >
                 <Text style={styles.buttonText}>Commenter</Text>
             </Pressable>
-            {/*<KeyboardAvoidingView*/}
-            {/*    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}*/}
-            {/*    style={styles.container}>*/}
-            {/*    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>*/}
-            {/*        <View style={styles.inner}>*/}
-            {/*            <Text style={styles.header}>Header</Text>*/}
-            {/*            <TextInput placeholder="Username" style={styles.textInput} />*/}
-            {/*            <View style={styles.btnContainer}>*/}
-            {/*                <Button title="Submit" onPress={() => null} />*/}
-            {/*            </View>*/}
-            {/*        </View>*/}
-            {/*    </TouchableWithoutFeedback>*/}
-            {/*</KeyboardAvoidingView>*/}
         </View>
-    )
-
-}
-export default CommentsArea;
+    );
+};
 
 const styles = StyleSheet.create({
-    container:{
-      gap:30,
-        flex: 1,
-        padding: 20,
+    container: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderColor: "#ddd",
+        backgroundColor: "white", // ou palette.textPrimary_1
     },
-    wrapper:{
+    inputText: {
+        minHeight: 80,
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        textAlignVertical: "top",
+    },
+    buttonInput: {
+        marginTop: 8,
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: "center",
+        opacity: 0.5,
+    },
+    buttonInputActive: {
+        opacity: 1,
+    },
+    buttonText: {
+        fontWeight: "600",
+    },
+});
 
-        padding:15,
-        borderWidth:1,
-        height:120,
-        borderRadius:15,
-    },
-    inputText:{
-        fontSize:14,
-        color:palette.surface,
-    },
-    buttonInput:{
-        padding:15,
-        backgroundColor: palette.textMuted_1,
-        borderRadius:15,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonInputActive:{
-      backgroundColor:palette.success_60
-    },
-    buttonText:{
-        color: palette.textPrimary,
-        fontSize: 18,
-    },
-    inner: {
-        padding: 24,
-        flex: 1,
-        justifyContent: 'space-around',
-    },
-    header: {
-        fontSize: 36,
-        marginBottom: 48,
-    },
-    textInput: {
-        height: 40,
-        borderColor: '#000000',
-        borderBottomWidth: 1,
-        marginBottom: 36,
-    },
-    btnContainer: {
-        backgroundColor: 'white',
-        marginTop: 12,
-    },
-
-})
+export default CommentsArea;

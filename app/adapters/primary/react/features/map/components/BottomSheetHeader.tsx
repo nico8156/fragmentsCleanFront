@@ -42,7 +42,6 @@ export default BottomSheetHeader;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
       backgroundColor: palette.textPrimary_1 ,
       flexDirection: 'row',
       alignItems: 'center',

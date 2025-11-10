@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet, useWindowDimensions, View } from "react-native";
+import {
+    StatusBar,
+    StyleSheet,
+    View,
+    Platform,
+    KeyboardAvoidingView
+} from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
-import { BottomSheet, Host } from "@expo/ui/swift-ui";
+import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Clusterer, coordsToGeoJSONFeature, isClusterFeature } from "react-native-clusterer";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 
 import LocalisationButton from "@/app/adapters/primary/react/features/map/components/coffeeSelection/localisationButton";
 import CoffeeMarker from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeMarker";
@@ -32,6 +40,9 @@ import { ClusterBubble } from "@/app/adapters/primary/react/features/map/compone
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type LatLng = { lat: number; lng: number };
 
+const COMMENTS_AREA_HEIGHT = 140; // ajuste si besoin (140–180)
+
+
 const expandRegion = (region: Region, factor = 0.2): Region => ({
     ...region,
     latitudeDelta: region.latitudeDelta * (1 + factor),
@@ -39,10 +50,50 @@ const expandRegion = (region: Region, factor = 0.2): Region => ({
 });
 
 export function MapScreen() {
+   //BOTTOMSHEET
+    const [bottomSheetIndex, setBottomSheetIndex] = useState(-1); // -1 = fermée
+    const bottomSheetRef = useRef<BottomSheet>(null);
+
+    const commentScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+    const snapPoints = useMemo(() => ["25%", "85%"], []);
+    const scrollRef = useRef<any>(null); // tu pourras typer plus finement plus tard
+    const handleCommentFocus = useCallback(() => {
+        bottomSheetRef.current?.expand();
+
+        // On évite d'empiler les timeouts
+        if (commentScrollTimeoutRef.current) {
+            clearTimeout(commentScrollTimeoutRef.current);
+        }
+
+        commentScrollTimeoutRef.current = setTimeout(() => {
+            scrollRef.current?.scrollToEnd?.({ animated: true });
+            commentScrollTimeoutRef.current = null;
+        }, 120);
+    }, []);
+    const handleCommentBlur = useCallback(() => {
+        // Si le scrollToEnd n'a pas encore été exécuté,
+        // on annule pour éviter un "coup de fouet" après coup
+        if (commentScrollTimeoutRef.current) {
+            clearTimeout(commentScrollTimeoutRef.current);
+            commentScrollTimeoutRef.current = null;
+        }
+    }, []);
+
+    // useEffect(() => {
+    //     const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+    //         scrollRef.current?.scrollTo({ y: 0, animated: true });
+    //     });
+    //     return () => hideSub.remove();
+    // }, []);
+//============================================================================================================
+
+
+
     const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
     const [viewMode, setViewMode] = useState<"map" | "list">("map");
     const [isFollowingUser, setIsFollowingUser] = useState(false);
-    const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
     const [mapRegion, setMapRegion] = useState<Region | undefined>();
     const [clusterRegion, setClusterRegion] = useState<Region | undefined>(undefined);
@@ -51,7 +102,6 @@ export function MapScreen() {
     const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
     const mapRef = useRef<MapView>(null);
-    const { width } = useWindowDimensions();
 
     const { coffees } = useCafeForMarkers();
     const { coords, refresh } = useUserLocationFromStore();
@@ -129,7 +179,7 @@ export function MapScreen() {
         const coffeeId = parseToCoffeeId(id);
         if (!coffeeId) return;
         setSelectedCoffeeId(coffeeId);
-        setIsBottomSheetOpen(true);
+        setBottomSheetIndex(0); // ouvre sur le premier snap
     }, []);
 
     const clusterData = useMemo<any[]>(
@@ -196,7 +246,7 @@ export function MapScreen() {
     }, []);
 
     return (
-        <View
+        <GestureHandlerRootView
             style={styles.safeArea}
             onLayout={(e) => {
                 const { width: w, height: h } = e.nativeEvent.layout;
@@ -226,49 +276,6 @@ export function MapScreen() {
                                 />
                             )}
                         </MapView>
-
-                        <Host
-                            matchContents
-                            style={[
-                                StyleSheet.absoluteFill,
-                                {
-                                    width,
-                                    pointerEvents: "none",
-                                },
-                            ]}
-                        >
-                            <BottomSheet
-                                isOpened={isBottomSheetOpen}
-                                onIsOpenedChange={setIsBottomSheetOpen}
-                                presentationDetents={["medium", "large"]}
-                                presentationDragIndicator="visible"
-                            >
-                                {isBottomSheetOpen && (
-                                    <ScrollView style={styles.sheetContent}>
-                                        <BottomSheetHeader name={coffee?.name} />
-                                        <BottomSheetCat
-                                            openingHoursToday={todayHoursLabel}
-                                            isOpen={isOpen}
-                                            distance={distanceText}
-                                        />
-                                        <BottomSheetActions />
-                                        <BottomSheetPhotos photos={coffee?.photos} />
-                                        <BottomSheetGeneral />
-                                        <Separator />
-                                        <GeneralComponent
-                                            isOpen={isOpen}
-                                            address={coffee?.address}
-                                            openingTodayHours={todayHoursLabel}
-                                        />
-                                        <Separator />
-                                        <TagComponent />
-                                        <Separator />
-                                        <CommentsArea />
-                                    </ScrollView>
-                                )}
-                            </BottomSheet>
-                        </Host>
-
                         <ActionButtonsWrapper toggleViewMode={toggleViewMode} />
 
                         <LocalisationButton
@@ -278,27 +285,74 @@ export function MapScreen() {
                             color={isFollowingUser ? palette.accent : palette.textSecondary}
                             isFollowing={isFollowingUser}
                         />
+                        <BottomSheet
+                            ref={bottomSheetRef}
+                            index={bottomSheetIndex}
+                            onChange={setBottomSheetIndex}
+                            snapPoints={snapPoints}
+                            enablePanDownToClose
+                            keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
+                            keyboardBlurBehavior="none"
+                            android_keyboardInputMode="adjustResize"
+                            backgroundStyle={{ backgroundColor: palette.textPrimary_1 }}
+                        >
+                            <KeyboardAvoidingView
+                                style={{ flex: 1 }}
+                                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                                keyboardVerticalOffset={16}
+                            >
+                                {/* Contenu scrollable */}
+                                <BottomSheetScrollView
+                                    ref={scrollRef} // 👈 important
+                                    style={styles.sheetContent}
+                                    keyboardShouldPersistTaps="handled"
+                                    contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT + 16 }}
+                                >
+                                    <BottomSheetHeader name={coffee?.name} />
+                                    <BottomSheetCat
+                                        openingHoursToday={todayHoursLabel}
+                                        isOpen={isOpen}
+                                        distance={distanceText}
+                                    />
+                                    <BottomSheetActions />
+                                    <BottomSheetPhotos photos={coffee?.photos} />
+                                    <BottomSheetGeneral />
+                                    <Separator />
+                                    <GeneralComponent
+                                        isOpen={isOpen}
+                                        address={coffee?.address}
+                                        openingTodayHours={todayHoursLabel}
+                                    />
+                                    <Separator />
+                                    <TagComponent />
+                                    <Separator />
+                                    <CommentsArea onFocusComment={handleCommentFocus}
+                                                  onBlurComment={handleCommentBlur} />
+                                </BottomSheetScrollView>
+                            </KeyboardAvoidingView>
+                        </BottomSheet>
+
                     </>
                 ) : (
                     <ListViewForCoffees toggleViewMode={toggleViewMode} />
                 )}
             </View>
-        </View>
+        </GestureHandlerRootView>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: palette.background,
-    },
-    container: {
-        flex: 1,
-    },
-    sheetContent: {
-        flex: 1,
-        backgroundColor: palette.textPrimary_1,
-    },
+        safeArea: {
+            flex: 1,
+            backgroundColor: palette.background,
+        },
+        container: {
+            flex: 1,
+        },
+        sheetContent: {
+            backgroundColor: palette.textPrimary_1,
+            // surtout pas de flex: 1 ici
+        },
 });
 
 export default MapScreen;
