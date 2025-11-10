@@ -293,7 +293,6 @@ export function MapScreen() {
                             enablePanDownToClose
                             keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
                             keyboardBlurBehavior="none"
-                            android_keyboardInputMode="adjustResize"
                             backgroundStyle={{ backgroundColor: palette.textPrimary_1 }}
                         >
                             <KeyboardAvoidingView
@@ -301,9 +300,8 @@ export function MapScreen() {
                                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                                 keyboardVerticalOffset={16}
                             >
-                                {/* Contenu scrollable */}
                                 <BottomSheetScrollView
-                                    ref={scrollRef} // 👈 important
+                                    ref={scrollRef}
                                     style={styles.sheetContent}
                                     keyboardShouldPersistTaps="handled"
                                     contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT + 16 }}
