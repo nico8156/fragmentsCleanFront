@@ -324,8 +324,11 @@ export function MapScreen() {
                                     <Separator />
                                     <TagComponent />
                                     <Separator />
-                                    <CommentsArea onFocusComment={handleCommentFocus}
-                                                  onBlurComment={handleCommentBlur} />
+                                    <CommentsArea
+                                        coffeeId={selectedCoffeeId ?? undefined}
+                                        onFocusComment={handleCommentFocus}
+                                        onBlurComment={handleCommentBlur}
+                                    />
                                 </BottomSheetScrollView>
                             </KeyboardAvoidingView>
                         </BottomSheet>
