@@ -45,7 +45,7 @@ export const likeWlReducer = createReducer(
             v.me = me;
             v.version = version;
             v.updatedAt = serverTime as ISODate ?? (v.updatedAt as ISODate);
-            v.lastFetchedAt = (serverTime as ISODate) ?? (new Date().toISOString() as ISODate);
+            v.lastFetchedAt = new Date().toISOString() as ISODate;
             v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
             v.loading = loadingStates.SUCCESS;
             v.optimistic = false;
@@ -81,7 +81,7 @@ export const likeWlReducer = createReducer(
             v.me = server.me;
             v.version = server.version;
             v.updatedAt = server.updatedAt ?? v.updatedAt;
-            v.lastFetchedAt = (server.updatedAt as ISODate) ?? v.lastFetchedAt ?? (new Date().toISOString() as ISODate);
+            v.lastFetchedAt = new Date().toISOString() as ISODate;
             v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
             v.optimistic = false;
             v.loading = v.loading === loadingStates.PENDING ? loadingStates.SUCCESS : v.loading;
