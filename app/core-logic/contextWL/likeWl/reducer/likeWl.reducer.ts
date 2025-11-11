@@ -1,4 +1,3 @@
-
 import {createReducer} from "@reduxjs/toolkit";
 import {
     likeOptimisticApplied,
@@ -10,13 +9,27 @@ import {
 } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 
 import {AppStateWl} from "@/app/store/appStateWl";
-import {LikeAggregate, LikesStateWl, loadingStates, TargetId} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
+import {LikeAggregate, LikesStateWl, LoadingState, loadingStates, TargetId} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+
+const DEFAULT_STALE_AFTER_MS = 60_000;
 
 const initialState: AppStateWl["likes"] = { byTarget: {} };
 
-const ensureAgg = (state: LikesStateWl, targetId: TargetId): LikeAggregate & { loading: any; error?: string } =>
-    (state.byTarget[targetId] ??= { targetId, count: 0, me: false, version: 0, loading: "idle" });
+const ensureAgg = (state: LikesStateWl, targetId: TargetId): LikeAggregate & {
+    loading: LoadingState;
+    error?: string;
+    lastFetchedAt?: ISODate;
+    staleAfterMs?: number;
+} =>
+    (state.byTarget[targetId] ??= {
+        targetId,
+        count: 0,
+        me: false,
+        version: 0,
+        loading: loadingStates.IDLE,
+        staleAfterMs: DEFAULT_STALE_AFTER_MS,
+    });
 
 export const likeWlReducer = createReducer(
     initialState,
@@ -31,7 +44,9 @@ export const likeWlReducer = createReducer(
             v.count = count;
             v.me = me;
             v.version = version;
-            v.updatedAt = serverTime as ISODate?? v.updatedAt as ISODate;
+            v.updatedAt = serverTime as ISODate ?? (v.updatedAt as ISODate);
+            v.lastFetchedAt = (serverTime as ISODate) ?? (new Date().toISOString() as ISODate);
+            v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
             v.loading = loadingStates.SUCCESS;
             v.optimistic = false;
         });
@@ -66,6 +81,8 @@ export const likeWlReducer = createReducer(
             v.me = server.me;
             v.version = server.version;
             v.updatedAt = server.updatedAt ?? v.updatedAt;
+            v.lastFetchedAt = (server.updatedAt as ISODate) ?? v.lastFetchedAt ?? (new Date().toISOString() as ISODate);
+            v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
             v.optimistic = false;
             v.loading = v.loading === loadingStates.PENDING ? loadingStates.SUCCESS : v.loading;
         });
@@ -80,4 +97,4 @@ export const likeWlReducer = createReducer(
             // ne change pas loading ici
         });
     }
-)
+);

@@ -12,6 +12,8 @@ import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentW
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 import { RootNavigator } from "@/app/adapters/primary/react/navigation/RootNavigator";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import {likeToggleUseCaseFactory} from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
+import {ackLikesListenerFactory} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 
 let storeRef: ReduxStoreWl | null = null;
 
@@ -32,6 +34,11 @@ export default function RootLayout() {
                     gateways,
                     helpers,
                 }).middleware;
+                const likeToggleMiddleware = likeToggleUseCaseFactory({
+                    gateways,
+                    helpers,
+                }).middleware;
+                const likeAckMiddleware = ackLikesListenerFactory().middleware;
                 const outboxMiddleware = processOutboxFactory({
                     gateways,
                     helpers,
@@ -40,10 +47,12 @@ export default function RootLayout() {
                 const createdStore = initReduxStoreWl({
                     dependencies: {
                         gateways,
-                        helpers: {},
+                        helpers,
                     },
                     listeners: [
                         commentCreateMiddleware,
+                        likeToggleMiddleware,
+                        likeAckMiddleware,
                         outboxMiddleware,
                         ticketSubmitMiddleware,
                         authListenerFactory({ gateways, helpers: {} }),
@@ -51,6 +60,12 @@ export default function RootLayout() {
                     ],
                 });
                 storeRef = createdStore;
+
+                const likeGateway: any = gateways.likes;
+                if (likeGateway?.setCurrentUserIdGetter) {
+                    likeGateway.setCurrentUserIdGetter(() => storeRef?.getState().aState.currentUser?.id ?? "anonymous");
+                }
+
                 return createdStore;
             },
         [],

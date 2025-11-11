@@ -6,7 +6,7 @@ export type LikeAddCommand = {
     commandId: CommandId | string;            // idempotence côté serveur
     targetId: string;
     at: ISODate | string;
-    userId?: string;// ex: cafeId
+    userId: string;// ex: cafeId
 };
 export type LikeAddUndo = {
     kind: typeof commandKinds.LikeAdd;
@@ -21,7 +21,7 @@ export type LikeRemoveCommand = {
     commandId: CommandId | string;
     targetId: string;
     at: ISODate | string;
-    userId?: string;
+    userId: string;
 };
 export type LikeRemoveUndo = {
     kind: typeof commandKinds.LikeRemove;
