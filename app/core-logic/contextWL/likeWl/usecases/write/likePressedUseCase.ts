@@ -1,4 +1,4 @@
-import { createListenerMiddleware, createAction, TypedStartListening } from "@reduxjs/toolkit";
+import {createListenerMiddleware, createAction, TypedStartListening, nanoid} from "@reduxjs/toolkit";
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
@@ -17,8 +17,8 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
         effect: async ({ payload: { targetId } }, api) => {
             const state: any = api.getState();
             const me = state.lState.byTarget?.[targetId]?.me ?? false;
-            const outboxId  = deps.helpers?.getCommandIdForTests?.() ?? `obx_${crypto.randomUUID?.() ?? Math.random()}`;
-            const commandId = `cmd_${crypto.randomUUID?.() ?? Math.random()}` as CommandId;
+            const outboxId  = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid() ?? Math.random()}`;
+            const commandId = `cmd_${nanoid() ?? Math.random()}` as CommandId;
             const at        = deps.helpers?.nowIso?.() ?? new Date().toISOString();
             const userId    = deps.helpers?.currentUserId?.() ?? "anonymous";
 
