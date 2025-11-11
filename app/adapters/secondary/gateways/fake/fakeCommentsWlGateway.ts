@@ -1,5 +1,7 @@
+import { nanoid } from "@reduxjs/toolkit";
 import { CommentEntity, Op, opTypes, moderationTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
+import { onCommentCreatedAck } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
 const seedComments: Record<string, CommentEntity[]> = {
     "07dae867-1273-4d0f-b1dd-f206b290626b": [
@@ -66,6 +68,17 @@ const seedComments: Record<string, CommentEntity[]> = {
     ],
 };
 
+type AckDispatcher = (action: { type: string; payload?: any }) => void;
+
+type PendingCreate = {
+    commandId: string;
+    tempId?: string;
+    targetId: string;
+    parentId?: string;
+    body: string;
+    authorId: string;
+};
+
 export class FakeCommentsWlGateway implements CommentsWlGateway {
     nextCommentsResponse: {
         targetId: string;
@@ -77,6 +90,108 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
     } | null = null;
 
     willFail = false;
+
+    private readonly commentsByTarget = new Map<string, CommentEntity[]>();
+
+    private ackDispatcher?: AckDispatcher;
+
+    private currentUserIdGetter?: () => string;
+
+    private readonly pendingCreates = new Map<string, PendingCreate>();
+
+    private versionCounter = 0;
+
+    constructor(initialSeed: Record<string, CommentEntity[]> = seedComments) {
+        Object.entries(initialSeed).forEach(([targetId, comments]) => {
+            const cloned = comments.map((comment) => ({ ...comment }));
+            this.commentsByTarget.set(targetId, cloned);
+            cloned.forEach((comment) => {
+                if (comment.version > this.versionCounter) {
+                    this.versionCounter = comment.version;
+                }
+            });
+        });
+    }
+
+    setAckDispatcher(dispatcher: AckDispatcher) {
+        this.ackDispatcher = dispatcher;
+    }
+
+    setCurrentUserIdGetter(getter: () => string) {
+        this.currentUserIdGetter = getter;
+    }
+
+    private getCurrentUserId() {
+        return this.currentUserIdGetter?.() ?? "anonymous";
+    }
+
+    private ensureComments(targetId: string) {
+        if (!this.commentsByTarget.has(targetId)) {
+            this.commentsByTarget.set(targetId, []);
+        }
+        return this.commentsByTarget.get(targetId)!;
+    }
+
+    private cloneComments(targetId: string) {
+        return this.ensureComments(targetId).map((comment) => ({ ...comment }));
+    }
+
+    private randomAckDelayMs() {
+        return 2000 + Math.floor(Math.random() * 2001); // 2000ms → 4000ms
+    }
+
+    private scheduleAck(pending: PendingCreate) {
+        const delay = this.randomAckDelayMs();
+        setTimeout(() => {
+            const record = this.pendingCreates.get(pending.commandId);
+            if (!record) {
+                return;
+            }
+            this.pendingCreates.delete(pending.commandId);
+
+            const serverId = `cmt_srv_${nanoid()}`;
+            const createdAt = new Date().toISOString();
+            const version = ++this.versionCounter;
+
+            const newComment: CommentEntity = {
+                id: serverId,
+                targetId: record.targetId,
+                parentId: record.parentId,
+                body: record.body,
+                authorId: record.authorId,
+                createdAt,
+                likeCount: 0,
+                replyCount: 0,
+                moderation: moderationTypes.PUBLISHED,
+                version,
+            };
+
+            const collection = this.ensureComments(record.targetId);
+            collection.push(newComment);
+            collection.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+            if (record.parentId) {
+                const parent = collection.find((comment) => comment.id === record.parentId);
+                if (parent) {
+                    parent.replyCount = Math.max(parent.replyCount + 1, 1);
+                }
+            }
+
+            if (record.tempId && this.ackDispatcher) {
+                this.ackDispatcher(
+                    onCommentCreatedAck({
+                        commandId: record.commandId,
+                        tempId: record.tempId,
+                        server: {
+                            id: newComment.id,
+                            createdAt: newComment.createdAt,
+                            version: newComment.version,
+                        },
+                    }),
+                );
+            }
+        }, delay);
+    }
 
     async list({ targetId }: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<{
         targetId: string;
@@ -93,7 +208,7 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
             return this.nextCommentsResponse;
         }
 
-        const items = seedComments[targetId] ?? [];
+        const items = this.cloneComments(targetId);
         return {
             targetId,
             op: opTypes.RETRIEVE,
@@ -102,11 +217,22 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         };
     }
 
-    async create({ commandId, targetId, parentId, body }: { commandId: string; targetId: string; parentId?: string | null; body: string }): Promise<void> {
-        void commandId;
-        void targetId;
-        void parentId;
-        void body;
+    async create({ commandId, targetId, parentId, body, tempId }: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }): Promise<void> {
+        if (this.willFail) {
+            throw new Error("Fake error from fakeCommentsWlGateway");
+        }
+
+        const pending: PendingCreate = {
+            commandId,
+            tempId,
+            targetId,
+            parentId: parentId ?? undefined,
+            body,
+            authorId: this.getCurrentUserId(),
+        };
+
+        this.pendingCreates.set(commandId, pending);
+        this.scheduleAck(pending);
         return Promise.resolve();
     }
 
