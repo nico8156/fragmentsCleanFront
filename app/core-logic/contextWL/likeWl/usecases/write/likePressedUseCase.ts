@@ -20,7 +20,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
             const outboxId  = deps.helpers?.getCommandIdForTests?.() ?? `obx_${crypto.randomUUID?.() ?? Math.random()}`;
             const commandId = `cmd_${crypto.randomUUID?.() ?? Math.random()}` as CommandId;
             const at        = deps.helpers?.nowIso?.() ?? new Date().toISOString();
-            //const userId    = deps.helpers?.currentUserId?.() ?? "me";
+            const userId    = deps.helpers?.currentUserId?.() ?? "anonymous";
 
             if (!deps.gateways.likes) return;
             if (!me) {
@@ -29,7 +29,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
                 api.dispatch(enqueueCommitted({
                     id: outboxId,
                     item: {
-                        command: { kind: commandKinds.LikeAdd, commandId, targetId, at : at as ISODate},
+                        command: { kind: commandKinds.LikeAdd, commandId, targetId, at : at as ISODate, userId},
                         undo:    { kind: commandKinds.LikeAdd, targetId, prevCount: state.lState.byTarget[targetId]?.count ?? 0, prevMe: false, prevVersion: state.lState.byTarget[targetId]?.version },
                     },
                     enqueuedAt: at,
@@ -40,7 +40,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
                 api.dispatch(enqueueCommitted({
                     id: outboxId,
                     item: {
-                        command: { kind: commandKinds.LikeRemove, commandId, targetId, at: at as ISODate},
+                        command: { kind: commandKinds.LikeRemove, commandId, targetId, at: at as ISODate, userId},
                         undo:    { kind: commandKinds.LikeRemove, targetId, prevCount: state.lState.byTarget[targetId]?.count ?? 0, prevMe: true, prevVersion: state.lState.byTarget[targetId]?.version },
                     },
                     enqueuedAt: at,

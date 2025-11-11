@@ -73,10 +73,11 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 switch (cmd.kind) {
                     // ===== Likes =====
                     case commandKinds.LikeAdd: {
+                        const userId = (cmd as any).userId ?? deps.helpers?.currentUserId?.() ?? "anonymous";
                         await deps.gateways.likes!.add({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId: (cmd as any).userId,
+                            userId,
                             at: cmd.at,
                         });
                         const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
@@ -85,10 +86,11 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         break;
                     }
                     case commandKinds.LikeRemove: {
+                        const userId = (cmd as any).userId ?? deps.helpers?.currentUserId?.() ?? "anonymous";
                         await deps.gateways.likes!.remove({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId: (cmd as any).userId,
+                            userId,
                             at: cmd.at,
                         });
                         const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();

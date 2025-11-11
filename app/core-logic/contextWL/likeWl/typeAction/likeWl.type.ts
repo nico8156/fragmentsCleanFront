@@ -53,5 +53,7 @@ export type LikesStateWl = {
     byTarget: Record<TargetId, LikeAggregate & {
         loading: LoadingState;
         error?: string;
+        lastFetchedAt?: ISODate;
+        staleAfterMs?: number;
     }>;
 };

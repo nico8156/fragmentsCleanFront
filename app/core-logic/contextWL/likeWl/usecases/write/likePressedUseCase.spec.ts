@@ -64,6 +64,7 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
         const command = rec.item.command as LikeAddCommand;
         expect(command.kind).toBe(commandKinds.LikeAdd);
         expect(command.targetId).toBe("cafe_A");
+        expect(command.userId).toBe("user_test");
         // snapshot undo pour rollback
         const undo = rec.item.undo as LikeAddUndo;
         expect(undo.prevCount).toBe(10);
@@ -120,6 +121,7 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
         const undo = rec.item.undo as LikeRemoveUndo
         const command = rec.item.command as LikeRemoveCommand;
         expect(command.targetId).toBe("cafe_A");
+        expect(command.userId).toBe("user_test");
         expect(undo.prevCount).toBe(11);
         expect(undo.prevMe).toBe(true);
     });

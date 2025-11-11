@@ -17,8 +17,9 @@ type Props = {
 function CoffeeMarker(props: Props) {
     const { coffee, selected, zoomLevel, onSelect, coordinate } = props;
 
+    const coffeeId = parseToCoffeeId(String(coffee.id));
     const showExpanded = zoomLevel <= 0.015;
-    const isOpen = useCafeOpenNow(parseToCoffeeId(coffee.id));
+    const isOpen = useCafeOpenNow(coffeeId);
 
     const handlePress = () => {
         onSelect?.();
@@ -31,7 +32,12 @@ function CoffeeMarker(props: Props) {
             tracksViewChanges={false}
             onPress={handlePress}
         >
-            <CoffeeMarkerBubble isOpen={isOpen} showExpanded={showExpanded} selected={selected} />
+            <CoffeeMarkerBubble
+                coffeeId={coffeeId}
+                isOpen={isOpen}
+                showExpanded={showExpanded}
+                selected={selected}
+            />
             <CoffeeMarkerLabel name={coffee?.name ?? "Café"} />
         </Marker>
     );

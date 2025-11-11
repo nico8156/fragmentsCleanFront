@@ -1,39 +1,52 @@
 import { View, StyleSheet, Text } from "react-native";
 import { SymbolView } from "expo-symbols";
+
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { useLikesForCafe } from "@/app/adapters/secondary/viewModel/useLikesForCafe";
+import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 type Props = {
     isOpen: boolean;
     showExpanded: boolean;
     selected?: boolean;
+    coffeeId: CoffeeId;
 };
 
-export const CoffeeMarkerBubble = ({ isOpen, showExpanded, selected }: Props) => (
-    <View style={styles.wrapper}>
-        <View
-            style={[
-                styles.markerBody,
-                selected && styles.markerBodySelected,
-                showExpanded && styles.markerBodyExpanded,
-            ]}
-        >
-            <View style={styles.iconWrapper}>
-                <SymbolView
-                    name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
-                    size={20}
-                    tintColor="#F4EDE6"
-                />
-            </View>
+export const CoffeeMarkerBubble = ({ isOpen, showExpanded, selected, coffeeId }: Props) => {
+    const { count, likedByMe, isRefreshing, isLoading } = useLikesForCafe(coffeeId);
+    const isBusy = isLoading || isRefreshing;
 
-            {showExpanded && (
-                <View style={styles.likes}>
-                    <Text style={styles.likesText}>{72}</Text>
-                    <SymbolView name="heart.fill" size={18} tintColor={palette.accent} />
+    return (
+        <View style={styles.wrapper}>
+            <View
+                style={[
+                    styles.markerBody,
+                    selected && styles.markerBodySelected,
+                    showExpanded && styles.markerBodyExpanded,
+                ]}
+            >
+                <View style={styles.iconWrapper}>
+                    <SymbolView
+                        name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
+                        size={20}
+                        tintColor="#F4EDE6"
+                    />
                 </View>
-            )}
+
+                {showExpanded && (
+                    <View style={styles.likes}>
+                        <Text style={styles.likesText}>{isBusy ? "…" : count}</Text>
+                        <SymbolView
+                            name={likedByMe ? "heart.fill" : "heart"}
+                            size={18}
+                            tintColor={likedByMe ? palette.accent : palette.textPrimary}
+                        />
+                    </View>
+                )}
+            </View>
         </View>
-    </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     wrapper: { alignItems: "center" },
