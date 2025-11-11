@@ -1,0 +1,29 @@
+%% Mermaid sequence diagram décrivant le flux commentaire WL
+sequenceDiagram
+    participant UI as CommentsArea (React Native)
+    participant Hook as useCommentsForCafe
+    participant UseCases as Use cases WL
+    participant Reducer as Reducer cState
+    participant Outbox as Outbox WL
+    participant Gateway as Comments Gateway
+    participant Socket as ACK temps réel
+
+    UI->>Hook: Input utilisateur / rendu liste
+    Hook->>UseCases: uiCommentCreateRequested(targetId, body)
+    UseCases->>Reducer: addOptimisticCreated(tempComment)
+    UseCases->>Outbox: enqueueCommitted(CommentCreate)
+    UseCases->>Outbox: outboxProcessOnce()
+    Outbox->>Reducer: markProcessing / markAwaitingAck
+    Outbox->>Gateway: create(command)
+    Gateway-->>Outbox: Promise résolue
+    Outbox->>Reducer: dequeueCommitted (status awaitingAck)
+
+    Note over Socket,Gateway: L'ACK serveur arrive plus tard (socket)
+
+    Socket-->>UseCases: onCommentCreatedAck(commandId, tempId, server)
+    UseCases->>Reducer: createReconciled(tempId → serverId)
+    UseCases->>Outbox: dropCommitted(commandId)
+
+    Hook->>Reducer: commentRetrieval(op=retrieve/refresh)
+    Reducer-->>Hook: Comments + métadonnées (via selector)
+    Hook-->>UI: CommentItemVM (avatar, relativeTime, status)
