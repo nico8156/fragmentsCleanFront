@@ -14,6 +14,7 @@ import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
 
 const AVATAR_BASE_URL = "https://i.pravatar.cc/120";
 
@@ -25,6 +26,7 @@ export type CommentItemVM = {
     createdAt: string;
     relativeTime: string;
     isOptimistic: boolean;
+    transportStatus: "pending" | "success" | "failed";
 };
 
 type CommentsSelectorResult = {
@@ -96,6 +98,20 @@ export function useCommentsForCafe(targetId?: CafeId) {
     const { comments, loading, error, lastFetchedAt, staleAfterMs } =
         useSelector(selector);
 
+    const outboxRecords = useSelector((state: RootStateWl) => state.oState.byId);
+
+    const outboxStatusByTempId = useMemo(() => {
+        const result: Record<string, string> = {};
+        Object.values(outboxRecords ?? {}).forEach((record: any) => {
+            const command = record?.item?.command;
+            if (!command) return;
+            if (command.kind === commandKinds.CommentCreate) {
+                result[command.tempId] = record.status;
+            }
+        });
+        return result;
+    }, [outboxRecords]);
+
     const viewModel: CommentItemVM[] = useMemo(
         () =>
             comments
@@ -112,8 +128,18 @@ export function useCommentsForCafe(targetId?: CafeId) {
                     createdAt: comment.createdAt,
                     relativeTime: formatRelativeTime(comment.createdAt),
                     isOptimistic: Boolean(comment.optimistic),
+                    transportStatus: (() => {
+                        if (!comment.optimistic) {
+                            return "success" as const;
+                        }
+                        const status = outboxStatusByTempId[comment.id];
+                        if (status === statusTypes.failed) {
+                            return "failed" as const;
+                        }
+                        return "pending" as const;
+                    })(),
                 })),
-        [comments],
+        [comments, outboxStatusByTempId],
     );
 
     useEffect(() => {

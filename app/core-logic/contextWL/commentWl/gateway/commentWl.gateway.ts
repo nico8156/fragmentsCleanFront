@@ -4,7 +4,7 @@ import {ListCommentsResult} from "@/app/core-logic/contextWL/commentWl/type/comm
 
 export interface CommentsWlGateway{
     list(params: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<ListCommentsResult>;
-    create({commandId, targetId, parentId, body}:{commandId: string, targetId : string, parentId?: string | null, body: string}):Promise<void>
+    create({commandId, targetId, parentId, body, tempId}:{commandId: string, targetId : string, parentId?: string | null, body: string, tempId?: string}):Promise<void>
     update({commandId, commentId, body, updatedAt}:{commandId: string, commentId:string, body:string, updatedAt?:string}):Promise<void>
     delete({commandId, commentId, deletedAt}:{commandId: string, commentId:string, deletedAt: string}):Promise<void>
 }
