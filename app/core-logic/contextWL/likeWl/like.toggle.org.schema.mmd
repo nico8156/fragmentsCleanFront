@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as UI
+    participant R as Reducer (likes)
+    participant O as Outbox (committed)
+    participant W as Outbox Worker
+    participant G as Gateway (likes API)
+    participant A as Ack Listener
+
+    U->>UI: Tap like toggle
+    UI->>R: dispatch likeOptimisticApplied / unlikeOptimisticApplied
+    R-->>UI: state[targetId]{count±1, me toggled, optimistic=true}
+    UI->>O: enqueueCommitted(command + undo)
+    UI->>W: dispatch outboxProcessOnce()
+    W->>O: take next command
+    W->>G: call add/remove(command)
+
+    rect rgb(245,245,245)
+        alt Accepted
+            G-->>W: 202 Accepted (commandId)
+            G-->>A: emit SERVER/LIKE/*_ACK(server aggregate)
+            A->>R: likeReconciled(server aggregate)
+            A->>O: dropCommitted(commandId)
+        else Retryable failure
+            G-->>W: network/5xx
+            W->>O: requeue command (backoff)
+        else Definitive failure
+            G-->>W: 4xx conflict
+            W->>R: likeRollback(prev snapshot)
+            W->>O: dropCommitted(commandId)
+        end
+    end
