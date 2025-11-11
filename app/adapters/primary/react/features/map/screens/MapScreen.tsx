@@ -312,7 +312,7 @@ export function MapScreen() {
                                         isOpen={isOpen}
                                         distance={distanceText}
                                     />
-                                    <BottomSheetActions />
+                                    <BottomSheetActions latitude={coffee?.location.lat} longitude={coffee?.location.lon} name={coffee?.name}/>
                                     <BottomSheetPhotos photos={coffee?.photos} />
                                     <BottomSheetGeneral />
                                     <Separator />
