@@ -13,7 +13,7 @@ export function openRouteInAppleMaps({ latitude, longitude, label = "Destination
     const encodedLabel = encodeURIComponent(label);
 
     // Apple Maps (iOS)
-    const appleUrl = `http://maps.apple.com/?daddr=${latitude},${longitude}&q=${encodedLabel}`;
+    const appleUrl = `http://maps.apple.com/?daddr=${latitude},${longitude}&q=${encodedLabel}&dirflg=w`;
 
     Linking.openURL(appleUrl).catch((err) => {
         console.warn("Failed to open Apple Maps", err);
