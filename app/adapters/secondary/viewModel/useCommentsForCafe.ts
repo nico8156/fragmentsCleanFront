@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { selectCommentsForTarget } from "@/app/core-logic/contextWL/commentWl/selector/commentWl.selector";
@@ -11,8 +11,9 @@ import {
     opTypes,
 } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
-import {uiCommentCreateRequested} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {CoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
 
 const AVATAR_BASE_URL = "https://i.pravatar.cc/120";
 
@@ -33,6 +34,18 @@ type CommentsSelectorResult = {
     lastFetchedAt?: string;
     staleAfterMs: number;
 };
+
+const EMPTY_COMMENTS_RESULT: CommentsSelectorResult = {
+    comments: [],
+    loading: loadingStates.IDLE,
+    error: undefined,
+    lastFetchedAt: undefined,
+    staleAfterMs: 30_000,
+};
+
+// Selector "safe" pour le cas sans targetId : toujours la même ref
+const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () =>
+    EMPTY_COMMENTS_RESULT;
 
 const toAvatarUrl = (authorId: string) => `${AVATAR_BASE_URL}?u=${encodeURIComponent(authorId)}`;
 
@@ -65,29 +78,32 @@ const formatRelativeTime = (isoDate: string): string => {
 export function useCommentsForCafe(targetId?: CafeId) {
     const dispatch = useDispatch<any>();
 
-    const uiViaHookCreateComment = ({targetId, body}:{targetId:CoffeeId, body:string}) => {
-        dispatch(uiCommentCreateRequested({targetId, body}))
-    }
+    const uiViaHookCreateComment = useCallback(
+        ({ targetId, body }: { targetId: CoffeeId; body: string }) => {
+            dispatch(uiCommentCreateRequested({ targetId, body }));
+        },
+        [dispatch],
+    );
 
+    // IMPORTANT : on ne crée plus un () => ({...}) à chaque fois
     const selector = useMemo(() => {
         if (!targetId) {
-            return () => ({
-                comments: [],
-                loading: loadingStates.IDLE,
-                error: undefined,
-                lastFetchedAt: undefined,
-                staleAfterMs: 30_000,
-            }) as CommentsSelectorResult;
+            return selectEmptyComments;
         }
-        return selectCommentsForTarget(targetId);
+        return selectCommentsForTarget(targetId); // factory Reselect, OK
     }, [targetId]);
 
-    const { comments, loading, error, lastFetchedAt, staleAfterMs } = useSelector(selector);
+    const { comments, loading, error, lastFetchedAt, staleAfterMs } =
+        useSelector(selector);
 
     const viewModel: CommentItemVM[] = useMemo(
         () =>
             comments
-                .filter((comment) => !comment.deletedAt && comment.moderation !== moderationTypes.SOFT_DELETED)
+                .filter(
+                    (comment) =>
+                        !comment.deletedAt &&
+                        comment.moderation !== moderationTypes.SOFT_DELETED,
+                )
                 .map((comment) => ({
                     id: comment.id,
                     authorName: comment.authorId,
@@ -109,12 +125,26 @@ export function useCommentsForCafe(targetId?: CafeId) {
         const isStale = Date.now() - lastFetchTime > staleAfterMs;
 
         if (!hasFetchedOnce) {
-            dispatch(commentRetrieval({ targetId, op: opTypes.RETRIEVE, cursor: "",limit:10 }));
+            dispatch(
+                commentRetrieval({
+                    targetId,
+                    op: opTypes.RETRIEVE,
+                    cursor: "",
+                    limit: 10,
+                }),
+            );
             return;
         }
 
         if (isStale) {
-            dispatch(commentRetrieval({ targetId, op: opTypes.REFRESH, cursor: "",limit:10 }));
+            dispatch(
+                commentRetrieval({
+                    targetId,
+                    op: opTypes.REFRESH,
+                    cursor: "",
+                    limit: 10,
+                }),
+            );
         }
     }, [dispatch, targetId, loading, lastFetchedAt, staleAfterMs]);
 
@@ -126,6 +156,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
         isLoading,
         error,
         isRefreshing,
-        uiViaHookCreateComment
+        uiViaHookCreateComment,
     } as const;
 }
