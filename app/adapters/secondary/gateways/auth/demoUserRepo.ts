@@ -5,17 +5,20 @@ import {
     ProviderId,
     ProviderUserId,
     toIdentityId,
+    toProviderUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { getProfileOrDefault } from "@/app/adapters/secondary/fakeData/communityProfiles";
 
 const buildIdentity = (
     provider: ProviderId,
     providerUserId: ProviderUserId,
+    email: string,
 ): LinkedIdentity => ({
     id: toIdentityId(`${provider}:${providerUserId}:identity`),
     provider,
     providerUserId,
-    email: `demo.${provider}@example.com`,
+    email,
     createdAt: parseToISODate(new Date().toISOString()),
     lastAuthAt: parseToISODate(new Date().toISOString()),
 });
@@ -26,15 +29,20 @@ export class DemoUserRepo implements UserRepo {
     async getById(id: AppUser["id"]): Promise<AppUser | null> {
         if (!this.cache.has(id)) {
             const [provider, providerUserId] = id.split(":");
-            const identity = buildIdentity(provider as ProviderId, providerUserId as ProviderUserId);
+            const profileSeed = getProfileOrDefault(providerUserId);
+            const identity = buildIdentity(
+                provider as ProviderId,
+                toProviderUserId(providerUserId),
+                profileSeed.email,
+            );
             const now = parseToISODate(new Date().toISOString());
             this.cache.set(id, {
                 id,
                 createdAt: now,
                 updatedAt: now,
-                displayName: "Demo User",
-                avatarUrl: `https://i.pravatar.cc/120?u=${id}`,
-                bio: "Caféiné et prêt à explorer",
+                displayName: profileSeed.displayName,
+                avatarUrl: profileSeed.avatarUrl,
+                bio: profileSeed.bio ?? "Caféiné et prêt à explorer",
                 identities: [identity],
                 roles: ["user"],
                 flags: { beta: true },

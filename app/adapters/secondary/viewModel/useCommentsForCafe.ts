@@ -15,8 +15,7 @@ import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/u
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
-
-const AVATAR_BASE_URL = "https://i.pravatar.cc/120";
+import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
 
 export type CommentItemVM = {
     id: string;
@@ -49,7 +48,10 @@ const EMPTY_COMMENTS_RESULT: CommentsSelectorResult = {
 const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () =>
     EMPTY_COMMENTS_RESULT;
 
-const toAvatarUrl = (authorId: string) => `${AVATAR_BASE_URL}?u=${encodeURIComponent(authorId)}`;
+const toAuthorName = (authorId: string) => getCommunityProfile(authorId)?.displayName ?? authorId;
+
+const toAvatarUrl = (authorId: string) =>
+    getCommunityProfile(authorId)?.avatarUrl ?? `https://i.pravatar.cc/120?u=${encodeURIComponent(authorId)}`;
 
 const formatRelativeTime = (isoDate: string): string => {
     const createdAt = new Date(isoDate);
@@ -122,7 +124,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
                 )
                 .map((comment) => ({
                     id: comment.id,
-                    authorName: comment.authorId,
+                    authorName: toAuthorName(comment.authorId),
                     avatarUrl: toAvatarUrl(comment.authorId),
                     body: comment.body,
                     createdAt: comment.createdAt,

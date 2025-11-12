@@ -1,28 +1,45 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCallback } from "react";
-import { Pressable } from "react-native";
-import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
-import { signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
+
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 
 export function ProfileScreen() {
-    const dispatch = useDispatch<any>();
-    const user = useSelector(selectCurrentUser);
+    const {
+        displayName,
+        primaryEmail,
+        avatarUrl,
+        bio,
+        isSignedIn,
+        isLoading,
+        hasError,
+        signOut: signOutUser,
+    } = useAuthUser();
+
+    const statusLabel = isSignedIn ? "Connecté" : isLoading ? "Chargement..." : hasError ? "Erreur" : "Hors connexion";
+    const emailLabel = primaryEmail ?? "Non renseigné";
 
     const handleSignOut = useCallback(() => {
-        dispatch(signOut());
-    }, [dispatch]);
+        if (!isSignedIn) {
+            return;
+        }
+        signOutUser();
+    }, [isSignedIn, signOutUser]);
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarInitial}>{user?.profile?.name?.[0]?.toUpperCase() ?? 'F'}</Text>
+                        {avatarUrl ? (
+                            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+                        ) : (
+                            <Text style={styles.avatarInitial}>{displayName?.[0]?.toUpperCase() ?? "F"}</Text>
+                        )}
                     </View>
-                    <Text style={styles.name}>{user?.profile?.name ?? 'Invité·e'}</Text>
-                    <Text style={styles.email}>{user?.email ?? 'Non renseigné'}</Text>
+                    <Text style={styles.name}>{displayName}</Text>
+                    <Text style={styles.email}>{emailLabel}</Text>
+                    {bio ? <Text style={styles.bio}>{bio}</Text> : null}
                 </View>
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Compte</Text>
@@ -32,13 +49,19 @@ export function ProfileScreen() {
                     <View style={styles.row}>
                         <View>
                             <Text style={styles.rowTitle}>Statut</Text>
-                            <Text style={styles.rowSubtitle}>
-                                {user ? 'Connecté' : 'Hors connexion'}
-                            </Text>
+                            <Text style={styles.rowSubtitle}>{statusLabel}</Text>
                         </View>
                     </View>
                 </View>
-                <Pressable style={({ pressed }) => [styles.signOutButton, pressed && styles.signOutButtonPressed]} onPress={handleSignOut}>
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.signOutButton,
+                        pressed && !isLoading && styles.signOutButtonPressed,
+                        (isLoading || !isSignedIn) && styles.signOutButtonDisabled,
+                    ]}
+                    disabled={isLoading || !isSignedIn}
+                    onPress={handleSignOut}
+                >
                     <Text style={styles.signOutLabel}>Se déconnecter</Text>
                 </Pressable>
             </ScrollView>
@@ -57,16 +80,21 @@ const styles = StyleSheet.create({
     },
     header: {
         gap: 12,
-        alignItems: 'center',
+        alignItems: "center",
     },
     name: {
         fontSize: 26,
-        fontWeight: '700',
+        fontWeight: "700",
         color: palette.textPrimary,
     },
     email: {
         fontSize: 14,
         color: palette.textMuted,
+    },
+    bio: {
+        fontSize: 14,
+        color: palette.textSecondary,
+        textAlign: "center",
     },
     card: {
         backgroundColor: palette.elevated,
@@ -78,7 +106,7 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontSize: 20,
-        fontWeight: '600',
+        fontWeight: "600",
         color: palette.textPrimary,
     },
     cardSubtitle: {
@@ -87,13 +115,13 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
     },
     rowTitle: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
         color: palette.textPrimary,
     },
     rowSubtitle: {
@@ -104,30 +132,38 @@ const styles = StyleSheet.create({
         backgroundColor: palette.accent,
         borderRadius: 30,
         paddingVertical: 16,
-        alignItems: 'center',
+        alignItems: "center",
     },
     signOutButtonPressed: {
         opacity: 0.8,
     },
+    signOutButtonDisabled: {
+        opacity: 0.5,
+    },
     signOutLabel: {
-        color: '#1C0E08',
+        color: "#1C0E08",
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: "600",
     },
     avatar: {
         width: 84,
         height: 84,
         borderRadius: 42,
         backgroundColor: palette.overlay,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
+        overflow: "hidden",
     },
     avatarInitial: {
         fontSize: 32,
-        fontWeight: '700',
+        fontWeight: "700",
         color: palette.textPrimary,
+    },
+    avatarImage: {
+        width: "100%",
+        height: "100%",
     },
 });
 
