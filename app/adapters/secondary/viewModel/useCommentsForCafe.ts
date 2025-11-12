@@ -15,7 +15,18 @@ import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/u
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
-import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
+import {
+    DEFAULT_COMMUNITY_PROFILE,
+    getCommunityProfile,
+} from "@/app/adapters/secondary/fakeData/communityProfiles";
+import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
+
+const buildFallbackAvatarUrl = (id: string) => `https://i.pravatar.cc/120?u=${encodeURIComponent(id)}`;
+
+const normalizeAuthorId = (authorId: string) => {
+    const parts = authorId.split(":").filter(Boolean);
+    return parts[parts.length - 1] ?? authorId;
+};
 
 export type CommentItemVM = {
     id: string;
@@ -48,11 +59,6 @@ const EMPTY_COMMENTS_RESULT: CommentsSelectorResult = {
 const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () =>
     EMPTY_COMMENTS_RESULT;
 
-const toAuthorName = (authorId: string) => getCommunityProfile(authorId)?.displayName ?? authorId;
-
-const toAvatarUrl = (authorId: string) =>
-    getCommunityProfile(authorId)?.avatarUrl ?? `https://i.pravatar.cc/120?u=${encodeURIComponent(authorId)}`;
-
 const formatRelativeTime = (isoDate: string): string => {
     const createdAt = new Date(isoDate);
     if (Number.isNaN(createdAt.getTime())) {
@@ -81,6 +87,8 @@ const formatRelativeTime = (isoDate: string): string => {
 
 export function useCommentsForCafe(targetId?: CafeId) {
     const dispatch = useDispatch<any>();
+
+    const currentUser = useSelector(selectCurrentUser);
 
     const uiViaHookCreateComment = useCallback(
         ({ targetId, body }: { targetId: CoffeeId; body: string }) => {
@@ -122,26 +130,36 @@ export function useCommentsForCafe(targetId?: CafeId) {
                         !comment.deletedAt &&
                         comment.moderation !== moderationTypes.SOFT_DELETED,
                 )
-                .map((comment) => ({
-                    id: comment.id,
-                    authorName: toAuthorName(comment.authorId),
-                    avatarUrl: toAvatarUrl(comment.authorId),
-                    body: comment.body,
-                    createdAt: comment.createdAt,
-                    relativeTime: formatRelativeTime(comment.createdAt),
-                    isOptimistic: Boolean(comment.optimistic),
-                    transportStatus: (() => {
-                        if (!comment.optimistic) {
-                            return "success" as const;
-                        }
-                        const status = outboxStatusByTempId[comment.id];
-                        if (status === statusTypes.failed) {
-                            return "failed" as const;
-                        }
-                        return "pending" as const;
-                    })(),
+                .map((comment) => {
+                    const normalizedAuthorId = normalizeAuthorId(comment.authorId);
+                    const isCurrentUser = currentUser?.id === comment.authorId;
+                    const communityProfile = getCommunityProfile(normalizedAuthorId);
+
+                    return {
+                        id: comment.id,
+                        authorName: isCurrentUser
+                            ? currentUser.displayName ?? DEFAULT_COMMUNITY_PROFILE.displayName
+                            : communityProfile?.displayName ?? normalizedAuthorId,
+                        avatarUrl: isCurrentUser
+                            ? currentUser.avatarUrl ?? DEFAULT_COMMUNITY_PROFILE.avatarUrl
+                            : communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId),
+                        body: comment.body,
+                        createdAt: comment.createdAt,
+                        relativeTime: formatRelativeTime(comment.createdAt),
+                        isOptimistic: Boolean(comment.optimistic),
+                        transportStatus: (() => {
+                            if (!comment.optimistic) {
+                                return "success" as const;
+                            }
+                            const status = outboxStatusByTempId[comment.id];
+                            if (status === statusTypes.failed) {
+                                return "failed" as const;
+                            }
+                            return "pending" as const;
+                        })(),
+                    };
                 })),
-        [comments, outboxStatusByTempId],
+        [comments, outboxStatusByTempId, currentUser],
     );
 
     useEffect(() => {
