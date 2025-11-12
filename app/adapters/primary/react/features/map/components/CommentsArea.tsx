@@ -159,15 +159,18 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+
     },
     commentHeaderMeta: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
+        flexShrink: 0,
     },
     commentUserHeader: {
         flexDirection: "row",
         alignItems: "center",
+        minWidth:0,
         gap: 8,
     },
     avatar: {

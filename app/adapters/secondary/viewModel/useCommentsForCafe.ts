@@ -156,11 +156,12 @@ export function useCommentsForCafe(targetId?: CafeId) {
                                 return "failed" as const;
                             }
                             return "pending" as const;
-                        })(),
+                        })(), // <- appel de la IIFE
                     };
-                })),
+                }),
         [comments, outboxStatusByTempId, currentUser],
     );
+
 
     useEffect(() => {
         if (!targetId) return;
