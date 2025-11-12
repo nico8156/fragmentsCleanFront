@@ -77,22 +77,24 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
                                     <Text style={styles.userName}>{comment.authorName}</Text>
                                 </View>
                                 <View style={styles.commentHeaderMeta}>
-                                    <View style={styles.statusBadge}>
-                                        <View
-                                            style={[
-                                                styles.statusLight,
-                                                { backgroundColor: STATUS_COLORS[comment.transportStatus] },
-                                            ]}
-                                        />
-                                        <Text style={styles.statusText}>{STATUS_LABELS[comment.transportStatus]}</Text>
-                                    </View>
                                     <SymbolView name="ellipsis" size={18} tintColor="black" />
                                 </View>
                             </View>
                             <View>
                                 <Text style={styles.commentBody}>{comment.body}</Text>
                             </View>
-                            <Text style={styles.dateFromComment}>{comment.relativeTime}</Text>
+                            <View>
+                                <Text style={styles.dateFromComment}>{comment.relativeTime}</Text><View style={styles.statusBadge}>
+                                <View
+                                    style={[
+                                        styles.statusLight,
+                                        { backgroundColor: STATUS_COLORS[comment.transportStatus] },
+                                    ]}
+                                />
+                                <Text style={styles.statusText}>{STATUS_LABELS[comment.transportStatus]}</Text>
+                            </View>
+
+                            </View>
                         </View>
                     ))}
                 </View>
@@ -128,6 +130,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         backgroundColor: palette.textPrimary_1,
         gap: 16,
+        marginBottom: 160,
     },
     headerRow: {
         flexDirection: "row",

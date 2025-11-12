@@ -7,7 +7,7 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 const { width } = Dimensions.get("window");
 
 const CARD_WIDTH = width;
-const CARD_HEIGHT = Math.round(width * 1.3);
+const CARD_HEIGHT = Math.round(width * 1.4);
 
 
 type Props = {

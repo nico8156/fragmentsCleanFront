@@ -40,7 +40,7 @@ import { ClusterBubble } from "@/app/adapters/primary/react/features/map/compone
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type LatLng = { lat: number; lng: number };
 
-const COMMENTS_AREA_HEIGHT = 140; // ajuste si besoin (140–180)
+const COMMENTS_AREA_HEIGHT = 50; // ajuste si besoin (140–180)
 
 
 const expandRegion = (region: Region, factor = 0.2): Region => ({
@@ -304,7 +304,7 @@ export function MapScreen() {
                                     ref={scrollRef}
                                     style={styles.sheetContent}
                                     keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT + 16 }}
+                                    contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT  }}
                                 >
                                     <BottomSheetHeader name={coffee?.name} coffeeId={selectedCoffeeId ?? undefined}/>
                                     <BottomSheetCat

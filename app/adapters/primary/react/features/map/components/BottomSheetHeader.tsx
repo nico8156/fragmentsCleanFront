@@ -26,7 +26,7 @@ const BottomSheetHeader = ({ name, coffeeId }: Props) => {
     return (
         <View style={styles.container}>
             <View style={styles.border}>
-                <SvgComponent />
+                <SvgComponent coffeeId={coffeeId}/>
             </View>
             <View style={styles.info}>
                 <Text style={styles.name}>{name}</Text>
