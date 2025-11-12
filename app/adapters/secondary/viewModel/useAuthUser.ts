@@ -24,7 +24,7 @@ const selectPrimaryEmail = (user: AppUser | undefined): string | undefined => {
 };
 
 export function useAuthUser() {
-    const dispatch = useDispatch<AppDispatchWl>();
+    const dispatch = useDispatch<any>();
 
     const status = useSelector(selectAuthStatus);
     const error = useSelector(selectAuthError);
