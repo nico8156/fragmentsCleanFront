@@ -1,36 +1,45 @@
-import { ActivityIndicator, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import { signInWithProvider } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
-import { selectAuthError, selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
+import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { useCallback } from "react";
+import { FontAwesome } from "@expo/vector-icons";
+
+import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 
 export function LoginScreen() {
-    const dispatch = useDispatch<any>();
-    const status = useSelector(selectAuthStatus);
-    const error = useSelector(selectAuthError);
+    const { signInWithGoogle, isLoading, error } = useAuthUser();
 
-    const loading = status === "loading";
-
-    const handlePress = () => {
-        if (loading) return;
-        dispatch(signInWithProvider({ provider: "google", scopes: ["openid", "email", "profile"] }));
-    };
+    const handlePress = useCallback(() => {
+        signInWithGoogle();
+    }, [signInWithGoogle]);
 
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.container}>
-                <Image
-                    style={styles.logo}
-                    source={{ uri: "https://cdn.simpleicons.org/google/4285F4" }}
-                />
+                <View style={styles.logoContainer}>
+                    <FontAwesome name="exclamation" size={24} color="black" />
+                </View>
                 <Text style={styles.title}>Connexion</Text>
                 <Text style={styles.subtitle}>
                     Continue avec ton compte Google pour retrouver tes cafés préférés.
                 </Text>
-                <Pressable style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]} onPress={handlePress}>
-                    {loading ? (
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.button,
+                        pressed && styles.buttonPressed,
+                        isLoading && styles.buttonDisabled,
+                    ]}
+                    onPress={handlePress}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.buttonText}>Se connecter avec Google</Text>
+                        <View style={styles.buttonContent}>
+                            <Text style={styles.buttonText}>Se connecter avec</Text>
+                            <View style={styles.googleLabel}>
+                                <Text style={styles.googleText}>Google</Text>
+                                <FontAwesome name="google" size={24} color="black" />
+                            </View>
+                        </View>
                     )}
                 </Pressable>
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -51,11 +60,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         gap: 24,
     },
-    logo: {
+    logoContainer: {
         width: 80,
         height: 80,
         borderRadius: 40,
         backgroundColor: "#fff",
+        alignItems: "center",
+        justifyContent: "center",
     },
     title: {
         fontSize: 28,
@@ -77,9 +88,31 @@ const styles = StyleSheet.create({
     buttonPressed: {
         opacity: 0.7,
     },
+    buttonDisabled: {
+        opacity: 0.8,
+    },
+    buttonContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
     buttonText: {
         color: "#fff",
         fontWeight: "600",
+        fontSize: 16,
+    },
+    googleLabel: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "#fff",
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    googleText: {
+        fontWeight: "700",
+        color: "#1a1a1a",
         fontSize: 16,
     },
     error: {
