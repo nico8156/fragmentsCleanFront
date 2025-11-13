@@ -8,7 +8,7 @@ import {
 } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 
 export const ticketRetrieved = createAction<TicketRetrievedPayload>("SERVER/TICKET/RETRIEVED");
-export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>('UI/TICKET/CREATE_OPTIMISTIC_TICKET');
+export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null; imageRef?: string }>('UI/TICKET/CREATE_OPTIMISTIC_TICKET');
 export const ticketSetLoading = createAction<{ ticketId: TicketId }>('ticketSetLoading');
 export const ticketSetError = createAction<{ ticketId: TicketId; message: string }>('ticketSetError');
 export const ticketReconciledConfirmed = createAction<TicketReconciledConfirmedPayload>('SERVER/TICKET/RECONCILED_CONFIRMED');
@@ -33,13 +33,18 @@ export const ticketWlReducer = createReducer(
                     amountCents: payload.amountCents ?? prev?.amountCents,
                     currency: payload.currency ?? prev?.currency,
                     ticketDate: payload.ticketDate ?? prev?.ticketDate,
+                    merchantName: payload.merchantName ?? prev?.merchantName,
+                    merchantAddress: payload.merchantAddress ?? prev?.merchantAddress,
+                    paymentMethod: payload.paymentMethod ?? prev?.paymentMethod,
+                    imageRef: payload.imageRef ?? prev?.imageRef,
+                    lineItems: payload.lineItems ?? prev?.lineItems,
                     rejectionReason: payload.rejectionReason ?? prev?.rejectionReason,
                     loading: "success",
                     error: null,
                     optimistic: false,
                 }
             })
-            .addCase(ticketOptimisticCreated, (state, { payload }: PayloadAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null }>) => {
+            .addCase(ticketOptimisticCreated, (state, { payload }: PayloadAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null; imageRef?: string }>) => {
                 state.byId[payload.ticketId] = {
                     ticketId: payload.ticketId,
                     status: payload.status ?? "ANALYZING", // tu peux mettre "CAPTURED" si tu préfères
@@ -47,6 +52,7 @@ export const ticketWlReducer = createReducer(
                     updatedAt: payload.at,
                     createdAt: payload.at,
                     ocrText: payload.ocrText,
+                    imageRef: payload.imageRef,
                     loading: "success",
                     error: null,
                     optimistic: true,
@@ -67,6 +73,10 @@ export const ticketWlReducer = createReducer(
                     amountCents: server.amountCents,
                     currency: server.currency,
                     ticketDate: server.ticketDate,
+                    merchantName: server.merchantName ?? prev.merchantName,
+                    merchantAddress: server.merchantAddress ?? prev.merchantAddress,
+                    paymentMethod: server.paymentMethod ?? prev.paymentMethod,
+                    lineItems: server.lineItems ?? prev.lineItems,
                     optimistic: false,
                     loading: "success",
                     error: null,
@@ -85,6 +95,8 @@ export const ticketWlReducer = createReducer(
                     version: server.version,
                     updatedAt: server.updatedAt,
                     rejectionReason: server.reason,
+                    merchantName: server.merchantName ?? prev.merchantName,
+                    merchantAddress: server.merchantAddress ?? prev.merchantAddress,
                     optimistic: false,
                     loading: "success",
                     error: null,
