@@ -1,0 +1,10 @@
+%% Article retrieval flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI: Home/ArticleScreen] --> Thunk{articleRetrievalBySlug<br/>articlesListRetrieval}
+    Thunk --> Gateway[gateway.articles]
+    Gateway --> Reducer[articleWl.reducer]
+    Reducer --> Cache[State: byId/bySlug/listsByLocale]
+    Cache --> Selector[selectArticlesForLocale]
+    Selector --> VM[useArticlesHome]
+    VM --> UI

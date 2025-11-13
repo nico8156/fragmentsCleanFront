@@ -1,0 +1,10 @@
+%% Opening hours flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[Boot / CafeDetails] --> Thunk[onOpeningHourRetrieval]
+    Thunk --> Gateway[gateway.openingHours]
+    Gateway --> Reducer[openingHours.reducer]
+    Reducer --> State[byCoffeeIdDayWindow]
+    State --> Selector[selectHoursByDayVM]
+    Selector --> VM[useCafeOpenNow]
+    VM --> UI

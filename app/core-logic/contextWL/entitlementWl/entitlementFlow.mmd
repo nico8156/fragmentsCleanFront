@@ -1,0 +1,11 @@
+%% Entitlement flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI / Boot] --> Retrieval[entitlementsRetrieval]
+    Retrieval --> Gateway[gateway.entitlements]
+    Gateway --> Reducer[entitlementWl.reducer]
+    Reducer --> State[byUser + thresholds]
+    TicketAck[onTicketConfirmedAck] --> Listener[ackEntitlementsListener]
+    Listener --> Reducer
+    State --> Selector[selectUserEntitlements]
+    Selector --> UI

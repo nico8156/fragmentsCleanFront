@@ -1,0 +1,10 @@
+%% Coffee context flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI: Map/Home/Profile] --> Thunk{coffeeRetrieval<br/>coffeeGlobalRetrieval<br/>coffeesSearch}
+    Thunk --> Gateway[gateway.coffees]
+    Gateway --> Reducer[coffeeWl.reducer]
+    Reducer --> State[byId / ids / byCity]
+    State --> Selector[selectCoffeeFullVM & friends]
+    Selector --> VM[useCafeFull, useCafeOpenNow, useCoffeesForMarkers]
+    VM --> UI
