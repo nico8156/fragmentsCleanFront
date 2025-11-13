@@ -1,0 +1,15 @@
+%% Location flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI / runtime] --> Listener[userLocationListenerFactory]
+    Listener -->|permissionCheckRequested| Permission[gateways.locations.getPermissionStatus]
+    Listener -->|requestPermission|getPerm
+    Listener -->|getOnceRequested|getCurrentPosition
+    Listener -->|startWatchRequested|Watch[watchPosition subscription]
+    Watch --> Reducer[location.reducer]
+    getPerm --> Reducer
+    getCurrentPosition --> Reducer
+    Reducer --> State[LocationStateWl]
+    State --> Selector[selectUserCoords / status]
+    Selector --> VM[useUserLocationFromStore, useDistanceToPoint]
+    VM --> UI

@@ -1,0 +1,12 @@
+%% Outbox flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI intent (like/comment/ticket)] --> Optimistic[optimistic reducer]
+    Optimistic --> Enqueue[enqueueCommitted]
+    Enqueue --> Process[outboxProcessOnce]
+    Process --> Gateway[likes/comments/tickets GW]
+    Gateway --> Ack[ACK listener]
+    Ack --> Drop[dropCommitted]
+    Process -->|error| Undo[undo action]
+    Undo --> State
+    Drop --> State

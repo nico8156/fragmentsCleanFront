@@ -1,0 +1,9 @@
+%% Coffee photos flow
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    Intent[UI: CafeDetails carousel] --> Thunk[onCfPhotoRetrieval]
+    Thunk --> Gateway[gateway.cfPhotos]
+    Gateway --> Reducer[cfPhoto.reducer]
+    Reducer --> State[byCoffeeId]
+    State --> Selector[selectPhotosForCoffeeId]
+    Selector --> UI
