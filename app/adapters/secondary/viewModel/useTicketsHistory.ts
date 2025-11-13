@@ -16,6 +16,7 @@ export type TicketHistoryItemVM = {
     rejectionReason?: string;
     lineItems?: TicketAggregate["lineItems"];
     paymentMethod?: string;
+    currency?: string;
     transportStatus: "pending" | "success" | "failed";
 };
 
