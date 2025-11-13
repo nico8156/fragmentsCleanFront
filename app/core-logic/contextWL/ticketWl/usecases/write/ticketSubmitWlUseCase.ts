@@ -34,6 +34,7 @@ export const ticketSubmitUseCaseFactory = (deps: {
                     at,
                     status: "ANALYZING",
                     ocrText: action.payload.ocrText ?? undefined,
+                    imageRef: action.payload.imageRef,
                 })
             );
 

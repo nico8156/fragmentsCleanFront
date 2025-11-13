@@ -9,6 +9,12 @@ export type CurrencyCode = "EUR" | "USD" | "GBP" | "CHF" | string;
 // Statuts côté client (miroir du serveur)
 export type TicketStatus = "CAPTURED" | "ANALYZING" | "CONFIRMED" | "REJECTED";
 
+export interface TicketLineItem {
+    label: string;
+    quantity?: number;
+    amountCents?: number;
+}
+
 // Agrégat (state local du ticket)
 export interface TicketAggregate {
     ticketId: TicketId;
@@ -21,6 +27,11 @@ export interface TicketAggregate {
     amountCents?: number;
     currency?: CurrencyCode;
     ticketDate?: ISODate;
+    merchantName?: string;
+    merchantAddress?: string;
+    paymentMethod?: string;
+    imageRef?: string;
+    lineItems?: TicketLineItem[];
     rejectionReason?: string;
 
     // UX
@@ -44,6 +55,11 @@ export interface TicketRetrievedPayload {
     amountCents?: number;
     currency?: CurrencyCode;
     ticketDate?: ISODate;
+    merchantName?: string;
+    merchantAddress?: string;
+    paymentMethod?: string;
+    imageRef?: string;
+    lineItems?: TicketLineItem[];
     rejectionReason?: string;
 }
 
@@ -61,6 +77,10 @@ export interface TicketReconciledConfirmedPayload {
         currency: CurrencyCode;
         ticketDate: ISODate;
         updatedAt: ISODate;
+        merchantName?: string;
+        merchantAddress?: string;
+        paymentMethod?: string;
+        lineItems?: TicketLineItem[];
     };
     userId: UserId; // nécessaire pour alimenter les entitlements
 }
@@ -72,6 +92,8 @@ export interface TicketReconciledRejectedPayload {
         reason: string;
         version: number;
         updatedAt: ISODate;
+        merchantName?: string;
+        merchantAddress?: string;
     };
     userId: UserId;
 }
@@ -95,6 +117,10 @@ export interface TicketConfirmedAck {
         currency: string;
         ticketDate: ISODate;
         updatedAt: ISODate;
+        merchantName?: string;
+        merchantAddress?: string;
+        paymentMethod?: string;
+        lineItems?: TicketLineItem[];
     };
 }
 
@@ -107,5 +133,7 @@ export interface TicketRejectedAck {
         reason: string;
         version: number;
         updatedAt: ISODate;
+        merchantName?: string;
+        merchantAddress?: string;
     };
 }

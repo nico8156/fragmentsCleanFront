@@ -16,6 +16,9 @@ import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {likeToggleUseCaseFactory} from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import {ackLikesListenerFactory} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import { FakeCommentsWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
+import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
+import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
+import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 
 let storeRef: ReduxStoreWl | null = null;
 
@@ -45,6 +48,8 @@ export default function RootLayout() {
                     helpers,
                 }).middleware;
                 const likeAckMiddleware = ackLikesListenerFactory().middleware;
+                const ticketAckMiddleware = ackTicketsListenerFactory();
+                const entitlementAckMiddleware = ackEntitlementsListener();
                 const outboxMiddleware = processOutboxFactory({
                     gateways,
                     helpers,
@@ -62,6 +67,8 @@ export default function RootLayout() {
                         likeAckMiddleware,
                         outboxMiddleware,
                         ticketSubmitMiddleware,
+                        ticketAckMiddleware,
+                        entitlementAckMiddleware,
                         authListenerFactory({ gateways, helpers: {} }),
                         userLocationListenerFactory({ gateways, helpers: {} }),
                     ],
@@ -84,6 +91,17 @@ export default function RootLayout() {
                             () => createdStore.getState().aState.currentUser?.id ?? "anonymous",
                         );
                     }
+                }
+
+                const ticketsGateway = gateways.tickets;
+                if (ticketsGateway && "setAckDispatcher" in ticketsGateway) {
+                    const fakeGateway = ticketsGateway as FakeTicketsGateway;
+                    fakeGateway.setAckDispatcher((action) => {
+                        createdStore.dispatch(action);
+                    });
+                    fakeGateway.setCurrentUserIdGetter(
+                        () => createdStore.getState().aState.currentUser?.id ?? "anonymous",
+                    );
                 }
 
                 return createdStore;
