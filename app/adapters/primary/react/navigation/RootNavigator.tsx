@@ -1,13 +1,18 @@
-import {NavigationContainer, DefaultTheme, LinkingOptions, NavigationIndependentTree} from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, LinkingOptions, NavigationIndependentTree } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
+
 import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
-import { RootStackParamList, RootTabsParamList } from "@/app/adapters/primary/react/navigation/types";
+import {
+    ProfileStackParamList,
+    RootStackParamList,
+    RootTabsParamList,
+} from "@/app/adapters/primary/react/navigation/types";
 import { HomeScreen } from "@/app/adapters/primary/react/features/home/screens/HomeScreen";
-import {MapScreen} from "@/app/adapters/primary/react/features/map/screens/MapScreen";
+import { MapScreen } from "@/app/adapters/primary/react/features/map/screens/MapScreen";
 import { RewardsScreen } from "@/app/adapters/primary/react/features/rewards/screens/RewardsScreen";
 import { ProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/ProfileScreen";
 import { CafeDetailsScreen } from "@/app/adapters/primary/react/features/cafes/screens/CafeDetailsScreen";
@@ -16,9 +21,14 @@ import { ScanTicketScreen } from "@/app/adapters/primary/react/features/scan/scr
 import { LoginScreen } from "@/app/adapters/primary/react/features/auth/screens/LoginScreen";
 import { SearchScreen } from "@/app/adapters/primary/react/features/search/screens/SearchScreen";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { EditProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/EditProfileScreen";
+import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
+import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
+import { AppSettingsScreen } from "@/app/adapters/primary/react/features/profile/screens/AppSettingsScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
 const linking: LinkingOptions<RootStackParamList> = {
     prefixes: ["fragments://"],
@@ -32,7 +42,16 @@ const linking: LinkingOptions<RootStackParamList> = {
                     Home: "home",
                     Map: "map",
                     Rewards: "rewards",
-                    Profile: "profile",
+                    Profile: {
+                        path: "profile",
+                        screens: {
+                            ProfileHome: "",
+                            EditProfile: "edit",
+                            Tickets: "tickets",
+                            Favorites: "favorites",
+                            AppSettings: "settings",
+                        },
+                    },
                 },
             },
         },
@@ -52,6 +71,18 @@ const theme = {
         notification: palette.accent,
     },
 };
+
+function ProfileNavigator() {
+    return (
+        <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+            <ProfileStack.Screen name="ProfileHome" component={ProfileScreen} />
+            <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+            <ProfileStack.Screen name="Tickets" component={TicketsScreen} />
+            <ProfileStack.Screen name="Favorites" component={FavoritesScreen} />
+            <ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} />
+        </ProfileStack.Navigator>
+    );
+}
 
 function TabsNavigator() {
     return (
@@ -84,7 +115,7 @@ function TabsNavigator() {
             <Tabs.Screen name="Home" component={HomeScreen} options={{ title: "Home" }} />
             <Tabs.Screen name="Map" component={MapScreen} options={{ title: "Carte" }} />
             <Tabs.Screen name="Rewards" component={RewardsScreen} options={{ title: "Pass" }} />
-            <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: "Profil" }} />
+            <Tabs.Screen name="Profile" component={ProfileNavigator} options={{ title: "Profil" }} />
         </Tabs.Navigator>
     );
 }
