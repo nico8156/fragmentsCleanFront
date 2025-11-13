@@ -56,6 +56,7 @@ export function ProfileScreen() {
     }, [isSignedIn, signOutUser]);
 
     const handlePress = useCallback((page:string)=>{
+        //TODO navigate to relevant screen
         console.log(page)
     }, [])
 
