@@ -12,7 +12,7 @@ const DEFAULT_UNSPLASH_AVATAR =
 export const COMMUNITY_PROFILES: Record<string, CommunityProfile> = {
     "camille.dupont": {
         id: "camille.dupont",
-        displayName: "Camille \"Flat White\" Dupont",
+        displayName: "Camille Dupont",
         avatarUrl: DEFAULT_UNSPLASH_AVATAR,
         email: "camille.dupont@example.com",
         bio: "Toujours partante pour découvrir un nouveau torréfacteur artisanal.",

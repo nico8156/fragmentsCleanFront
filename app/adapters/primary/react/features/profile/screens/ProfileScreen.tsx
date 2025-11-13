@@ -1,8 +1,37 @@
-import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import {Image, Pressable, StyleSheet, Text, View} from "react-native";
 import { useCallback } from "react";
-
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
+import {SymbolView} from "expo-symbols";
+import SvgComponent from "@/app/adapters/primary/react/features/map/components/SvgComponent";
+import {SFSymbols6_0} from "sf-symbols-typescript";
+
+const data : {
+    symbolName:SFSymbols6_0,
+    title:string,
+    page:string
+}[] = [
+    {
+        symbolName:"pencil",
+        title:"Edit Profile",
+        page:"EditProfileScreen"
+    },
+    {
+        symbolName:"list.bullet.rectangle.portrait",
+        title:"Tickets",
+        page:"TicketsScreen"
+    },
+    {
+        symbolName:"heart.fill",
+        title:"Favorites",
+        page:"FavoritesScreen"
+    },
+    {
+        symbolName:"dial.low",
+        title:"Settings",
+        page:"AppSettingScreen"
+    },
+]
 
 export function ProfileScreen() {
     const {
@@ -26,50 +55,127 @@ export function ProfileScreen() {
         signOutUser();
     }, [isSignedIn, signOutUser]);
 
+    const handlePress = useCallback((page:string)=>{
+        console.log(page)
+    }, [])
+
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.header}>
-                    <View style={styles.avatar}>
-                        {avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-                        ) : (
-                            <Text style={styles.avatarInitial}>{displayName?.[0]?.toUpperCase() ?? "F"}</Text>
-                        )}
-                    </View>
-                    <Text style={styles.name}>{displayName}</Text>
-                    <Text style={styles.email}>{emailLabel}</Text>
-                    {bio ? <Text style={styles.bio}>{bio}</Text> : null}
+        <View style={{flex:1, backgroundColor:palette.bg_dark_90}}>
+                <View style={styles.masterHeader}>
+                    <Text style={styles.title}>PROFILE</Text>
                 </View>
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Compte</Text>
-                    <Text style={styles.cardSubtitle}>
-                        Gère tes préférences, ta sécurité et l’accès à tes cafés favoris.
-                    </Text>
-                    <View style={styles.row}>
-                        <View>
-                            <Text style={styles.rowTitle}>Statut</Text>
-                            <Text style={styles.rowSubtitle}>{statusLabel}</Text>
-                        </View>
-                    </View>
+                <View style={styles.profile}>
+                    <Image source={{ uri: avatarUrl }} style={{width:150, height:150, borderRadius:75}}/>
+                    <Text style={styles.profileName}>{displayName}</Text>
+                    <Text style={styles.profileEmail}>{emailLabel}</Text>
                 </View>
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.signOutButton,
-                        pressed && !isLoading && styles.signOutButtonPressed,
-                        (isLoading || !isSignedIn) && styles.signOutButtonDisabled,
-                    ]}
-                    disabled={isLoading || !isSignedIn}
-                    onPress={handleSignOut}
-                >
-                    <Text style={styles.signOutLabel}>Se déconnecter</Text>
-                </Pressable>
-            </ScrollView>
-        </SafeAreaView>
+                <View style={{flexDirection:"row",justifyContent:"center", alignItems:"center", gap:20}}>
+                    <SvgComponent coffeeId={undefined} width={80} height={80}/>
+                    <Text style={{color:palette.primary_90, fontWeight:"bold"}}>Coffee Lover</Text>
+                </View>
+                <View style={styles.menu}>
+                    {data.map((item,index)=>(
+                        <Pressable key={index}  onPress={()=>handlePress(item.page)}>
+                            <View style={styles.selector}>
+                                <SymbolView name={item.symbolName as SFSymbols6_0} size={24} weight={"bold"} tintColor={palette.textPrimary}/>
+                                <Text style={styles.selectorTitle}>{item.title}</Text>
+                            </View>
+                        </Pressable>
+                    ))}
+                </View>
+
+            {/*<ScrollView contentContainerStyle={styles.container}>*/}
+            {/*    <View style={styles.header}>*/}
+            {/*        <View style={styles.avatar}>*/}
+            {/*            {avatarUrl ? (*/}
+            {/*                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />*/}
+            {/*            ) : (*/}
+            {/*                <Text style={styles.avatarInitial}>{displayName?.[0]?.toUpperCase() ?? "F"}</Text>*/}
+            {/*            )}*/}
+            {/*        </View>*/}
+            {/*        <Text style={styles.name}>{displayName}</Text>*/}
+            {/*        <Text style={styles.email}>{emailLabel}</Text>*/}
+            {/*        {bio ? <Text style={styles.bio}>{bio}</Text> : null}*/}
+            {/*    </View>*/}
+            {/*    <View style={styles.card}>*/}
+            {/*        <Text style={styles.cardTitle}>Compte</Text>*/}
+            {/*        <Text style={styles.cardSubtitle}>*/}
+            {/*            Gère tes préférences, ta sécurité et l’accès à tes cafés favoris.*/}
+            {/*        </Text>*/}
+            {/*        <View style={styles.row}>*/}
+            {/*            <View>*/}
+            {/*                <Text style={styles.rowTitle}>Statut</Text>*/}
+            {/*                <Text style={styles.rowSubtitle}>{statusLabel}</Text>*/}
+            {/*            </View>*/}
+            {/*        </View>*/}
+            {/*    </View>*/}
+            {/*    <Pressable*/}
+            {/*        style={({ pressed }) => [*/}
+            {/*            styles.signOutButton,*/}
+            {/*            pressed && !isLoading && styles.signOutButtonPressed,*/}
+            {/*            (isLoading || !isSignedIn) && styles.signOutButtonDisabled,*/}
+            {/*        ]}*/}
+            {/*        disabled={isLoading || !isSignedIn}*/}
+            {/*        onPress={handleSignOut}*/}
+            {/*    >*/}
+            {/*        <Text style={styles.signOutLabel}>Se déconnecter</Text>*/}
+            {/*    </Pressable>*/}
+            {/*</ScrollView>*/}
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    masterHeader:{
+        backgroundColor: palette.primary_50,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingBottom:12,
+        paddingTop:45,
+    },
+    title:{
+      fontSize: 32,
+        fontWeight: "700",
+        color: palette.text_90,
+    },
+    profile:{
+        alignItems: "center",
+        paddingVertical: 20,
+        gap:10
+    },
+    profileName:{
+        fontSize: 28,
+        fontWeight: "600",
+        color: palette.text_90,
+    },
+    profileEmail:{
+        fontSize: 20,
+        fontWeight: "400",
+        color: palette.text_90,
+    },
+    menu:{
+        flex:1,
+        justifyContent:"center",
+        backgroundColor:palette.bg_dark_30,
+        borderRadius:12,
+        padding:20,
+        gap:10,
+    },
+    selector:{
+        backgroundColor:palette.bg_dark_10,
+        flexDirection:"row",
+        gap:20,
+        borderWidth:1,
+        borderColor:palette.border,
+        borderRadius:16,
+        paddingHorizontal:20,
+        paddingVertical:14,
+    },
+    selectorTitle:{
+        fontSize: 24,
+        fontWeight: "400",
+        color: palette.text_90,
+    },
     safeArea: {
         flex: 1,
         backgroundColor: palette.background,
