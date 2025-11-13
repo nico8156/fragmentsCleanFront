@@ -1,4 +1,4 @@
-import { StyleSheet, Switch, Text, View } from "react-native";
+import {Pressable, StyleSheet, Switch, Text, View} from "react-native";
 import { useMemo, useState } from "react";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
@@ -30,21 +30,34 @@ export function AppSettingsScreen() {
                         <Text style={styles.rowSubtitle}>{statusLabel}</Text>
                     </View>
                 </View>
-                <View style={styles.row}>
-                    <View>
-                        <Text style={styles.rowTitle}>Déconnexion</Text>
-                        <Text style={styles.rowSubtitle}>Termine ta session en toute sécurité</Text>
-                    </View>
-                    <Text style={styles.signOut} onPress={signOut}>
+            </ProfileCard>
+                <Pressable onPress={signOut} style={[styles.col,styles.logoutButton]}>
+                    <Text style={styles.signOut} >
                         Se déconnecter
                     </Text>
-                </View>
-            </ProfileCard>
+                    <View>
+                        <Text style={styles.rowSubtitle}>Termine ta session en toute sécurité</Text>
+                    </View>
+                </Pressable>
         </ProfileLayout>
     );
 }
 
 const styles = StyleSheet.create({
+    logoutButton:{
+      backgroundColor: palette.primary_30,
+        padding: 16,
+        borderRadius: 12,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: palette.primary_50,
+    },
+    col:{
+      flexDirection: "column",
+        gap: 12,
+        justifyContent: "center",
+        alignItems: "center",
+    },
     row: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -63,6 +76,7 @@ const styles = StyleSheet.create({
         color: palette.textSecondary,
     },
     signOut: {
+        fontSize: 20,
         color: palette.accent,
         fontWeight: "600",
     },

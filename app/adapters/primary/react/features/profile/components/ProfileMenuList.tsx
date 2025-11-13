@@ -23,9 +23,12 @@ export function ProfileMenuList<TDestination extends string>({
         <View style={styles.wrapper}>
             {items.map((item) => (
                 <Pressable key={item.destination} onPress={() => onNavigate(item.destination)}>
-                    <View style={styles.row}>
-                        <SymbolView name={item.symbolName} size={24} weight={"bold"} tintColor={palette.textPrimary} />
-                        <Text style={styles.label}>{item.title}</Text>
+                    <View style={[styles.row, {justifyContent:"space-between"}]}>
+                        <View style={{flexDirection:'row', gap:16}}>
+                            <SymbolView name={item.symbolName} size={24} weight={"bold"} tintColor={palette.textPrimary} />
+                            <Text style={styles.label}>{item.title}</Text>
+                        </View>
+                        <SymbolView name={"chevron.forward"} tintColor={palette.textPrimary}/>
                     </View>
                 </Pressable>
             ))}
