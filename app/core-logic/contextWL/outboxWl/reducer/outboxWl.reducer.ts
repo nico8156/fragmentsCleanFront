@@ -7,15 +7,16 @@ import {
     markFailed,
     markProcessing,
 } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import { outboxRehydrateCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-const initialState:AppStateWl["outbox"] = {
+export const initialOutboxState: AppStateWl["outbox"] = {
     byId: {},
     queue: [],
     byCommandId: {},
 }
 
 export const outboxWlReducer = createReducer(
-    initialState,
+    initialOutboxState,
     (builder) => {
         builder
             .addCase(enqueueCommitted, (state, action) => {
@@ -64,5 +65,8 @@ export const outboxWlReducer = createReducer(
                 if (!r) return;
                 delete state.byId[r];
                 delete state.byCommandId[commandId];
+            })
+            .addCase(outboxRehydrateCommitted, (state, action) => {
+                return action.payload;
             })
     })
