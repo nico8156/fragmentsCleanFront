@@ -24,6 +24,13 @@ L'application démarre dans `_layout.tsx` : création du store, injection des li
 
 Cette boucle assure une propagation unidirectionnelle (intent → middleware → reducer → selectors → UI) fidèle à Redux puriste.
 
+## Runtime de reprise & synchronisation offline-first
+
+- `outboxWl/runtime/syncRuntime.ts` charge la méta sync persistée (`cursor`, `sessionId`, `lastActiveAt`, `appliedEventIds`), rejoue les events locaux et décide automatiquement si un `syncDelta` ou `syncFull` doit être déclenché (heuristique idle/session + fallback `cursorUnknown`).【F:app/core-logic/contextWL/outboxWl/runtime/syncRuntime.ts†L1-L140】
+- `outboxWl/runtime/eventsApplier.ts` applique les events idempotents (likes/comments/tickets) et court-circuite les doublons via `appliedEventIds` persistés.【F:app/core-logic/contextWL/outboxWl/runtime/eventsApplier.ts†L1-L54】
+- `FakeEventsGateway` fournit des scénarios déterministes pour la démo sans backend et alimente `gateways.events`.【F:app/adapters/secondary/gateways/fake/fakeEventsGateway.ts†L1-L103】【F:app/adapters/primary/react/gateways-config/gatewaysConfiguration.ts†L1-L58】
+- Les listeners RN (`netInfo.adapter`, `appState.adapter`) déclenchent maintenant `replayLocal → outboxProcessOnce → decideAndSync` à la reprise et relancent l'outbox lors du retour online (debounce 500 ms).【F:app/_layout.tsx†L1-L150】【F:app/adapters/primary/react/gateways-config/netInfo.adapter.ts†L1-L48】【F:app/adapters/primary/react/gateways-config/appState.adapter.ts†L1-L33】
+
 ## Cartographie des contexts (bounded contexts)
 
 Chaque dossier dispose maintenant d'un README + d'un diagramme `.mmd` détaillant son flux :

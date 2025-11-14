@@ -6,7 +6,7 @@ module.exports = function (api) {
             // si tu utilises "@/..."
             ['module-resolver', {
                 root: ['./'],
-                alias: { '@': './' },
+                alias: { '@': './', ulid: './app/lib/ulid' },
                 extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             }],
             // à garder en dernier si tu utilises reanimated

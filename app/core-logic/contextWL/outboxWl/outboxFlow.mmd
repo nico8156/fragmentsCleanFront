@@ -10,3 +10,9 @@ flowchart LR
     Process -->|error| Undo[undo action]
     Undo --> State
     Drop --> State
+
+    AppActive[AppState active] --> Replay[replayLocal()]
+    Replay --> Process
+    Replay --> Decide[decideAndSync()]
+    Decide --> Gateway
+    NetOnline[NetInfo online] --> Process

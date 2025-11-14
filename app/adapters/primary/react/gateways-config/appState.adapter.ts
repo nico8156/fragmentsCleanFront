@@ -1,8 +1,18 @@
 import { AppState, AppStateStatus } from "react-native";
-import type { Store } from "@reduxjs/toolkit";
-import {appBecameActive, appBecameBackground, appBecameInactive} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import {
+    appBecameActive,
+    appBecameBackground,
+    appBecameInactive,
+} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
-export function mountAppStateAdapter(store: Store) {
+type AppStateAdapterOptions = {
+    onActive?: () => void;
+};
+
+type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
+
+export function mountAppStateAdapter(store: DispatchCapableStore, options?: AppStateAdapterOptions) {
     let mounted = true;
 
     const handler = (status: AppStateStatus) => {
@@ -10,6 +20,7 @@ export function mountAppStateAdapter(store: Store) {
         switch (status) {
             case "active":
                 store.dispatch(appBecameActive());
+                options?.onActive?.();
                 break;
             case "background":
                 store.dispatch(appBecameBackground());
