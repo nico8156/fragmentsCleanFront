@@ -1,8 +1,9 @@
 import { createSyncRuntime } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntime";
 import { MemorySyncMetaStorage, createDefaultSyncMeta } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
-import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/runtime/eventsGateway";
+import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
 import { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const buildStore = (sessionId = "user:1") => {
     const state = {
@@ -131,7 +132,7 @@ describe("syncRuntime decideAndSync", () => {
     it("does not re-apply events already stored", async () => {
         const event: SyncEvent = {
             id: "evt-1",
-            happenedAt: new Date().toISOString(),
+            happenedAt: parseToISODate(new Date().toISOString()),
             type: "like.addedAck",
             payload: {
                 commandId: "cmd-demo",

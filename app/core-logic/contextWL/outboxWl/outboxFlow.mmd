@@ -1,18 +1,17 @@
-%% Outbox flow
 %%{init: {"theme": "neutral"}}%%
 flowchart LR
-    Intent[UI intent (like/comment/ticket)] --> Optimistic[optimistic reducer]
-    Optimistic --> Enqueue[enqueueCommitted]
-    Enqueue --> Process[outboxProcessOnce]
-    Process --> Gateway[likes/comments/tickets GW]
-    Gateway --> Ack[ACK listener]
-    Ack --> Drop[dropCommitted]
-    Process -->|error| Undo[undo action]
-    Undo --> State
-    Drop --> State
+    intent["UI intent (like / comment / ticket)"] --> optimistic["Optimistic reducer"]
+    optimistic --> enqueue[enqueueCommitted]
+    enqueue --> process[outboxProcessOnce]
+    process --> gateway["likes / comments / tickets GW"]
+    gateway --> ack["ACK listener"]
+    ack --> drop[dropCommitted]
+    process -- error --> undo["undo action"]
+    undo --> stateNode["State"]
+    drop --> stateNode
 
-    AppActive[AppState active] --> Replay[replayLocal()]
-    Replay --> Process
-    Replay --> Decide[decideAndSync()]
-    Decide --> Gateway
-    NetOnline[NetInfo online] --> Process
+    appActive["AppState active"] --> replay["replayLocal()"]
+    replay --> process
+    replay --> decide["decideAndSync()"]
+    decide --> gateway
+    netOnline["NetInfo online"] --> process

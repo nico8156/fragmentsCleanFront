@@ -1,5 +1,5 @@
 import { ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { SyncEventsGateway, isCursorUnknownError } from "@/app/core-logic/contextWL/outboxWl/runtime/eventsGateway";
+import { SyncEventsGateway, isCursorUnknownError } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import {
     createDefaultSyncMeta,
     SyncMetaStorage,

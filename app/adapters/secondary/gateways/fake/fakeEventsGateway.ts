@@ -1,10 +1,24 @@
 import { ulid } from "ulid";
-import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/runtime/eventsGateway";
+import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {parseToTicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
 
 const minutesAgo = (base: number, minutes: number) => new Date(base - minutes * 60_000).toISOString();
 
 export class FakeEventsGateway implements SyncEventsGateway {
+    //TODO link with data available :
+    // 1 coffees : /Users/nicolasmaldiney/fragmentsCleanFront/assets/data/coffeeFromOldServer.ts
+    // like and comment  the coffees with names : gang , albertine, mado , cafe 1802 .... Create also tickets from those coffees
+    // 2 users :     "camille.dupont": {
+    //         id: "camille.dupont",
+    //         displayName: "Camille Dupont",
+    //         avatarUrl: DEFAULT_UNSPLASH_AVATAR,
+    //         email: "camille.dupont@example.com",
+    //         bio: "Toujours partante pour découvrir un nouveau torréfacteur artisanal.",
+    //     },
+
     private readonly timeline: SyncEvent[];
     private readonly knownCursors: Set<string> = new Set();
     private readonly sessionId = `demo-session-${ulid()}`;
@@ -23,7 +37,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
         const serverCommentId = `srv_${ulid(base - 45 * 60_000)}`;
         events.push({
             id: ulid(base - 45 * 60_000),
-            happenedAt: commentCreatedAt,
+            happenedAt: parseToISODate(commentCreatedAt),
             type: "comment.createdAck",
             payload: {
                 commandId: `cmd_${ulid(base - 45 * 60_000)}`,
@@ -39,7 +53,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
         const likeAddedAt = minutesAgo(base, 30);
         events.push({
             id: ulid(base - 30 * 60_000),
-            happenedAt: likeAddedAt,
+            happenedAt: parseToISODate(likeAddedAt),
             type: "like.addedAck",
             payload: {
                 commandId: `cmd_${ulid(base - 30 * 60_000)}`,
@@ -48,7 +62,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
                     count: 12,
                     me: true,
                     version: 3,
-                    updatedAt: likeAddedAt,
+                    updatedAt: parseToISODate(likeAddedAt),
                 },
             },
         });
@@ -56,19 +70,19 @@ export class FakeEventsGateway implements SyncEventsGateway {
         const ticketConfirmedAt = minutesAgo(base, 20);
         events.push({
             id: ulid(base - 20 * 60_000),
-            happenedAt: ticketConfirmedAt,
+            happenedAt: parseToISODate(ticketConfirmedAt),
             type: "ticket.confirmedAck",
             payload: {
-                commandId: `cmd_${ulid(base - 20 * 60_000)}`,
-                ticketId: `tkt_${ulid(base - 20 * 60_000)}`,
+                commandId: parseToCommandId(`cmd_${ulid(base - 20 * 60_000)}`),
+                ticketId: parseToTicketId('tkt_${ulid(base - 20 * 60_000)}'),
                 userId: "demo-user",
                 server: {
                     status: "CONFIRMED",
                     version: 2,
                     amountCents: 980,
                     currency: "EUR",
-                    ticketDate: ticketConfirmedAt,
-                    updatedAt: ticketConfirmedAt,
+                    ticketDate: parseToISODate(ticketConfirmedAt),
+                    updatedAt: parseToISODate(ticketConfirmedAt),
                     merchantName: "Fragments",
                 },
             },
@@ -77,7 +91,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
         const commentUpdatedAt = minutesAgo(base, 8);
         events.push({
             id: ulid(base - 8 * 60_000),
-            happenedAt: commentUpdatedAt,
+            happenedAt: parseToISODate(commentUpdatedAt),
             type: "comment.updatedAck",
             payload: {
                 commandId: `cmd_${ulid(base - 8 * 60_000)}`,
@@ -93,7 +107,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
         const likeRemovedAt = minutesAgo(base, 3);
         events.push({
             id: ulid(base - 3 * 60_000),
-            happenedAt: likeRemovedAt,
+            happenedAt: parseToISODate(likeRemovedAt),
             type: "like.removedAck",
             payload: {
                 commandId: `cmd_${ulid(base - 3 * 60_000)}`,
@@ -102,7 +116,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
                     count: 11,
                     me: false,
                     version: 4,
-                    updatedAt: likeRemovedAt,
+                    updatedAt: parseToISODate(likeRemovedAt),
                 },
             },
         });

@@ -25,7 +25,7 @@ import {
 import {DemoOAuthGateway} from "@/app/adapters/secondary/gateways/auth/demoOAuthGateway";
 import {ExpoSecureAuthSessionStore} from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
 import {DemoUserRepo} from "@/app/adapters/secondary/gateways/auth/demoUserRepo";
-import {SyncEventsGateway} from "@/app/core-logic/contextWL/outboxWl/runtime/eventsGateway";
+import {SyncEventsGateway} from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import {FakeEventsGateway} from "@/app/adapters/secondary/gateways/fake/fakeEventsGateway";
 
 export type GatewaysWl = {

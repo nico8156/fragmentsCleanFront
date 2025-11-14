@@ -13,6 +13,9 @@ import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };
+
+export const parseToCommandId = (commandId: string): CommandId => commandId as CommandId;
+
 export type OutboxRecord = {
     id: string;                 // outboxId
     item: OutboxItem;           // { command, undo }

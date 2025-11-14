@@ -1,6 +1,9 @@
 // Types de base partagés (tu peux déplacer ça dans un "shared/brand.ts" si tu préfères)
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type TicketId = string & { readonly __brand: "TicketId" };
+
+export const parseToTicketId = (ticketId: string): TicketId => ticketId as TicketId;
+
 export type UserId = string & { readonly __brand: "UserId" };
 export type CommandId = string & { readonly __brand: "CommandId" };
 
