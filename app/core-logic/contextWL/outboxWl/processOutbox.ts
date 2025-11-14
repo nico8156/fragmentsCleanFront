@@ -102,7 +102,8 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             userId,
                             at: cmd.at,
                         });
-                        const ackBy = new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
+                        console.log('ackBy', ackBy)
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;

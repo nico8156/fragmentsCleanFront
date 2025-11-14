@@ -12,10 +12,15 @@ describe("Outbox process — Likes", () => {
     let likes: FakeLikesGateway;
     let comments: FakeCommentsWlGateway;
 
+    const FIXED_NOW = Date.parse("2025-10-10T07:03:00.000Z");
+
     const init = (gateways: any, helpers?: any) =>
         initReduxStoreWl({
             dependencies: { gateways, helpers },
-            listeners: [processOutboxFactory({ gateways, helpers }).middleware],
+            listeners: [processOutboxFactory({ gateways, helpers: {
+                    nowMs: () => FIXED_NOW,
+                    nowPlusMs: (ms:number) => new Date(FIXED_NOW + ms).toISOString(),
+                } }).middleware],
         });
 
     it("LikeAdd — happy path: awaitingAck + dequeue", async () => {
@@ -46,7 +51,7 @@ describe("Outbox process — Likes", () => {
 
         const o = store.getState().oState;
         expect(o.byId["obx_like_001"].status).toBe(statusTypes.awaitingAck);
-        expect(o.byId["obx_like_001"].nextCheckAt).toBe("2025-10-10T07:03:00.000Z");
+        expect(o.byId["obx_like_001"].nextCheckAt).toBe("2025-10-10T07:03:30.000Z"); // now + 30s
         expect(o.queue).toEqual([]);
         expect(o.byCommandId["cmd_like_001"]).toBe("obx_like_001");
     });

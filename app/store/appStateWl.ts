@@ -38,6 +38,8 @@ export type helpersType = {
     currentUserId: () => string
     getCommentIdForTests: () => string
     getCommandIdForTests: () => string
+    nowMs: () => number,
+    nowPlusMs: (ms:number) => string,
 }
 
 
