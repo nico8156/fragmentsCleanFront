@@ -1,5 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
-import type { Store } from "@reduxjs/toolkit";
+import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {appConnectivityChanged} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 type NetInfoAdapterOptions = {
@@ -7,7 +7,9 @@ type NetInfoAdapterOptions = {
     debounceMs?: number;
 };
 
-export function mountNetInfoAdapter(store: Store, options?: NetInfoAdapterOptions) {
+type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
+
+export function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetInfoAdapterOptions) {
     let lastOnline = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const debounceMs = options?.debounceMs ?? 500;
