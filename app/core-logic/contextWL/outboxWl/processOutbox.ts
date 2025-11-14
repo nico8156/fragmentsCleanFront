@@ -2,7 +2,7 @@ import {createAction, createListenerMiddleware, TypedStartListening} from "@redu
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {outboxProcessOnce} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {commandKinds, OutboxItem, statusTypes} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, OutboxItem, statusTypes} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {LikeUndo} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {likeRollback} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import {ticketRollBack} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";

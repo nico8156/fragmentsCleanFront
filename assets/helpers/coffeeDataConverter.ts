@@ -1,6 +1,6 @@
 import {CoffeeFromOldServer} from "@/assets/data/coffeeFromOldServer";
 import {Address, Coffee, GeoPoint, parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export function coffeeDataConverter(coffeeData: CoffeeFromOldServer):Coffee {
     const {

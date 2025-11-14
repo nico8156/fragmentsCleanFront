@@ -1,4 +1,4 @@
-import { SyncEventsBatch, SyncResponse } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+import { SyncEventsBatch, SyncResponse } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 
 export interface SyncEventsGateway {
     replayLocal(): Promise<SyncEventsBatch>;

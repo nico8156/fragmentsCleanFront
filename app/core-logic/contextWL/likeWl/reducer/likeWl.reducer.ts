@@ -10,7 +10,7 @@ import {
 
 import {AppStateWl} from "@/app/store/appStateWl";
 import {LikeAggregate, LikesStateWl, LoadingState, loadingStates, TargetId} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 const DEFAULT_STALE_AFTER_MS = 60_000;
 

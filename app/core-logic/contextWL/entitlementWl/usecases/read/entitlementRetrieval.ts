@@ -1,5 +1,5 @@
 
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
 import {entitlementsHydrated} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
 

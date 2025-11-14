@@ -2,7 +2,7 @@ import {createAction, createListenerMiddleware, TypedStartListening, nanoid} fro
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {CommentEntity, moderationTypes} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import {commandKinds, OutboxItem} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, OutboxItem} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const uiCommentCreateRequested = createAction<{ targetId: string, body: string, parentId?: string }>("UI/COMMENT/CREATE");
 export const addOptimisticCreated = createAction<{entity:CommentEntity}>('UI/COMMENT/ADD_OPTIMISTIC_CREATED');

@@ -3,7 +3,7 @@ import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { ackListenerFactory, onCommentCreatedAck } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { enqueueCommitted, addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 describe("Create ACK (reconcile + drop outbox)", () => {
     let store: ReduxStoreWl;

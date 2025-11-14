@@ -3,13 +3,13 @@ import {
     LikeAddUndo,
     LikeRemoveCommand,
     LikeRemoveUndo
-} from "@/app/core-logic/contextWL/outboxWl/type/commandForLike.type";
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForLike.type";
 import {
     CommentCreateCommand, CommentCreateUndo,
     CommentDeleteCommand, CommentDeleteUndo,
     CommentUpdateCommand, CommentUpdateUndo
-} from "@/app/core-logic/contextWL/outboxWl/type/commandForComment.type";
-import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/outboxWl/type/commandForTicket.type";
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
+import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };

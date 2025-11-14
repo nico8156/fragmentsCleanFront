@@ -2,7 +2,7 @@ import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeEntitlementWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import {entitlementsRetrieval} from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import {UserEntitlements} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 
 describe("On Entitlements retrieval, ", () => {

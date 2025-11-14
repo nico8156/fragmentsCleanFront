@@ -22,7 +22,7 @@ import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeT
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
 import { createNativeSyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
-import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/runtime/syncActions";
+import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 
 let storeRef: ReduxStoreWl | null = null;
 

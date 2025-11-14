@@ -1,9 +1,9 @@
 import { ulid } from "ulid";
 import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
-import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type"
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {parseToTicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 const minutesAgo = (base: number, minutes: number) => new Date(base - minutes * 60_000).toISOString();
 

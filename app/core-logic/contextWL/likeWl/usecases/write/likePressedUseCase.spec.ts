@@ -6,14 +6,14 @@ import {
     uiLikeToggleRequested
 } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import {likesRetrieved} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import {commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 import {
     LikeAddCommand,
     LikeAddUndo,
     LikeRemoveCommand,
     LikeRemoveUndo
-} from "@/app/core-logic/contextWL/outboxWl/type/commandForLike.type";
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForLike.type";
 
 
 

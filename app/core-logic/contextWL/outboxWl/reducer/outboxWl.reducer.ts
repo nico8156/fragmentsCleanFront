@@ -1,7 +1,7 @@
 import {createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {enqueueCommitted} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {statusTypes} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {statusTypes} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
     dequeueCommitted, dropCommitted, markAwaitingAck,
     markFailed,

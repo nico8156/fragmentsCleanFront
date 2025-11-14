@@ -1,5 +1,5 @@
 // likeWl.type.ts
-import {commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 
 export type TargetId = string;   // ex: cafeId / postId

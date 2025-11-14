@@ -1,6 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
-import { OutboxRecord, OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import { OutboxRecord, OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const selectOutboxState = (state: RootStateWl): OutboxStateWl => state.oState;
 

@@ -1,4 +1,4 @@
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 // ===== Comments =====
 

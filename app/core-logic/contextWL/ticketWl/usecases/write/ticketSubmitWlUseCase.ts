@@ -3,7 +3,7 @@ import {createAction, createListenerMiddleware, TypedStartListening} from "@redu
 import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {TicketSubmitHelpers} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {ticketOptimisticCreated} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
-import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 

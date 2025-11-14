@@ -4,9 +4,9 @@ import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/
 import {
     replayRequested,
     syncDecideRequested,
-} from "@/app/core-logic/contextWL/outboxWl/runtime/syncActions";
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import { createMemorySyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
-import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const buildState = (sessionStamp = "user:1") => {
@@ -33,7 +33,7 @@ const getSessionStampFromState = (state: ReturnType<typeof buildState>) => {
 };
 
 const captureActions = (bag: AnyAction[]): Middleware => () => (next) => (action) => {
-    bag.push(action);
+    bag.push(action as AnyAction);
     return next(action);
 };
 

@@ -1,5 +1,5 @@
 import { UserId} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import { ISODate } from "../../outboxWl/type/outbox.type";
+import { ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 //export type Entitlement = "LIKE" | "COMMENT" | "SUBMIT_CAFE";
 

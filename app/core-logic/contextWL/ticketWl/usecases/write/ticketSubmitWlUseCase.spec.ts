@@ -5,9 +5,9 @@ import {
     uiTicketSubmitRequested,
 } from "@/app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase";
 import {CommandId, ISODate, TicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {FakeTicketsGateway} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
-import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/outboxWl/type/commandForTicket.type";
+import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
 
 describe("Ticket submit listener (optimistic + enqueue)", () => {
     let store: ReduxStoreWl;

@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 
 import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 import { TicketAggregate } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 
 export type TicketHistoryItemVM = {

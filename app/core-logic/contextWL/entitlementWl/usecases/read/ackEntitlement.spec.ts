@@ -2,7 +2,7 @@
 import {onTicketConfirmedAck} from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {ackEntitlementsListener} from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
-import {CommandId} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {CommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {entitlementsSetThresholds} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
 
 describe("Entitlements projection on TicketConfirmed ACK", () => {

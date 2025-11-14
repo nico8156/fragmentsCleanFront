@@ -1,7 +1,7 @@
 import {uiCommentCreateRequested, createCommentUseCaseFactory} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
-import {CommentCreateCommand} from "@/app/core-logic/contextWL/outboxWl/type/commandForComment.type";
+import {CommentCreateCommand} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 
 describe('On comment creation button pressed : ', () => {
     let store: ReduxStoreWl

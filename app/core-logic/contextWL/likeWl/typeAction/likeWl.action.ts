@@ -1,6 +1,6 @@
 import {createAction} from "@reduxjs/toolkit";
 import { TargetId} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const likesRetrievalPending  = createAction<{ targetId: TargetId }>("LIKES/RETRIEVAL_PENDING");
 export const likesRetrieved         = createAction<{ targetId: TargetId; count: number; me: boolean; version: number; serverTime?: string }>("LIKES/RETRIEVED");

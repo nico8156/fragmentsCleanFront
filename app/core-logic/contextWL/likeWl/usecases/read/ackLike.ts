@@ -4,7 +4,7 @@ import { AppStateWl } from "@/app/store/appStateWl";
 
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {likeReconciled} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import {ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const onLikeAddedAck = createAction<{ commandId: string; targetId: string; server: { count: number; me: boolean; version: number; updatedAt?: ISODate } }>("SERVER/LIKE/ADDED_ACK");
 export const onLikeRemovedAck = createAction<{ commandId: string; targetId: string; server: { count: number; me: boolean; version: number; updatedAt?: ISODate } }>("SERVER/LIKE/REMOVED_ACK");

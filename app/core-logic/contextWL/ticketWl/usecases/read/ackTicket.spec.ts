@@ -2,7 +2,7 @@
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // même action utilisée pour enregistrer l'item outbox
 import {ackTicketsListenerFactory, onTicketConfirmedAck, onTicketRejectedAck} from "./ackTicket";
-import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {CommandId, ISODate, TicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {flush} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 

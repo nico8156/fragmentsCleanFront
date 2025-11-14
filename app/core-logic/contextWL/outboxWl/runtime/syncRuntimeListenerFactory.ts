@@ -7,9 +7,9 @@ import {
     syncDecideRequested,
     syncDeltaRequested,
     syncFullRequested,
-} from "@/app/core-logic/contextWL/outboxWl/runtime/syncActions";
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import { SyncResponse } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+import { SyncResponse } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 const THIRTY_MINUTES = 30 * 60 * 1000;
@@ -135,11 +135,11 @@ export const syncRuntimeListenerFactory = ({
                 }
             }
 
-            if (response.events.length) {
-                await applyEvents(response.events);
+            if (response!.events.length) {
+                await applyEvents(response!.events);
             }
 
-            await metaStorage.setCursor(response.cursor ?? snapshotBefore.cursor);
+            await metaStorage.setCursor(response!.cursor ?? snapshotBefore.cursor);
             await metaStorage.updateLastActiveAt(now);
             await metaStorage.setSessionId(sessionStamp);
 

@@ -1,5 +1,5 @@
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
-import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
+
 import { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
 import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import {
@@ -11,6 +11,7 @@ import {
     onTicketConfirmedAck,
     onTicketRejectedAck,
 } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
+import {SyncEvent} from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 
 const MAX_APPLIED_EVENT_IDS = 2000;
 

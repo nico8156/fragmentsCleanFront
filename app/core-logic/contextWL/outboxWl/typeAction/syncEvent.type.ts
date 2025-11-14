@@ -1,4 +1,4 @@
-import { ISODate } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import { ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import {
     onCommentCreatedAck,

@@ -1,5 +1,5 @@
 import {CommentsStateWl} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import {OutboxStateWl} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {OutboxStateWl} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { LikesStateWl} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {TicketsStateWl} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {EntitlementStateWl} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";

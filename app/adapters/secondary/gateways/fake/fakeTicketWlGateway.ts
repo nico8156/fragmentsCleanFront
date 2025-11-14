@@ -1,6 +1,6 @@
 import { TicketLineItem } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
-import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 const TOTAL_KEYWORDS = /(total|montant|à payer|a payer|ttc|payé|paye)/i;
 const BLOCKED_LINE_ITEM_KEYWORDS = /(total|tva|taxe|paiement|merci|remerciements|carte|cb|visa|master|amex|contact)/i;

@@ -1,13 +1,13 @@
 // commentDelete.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { moderationTypes, opTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
     commentDeleteUseCaseFactory,
     uiCommentDeleteRequested
 } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import {commentsRetrieved} from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
-import {CommentDeleteCommand, CommentDeleteUndo} from "@/app/core-logic/contextWL/outboxWl/type/commandForComment.type";
+import {CommentDeleteCommand, CommentDeleteUndo} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 
 describe("On comment delete button pressed :", () => {
     let store: ReduxStoreWl;

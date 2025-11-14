@@ -2,7 +2,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {likesRetrieved} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 

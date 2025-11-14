@@ -2,7 +2,7 @@ import {createListenerMiddleware, createAction, TypedStartListening, nanoid} fro
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {likeOptimisticApplied, unlikeOptimisticApplied} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 
 

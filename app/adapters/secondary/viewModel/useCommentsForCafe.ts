@@ -14,7 +14,7 @@ import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
-import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/type/outbox.type";
+import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
     DEFAULT_COMMUNITY_PROFILE,
     getCommunityProfile,
