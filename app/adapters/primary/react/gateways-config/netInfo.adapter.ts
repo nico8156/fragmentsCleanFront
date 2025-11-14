@@ -1,9 +1,9 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {appConnectivityChanged} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
 type NetInfoAdapterOptions = {
-    onReconnected?: () => void;
     debounceMs?: number;
 };
 
@@ -22,10 +22,9 @@ export function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetIn
     };
 
     const scheduleReplay = () => {
-        if (!options?.onReconnected) return;
         clearTimer();
         timer = setTimeout(() => {
-            options.onReconnected?.();
+            store.dispatch(outboxProcessOnce());
             timer = null;
         }, debounceMs);
     };

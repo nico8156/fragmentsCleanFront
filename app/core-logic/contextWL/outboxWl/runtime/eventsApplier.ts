@@ -1,6 +1,6 @@
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/runtime/syncEvents";
-import { SyncMetaState } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
+import { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
 import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import {
     onCommentCreatedAck,
@@ -12,20 +12,12 @@ import {
     onTicketRejectedAck,
 } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 
-const MAX_APPLIED_EVENT_IDS = 256;
+const MAX_APPLIED_EVENT_IDS = 2000;
 
-type MetaUpdater = (updater: (meta: SyncMetaState) => SyncMetaState) => Promise<void>;
-
-type MetaGetter = () => SyncMetaState;
-
-export const createEventsApplier = (
-    dispatch: AppDispatchWl,
-    getMeta: MetaGetter,
-    updateMeta: MetaUpdater,
-) => {
+export const createEventsApplier = (dispatch: AppDispatchWl, metaStorage: SyncMetaStorage) => {
     const apply = async (events: SyncEvent[]) => {
         if (!events.length) return;
-        const meta = getMeta();
+        const meta = metaStorage.getSnapshot();
         const knownIds = new Set(meta.appliedEventIds);
         const sorted = [...events].sort((a, b) => a.happenedAt.localeCompare(b.happenedAt));
         const newlyApplied: string[] = [];
@@ -63,17 +55,7 @@ export const createEventsApplier = (
         }
 
         if (newlyApplied.length === 0) return;
-
-        await updateMeta((current) => {
-            const updated = [...current.appliedEventIds, ...newlyApplied];
-            if (updated.length > MAX_APPLIED_EVENT_IDS) {
-                updated.splice(0, updated.length - MAX_APPLIED_EVENT_IDS);
-            }
-            return {
-                ...current,
-                appliedEventIds: updated,
-            };
-        });
+        await metaStorage.markEventsApplied(newlyApplied, MAX_APPLIED_EVENT_IDS);
     };
 
     return apply;
