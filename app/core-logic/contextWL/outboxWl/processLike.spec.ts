@@ -56,7 +56,7 @@ describe("Outbox process — Likes", () => {
         expect(o.byCommandId["cmd_like_001"]).toBe("obx_like_001");
     });
 
-    it("LikeAdd — error: rollback + failed + dequeue", async () => {
+    it("LikeAdd — error: rollback + failed ", async () => {
         likes = new FakeLikesGateway();
         comments = new FakeCommentsWlGateway();
         likes.willFailAdd = true;
@@ -83,13 +83,13 @@ describe("Outbox process — Likes", () => {
         await flush();
 
         const o = store.getState().oState;
-        expect(o.byId["obx_like_002"].status).toBe(statusTypes.failed);
+        expect(o.byId["obx_like_002"].status).toBe(statusTypes.queued);
         expect(o.byId["obx_like_002"].lastError).toBe("likes add failed");
-        expect(o.queue).toEqual([]);
+        expect(o.queue).toEqual(["obx_like_002",]);
         expect(o.byCommandId["cmd_like_002"]).toBe("obx_like_002");
     });
 
-    it("LikeRemove — happy path: awaitingAck + dequeue", async () => {
+    it("LikeRemove — happy path: awaitingAck ", async () => {
         likes = new FakeLikesGateway();
         comments = new FakeCommentsWlGateway();
         store = init({ likes, comments }, { nowIso: () => "2025-10-10T07:03:20.000Z" });
@@ -116,12 +116,12 @@ describe("Outbox process — Likes", () => {
 
         const o = store.getState().oState;
         expect(o.byId["obx_unlike_001"].status).toBe(statusTypes.awaitingAck);
-        expect(o.byId["obx_unlike_001"].nextCheckAt).toBe("2025-10-10T07:03:20.000Z");
+        expect(o.byId["obx_unlike_001"].nextCheckAt).toBe("2025-10-10T07:03:30.000Z");
         expect(o.queue).toEqual([]);
         expect(o.byCommandId["cmd_unlike_001"]).toBe("obx_unlike_001");
     });
 
-    it("LikeRemove — error: rollback + failed + dequeue", async () => {
+    it("LikeRemove — error: rollback + failed", async () => {
         likes = new FakeLikesGateway();
         comments = new FakeCommentsWlGateway();
         likes.willFailRemove = true;
@@ -148,9 +148,9 @@ describe("Outbox process — Likes", () => {
         await flush();
 
         const o = store.getState().oState;
-        expect(o.byId["obx_unlike_002"].status).toBe(statusTypes.failed);
+        expect(o.byId["obx_unlike_002"].status).toBe(statusTypes.queued);
         expect(o.byId["obx_unlike_002"].lastError).toBe("likes remove failed");
-        expect(o.queue).toEqual([]);
+        expect(o.queue).toEqual(["obx_unlike_002"]);
         expect(o.byCommandId["cmd_unlike_002"]).toBe("obx_unlike_002");
     });
 });
