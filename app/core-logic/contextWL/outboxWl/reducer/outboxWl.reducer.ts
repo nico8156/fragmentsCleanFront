@@ -7,7 +7,7 @@ import {
     markFailed,
     markProcessing,
 } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
-import { outboxRehydrateCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {outboxRehydrateCommitted, scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 export const initialOutboxState: AppStateWl["outbox"] = {
     byId: {},
@@ -22,7 +22,7 @@ export const outboxWlReducer = createReducer(
             .addCase(enqueueCommitted, (state, action) => {
                 const {id, item, enqueuedAt} = action.payload;
                 const cmdId = item.command.commandId;
-                // dédup idempotente
+
                 if (state.byCommandId[cmdId]) return;
                 state.byId[id] = {
                     id,
@@ -40,6 +40,7 @@ export const outboxWlReducer = createReducer(
                 if (!r || r.status === statusTypes.processing) return;
                 r.status = statusTypes.processing;
                 r.attempts += 1;
+                if ("nextAttemptAt" in r) delete (r as any).nextAttemptAt;
             })
             .addCase(markFailed, (state, action) => {
                 const {id, error} = action.payload
@@ -47,6 +48,13 @@ export const outboxWlReducer = createReducer(
                 if (!r) return;
                 r.status = statusTypes.failed;
                 r.lastError = error;
+            })
+            .addCase(scheduleRetry, (state, action) => {
+                const { id, nextAttemptAt } = action.payload;
+                const r = state.byId[id];
+                if (!r) return;
+                r.status = statusTypes.queued;
+                (r as any).nextAttemptAt = nextAttemptAt;
             })
             .addCase(dequeueCommitted, (state, action) => {
                 const {id} = action.payload;
@@ -67,6 +75,11 @@ export const outboxWlReducer = createReducer(
                 delete state.byCommandId[commandId];
             })
             .addCase(outboxRehydrateCommitted, (state, action) => {
-                return action.payload;
+                const snap = action.payload ?? {};
+                return {
+                    byId: snap.byId ?? {},
+                    queue: Array.isArray(snap.queue) ? snap.queue.filter((id: string) => !!snap.byId?.[id]) : [],
+                    byCommandId: snap.byCommandId ?? {},
+                };
             })
     })

@@ -2,10 +2,20 @@ import {createAction, createListenerMiddleware, TypedStartListening} from "@redu
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {outboxProcessOnce} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {commandKinds, OutboxItem, statusTypes} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import {
+    commandKinds,
+    OutboxItem,
+    OutboxStateWl,
+    statusTypes
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {LikeUndo} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {likeRollback} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import {ticketRollBack} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import {
+    selectOutboxById,
+    selectOutboxQueue,
+} from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import {scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 export const markProcessing = createAction<{id:string}>("OUTBOX/MARK_PROCESSING")
 export const createReconciled = createAction<{ tempId: string; server: { id: string; createdAt: string; version: number }}>("COMMENT/CREATE_RECONCILED")
@@ -25,20 +35,32 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
         actionCreator:outboxProcessOnce,
         effect: async (action, api)=>{
 
-            const {queue} = (api.getState() as any).oState
-            const id = queue[0]
-            if (!id) return
+            const state = api.getState() as AppStateWl;
+            const queue = selectOutboxQueue(state);
+            if (!queue.length) return;
 
-            const record = (api.getState()as any ).oState.byId[id]
+            const byId:OutboxStateWl["byId"] = selectOutboxById(state);
+            const now  = Date.now();
+
+
+            const eligibleId = queue.find((qid:string) => {
+                const rec = byId[qid];
+                if (!rec) return false;
+                if (rec.status !== statusTypes.queued) return false;
+                if (rec.nextAttemptAt && rec.nextAttemptAt > now) return false;
+                return true;
+            });
+
+            if (!eligibleId) return;
+
+            const id = eligibleId;
+            const record = byId[id];
 
             if (!record) {
                 // garde-fou: nettoie si incohérent
                 api.dispatch(dequeueCommitted({ id }));
                 return;
             }
-
-            // on ne traite que les "queued" (si déjà processing, on s'arrête)
-            if (record.status !== statusTypes.queued) return;
 
             const cmd = (record.item as OutboxItem).command;
 
@@ -80,7 +102,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             userId,
                             at: cmd.at,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -93,7 +115,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             userId,
                             at: cmd.at,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -107,7 +129,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             body: cmd.body,
                             tempId: cmd.tempId,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -119,7 +141,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             body: cmd.newBody,
                             updatedAt: cmd.at,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -130,7 +152,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             commentId: cmd.commentId,
                             deletedAt: cmd.at,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -145,7 +167,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             ocrText: cmd.ocrText ?? null,
                             at: cmd.at,
                         });
-                        const ackBy = deps.helpers?.nowIso?.() ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -201,7 +223,15 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 }
 
                 api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
-                api.dispatch(dequeueCommitted({ id }));
+
+                const stateAfterFail = api.getState() as AppStateWl;
+                const attemptsSoFar = selectOutboxById(stateAfterFail)[id]?.attempts ?? 0;
+
+                const base = Math.min(60_000, 2 ** Math.min(attemptsSoFar, 6) * 1000);
+                const jitter = Math.floor(Math.random() * 300);
+                const next = Date.now() + base + jitter;
+
+                api.dispatch(scheduleRetry({ id, nextAttemptAt: next }));
             }
 
             if (callback) callback();

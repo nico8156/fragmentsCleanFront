@@ -4,13 +4,21 @@ import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
 type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
+type AppStateAdapterOptions = { ignoreFirstActive?: boolean; };
 
-export function mountAppStateAdapter(store: DispatchCapableStore) {
+export function mountAppStateAdapter(store: DispatchCapableStore,opts?: AppStateAdapterOptions) {
     let mounted = true;
+    let firstActiveHandled = false;
+
 
     const handler = (status: AppStateStatus) => {
         if (!mounted) return;
+
         if (status === "active") {
+            if (opts?.ignoreFirstActive && !firstActiveHandled) {
+                firstActiveHandled = true;
+                return; // on ignore le tout premier active
+            }
             store.dispatch(replayRequested());
             store.dispatch(outboxProcessOnce());
             store.dispatch(syncDecideRequested());

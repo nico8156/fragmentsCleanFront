@@ -8,9 +8,10 @@ import {
     markProcessing,
 } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 import { OutboxStorageGateway } from "@/app/core-logic/contextWL/outboxWl/gateway/outboxStorage.gateway";
-import { outboxRehydrateCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {outboxRehydrateCommitted, scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import {selectOutbox} from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 
 const trackedActions = [
     enqueueCommitted,
@@ -19,6 +20,7 @@ const trackedActions = [
     dequeueCommitted,
     markAwaitingAck,
     dropCommitted,
+    scheduleRetry
 ];
 
 const cloneOutboxState = (state: OutboxStateWl): OutboxStateWl => {
@@ -39,18 +41,25 @@ type OutboxPersistenceDeps = {
     logger?: (message: string, payload?: unknown) => void;
 };
 
+let pending: ReturnType<typeof setTimeout> | null = null;
+
+
 const persistSnapshot = async (
     api: ListenerApi,
     deps: OutboxPersistenceDeps,
 ): Promise<void> => {
-    const state = api.getState().oState as OutboxStateWl | undefined;
-    if (!state) return;
-    const snapshot = cloneOutboxState(state);
-    try {
-        await deps.storage.saveSnapshot(snapshot);
-    } catch (error) {
-        deps.logger?.("[outbox] failed to persist", error);
-    }
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(async () => {
+        const root = api.getState();
+        const state = selectOutbox(root as any);
+        if (!state) return;
+        const snapshot = cloneOutboxState(state);
+        try {
+            await deps.storage.saveSnapshot(snapshot);
+        } catch (error) {
+            deps.logger?.("[outbox] failed to persist", error);
+        }
+    },75);
 };
 
 export const outboxPersistenceMiddlewareFactory = (deps: OutboxPersistenceDeps) => {

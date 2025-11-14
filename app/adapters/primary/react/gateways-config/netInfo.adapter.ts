@@ -8,7 +8,7 @@ type NetInfoAdapterOptions = {
 
 type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
 
-export function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetInfoAdapterOptions) {
+export async function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetInfoAdapterOptions) {
     let lastOnline = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const debounceMs = options?.debounceMs ?? 500;
@@ -28,10 +28,20 @@ export function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetIn
         }, debounceMs);
     };
 
+    try {
+        const s = await NetInfo.fetch();
+        lastOnline = Boolean(s.isConnected && (s.isInternetReachable ?? s.isConnected));
+    } catch {
+        lastOnline = false;
+    }
+
     const unsub = NetInfo.addEventListener((state) => {
-        const online = Boolean(state.isConnected && state.isInternetReachable);
+        // 🔹 Fallback si isInternetReachable est null/undefined
+        const reachable = (state.isInternetReachable ?? state.isConnected);
+        const online = Boolean(state.isConnected && reachable);
+
         if (online && !lastOnline) {
-            scheduleReplay();
+            scheduleReplay(); // transition offline -> online
         } else if (!online) {
             clearTimer();
         }

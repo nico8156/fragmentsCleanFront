@@ -23,7 +23,8 @@ export type OutboxRecord = {
     attempts: number;
     lastError?: string;
     enqueuedAt: string;
-    nextCheckAt?: string; // optionnel: pour timeout/cleanup
+    nextCheckAt?: string;
+    nextAttemptAt?: number;
 };
 
 export type OutboxStateWl = {

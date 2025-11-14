@@ -34,14 +34,14 @@ export class FakeEventsGateway implements SyncEventsGateway {
     private buildTimeline(base: number): SyncEvent[] {
         const events: SyncEvent[] = [];
         const commentCreatedAt = minutesAgo(base, 45);
-        const serverCommentId = `srv_${ulid(base - 45 * 60_000)}`;
+        const serverCommentId = `srv_${ulid()}`;
         events.push({
             id: ulid(base - 45 * 60_000),
             happenedAt: parseToISODate(commentCreatedAt),
             type: "comment.createdAck",
             payload: {
-                commandId: `cmd_${ulid(base - 45 * 60_000)}`,
-                tempId: `tmp_${ulid(base - 45 * 60_000)}`,
+                commandId: `cmd_${ulid()}`,
+                tempId: `tmp_${ulid()}`,
                 server: {
                     id: serverCommentId,
                     createdAt: commentCreatedAt,
@@ -56,7 +56,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
             happenedAt: parseToISODate(likeAddedAt),
             type: "like.addedAck",
             payload: {
-                commandId: `cmd_${ulid(base - 30 * 60_000)}`,
+                commandId: `cmd_${ulid()}`,
                 targetId: "cafe_demo",
                 server: {
                     count: 12,
@@ -73,8 +73,8 @@ export class FakeEventsGateway implements SyncEventsGateway {
             happenedAt: parseToISODate(ticketConfirmedAt),
             type: "ticket.confirmedAck",
             payload: {
-                commandId: parseToCommandId(`cmd_${ulid(base - 20 * 60_000)}`),
-                ticketId: parseToTicketId('tkt_${ulid(base - 20 * 60_000)}'),
+                commandId: parseToCommandId(`cmd_${ulid()}`),
+                ticketId: parseToTicketId(`tkt_${ulid()}`),
                 userId: "demo-user",
                 server: {
                     status: "CONFIRMED",
@@ -94,7 +94,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
             happenedAt: parseToISODate(commentUpdatedAt),
             type: "comment.updatedAck",
             payload: {
-                commandId: `cmd_${ulid(base - 8 * 60_000)}`,
+                commandId: `cmd_${ulid()}`,
                 commentId: serverCommentId,
                 server: {
                     editedAt: commentUpdatedAt,
@@ -110,7 +110,7 @@ export class FakeEventsGateway implements SyncEventsGateway {
             happenedAt: parseToISODate(likeRemovedAt),
             type: "like.removedAck",
             payload: {
-                commandId: `cmd_${ulid(base - 3 * 60_000)}`,
+                commandId: `cmd_${ulid()}`,
                 targetId: "cafe_demo",
                 server: {
                     count: 11,

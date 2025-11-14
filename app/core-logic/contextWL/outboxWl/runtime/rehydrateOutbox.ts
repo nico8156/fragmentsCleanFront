@@ -15,9 +15,19 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
     if (!record.item.command || typeof record.item.command !== "object") return null;
     if (!record.item.undo || typeof record.item.undo !== "object") return null;
     const status = Object.values(statusTypes).includes(record.status) ? record.status : statusTypes.queued;
-    const attempts = typeof record.attempts === "number" && Number.isFinite(record.attempts) ? record.attempts : 0;
-    const enqueuedAt = typeof record.enqueuedAt === "string" ? record.enqueuedAt : new Date().toISOString();
+    const attempts = typeof record.attempts === "number" && Number.isFinite(record.attempts)
+        ? record.attempts
+        : 0;
+    const enqueuedAt =
+        typeof record.enqueuedAt === "number" && Number.isFinite(record.enqueuedAt)
+            ? record.enqueuedAt
+            : Date.now();
     const nextCheckAt = typeof record.nextCheckAt === "string" ? record.nextCheckAt : undefined;
+    const nextAttemptAt =
+        typeof record.nextAttemptAt === "number" && Number.isFinite(record.nextAttemptAt)
+            ? record.nextAttemptAt
+            : undefined;
+
     const lastError = typeof record.lastError === "string" ? record.lastError : undefined;
     return {
         id: record.id,
@@ -26,6 +36,7 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
         attempts,
         enqueuedAt,
         nextCheckAt,
+        nextAttemptAt,
         lastError,
     };
 };
