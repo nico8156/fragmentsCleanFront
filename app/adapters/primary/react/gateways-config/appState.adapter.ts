@@ -5,14 +5,15 @@ import {
     appBecameBackground,
     appBecameInactive,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
-
-type AppStateAdapterOptions = {
-    onActive?: () => void;
-};
+import {
+    replayRequested,
+    syncDecideRequested,
+} from "@/app/core-logic/contextWL/outboxWl/runtime/syncActions";
+import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
 type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
 
-export function mountAppStateAdapter(store: DispatchCapableStore, options?: AppStateAdapterOptions) {
+export function mountAppStateAdapter(store: DispatchCapableStore) {
     let mounted = true;
 
     const handler = (status: AppStateStatus) => {
@@ -20,7 +21,9 @@ export function mountAppStateAdapter(store: DispatchCapableStore, options?: AppS
         switch (status) {
             case "active":
                 store.dispatch(appBecameActive());
-                options?.onActive?.();
+                store.dispatch(replayRequested());
+                store.dispatch(outboxProcessOnce());
+                store.dispatch(syncDecideRequested());
                 break;
             case "background":
                 store.dispatch(appBecameBackground());
