@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { mountAppStateAdapter } from "@/app/adapters/primary/react/gateways-config/appState.adapter";
 import { mountNetInfoAdapter } from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
-import { gateways } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+import { gateways, outboxStorage } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
@@ -23,8 +23,11 @@ import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
 import { createNativeSyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
 import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceMiddleware";
+import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 
 let storeRef: ReduxStoreWl | null = null;
+const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
 
 export default function RootLayout() {
     const store = useMemo(
@@ -64,6 +67,8 @@ export default function RootLayout() {
                     metaStorage: createNativeSyncMetaStorage(),
                 });
 
+                const outboxPersistenceMiddleware = outboxPersistenceMiddlewareFactory({ storage: outboxStorage });
+
                 const createdStore = initReduxStoreWl({
                     dependencies: {
                         gateways,
@@ -82,6 +87,7 @@ export default function RootLayout() {
                         authListenerFactory({ gateways, helpers: {} }),
                         userLocationListenerFactory({ gateways, helpers: {} }),
                     ],
+                    extraMiddlewares: [outboxPersistenceMiddleware],
                 });
                 storeRef = createdStore;
 
@@ -122,10 +128,20 @@ export default function RootLayout() {
     useEffect(() => {
         const unmountNetInfo = mountNetInfoAdapter(store);
         const unmountAppState = mountAppStateAdapter(store);
-        store.dispatch(replayRequested());
-        store.dispatch(outboxProcessOnce());
-        store.dispatch(syncDecideRequested());
+        let cancelled = false;
+
+        void (async () => {
+            const snapshot = await runRehydrateOutbox(store);
+            if (cancelled) return;
+            if (snapshot.queue.length) {
+                store.dispatch(outboxProcessOnce());
+            }
+            store.dispatch(replayRequested());
+            store.dispatch(syncDecideRequested());
+        })();
+
         return () => {
+            cancelled = true;
             unmountAppState();
             unmountNetInfo();
         };

@@ -27,6 +27,7 @@ import {ExpoSecureAuthSessionStore} from "@/app/adapters/secondary/gateways/auth
 import {DemoUserRepo} from "@/app/adapters/secondary/gateways/auth/demoUserRepo";
 import {SyncEventsGateway} from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import {FakeEventsGateway} from "@/app/adapters/secondary/gateways/fake/fakeEventsGateway";
+import { createNativeOutboxStorage } from "@/app/adapters/secondary/gateways/outbox/nativeOutboxStorage";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -57,6 +58,7 @@ const entitlements = new FakeEntitlementWlGateway()
 const locations = new ExpoLocationGateway()
 const articles = new StaticArticleWlGateway()
 const events = new FakeEventsGateway()
+export const outboxStorage = createNativeOutboxStorage()
 const auth = {
     oauth: new DemoOAuthGateway(),
     secureStore: new ExpoSecureAuthSessionStore(),

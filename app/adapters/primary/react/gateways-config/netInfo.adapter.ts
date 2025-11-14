@@ -1,6 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import {appConnectivityChanged} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
 type NetInfoAdapterOptions = {
@@ -31,7 +30,6 @@ export function mountNetInfoAdapter(store: DispatchCapableStore, options?: NetIn
 
     const unsub = NetInfo.addEventListener((state) => {
         const online = Boolean(state.isConnected && state.isInternetReachable);
-        store.dispatch(appConnectivityChanged({ online }));
         if (online && !lastOnline) {
             scheduleReplay();
         } else if (!online) {
