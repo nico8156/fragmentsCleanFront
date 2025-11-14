@@ -141,7 +141,7 @@ describe("syncRuntime decideAndSync", () => {
                     count: 1,
                     me: true,
                     version: 1,
-                    updatedAt: new Date().toISOString(),
+                    updatedAt: parseToISODate(new Date().toISOString()),
                 },
             },
         };

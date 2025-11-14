@@ -138,11 +138,13 @@ export default function RootLayout() {
 
         const unmountNetInfo = mountNetInfoAdapter(store, {
             onReconnected: () => {
+                console.log("App reconnected, replaying outbox and syncing");
                 store.dispatch(outboxProcessOnce());
             },
         });
         const unmountAppState = mountAppStateAdapter(store, {
             onActive: () => {
+                console.log("[appState] onActive replaying outbox and syncing");
                 void replayOutboxAndSync();
             },
         });
