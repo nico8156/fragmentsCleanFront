@@ -19,8 +19,12 @@ import { FakeCommentsWlGateway } from "@/app/adapters/secondary/gateways/fake/fa
 import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
 import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
+import { createSyncRuntime, SyncRuntime } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntime";
+import { createNativeSyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
+import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
 let storeRef: ReduxStoreWl | null = null;
+let syncRuntimeRef: SyncRuntime | null = null;
 
 export default function RootLayout() {
     const store = useMemo(
@@ -74,6 +78,12 @@ export default function RootLayout() {
                     ],
                 });
                 storeRef = createdStore;
+                const syncRuntime = createSyncRuntime({
+                    store: createdStore,
+                    eventsGateway: gateways.events,
+                    metaStorage: createNativeSyncMetaStorage(),
+                });
+                syncRuntimeRef = syncRuntime;
 
                 const likeGateway: any = gateways.likes;
                 if (likeGateway?.setCurrentUserIdGetter) {
@@ -110,11 +120,36 @@ export default function RootLayout() {
     );
 
     useEffect(() => {
-        const unmountNetInfo = mountNetInfoAdapter(store);
-        const unmountAppState = mountAppStateAdapter(store);
+        const runtime = syncRuntimeRef;
+
+        const replayOutboxAndSync = async () => {
+            if (!runtime) {
+                store.dispatch(outboxProcessOnce());
+                return;
+            }
+            try {
+                await runtime.replayLocal();
+                store.dispatch(outboxProcessOnce());
+                await runtime.decideAndSync();
+            } catch (error) {
+                console.warn("[runtime] replay failed", error);
+            }
+        };
+
+        const unmountNetInfo = mountNetInfoAdapter(store, {
+            onReconnected: () => {
+                store.dispatch(outboxProcessOnce());
+            },
+        });
+        const unmountAppState = mountAppStateAdapter(store, {
+            onActive: () => {
+                void replayOutboxAndSync();
+            },
+        });
         return () => {
             unmountAppState();
             unmountNetInfo();
+            runtime?.teardown();
         };
     }, [store]);
 
