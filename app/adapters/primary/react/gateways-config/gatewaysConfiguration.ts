@@ -28,6 +28,7 @@ import {DemoUserRepo} from "@/app/adapters/secondary/gateways/auth/demoUserRepo"
 import {SyncEventsGateway} from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import {FakeEventsGateway} from "@/app/adapters/secondary/gateways/fake/fakeEventsGateway";
 import { createNativeOutboxStorage } from "@/app/adapters/secondary/gateways/outbox/nativeOutboxStorage";
+import {ReduxStoreWl} from "@/app/store/reduxStoreWl";
 
 export type GatewaysWl = {
     coffees: CoffeeWlGateway
@@ -47,6 +48,42 @@ export type GatewaysWl = {
         server?: AuthServerGateway
     }
 }
+// toujours dans gatewaysConfiguration.ts
+
+export const wireGatewaysForStore = (store: ReduxStoreWl) => {
+    // currentUserId getter pour les likes
+    const likeGateway = gateways.likes as FakeLikesGateway;
+    if (likeGateway.setCurrentUserIdGetter) {
+        likeGateway.setCurrentUserIdGetter(
+            () => store.getState().aState.currentUser?.id ?? "anonymous",
+        );
+    }
+
+    // ACK dispatcher pour les comments
+    const commentsGateway = gateways.comments as FakeCommentsWlGateway;
+    if ("setAckDispatcher" in commentsGateway) {
+        commentsGateway.setAckDispatcher((action) => {
+            store.dispatch(action);
+        });
+        if (commentsGateway.setCurrentUserIdGetter) {
+            commentsGateway.setCurrentUserIdGetter(
+                () => store.getState().aState.currentUser?.id ?? "anonymous",
+            );
+        }
+    }
+
+    // ACK dispatcher pour les tickets
+    const ticketsGateway = gateways.tickets as FakeTicketsGateway;
+    if ("setAckDispatcher" in ticketsGateway) {
+        ticketsGateway.setAckDispatcher((action) => {
+            store.dispatch(action);
+        });
+        ticketsGateway.setCurrentUserIdGetter(
+            () => store.getState().aState.currentUser?.id ?? "anonymous",
+        );
+    }
+};
+
 
 const coffees = new FakeCoffeeGateway()
 const cfPhotos = new FakeCfPhotoWlGateway()

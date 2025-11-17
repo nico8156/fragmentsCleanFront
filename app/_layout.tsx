@@ -3,7 +3,11 @@ import { useEffect, useMemo } from "react";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { mountAppStateAdapter } from "@/app/adapters/primary/react/gateways-config/appState.adapter";
 import { mountNetInfoAdapter } from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
-import { gateways, outboxStorage } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+import {
+    gateways,
+    outboxStorage,
+    wireGatewaysForStore
+} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
@@ -15,15 +19,11 @@ import { RootNavigator } from "@/app/adapters/primary/react/navigation/RootNavig
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {likeToggleUseCaseFactory} from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import {ackLikesListenerFactory} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
-import { FakeCommentsWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
-import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
-
 import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 import {createNativeSyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
 import {outboxPersistenceMiddlewareFactory} from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
@@ -93,34 +93,7 @@ export default function RootLayout() {
                 });
                 storeRef = createdStore;
 
-                const likeGateway: any = gateways.likes;
-                if (likeGateway?.setCurrentUserIdGetter) {
-                    likeGateway.setCurrentUserIdGetter(() => storeRef?.getState().aState.currentUser?.id ?? "anonymous");
-                }
-
-                const commentsGateway = gateways.comments;
-                if (commentsGateway && "setAckDispatcher" in commentsGateway) {
-                    const fakeGateway = commentsGateway as FakeCommentsWlGateway;
-                    fakeGateway.setAckDispatcher((action) => {
-                        createdStore.dispatch(action);
-                    });
-                    if (fakeGateway.setCurrentUserIdGetter) {
-                        fakeGateway.setCurrentUserIdGetter(
-                            () => createdStore.getState().aState.currentUser?.id ?? "anonymous",
-                        );
-                    }
-                }
-
-                const ticketsGateway = gateways.tickets;
-                if (ticketsGateway && "setAckDispatcher" in ticketsGateway) {
-                    const fakeGateway = ticketsGateway as FakeTicketsGateway;
-                    fakeGateway.setAckDispatcher((action) => {
-                        createdStore.dispatch(action);
-                    });
-                    fakeGateway.setCurrentUserIdGetter(
-                        () => createdStore.getState().aState.currentUser?.id ?? "anonymous",
-                    );
-                }
+                wireGatewaysForStore(createdStore)
 
                 return createdStore;
             },
@@ -152,7 +125,6 @@ export default function RootLayout() {
     return (
         <Provider store={store}>
             <RootNavigator />
-            <AppInitializer />
         </Provider>
     );
 }

@@ -4,7 +4,7 @@ Ce bounded context orchestre le cycle de vie global de l'app côté client : pha
 
 - Un **state runtime** décrit dans `typeAction/appWl.type.ts` (phase, dernière activité, statut réseau et drapeaux de boot).【F:app/core-logic/contextWL/appWl/typeAction/appWl.type.ts†L1-L16】
 - Un **réducteur** `appReducer` qui réagit aux actions de bootstrap/hydratation/connectivité pour mettre à jour ces indicateurs en temps réel.【F:app/core-logic/contextWL/appWl/reducer/app.reducer.ts†L4-L35】
-- Un **listener middleware** `runtimeListenerFactory` qui écoute `appBootRequested`, hydrate Redux, précharge les cafés/entitlements puis déclenche l'outbox dès que l'appli devient active ou repasse online.【F:app/core-logic/contextWL/appWl/usecases/runtimeListener.ts†L1-L55】【F:app/core-logic/contextWL/appWl/usecases/runtimeListener.ts†L55-L76】
+- Un **listener middleware** `runtimeListenerFactory` qui écoute `appBootRequested`, hydrate Redux, précharge les cafés/entitlements puis déclenche l'outbox dès que l'appli devient active ou repasse online.【F:app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts†L1-L55】【F:app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts†L55-L76】
 
 ## Flux event-driven
 
