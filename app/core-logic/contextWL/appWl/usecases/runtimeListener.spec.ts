@@ -1,8 +1,9 @@
 import {FakeCoffeeGateway} from "../../../../adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 import {initReduxStoreWl, ReduxStoreWl} from "../../../../store/reduxStoreWl";
 import {createActionsRecorder} from "../../../../store/middleware/actionRecorder";
-import {runtimeListenerFactory} from "./runtimeListener";
+
 import {appBecameActive, appBootRequested, appConnectivityChanged} from "../typeAction/appWl.action";
+import {runtimeListenerFactory} from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
 
 const flush = () => new Promise<void>((r) => setTimeout(r, 0));

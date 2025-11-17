@@ -8,7 +8,6 @@ import {
     outboxStorage,
     wireGatewaysForStore
 } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
-import AppInitializer from "@/app/adapters/primary/react/components/appInitializer";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { ticketSubmitUseCaseFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase";
