@@ -42,7 +42,7 @@ describe("Ticket submit listener (optimistic + enqueue)", () => {
         const s = store.getState();
         const tk = s.tState.byId["tk_001" as TicketId];
         expect(tk).toBeDefined();
-        // juste après submit, on place en ANALYZING (ou CAPTURED selon ton choix de UX)
+
         expect(tk.status).toBe("ANALYZING");
         expect(tk.optimistic).toBe(true);
         expect(tk.createdAt).toBe("2025-10-10T07:07:00.000Z");

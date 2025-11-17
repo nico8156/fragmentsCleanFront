@@ -1,40 +1,9 @@
-export type SyncMetaState = {
-    schemaVersion: number;
-    cursor?: string;
-    lastActiveAt: number;
-    sessionId?: string;
-    appliedEventIds: string[];
-};
-
-export interface SyncMetaStorage {
-    loadOrDefault(): Promise<SyncMetaState>;
-    getSnapshot(): SyncMetaState;
-    setCursor(cursor?: string | null): Promise<void>;
-    updateLastActiveAt(timestamp: number): Promise<void>;
-    setSessionId(sessionId?: string | null): Promise<void>;
-    hasEventBeenApplied(eventId: string): boolean;
-    markEventApplied(eventId: string): Promise<void>;
-    markEventsApplied(eventIds: string[], maxSize?: number): Promise<void>;
-    clear(): Promise<void>;
-}
-
-const SCHEMA_VERSION = 1;
-
-const createDefaultState = (): SyncMetaState => ({
-    schemaVersion: SCHEMA_VERSION,
-    cursor: undefined,
-    lastActiveAt: 0,
-    sessionId: undefined,
-    appliedEventIds: [],
-});
-
-type PersistedState = SyncMetaState;
-
-type StorageDriver = {
-    load(): Promise<PersistedState | null>;
-    save(state: PersistedState): Promise<void>;
-    clear(): Promise<void>;
-};
+import {PersistedState, StorageDriver} from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxPersistence.types";
+import {
+    SCHEMA_VERSION,
+    SyncMetaState,
+    SyncMetaStorage
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 
 class MemoryDriver implements StorageDriver {
     private snapshot: PersistedState | null = null;
@@ -116,6 +85,14 @@ const createDriverChain = (key: string): StorageDriver => {
     if (asyncStorage) return asyncStorage;
     return new MemoryDriver();
 };
+
+const createDefaultState = (): SyncMetaState => ({
+    schemaVersion: SCHEMA_VERSION,
+    cursor: undefined,
+    lastActiveAt: 0,
+    sessionId: undefined,
+    appliedEventIds: [],
+});
 
 const sanitizeState = (input: PersistedState | null): SyncMetaState => {
     if (!input || input.schemaVersion !== SCHEMA_VERSION) {
@@ -217,5 +194,3 @@ export const createNativeSyncMetaStorage = (key = "app.sync.meta"): SyncMetaStor
 export const createMemorySyncMetaStorage = (): SyncMetaStorage => {
     return createSyncMetaStorageFromDriver(new MemoryDriver());
 };
-
-export const createDefaultSyncMeta = createDefaultState;

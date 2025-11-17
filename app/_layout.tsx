@@ -21,10 +21,12 @@ import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementW
 import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
-import { createNativeSyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
+
 import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceMiddleware";
+
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
+import {createNativeSyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import {outboxPersistenceMiddlewareFactory} from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
 
 let storeRef: ReduxStoreWl | null = null;
 const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });

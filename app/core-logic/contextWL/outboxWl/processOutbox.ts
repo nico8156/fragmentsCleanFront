@@ -42,7 +42,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             const byId:OutboxStateWl["byId"] = selectOutboxById(state);
             const now  = Date.now();
 
-
             const eligibleId = queue.find((qid:string) => {
                 const rec = byId[qid];
                 if (!rec) return false;
@@ -130,7 +129,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             body: cmd.body,
                             tempId: cmd.tempId,
                         });
-                        const ackBy = new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -142,7 +141,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             body: cmd.newBody,
                             updatedAt: cmd.at,
                         });
-                        const ackBy = new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -153,7 +152,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             commentId: cmd.commentId,
                             deletedAt: cmd.at,
                         });
-                        const ackBy = new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -219,7 +218,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                         break;
                     }
                     default:
-                        // noop
                         break;
                 }
 

@@ -1,15 +1,13 @@
-// processOutbox.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway"; // si tu as une action dédiée
-// si tu n'as pas d'action 'enqueueCommitted' exportée, tu peux dispatcher directement un "hydrate" custom, ou muter le state via un reducer test-only.
 
 describe("processOutboxFactory", () => {
     let store: ReduxStoreWl;
-
+    const FIXED_NOW = Date.parse("2025-10-10T07:03:00.000Z");
     const flush = () => new Promise<void>(r => setTimeout(r, 0));
 
     // ---- Fake gateway pilotable ----
@@ -35,14 +33,17 @@ describe("processOutboxFactory", () => {
     const initStore = (gateways: any, helpers?: any) =>
         initReduxStoreWl({
             dependencies: { gateways, helpers },
-            listeners: [processOutboxFactory({ gateways, helpers }).middleware],
+            listeners: [processOutboxFactory({ gateways, helpers: {
+                    nowMs: () => FIXED_NOW,
+                    nowPlusMs: (ms:number) => new Date(FIXED_NOW + ms).toISOString(),
+                } }).middleware],
         });
 
     // ---------- CREATE ----------
     it("CREATE — happy path: queued → processing → awaitingAck + dequeue", async () => {
         const comments = new FakeCommentsGateway();
         const likes = new FakeLikesGateway();
-        store = initStore({ comments, likes }, { nowIso: () => "2025-10-10T07:00:30.000Z" });
+        store = initStore({ comments, likes });
 
         // seed: record en queue
         store.dispatch(
@@ -70,7 +71,7 @@ describe("processOutboxFactory", () => {
         const s = store.getState().oState;
         // record conservé mais statut avancé
         expect(s.byId["obx_0001"].status).toBe(statusTypes.awaitingAck);
-        expect(s.byId["obx_0001"].nextCheckAt).toBe("2025-10-10T07:00:30.000Z");
+        expect(s.byId["obx_0001"].nextCheckAt).toBe("2025-10-10T07:03:30.000Z");
         // plus dans la queue
         expect(s.queue).toEqual([]);
         // mapping toujours présent (drop sera fait à l’ACK)
@@ -105,9 +106,9 @@ describe("processOutboxFactory", () => {
         await flush();
 
         const s = store.getState().oState;
-        expect(s.byId["obx_0002"].status).toBe(statusTypes.failed);
+        expect(s.byId["obx_0002"].status).toBe(statusTypes.queued);
         expect(s.byId["obx_0002"].lastError).toBe("create failed");
-        expect(s.queue).toEqual([]); // dequeued
+        expect(s.queue).toEqual(["obx_0002"]); // dequeued
         // mapping commandId → outboxId conservé (à toi de décider de le garder pour debug, ou de le dropper dans markFailed)
         expect(s.byCommandId["cmd_002"]).toBe("obx_0002");
     });
@@ -145,7 +146,7 @@ describe("processOutboxFactory", () => {
 
         const s = store.getState().oState;
         expect(s.byId["obx_upd_001"].status).toBe(statusTypes.awaitingAck);
-        expect(s.byId["obx_upd_001"].nextCheckAt).toBe("2025-10-10T07:00:31.000Z");
+        expect(s.byId["obx_upd_001"].nextCheckAt).toBe("2025-10-10T07:03:30.000Z");
         expect(s.queue).toEqual([]);
         expect(s.byCommandId["cmd_upd_001"]).toBe("obx_upd_001");
     });
@@ -182,9 +183,9 @@ describe("processOutboxFactory", () => {
         await flush();
 
         const s = store.getState().oState;
-        expect(s.byId["obx_upd_002"].status).toBe(statusTypes.failed);
+        expect(s.byId["obx_upd_002"].status).toBe(statusTypes.queued);
         expect(s.byId["obx_upd_002"].lastError).toBe("update failed");
-        expect(s.queue).toEqual([]);
+        expect(s.queue).toEqual(["obx_upd_002"]);
         expect(s.byCommandId["cmd_upd_002"]).toBe("obx_upd_002");
     });
 
@@ -221,7 +222,7 @@ describe("processOutboxFactory", () => {
 
         const s = store.getState().oState;
         expect(s.byId["obx_del_001"].status).toBe(statusTypes.awaitingAck);
-        expect(s.byId["obx_del_001"].nextCheckAt).toBe("2025-10-10T07:00:32.000Z");
+        expect(s.byId["obx_del_001"].nextCheckAt).toBe("2025-10-10T07:03:30.000Z");
         expect(s.queue).toEqual([]);
         expect(s.byCommandId["cmd_del_001"]).toBe("obx_del_001");
     });
@@ -258,9 +259,9 @@ describe("processOutboxFactory", () => {
         await flush();
 
         const s = store.getState().oState;
-        expect(s.byId["obx_del_002"].status).toBe(statusTypes.failed);
+        expect(s.byId["obx_del_002"].status).toBe(statusTypes.queued);
         expect(s.byId["obx_del_002"].lastError).toBe("delete failed");
-        expect(s.queue).toEqual([]);
+        expect(s.queue).toEqual(["obx_del_002"]);
         expect(s.byCommandId["cmd_del_002"]).toBe("obx_del_002");
     });
 

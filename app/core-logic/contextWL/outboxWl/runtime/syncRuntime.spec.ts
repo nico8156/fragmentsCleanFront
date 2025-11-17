@@ -5,9 +5,9 @@ import {
     replayRequested,
     syncDecideRequested,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-import { createMemorySyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/runtime/syncMetaStorage";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {createMemorySyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
 
 const buildState = (sessionStamp = "user:1") => {
     const [userId, issuedAtRaw] = sessionStamp.split(":");
