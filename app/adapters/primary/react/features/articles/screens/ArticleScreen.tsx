@@ -64,7 +64,7 @@ export function ArticleScreen() {
             ) : (
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     <Image
-                        source={{ uri: article.cover?.url ?? article.blocks[0]?.photo?.url ?? "" }}
+                        source={ article.cover?.url ?? article.blocks[0]?.photo?.url ?? "" }
                         style={styles.coverImage}
                         contentFit="cover"
                         cachePolicy="memory-disk"
@@ -88,7 +88,7 @@ export function ArticleScreen() {
                                 <Text style={styles.blockHeading}>{block.heading}</Text>
                                 {block.photo ? (
                                     <Image
-                                        source={{ uri: block.photo.url }}
+                                        source={block.photo.url }
                                         style={styles.blockImage}
                                         contentFit="cover"
                                         cachePolicy="memory-disk"

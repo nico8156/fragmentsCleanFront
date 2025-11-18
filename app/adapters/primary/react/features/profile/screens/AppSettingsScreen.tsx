@@ -6,15 +6,21 @@ import { ProfileHero } from "@/app/adapters/primary/react/features/profile/compo
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
+import {SymbolView} from "expo-symbols";
+import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
+import {useNavigation} from "@react-navigation/native";
 
 export function AppSettingsScreen() {
     const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut } = useAuthUser();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
+    const navigation = useNavigation<ProfileStackNavigationProp>();
     const statusLabel = useMemo(() => (isSignedIn ? "Connecté" : "Hors connexion"), [isSignedIn]);
 
     return (
         <ProfileLayout title="SETTINGS">
+            <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+                <SymbolView name={"chevron.backward"} weight={"bold"} size={24} tintColor={palette.accent}/>
+            </Pressable>
             <ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail ?? "Non renseigné"} />
             <ProfileCard title="Préférences">
                 <View style={styles.row}>
@@ -51,6 +57,12 @@ const styles = StyleSheet.create({
         marginTop: 12,
         borderWidth: 1,
         borderColor: palette.primary_50,
+    },
+    backButton:{
+        position:"absolute",
+        top:30,
+        left:30,
+        borderColor:palette.primary_90
     },
     col:{
       flexDirection: "column",

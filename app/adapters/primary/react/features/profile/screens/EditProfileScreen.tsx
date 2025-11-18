@@ -1,16 +1,24 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import {Pressable, StyleSheet, Text, TextInput, View} from "react-native";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import {SymbolView} from "expo-symbols";
+import {useNavigation} from "@react-navigation/native";
+import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
 
 export function EditProfileScreen() {
+
     const { displayName, primaryEmail, avatarUrl, bio } = useAuthUser();
+    const navigation = useNavigation<ProfileStackNavigationProp>();
 
     return (
         <ProfileLayout title="EDIT PROFILE">
+            <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+                <SymbolView name={"chevron.backward"} weight={"bold"} size={24} tintColor={palette.accent}/>
+            </Pressable>
             <ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail ?? "Non renseigné"} />
             <ProfileCard title="Informations personnelles" subtitle="Visualise et prépare tes prochaines modifications.">
                 <View style={styles.field}>
@@ -36,6 +44,12 @@ export function EditProfileScreen() {
 const styles = StyleSheet.create({
     field: {
         gap: 8,
+    },
+    backButton:{
+        position:"absolute",
+        top:30,
+        left:30,
+        borderColor:palette.primary_90
     },
     label: {
         color: palette.textSecondary,
