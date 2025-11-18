@@ -1,10 +1,11 @@
 // likeWl/outbox/processOutbox.likes.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
-import { outboxProcessOnce, enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {FakeLikesGateway, flush} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {commandKinds, statusTypes} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
+import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 
 describe("Outbox process — Likes", () => {

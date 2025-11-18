@@ -1,9 +1,12 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway"; // si tu as une action dédiée
+import {FakeLikesGateway} from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
+import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions"; // si tu as une action dédiée
+
+
 
 describe("processOutboxFactory", () => {
     let store: ReduxStoreWl;
