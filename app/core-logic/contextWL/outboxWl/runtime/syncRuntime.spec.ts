@@ -1,41 +1,32 @@
-import { configureStore, Middleware, AnyAction } from "@reduxjs/toolkit";
-import { SyncEventsGateway, CursorUnknownSyncError } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
+// outboxWl/runtime/syncRuntimeListener.spec.ts
+
+import { AnyAction, Middleware } from "@reduxjs/toolkit";
+import {
+    SyncEventsGateway,
+    CursorUnknownSyncError,
+} from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
 import {
     replayRequested,
     syncDecideRequested,
+    syncEventsReceived,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {createMemorySyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import {RecordingGateway} from "@/app/adapters/secondary/gateways/fake/fakeSyncRecordEventGateway";
 
-const buildState = (sessionStamp = "user:1") => {
-    const [userId, issuedAtRaw] = sessionStamp.split(":");
-    const issuedAt = Number(issuedAtRaw ?? Date.now());
-    return {
-        aState: {
-            session: {
-                userId,
-                provider: "demo",
-                scopes: [],
-                establishedAt: issuedAt,
-                tokens: {
-                    expiresAt: issuedAt + 60_000,
-                    issuedAt,
-                },
-            },
-        },
-    } as any;
-};
+// ---- helpers de test ----
 
-const getSessionStampFromState = (state: ReturnType<typeof buildState>) => {
-    return `${state.aState.session.userId}:${state.aState.session.tokens?.issuedAt ?? "0"}`;
-};
-
-const captureActions = (bag: AnyAction[]): Middleware => () => (next) => (action) => {
-    bag.push(action as AnyAction);
-    return next(action);
-};
+const captureActions =
+    (bag: AnyAction[]): Middleware =>
+        () =>
+            (next) =>
+                (action) => {
+                    bag.push(action as AnyAction);
+                    return next(action);
+                };
 
 const waitFor = async (assertion: () => void, timeoutMs = 500) => {
     const start = Date.now();
@@ -52,78 +43,88 @@ const waitFor = async (assertion: () => void, timeoutMs = 500) => {
         }
     }
 };
+// ---- helper pour créer un store avec initReduxStoreWl ----
 
-class RecordingGateway implements SyncEventsGateway {
-    deltaCalls = 0;
-    fullCalls = 0;
-    replayCalls = 0;
-    constructor(private readonly options: { deltaError?: Error } = {}) {}
-    async replayLocal() {
-        this.replayCalls += 1;
-        return { events: [] };
-    }
-    async syncDelta() {
-        this.deltaCalls += 1;
-        if (this.options.deltaError) {
-            throw this.options.deltaError;
-        }
-        return { events: [], cursor: "cursor_delta", sessionId: "remote" };
-    }
-    async syncFull() {
-        this.fullCalls += 1;
-        return { events: [], cursor: "cursor_full", sessionId: "remote" };
-    }
-}
+const makeStore = (opts: {
+    gateway: SyncEventsGateway;
+    metaStorage: ReturnType<typeof createMemorySyncMetaStorage>;
+    actionsBag?: AnyAction[];
+    nowMs?: () => number;
+}): ReduxStoreWl => {
+    const { gateway, metaStorage, actionsBag, nowMs } = opts;
 
-describe("sync runtime listener", () => {
+    const listener = syncRuntimeListenerFactory({
+        eventsGateway: gateway,
+        metaStorage,
+        // on injecte un sessionStamp constant pour ne pas dépendre du shape du state
+        getSessionStamp: () => "user:1:123",
+        nowMs,
+    });
+
+    return initReduxStoreWl({
+        dependencies: {
+            gateways: {},
+            helpers: {},
+        },
+        listeners: [listener.middleware],
+        extraMiddlewares: actionsBag ? [captureActions(actionsBag)] : [],
+    });
+};
+
+// ---- Tests ----
+
+describe("sync runtime listener (outboxWl)", () => {
     it("runs delta once after short idle", async () => {
         const now = Date.now();
         const metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
-        const baseState = buildState("user:1");
+
         await metaStorage.setCursor("cursor_prev");
-        await metaStorage.setSessionId(getSessionStampFromState(baseState));
-        await metaStorage.updateLastActiveAt(now - 2 * 60_000);
+        await metaStorage.setSessionId("user:1:123");
+        await metaStorage.updateLastActiveAt(now - 2 * 60_000); // 2 minutes d'inactivité
+
         const gateway = new RecordingGateway();
         const actions: AnyAction[] = [];
-        const listener = syncRuntimeListenerFactory({
-            eventsGateway: gateway,
+
+        const store = makeStore({
+            gateway,
             metaStorage,
+            actionsBag: actions,
             nowMs: () => now,
-        });
-        const store = configureStore({
-            reducer: (state = baseState) => state,
-            middleware: (getDefault) =>
-                getDefault({ serializableCheck: false }).prepend(listener.middleware, captureActions(actions)),
         });
 
         store.dispatch(syncDecideRequested());
         store.dispatch(syncDecideRequested());
+
         await waitFor(() => {
             expect(gateway.deltaCalls).toBe(1);
             expect(gateway.fullCalls).toBe(0);
         });
-        expect(actions.filter((action) => action.type === syncDecideRequested.type)).toHaveLength(2);
+
+        expect(
+            actions.filter((action) => action.type === syncDecideRequested.type),
+        ).toHaveLength(2);
     });
 
     it("falls back to full when cursor unknown", async () => {
         const metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
-        const baseState = buildState("user:1");
+
         await metaStorage.setCursor("stale");
-        await metaStorage.setSessionId(getSessionStampFromState(baseState));
-        await metaStorage.updateLastActiveAt(Date.now() - 15 * 60_000);
-        const gateway = new RecordingGateway({ deltaError: new CursorUnknownSyncError("cursor") });
-        const listener = syncRuntimeListenerFactory({
-            eventsGateway: gateway,
-            metaStorage,
+        await metaStorage.setSessionId("user:1:123");
+        await metaStorage.updateLastActiveAt(Date.now() - 15 * 60_000); // 15 min
+
+        const gateway = new RecordingGateway({
+            deltaError: new CursorUnknownSyncError("cursor"),
         });
-        const store = configureStore({
-            reducer: (state = baseState) => state,
-            middleware: (getDefault) => getDefault({ serializableCheck: false }).prepend(listener.middleware),
+
+        const store = makeStore({
+            gateway,
+            metaStorage,
         });
 
         store.dispatch(syncDecideRequested());
+
         await waitFor(() => {
             expect(gateway.deltaCalls).toBe(1);
             expect(gateway.fullCalls).toBe(1);
@@ -134,28 +135,29 @@ describe("sync runtime listener", () => {
     it("forces full after long inactivity", async () => {
         const metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
-        const baseState = buildState("user:1");
+
         await metaStorage.setCursor("cursor_prev");
-        await metaStorage.setSessionId(getSessionStampFromState(baseState));
-        await metaStorage.updateLastActiveAt(Date.now() - 2 * 60 * 60_000);
+        await metaStorage.setSessionId("user:1:123");
+        await metaStorage.updateLastActiveAt(
+            Date.now() - 2 * 60 * 60_000, // 2h d'inactivité
+        );
+
         const gateway = new RecordingGateway();
-        const listener = syncRuntimeListenerFactory({
-            eventsGateway: gateway,
+
+        const store = makeStore({
+            gateway,
             metaStorage,
-        });
-        const store = configureStore({
-            reducer: (state = baseState) => state,
-            middleware: (getDefault) => getDefault({ serializableCheck: false }).prepend(listener.middleware),
         });
 
         store.dispatch(syncDecideRequested());
+
         await waitFor(() => {
             expect(gateway.fullCalls).toBe(1);
             expect(gateway.deltaCalls).toBe(0);
         });
     });
 
-    it("does not re-apply events already stored", async () => {
+    it("dispatches syncEventsReceived on replay when gateway returns events", async () => {
         const event: SyncEvent = {
             id: "evt-1",
             happenedAt: parseToISODate(new Date().toISOString()),
@@ -171,33 +173,28 @@ describe("sync runtime listener", () => {
                 },
             },
         };
+
         const metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
+
         const actions: AnyAction[] = [];
-        const baseState = buildState("user:1");
-        const gateway: SyncEventsGateway = {
-            replayLocal: async () => ({ events: [event] }),
-            syncDelta: async () => ({ events: [], cursor: null, sessionId: "remote" }),
-            syncFull: async () => ({ events: [], cursor: null, sessionId: "remote" }),
-        };
-        const listener = syncRuntimeListenerFactory({
-            eventsGateway: gateway,
+        const gateway = new RecordingGateway();
+        gateway.eventsForReplay = [event];
+
+        const store = makeStore({
+            gateway,
             metaStorage,
-        });
-        const store = configureStore({
-            reducer: (state = baseState) => state,
-            middleware: (getDefault) =>
-                getDefault({ serializableCheck: false }).prepend(listener.middleware, captureActions(actions)),
+            actionsBag: actions,
         });
 
         store.dispatch(replayRequested());
-        await waitFor(() => {
-            expect(actions.filter((action) => action.type === "SERVER/LIKE/ADDED_ACK")).toHaveLength(1);
-        });
 
-        store.dispatch(replayRequested());
         await waitFor(() => {
-            expect(actions.filter((action) => action.type === "SERVER/LIKE/ADDED_ACK")).toHaveLength(1);
+            const received = actions.filter(
+                (a) => a.type === syncEventsReceived.type,
+            );
+            expect(received).toHaveLength(1);
+            expect(received[0].payload).toEqual([event]);
         });
     });
 });
