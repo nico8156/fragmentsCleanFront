@@ -1,128 +1,15 @@
+// /app/_layout.tsx (ou RootLayout.tsx selon ton projet)
 import { Provider } from "react-redux";
-import { useEffect, useMemo } from "react";
-import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { mountAppStateAdapter } from "@/app/adapters/primary/react/gateways-config/appState.adapter";
-import { mountNetInfoAdapter } from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
-import {
-    gateways,
-    outboxStorage,
-    wireGatewaysForStore
-} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
-import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
-import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
-import { ticketSubmitUseCaseFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase";
-import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { ackListenerFactory } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
-import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import { createWlStore } from "@/app/adapters/primary/react/wiring/setupGateways";
+import { AppBootstrap } from "@/app/adapters/primary/react/AppBootstrap";
 import { RootNavigator } from "@/app/adapters/primary/react/navigation/RootNavigator";
-import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import {likeToggleUseCaseFactory} from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
-import {ackLikesListenerFactory} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
-import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
-import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync/syncRuntimeListenerFactory";
-import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
-import {createNativeSyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
-import {outboxPersistenceMiddlewareFactory} from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
 
-let storeRef: ReduxStoreWl | null = null;
-const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
+const store = createWlStore();
 
 export default function RootLayout() {
-    const store = useMemo(
-        () =>
-            {
-                const helpers = {
-                    nowIso: () => new Date().toISOString() as any,
-                    currentUserId: () => storeRef?.getState().aState.currentUser?.id ?? "anonymous",
-                };
-
-                const ticketSubmitMiddleware = ticketSubmitUseCaseFactory({
-                    gateways,
-                    helpers,
-                });
-                const commentCreateMiddleware = createCommentUseCaseFactory({
-                    gateways,
-                    helpers,
-                }).middleware;
-                const commentAckMiddleware = ackListenerFactory({
-                    gateways,
-                    helpers,
-                }).middleware;
-                const likeToggleMiddleware = likeToggleUseCaseFactory({
-                    gateways,
-                    helpers,
-                }).middleware;
-                const likeAckMiddleware = ackLikesListenerFactory().middleware;
-                const ticketAckMiddleware = ackTicketsListenerFactory();
-                const entitlementAckMiddleware = ackEntitlementsListener();
-                const outboxMiddleware = processOutboxFactory({
-                    gateways,
-                    helpers,
-                }).middleware;
-
-                const syncRuntimeListener = syncRuntimeListenerFactory({
-                    eventsGateway: gateways.events,
-                    metaStorage: createNativeSyncMetaStorage(),
-                });
-
-                const outboxPersistenceMiddleware = outboxPersistenceMiddlewareFactory({ storage: outboxStorage });
-
-                const createdStore = initReduxStoreWl({
-                    dependencies: {
-                        gateways,
-                        helpers,
-                    },
-                    listeners: [
-                        commentCreateMiddleware,
-                        commentAckMiddleware,
-                        likeToggleMiddleware,
-                        likeAckMiddleware,
-                        outboxMiddleware,
-                        ticketSubmitMiddleware,
-                        ticketAckMiddleware,
-                        entitlementAckMiddleware,
-                        syncRuntimeListener.middleware,
-                        authListenerFactory({ gateways, helpers: {} }),
-                        userLocationListenerFactory({ gateways, helpers: {} }),
-                    ],
-                    extraMiddlewares: [outboxPersistenceMiddleware],
-                });
-                storeRef = createdStore;
-
-                wireGatewaysForStore(createdStore)
-
-                return createdStore;
-            },
-        [],
-    );
-
-    useEffect(() => {
-        const unmountNetInfo = mountNetInfoAdapter(store);
-        const unmountAppState = mountAppStateAdapter(store);
-        let cancelled = false;
-
-        void (async () => {
-            const snapshot = await runRehydrateOutbox(store);
-            if (cancelled) return;
-            if (snapshot.queue.length) {
-                store.dispatch(outboxProcessOnce());
-            }
-            store.dispatch(replayRequested());
-            store.dispatch(syncDecideRequested());
-        })();
-
-        return () => {
-            cancelled = true;
-            unmountAppState();
-            unmountNetInfo();
-        };
-    }, [store]);
-
     return (
         <Provider store={store}>
+            <AppBootstrap />
             <RootNavigator />
         </Provider>
     );
