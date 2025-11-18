@@ -9,7 +9,7 @@ export const ackEntitlementsListener = () => {
         actionCreator: onTicketConfirmedAck,
         effect: async (action, api) => {
             const state: any = api.getState();
-            const th = state.enState?.thresholds ?? { likeAt: 1, commentAt: 3, submitCafeAt: 5 };
+            //const th = state.enState?.thresholds ?? { likeAt: 1, commentAt: 3, submitCafeAt: 5 };
             const userId = String(action.payload.userId);
 
             const prev = state.enState?.byUser?.[userId];

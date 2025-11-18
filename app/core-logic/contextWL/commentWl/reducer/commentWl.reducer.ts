@@ -103,7 +103,7 @@ export const commentWlReducer = createReducer(
                 const temp = state.entities.entities[tempId];
                 if (!temp) return;
 
-                const { targetId, parentId } = temp;
+                const { targetId } = temp;
                 // remplace l’entité
                 adapter.removeOne(state.entities, tempId);
                 adapter.addOne(state.entities, {
@@ -200,7 +200,6 @@ export const commentWlReducer = createReducer(
                 // 2) vue
                 const v = ensureView(state, targetId);
                 // politique d’insertion selon l’opération
-                const newIds = items.map((i) => i.id);
                 const incomingIdsForTarget = items
                     .filter(i => i.targetId === targetId)  // <- filtre indispensable
                     .map(i => i.id);
@@ -226,7 +225,7 @@ export const commentWlReducer = createReducer(
                 v.lastFetchedAt = new Date().toISOString();
             })
             .addCase(commentsRetrievalFailed,(state, action) => {
-                const {targetId, op, error} = action.payload;
+                const {targetId, error} = action.payload;
                 const v = ensureView(state, targetId);
                 v.loading = loadingStates.ERROR;
                 v.error = error;

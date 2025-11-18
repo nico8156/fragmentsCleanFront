@@ -1,61 +1,127 @@
+
+---
+
 # Fragments Clean Front
 
-Client mobile Expo structuré en **bounded contexts** Redux (dossier `app/core-logic/contextWL`) et adaptateurs primaires/secondaires. L'objectif : conserver une clean architecture (domain centré) tout en profitant d'Expo Router/React Navigation pour la présentation.
+Client mobile Expo structuré en **bounded contexts** Redux (dossier `app/core-logic/contextWL`) et adaptateurs primaires/secondaires.
+L’objectif : conserver une architecture propre, centrée domaine, tout en profitant d’Expo Router / React Navigation pour la présentation.
 
-## Architecture hexagonale
+---
 
-| Couche | Rôle | Référence |
-| --- | --- | --- |
-| **Domain/Contexts** | États normalisés + use cases par domaine (`appWl`, `coffeeWl`, `ticketWl`…). Chaque contexte expose ses propres actions, réducteurs, gateways et documentation dédiée. | [`app/core-logic/contextWL`](./app/core-logic/contextWL) |
-| **Store** | Assemblage Redux Toolkit + middlewares (`initReduxStoreWl`, listeners outbox, auth/location). | [`app/store`](./app/store) |
-| **View models (adapteurs secondaires)** | Hooks `use*` qui combinent selectors, déclenchent les thunks et produisent des VM immuables. | [`app/adapters/secondary/viewModel`](./app/adapters/secondary/viewModel/README.md) |
-| **React (adaptateur primaire)** | Navigation, écrans, composants Expo/React Native. | [`app/adapters/primary/react`](./app/adapters/primary/react/README.md) |
+## 🧱 Architecture hexagonale
 
-L'application démarre dans `_layout.tsx` : création du store, injection des listeners (likes/comments/outbox/auth/location), puis montage de `RootNavigator` + `AppInitializer`. Chaque listener déclenche des actions Redux qui alimentent les contexts, les selectors et enfin les view models React.【F:app/_layout.tsx†L1-L71】【F:app/_layout.tsx†L71-L105】
+| Couche                                    | Rôle                                                                                                                                     | Référence                                                                          |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Domain / Contexts (write-logic)**       | State normalisé + use cases + actions pour chaque domaine (`coffeeWl`, `ticketWl`, `likeWl`…), plus l’orchestration runtime via `appWl`. | [`app/core-logic/contextWL`](./app/core-logic/contextWL)                           |
+| **Store (composition)**                   | Redux Toolkit + middlewares + listeners : outbox runtime, sync events, auth, location.                                                   | [`app/store`](./app/store)                                                         |
+| **View Models (adaptateurs secondaires)** | Hooks `use*` combinant selectors + use cases pour produire des objets immuables prêts à afficher.                                        | [`app/adapters/secondary/viewModel`](./app/adapters/secondary/viewModel/README.md) |
+| **React (adaptateur primaire)**           | Navigation, écrans, composants Expo. Relie UI → intentions → Redux → ViewModels → UI.                                                    | [`app/adapters/primary/react`](./app/adapters/primary/react/README.md)             |
 
-## Pipeline event-driven (Redux puriste)
+L’application est initialisée dans `_layout.tsx` : création du store, montage des listeners runtime (outbox, sync events, auth, location) puis rendu des navigateurs Expo Router.
 
-1. **Intention UI** : un écran appelle une action "UI" (`uiTicketSubmitRequested`, `authSignInRequested`, `commentRetrieval`).
-2. **Use case / listener** : middleware `createListenerMiddleware` orchestre les appels réseau, gère les permissions (location) ou la persistence (auth secure store).【F:app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase.ts†L1-L49】【F:app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory.ts†L1-L74】
-3. **Outbox / Side effects** : les écritures passent par `processOutboxFactory` pour garantir l'idempotence et gérer les ACKs (likes, comments, tickets).【F:app/core-logic/contextWL/outboxWl/processOutbox.ts†L1-L87】
-4. **Reducers** : chaque contexte maintient son state normalisé (`articleWl`, `coffeeWl`, `userWl`…), parfois avec EntityAdapter, caches par locale, indexes géographiques…【F:app/core-logic/contextWL/articleWl/reducer/articleWl.reducer.ts†L1-L82】【F:app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer.ts†L1-L40】
-5. **Selectors/View models** : les hooks du dossier `viewModel` combinent plusieurs contexts et retournent des objets prêts à afficher (`useCommentsForCafe`, `useArticlesHome`, `useCafeFull`).【F:app/adapters/secondary/viewModel/useCommentsForCafe.ts†L1-L74】【F:app/adapters/secondary/viewModel/useArticlesHome.ts†L1-L66】
-6. **React UI** : les écrans (`features/home`, `features/map`, etc.) consomment ces hooks et dispatchent les actions UI en retour.【F:app/adapters/primary/react/features/home/screens/HomeScreen.tsx†L1-L71】【F:app/adapters/primary/react/features/map/screens/MapScreen.tsx†L1-L40】
+---
 
-Cette boucle assure une propagation unidirectionnelle (intent → middleware → reducer → selectors → UI) fidèle à Redux puriste.
+## 🔄 Pipeline event-driven (Redux puriste)
 
-## Runtime de reprise & synchronisation offline-first
+1. **Intention UI**
+   Une action UI est dispatchée depuis un écran (ex : `ticketVerifyRequested`, `likeSetRequested`, `authSignInRequested`).
+2. **Use case / listener**
+   Les middlewares (`createListenerMiddleware`) orchestent :
+   appels réseau, permissions (location), préparations outbox, résolutions tempId→serverId.
+3. **Outbox / Side-effects offline-first**
+   Toutes les écritures passent par une **file persistée** :
 
-- `outboxWl/runtime/syncRuntime.ts` charge la méta sync persistée (`cursor`, `sessionId`, `lastActiveAt`, `appliedEventIds`), rejoue les events locaux et décide automatiquement si un `syncDelta` ou `syncFull` doit être déclenché (heuristique idle/session + fallback `cursorUnknown`).【F:app/core-logic/contextWL/outboxWl/runtime/syncRuntime.ts†L1-L140】
-- `outboxWl/runtime/syncEventsListenerFactory.ts` applique les events idempotents (likes/comments/tickets) et court-circuite les doublons via `appliedEventIds` persistés.【F:app/core-logic/contextWL/outboxWl/runtime/syncEventsListenerFactory.ts†L1-L54】
-- `FakeEventsGateway` fournit des scénarios déterministes pour la démo sans backend et alimente `gateways.events`.【F:app/adapters/secondary/gateways/fake/fakeEventsGateway.ts†L1-L103】【F:app/adapters/primary/react/gateways-config/gatewaysConfiguration.ts†L1-L58】
-- Les listeners RN (`netInfo.adapter`, `appState.adapter`) déclenchent maintenant `replayLocal → outboxProcessOnce → decideAndSync` à la reprise et relancent l'outbox lors du retour online (debounce 500 ms).【F:app/_layout.tsx†L1-L150】【F:app/adapters/primary/react/gateways-config/netInfo.adapter.ts†L1-L48】【F:app/adapters/primary/react/gateways-config/appState.adapter.ts†L1-L33】
+    * `enqueue(command)`
+    * `outboxProcessOnce()`
+    * backoff + retry
+    * idempotence via `commandId`
+    * squash (ex : Like.Set)
+4. **Reducers**
+   Mise à jour normalisée dans les BC (`coffeeWl`, `commentWl`, `ticketWl`, etc.).
+5. **Selectors / View models**
+   Les hooks `use*` agrègent plusieurs contexts (ex : `useCafeFull`, `useCommentsForCafe`).
+6. **React UI**
+   Les écrans consomment les VMs et redispatchent des intentions.
 
-## Cartographie des contexts (bounded contexts)
+Architecture unidirectionnelle :
+**UI → listener/use case → reducer → selectors → UI.**
 
-Chaque dossier dispose maintenant d'un README + d'un diagramme `.mmd` détaillant son flux :
+---
 
-- [`appWl`](./app/core-logic/contextWL/appWl/README.md)
-- [`articleWl`](./app/core-logic/contextWL/articleWl/README.md)
-- [`coffeeWl`](./app/core-logic/contextWL/coffeeWl/README.md)
-- [`cfPhotosWl`](./app/core-logic/contextWL/cfPhotosWl/README.md)
-- [`commentWl`](./app/core-logic/contextWL/commentWl/README.md)
-- [`entitlementWl`](./app/core-logic/contextWL/entitlementWl/README.md)
-- [`likeWl`](./app/core-logic/contextWL/likeWl/README.md)
-- [`locationWl`](./app/core-logic/contextWL/locationWl/README.md)
-- [`openingHoursWl`](./app/core-logic/contextWL/openingHoursWl/README.md)
-- [`outboxWl`](./app/core-logic/contextWL/outboxWl/README.md)
-- [`ticketWl`](./app/core-logic/contextWL/ticketWl/README.md)
-- [`userWl`](./app/core-logic/contextWL/userWl/README.md)
+## 📡 Runtime de reprise & synchronisation offline-first
 
-Ces documents expliquent le modèle, les reducers, les use cases et la façon dont les events circulent (ex : `ticketFlow.mmd`, `locationFlow.mmd`).
+Deux signaux RN alimentent `appWl` :
 
-## View models & React
+* **`AppState`** (via `appState.adapter`)
+  → `appBecameActive`
+* **`NetInfo`** (via `netInfo.adapter`)
+  → `appConnectivityChanged({ online })`
 
-- [View models](./app/adapters/secondary/viewModel/README.md) : conventions d'écriture des hooks `use*`, réutilisation des selectors et déclenchement automatique des thunks selon l'état (`IDLE`/`stale`).
-- [Adaptateur React](./app/adapters/primary/react/README.md) : navigation, initialisation (`AppInitializer`) et principes d'orchestration des features.
+`appWl` ne gère plus le boot initial :
+**il ne s’occupe que de la reprise runtime.**
 
-## Démarrer le projet
+### Foreground (app redevient active)
+
+```
+appBecameActive
+    → outboxProcessOnce
+    → replayRequested
+    → syncDecideRequested
+```
+
+### Reconnexion (offline → online)
+
+```
+appConnectivityChanged(online: true)
+    → outboxProcessOnce
+    → syncDecideRequested
+```
+
+### Composants runtime
+
+* **`syncRuntime.ts`** : heuristique syncDelta/syncFull (cursor, session, idle).
+* **`syncEventsListenerFactory.ts`** : applique les événements serveur dans les BC (idempotence, appliquer seulement les nouveaux eventIds).
+* **`outboxProcessOnce`** : exécute une commande persistée, applique la résolution optimiste, puis publie l’ACK serveur.
+
+---
+
+## 🗂 Cartographie complète des bounded contexts
+
+Chaque contexte expose un `README` avec :
+
+* son modèle
+* ses reducers
+* ses use cases
+* ses gateways
+* son diagramme `.mmd`
+
+Contexts :
+
+* [`appWl`](./app/core-logic/contextWL/appWl/README.md)
+* [`articleWl`](./app/core-logic/contextWL/articleWl/README.md)
+* [`coffeeWl`](./app/core-logic/contextWL/coffeeWl/README.md)
+* [`cfPhotosWl`](./app/core-logic/contextWL/cfPhotosWl/README.md)
+* [`commentWl`](./app/core-logic/contextWL/commentWl/README.md)
+* [`entitlementWl`](./app/core-logic/contextWL/entitlementWl/README.md)
+* [`likeWl`](./app/core-logic/contextWL/likeWl/README.md)
+* [`locationWl`](./app/core-logic/contextWL/locationWl/README.md)
+* [`openingHoursWl`](./app/core-logic/contextWL/openingHoursWl/README.md)
+* [`outboxWl`](./app/core-logic/contextWL/outboxWl/README.md)
+* [`ticketWl`](./app/core-logic/contextWL/ticketWl/README.md)
+* [`userWl`](./app/core-logic/contextWL/userWl/README.md)
+
+---
+
+## 🎛 View models & React
+
+Voir :
+
+* [View models](./app/adapters/secondary/viewModel/README.md) — conventions, immutabilité, règles de fetch selon état `IDLE/stale`.
+* [Adaptateur React](./app/adapters/primary/react/README.md) — navigation, initialisation, side-effects UI.
+
+---
+
+## ▶ Démarrer
 
 ```bash
 npm install
@@ -68,3 +134,5 @@ Tests & lint :
 npm test
 npm run lint
 ```
+
+---

@@ -114,14 +114,14 @@ export interface AppUserDTO {
     displayName?: string;
     avatarUrl?: string;
     bio?: string;
-    identities: Array<{
+    identities: {
         id: string;
         provider: ProviderId;
         providerUserId: string;
         email?: string;
         createdAt: string;
         lastAuthAt?: string;
-    }>;
+    }[];
     roles: UserRole[];
     flags?: Record<string, boolean>;
     preferences?: UserPreferences;

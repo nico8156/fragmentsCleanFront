@@ -51,12 +51,6 @@ const toPreview = (article: Article): ArticlePreviewVM => {
     };
 };
 
-const toCoffeePackPreview = () => {
-    return {
-
-    }
-}
-
 const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
     if (previews.length === 0) return [];
 

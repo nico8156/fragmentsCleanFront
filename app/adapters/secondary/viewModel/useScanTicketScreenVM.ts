@@ -49,6 +49,7 @@ export function useScanTicketScreenVM() {
             const text = await recognizeText(uri);
             setOcrText(text);
         } catch (recognitionError) {
+            console.error(recognitionError);
             setError("La reconnaissance du ticket a échoué. Réessaie.");
         } finally {
             setIsProcessing(false);

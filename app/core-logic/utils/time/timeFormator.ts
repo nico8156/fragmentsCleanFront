@@ -6,7 +6,7 @@ const toHHmm = (m: number) => {
     return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
 };
 
-const DAY_LABELS_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'] as const;
+//const DAY_LABELS_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'] as const;
 
 export function toHoursByDayVM(windows: DayWindow[]): HoursByDayVM {
     const byDay = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]} as Record<DayWindow['day'], DayWindow[]>;

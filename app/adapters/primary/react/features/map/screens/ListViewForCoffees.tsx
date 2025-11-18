@@ -3,7 +3,6 @@ import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
 import CoffeeList from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeList";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {useState} from "react";
 import {useNavigation} from "@react-navigation/native";
 import {RootStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
 

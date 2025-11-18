@@ -9,7 +9,6 @@ import {
     View,
 } from "react-native";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";

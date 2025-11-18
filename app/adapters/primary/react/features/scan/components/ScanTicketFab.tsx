@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 

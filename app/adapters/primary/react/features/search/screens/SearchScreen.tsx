@@ -3,8 +3,6 @@ import { FlatList, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, TextInp
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { RootStateWl } from "@/app/store/reduxStoreWl";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import CoffeeListItem from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeListItem";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
@@ -13,7 +11,7 @@ import {selectCoffeesList} from "@/app/core-logic/contextWL/coffeeWl/selector/co
 
 export function SearchScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
-    const inset = useSafeAreaInsets();
+
     const [query, setQuery] = useState("");
 
     const coffees = useSelector(selectCoffeesList)

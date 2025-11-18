@@ -1,28 +1,15 @@
 flowchart TD
 
-    A[appBootRequested] --> B[Hydration via redux persist]
-    B --> C[Rehydrate Outbox]
+subgraph Environment
+AS[AppState: status == 'active'] --> AB[dispatch appBecameActive]
+NI[NetInfo: passes offline  online] --> AC[dispatch appConnectivityChanged  online: true ]
+end
 
-    C -->|queue non vide| D[outboxProcessOnce]
-    C -->|queue vide| E[Init Auth and Location]
+subgraph appWl runtimeListener
+AB --> N[outboxProcessOnce]
+N --> O[replayRequested]
+O --> P[syncDecideRequested]
 
-    D --> E
-
-    E --> F[Fetch global data - coffees, photos, horaires]
-    F --> G{User authenticated}
-
-    G -->|oui| H[Fetch entitlements]
-    G -->|non| I[Skip entitlements]
-
-    H --> J[replayRequested]
-    I --> J[replayRequested]
-
-    J --> K[syncDecideRequested]
-    K --> L[appWarmupDone and appBootSucceeded]
-
-    M[appBecameActive] --> N[outboxProcessOnce]
-    N --> O[replayRequested]
-    O --> P[syncDecideRequested]
-
-    Q[appConnectivityChanged online true] --> R[outboxProcessOnce]
-    R --> S[syncDecideRequested]
+AC --> R[outboxProcessOnce]
+R --> S[syncDecideRequested]
+end

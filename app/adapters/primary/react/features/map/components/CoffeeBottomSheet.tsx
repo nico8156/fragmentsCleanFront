@@ -17,7 +17,7 @@ interface Props {
 }
 
 const CoffeeBottomSheet = (props: Props) => {
-    const { isBottomSheetOpen, setIsBottomSheetOpen, id } = props;
+    const { setIsBottomSheetOpen, id } = props;
     const { width } = useWindowDimensions();
     const { coffee } = useCafeFull(id);
 

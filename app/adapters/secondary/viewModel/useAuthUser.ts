@@ -9,7 +9,6 @@ import {
 } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { signInWithProvider, signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import type { AppUser } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { DEFAULT_COMMUNITY_PROFILE } from "@/app/adapters/secondary/fakeData/communityProfiles";
 
 const GOOGLE_SCOPES = ["openid", "email", "profile"] as const;

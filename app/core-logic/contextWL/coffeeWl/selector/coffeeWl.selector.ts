@@ -1,8 +1,7 @@
 import {
     Address, Coffee,
     CoffeeId,
-    GeoPoint,
-    parseToCoffeeId
+    GeoPoint
 } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {RootStateWl} from "@/app/store/reduxStoreWl";
 import { createSelector } from "@reduxjs/toolkit";

@@ -1,7 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
-import { OutboxRecord, OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import {AppStateWl} from "@/app/store/appStateWl";
+import { OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const selectOutbox = (s: RootStateWl) => (s as any).outbox ?? (s as any).oState;
 export const selectOutboxQueue = (s: RootStateWl) => selectOutbox(s).queue;

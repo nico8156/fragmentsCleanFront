@@ -35,7 +35,7 @@ const parseSnapshot = (raw: string | null): OutboxStateWl | null => {
 
 const createAsyncStorageDriver = (key: string): StorageDriver | null => {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const AsyncStorage = require("@react-native-async-storage/async-storage");
         const storage = AsyncStorage.default ?? AsyncStorage;
         if (!storage) return null;
@@ -58,7 +58,7 @@ const createAsyncStorageDriver = (key: string): StorageDriver | null => {
 
 const createMmkvDriver = (key: string): StorageDriver | null => {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+// eslint-disable-next-line @typescript-eslint/no-require-imports
         const { MMKVLoader } = require("react-native-mmkv-storage");
         const storage = new MMKVLoader().withInstanceID(key).initialize();
         return {
