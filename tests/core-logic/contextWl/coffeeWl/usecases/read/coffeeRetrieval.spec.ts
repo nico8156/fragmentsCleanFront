@@ -1,8 +1,10 @@
-import {coffeeGlobalRetrieval, coffeeRetrieval} from "./coffeeRetrieval";
-import {FakeCoffeeGateway} from "../../../../../adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import {initReduxStoreWl, ReduxStoreWl} from "../../../../../store/reduxStoreWl";
-import {AppStateWl} from "../../../../../store/appStateWl";
-
+import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
+import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
+import {
+    coffeeGlobalRetrieval,
+    coffeeRetrieval
+} from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
+import {AppStateWl} from "@/app/store/appStateWl";
 
 describe("On Coffee retrieval (single) : ", () => {
     let store: ReduxStoreWl;

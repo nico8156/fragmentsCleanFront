@@ -1,7 +1,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { rehydrateOutboxFactory } from "./rehydrateOutbox";
-import type { OutboxStateWl } from "../typeAction/outbox.type";
 import {FakeLogger, FakeOutboxStorage} from "@/app/adapters/secondary/gateways/fake/fakeOutboxStorage";
+import {rehydrateOutboxFactory} from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
+import {OutboxStateWl} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 const makeStore = (): ReduxStoreWl =>
     initReduxStoreWl({

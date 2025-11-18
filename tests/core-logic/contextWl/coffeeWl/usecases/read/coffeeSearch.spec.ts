@@ -1,7 +1,6 @@
-import { coffeesSearch } from "./coffeeRetrieval";
-
-import {FakeCoffeeGateway} from "../../../../../adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import {initReduxStoreWl, ReduxStoreWl} from "../../../../../store/reduxStoreWl";
+import {FakeCoffeeGateway} from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
+import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
+import {coffeesSearch} from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 
 
 describe("On Coffees search (batch hydrate)", () => {

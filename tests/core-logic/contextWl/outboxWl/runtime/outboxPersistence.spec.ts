@@ -1,14 +1,10 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { outboxPersistenceMiddlewareFactory } from "./outboxPersistenceFactory";
+
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {
-    markProcessing,
-} from "../processOutbox";
-import {
-    scheduleRetry,
-    outboxRehydrateCommitted,
-} from "../typeAction/outbox.actions";
 import {FakeLogger, FakeOutboxStorage} from "@/app/adapters/secondary/gateways/fake/fakeOutboxStorage";
+import {outboxPersistenceMiddlewareFactory} from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
+import {markProcessing} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import {outboxRehydrateCommitted, scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 const flush = () => new Promise<void>((r) => setTimeout(r, 100));
 

@@ -1,11 +1,14 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {FakeArticleWlGateway, flush} from "@/app/adapters/secondary/gateways/fake/fakeArticleWlGateway";
-import {articleRetrievalBySlug, articlesListRetrieval} from "./articleRetrieval";
 import {
     Article,
     articleLoadingStates,
 } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import {
+    articleRetrievalBySlug,
+    articlesListRetrieval
+} from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 
 const sampleArticle = (overrides?: Partial<Article>): Article => ({
     id: "article-1" as any,

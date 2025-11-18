@@ -1,6 +1,6 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {DependenciesWl} from "@/app/store/appStateWl";
-import {userLocationListenerFactory} from "./userLocationFactory";
+
 import {
     getOnceRequested,
     permissionCheckRequested,
@@ -11,6 +11,7 @@ import {
 import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
 import {AccuracyKey, LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
 import {FakeLocationGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
+import {userLocationListenerFactory} from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
