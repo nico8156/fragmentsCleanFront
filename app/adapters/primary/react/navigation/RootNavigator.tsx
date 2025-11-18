@@ -25,6 +25,7 @@ import { EditProfileScreen } from "@/app/adapters/primary/react/features/profile
 import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
 import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
 import { AppSettingsScreen } from "@/app/adapters/primary/react/features/profile/screens/AppSettingsScreen";
+import {ActivityIndicator, View} from "react-native";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();
@@ -161,11 +162,17 @@ function SignedOutNavigator() {
 }
 
 export function RootNavigator() {
-    const status = useSelector(selectAuthStatus);
 
+    const status = useSelector(selectAuthStatus);
+    console.log("[NAV] auth status =", status);
+    const LoadingScreen = () => (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator />
+        </View>
+    );
     const content = useMemo(() => {
         if (status === "loading") {
-            return null;
+            return <LoadingScreen/>;
         }
         if (status === "signedIn") {
             return <SignedInNavigator />;

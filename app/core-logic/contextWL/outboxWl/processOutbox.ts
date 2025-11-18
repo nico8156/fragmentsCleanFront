@@ -1,6 +1,6 @@
 import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
-import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
-import {AppDispatchWl} from "@/app/store/reduxStoreWl";
+import { DependenciesWl} from "@/app/store/appStateWl";
+import {AppDispatchWl, RootStateWl} from "@/app/store/reduxStoreWl";
 
 import {
     commandKinds,
@@ -29,18 +29,23 @@ export const deleteRollback = createAction<{ commentId: string; prevBody: string
 
 export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void) => {
     const processOutboxUseCase = createListenerMiddleware();
-    const listener = processOutboxUseCase.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
+    const listener = processOutboxUseCase.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
     listener({
         actionCreator:outboxProcessOnce,
         effect: async (action, api)=>{
 
-            const state = api.getState() as AppStateWl;
-            const queue = selectOutboxQueue(state);
+            const state = api.getState() as RootStateWl;
+            const queue:OutboxStateWl["queue"] = selectOutboxQueue(state);
             if (!queue.length) return;
 
             const byId:OutboxStateWl["byId"] = selectOutboxById(state);
             const now  = Date.now();
+            console.log("[OUTBOX] processOnce: start");
+            console.log(
+                "[OUTBOX] processOnce: current queue length =",
+                queue.length,
+            );
 
             const eligibleId = queue.find((qid:string) => {
                 const rec = byId[qid];
@@ -223,7 +228,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
 
                 api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 
-                const stateAfterFail = api.getState() as AppStateWl;
+                const stateAfterFail = api.getState() as RootStateWl;
                 const attemptsSoFar = selectOutboxById(stateAfterFail)[id]?.attempts ?? 0;
 
                 const base = Math.min(60_000, 2 ** Math.min(attemptsSoFar, 6) * 1000);
@@ -232,6 +237,10 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
 
                 api.dispatch(scheduleRetry({ id, nextAttemptAt: next }));
             }
+            console.log(
+                "[OUTBOX] processOnce: after, queue length =",
+                api.getState().oState.queue.length,
+            );
 
             if (callback) callback();
         },

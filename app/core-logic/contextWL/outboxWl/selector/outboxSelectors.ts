@@ -3,9 +3,9 @@ import { RootStateWl } from "@/app/store/reduxStoreWl";
 import { OutboxRecord, OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {AppStateWl} from "@/app/store/appStateWl";
 
-export const selectOutbox = (s: AppStateWl) => (s as any).outbox ?? (s as any).oState;
-export const selectOutboxQueue = (s: AppStateWl) => selectOutbox(s).queue;
-export const selectOutboxById  = (s: AppStateWl) => selectOutbox(s).byId;
+export const selectOutbox = (s: RootStateWl) => (s as any).outbox ?? (s as any).oState;
+export const selectOutboxQueue = (s: RootStateWl) => selectOutbox(s).queue;
+export const selectOutboxById  = (s: RootStateWl) => selectOutbox(s).byId;
 
 export const selectNextOutboxRecord = createSelector(selectOutbox, (state): OutboxRecord | undefined => {
     const nextId = state.queue[0];

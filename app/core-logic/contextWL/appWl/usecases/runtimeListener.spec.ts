@@ -1,18 +1,12 @@
 // app/core-logic/contextWL/appWl/usecases/runtimeListener.spec.ts
 
-import { FakeCoffeeGateway } from "../../../../adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import { initReduxStoreWl, ReduxStoreWl } from "../../../../store/reduxStoreWl";
-import { createActionsRecorder } from "../../../../store/middleware/actionRecorder";
+import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { createActionsRecorder } from "@/app/store/middleware/actionRecorder";
 
 import {
     appBecameActive,
-    appBootRequested,
     appConnectivityChanged,
-    appHydrationDone,
-    appWarmupDone,
-    appBootSucceeded,
-    appBootFailed,
-} from "../typeAction/appWl.action";
+} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 import {
     replayRequested,
@@ -23,63 +17,26 @@ import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeActio
 
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
-const flush = () => new Promise<void>((r) => setTimeout(r, 0));
-
-describe("On runtimeListener triggered :", () => {
+describe("runtimeListener (appWl) :", () => {
     let store: ReduxStoreWl;
-    let coffeeGateway: FakeCoffeeGateway;
     let rec: ReturnType<typeof createActionsRecorder>;
 
     beforeEach(() => {
-        coffeeGateway = new FakeCoffeeGateway();
         rec = createActionsRecorder();
+
         store = initReduxStoreWl({
             dependencies: {
-                gateways: {
-                    coffees: coffeeGateway,
-                },
+                // runtimeListenerFactory ne dépend plus de gateways,
+                // on peut donc passer un stub minimal ici.
+                gateways: {} as any,
+                helpers: {} as any,
             },
-            listeners: [runtimeListenerFactory({} as any)],
+            listeners: [runtimeListenerFactory()],
             extraMiddlewares: [rec.middleware],
         });
     });
 
-    afterEach(() => {
-        coffeeGateway.willFailGet = false;
-    });
-
-    it("should, on happy path, dispatch hydration, warmup and boot_succeeded", async () => {
-        store.dispatch(appBootRequested());
-        await flush();
-
-        const types = rec.getTypes().filter(Boolean);
-
-        expect(types).toEqual(
-            expect.arrayContaining([
-                appHydrationDone.type,
-                appWarmupDone.type,
-                appBootSucceeded.type,
-            ]),
-        );
-    });
-
-
-    it("should, if error thrown, trigger boot_failed action", async () => {
-        coffeeGateway.willFailGet = true;
-
-        store.dispatch(appBootRequested());
-        await flush();
-
-        const types = rec.getTypes();
-
-        expect(types).toEqual(
-            expect.arrayContaining([
-                appBootFailed.type,
-            ]),
-        );
-    });
-
-    it("should on appBecameActive triggered, call processOnce (outbox) + replay + syncDecide", () => {
+    it("should, on appBecameActive, dispatch outboxProcessOnce + replayRequested + syncDecideRequested", () => {
         store.dispatch(appBecameActive());
 
         const types = rec.getTypes();
@@ -93,7 +50,7 @@ describe("On runtimeListener triggered :", () => {
         );
     });
 
-    it("should on appConnectivityChanged(online: true) trigger processOnce (outbox) + syncDecide", () => {
+    it("should, on appConnectivityChanged(online: true), dispatch outboxProcessOnce + syncDecideRequested", () => {
         store.dispatch(appConnectivityChanged({ online: true }));
 
         const types = rec.getTypes();
@@ -106,7 +63,7 @@ describe("On runtimeListener triggered :", () => {
         );
     });
 
-    it("should on appConnectivityChanged(online: false) NOT trigger outboxProcessOnce nor syncDecide", () => {
+    it("should, on appConnectivityChanged(online: false), NOT dispatch outboxProcessOnce nor syncDecideRequested", () => {
         store.dispatch(appConnectivityChanged({ online: false }));
 
         const types = rec.getTypes();

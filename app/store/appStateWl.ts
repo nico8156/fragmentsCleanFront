@@ -5,12 +5,13 @@ import {TicketsStateWl} from "@/app/core-logic/contextWL/ticketWl/typeAction/tic
 import {EntitlementStateWl} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 import {CoffeeStateWl} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {AppRuntimeState} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.type";
-import {GatewaysWl} from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
+
 import {CfPhotoStateWl} from "@/app/core-logic/contextWL/cfPhotosWl/typeAction/cfPhoto.type";
 import {ohStateWl} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 import {LocationStateWl} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
 import {ArticleStateWl} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import {AuthState} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import {GatewaysWl} from "@/app/adapters/primary/react/wiring/setupGateways";
 
 
 export interface AppStateWl {

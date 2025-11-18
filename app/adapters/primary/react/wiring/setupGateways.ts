@@ -113,6 +113,7 @@ export const outboxStorage = createNativeOutboxStorage();
 // ---- wiring spécifique store <-> gateways ----
 
 export const wireGatewaysForStore = (store: ReduxStoreWl) => {
+    console.log("[STORE] wireGatewaysForStore: start");
     // currentUserId getter pour les likes
     const likeGateway = gateways.likes as FakeLikesGateway;
     if (likeGateway.setCurrentUserIdGetter) {
@@ -144,6 +145,8 @@ export const wireGatewaysForStore = (store: ReduxStoreWl) => {
             () => store.getState().aState.currentUser?.id ?? "anonymous",
         );
     }
+    console.log("[STORE] wireGatewaysForStore: done");
+
 
     // si un jour tu as des ACK pour events, tu les cableras aussi ici
 };
@@ -151,6 +154,7 @@ export const wireGatewaysForStore = (store: ReduxStoreWl) => {
 // ---- création du store + middlewares/metier/runtime/sync ----
 
 export const createWlStore = (): ReduxStoreWl => {
+    console.log("[STORE] createWlStore: start");
     let storeRef: ReduxStoreWl | null = null;
 
     const helpers = {
@@ -179,6 +183,7 @@ export const createWlStore = (): ReduxStoreWl => {
         gateways,
         helpers,
     }).middleware;
+    console.log("[STORE] createWlStore: create middlewares");
 
     const syncRuntimeListener = syncRuntimeListenerFactory({
         eventsGateway: gateways.events,
@@ -208,7 +213,13 @@ export const createWlStore = (): ReduxStoreWl => {
     });
 
     storeRef = store;
+
+    console.log("[STORE] createWlStore: initReduxStoreWl done");
+    console.log("[STORE] createWlStore: wireGatewaysForStore");
+
     wireGatewaysForStore(store);
+
+    console.log("[STORE] createWlStore: done");
 
     return store;
 };

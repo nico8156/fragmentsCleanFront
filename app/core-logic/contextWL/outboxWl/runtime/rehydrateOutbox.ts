@@ -76,14 +76,21 @@ const sanitizeOutboxState = (snapshot: OutboxStateWl | null | undefined): Outbox
 
 export const rehydrateOutboxFactory = ({ storage, logger }: RehydrateOutboxDeps) => {
     const loadSnapshot = async (): Promise<OutboxStateWl> => {
+        console.log("[OUTBOX] rehydrate: read from storage");
         let snapshot: OutboxStateWl | null = null;
         try {
             snapshot = await storage.loadSnapshot();
+            console.log(
+                "[OUTBOX] rehydrate: snapshot loaded, queue length =",
+                snapshot?.queue.length,
+            );
         } catch (error) {
             logger?.("[outbox] failed to load snapshot", error);
         }
+
         return sanitizeOutboxState(snapshot ?? undefined);
     };
+
 
     return async (store: ReduxStoreWl): Promise<OutboxStateWl> => {
         const sanitized = await loadSnapshot();
