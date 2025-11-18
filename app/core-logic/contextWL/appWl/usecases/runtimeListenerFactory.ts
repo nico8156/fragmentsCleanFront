@@ -1,7 +1,6 @@
 // appWl/runtimeListenerFactory.ts
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {  outboxStorage } from "@/app/adapters/primary/react/gateways-config/gatewaysConfiguration";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
@@ -20,6 +19,7 @@ import {coffeeGlobalRetrieval} from "@/app/core-logic/contextWL/coffeeWl/usecase
 import {onCfPhotoRetrieval} from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
 import {onOpeningHourRetrieval} from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
 import {entitlementsRetrieval} from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
+import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
 

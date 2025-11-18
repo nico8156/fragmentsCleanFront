@@ -1,6 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import { appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 type NetInfoAdapterOptions = {
     debounceMs?: number;
@@ -23,20 +23,20 @@ export function mountNetInfoAdapter(
         }
     };
 
-    const scheduleReplay = () => {
+    const scheduleConnectivityChanged = (online: boolean) => {
         clearTimer();
         timer = setTimeout(() => {
-            store.dispatch(outboxProcessOnce());
+            store.dispatch(appConnectivityChanged({ online }));
             timer = null;
         }, debounceMs);
     };
 
-    // 🔹 Initial fetch en "fire-and-forget", sans bloquer le montage
     NetInfo.fetch()
         .then((s) => {
             lastOnline = Boolean(
                 s.isConnected && (s.isInternetReachable ?? s.isConnected),
             );
+            // tu peux éventuellement faire un appConnectivityChanged initial ici
         })
         .catch(() => {
             lastOnline = false;
@@ -46,17 +46,14 @@ export function mountNetInfoAdapter(
         const reachable = state.isInternetReachable ?? state.isConnected;
         const online = Boolean(state.isConnected && reachable);
 
-        if (online && !lastOnline) {
-            // transition offline -> online
-            scheduleReplay();
-        } else if (!online) {
-            clearTimer();
+        if (online !== lastOnline) {
+            // on notifie le changement à appWl
+            scheduleConnectivityChanged(online);
         }
 
         lastOnline = online;
     });
 
-    // ✅ cleanup synchrones, prêts pour useEffect
     return () => {
         clearTimer();
         unsub();

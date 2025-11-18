@@ -1,7 +1,7 @@
 import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-import {outboxProcessOnce} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+
 import {
     commandKinds,
     OutboxItem,
@@ -15,7 +15,7 @@ import {
     selectOutboxById,
     selectOutboxQueue,
 } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-import {scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {outboxProcessOnce, scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 export const markProcessing = createAction<{id:string}>("OUTBOX/MARK_PROCESSING")
 export const createReconciled = createAction<{ tempId: string; server: { id: string; createdAt: string; version: number }}>("COMMENT/CREATE_RECONCILED")

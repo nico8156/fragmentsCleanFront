@@ -3,11 +3,12 @@ import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {CommentEntity, moderationTypes} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import {commandKinds, OutboxItem} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 export const uiCommentCreateRequested = createAction<{ targetId: string, body: string, parentId?: string }>("UI/COMMENT/CREATE");
 export const addOptimisticCreated = createAction<{entity:CommentEntity}>('UI/COMMENT/ADD_OPTIMISTIC_CREATED');
 export const enqueueCommitted = createAction<{id: string; item: OutboxItem; enqueuedAt: string }>('UI/COMMENT/ENQUEUE_COMMITTED');
-export const outboxProcessOnce = createAction("COMMENT/OUTBOXPROCESSONCE")
+
 
 export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () => void) => {
     const ccUseCase = createListenerMiddleware();

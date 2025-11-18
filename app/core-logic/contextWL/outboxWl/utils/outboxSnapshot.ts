@@ -1,4 +1,3 @@
-// runtime/outboxSnapshot.ts
 import { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const buildOutboxSnapshot = (state: OutboxStateWl): OutboxStateWl => {
