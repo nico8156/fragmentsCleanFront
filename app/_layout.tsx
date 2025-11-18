@@ -21,7 +21,7 @@ import {ackLikesListenerFactory} from "@/app/core-logic/contextWL/likeWl/usecase
 import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import { ackEntitlementsListener } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/ackEntitlement";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
+import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync/syncRuntimeListenerFactory";
 import { replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 import {createNativeSyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";

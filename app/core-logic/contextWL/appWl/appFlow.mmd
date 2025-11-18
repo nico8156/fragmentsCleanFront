@@ -1,12 +1,28 @@
-%% App lifecycle flow (mermaid)
-%%{init: {"theme": "neutral"}}%%
 flowchart TD
-    BootIntent[[AppInitializer / NetInfo]] -->|dispatch| Boot(appBootRequested)
-    Boot --> Listener(runtimeListenerFactory)
-    Listener --> Hydration[appHydrationDone]
-    Listener --> Warmup[coffeeGlobalRetrieval + entitlementsRetrieval]
-    Warmup --> Ready[appWarmupDone + appBootSucceeded]
-    Ready --> Reducer(appReducer)
-    Reducer --> State[AppRuntimeState]
-    State --> Triggers[appBecameActive / appConnectivityChanged]
-    Triggers --> Outbox(outboxProcessOnce)
+
+    A[appBootRequested] --> B[Hydration via redux persist]
+    B --> C[Rehydrate Outbox]
+
+    C -->|queue non vide| D[outboxProcessOnce]
+    C -->|queue vide| E[Init Auth and Location]
+
+    D --> E
+
+    E --> F[Fetch global data - coffees, photos, horaires]
+    F --> G{User authenticated}
+
+    G -->|oui| H[Fetch entitlements]
+    G -->|non| I[Skip entitlements]
+
+    H --> J[replayRequested]
+    I --> J[replayRequested]
+
+    J --> K[syncDecideRequested]
+    K --> L[appWarmupDone and appBootSucceeded]
+
+    M[appBecameActive] --> N[outboxProcessOnce]
+    N --> O[replayRequested]
+    O --> P[syncDecideRequested]
+
+    Q[appConnectivityChanged online true] --> R[outboxProcessOnce]
+    R --> S[syncDecideRequested]

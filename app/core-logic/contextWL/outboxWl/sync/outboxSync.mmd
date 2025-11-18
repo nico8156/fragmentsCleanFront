@@ -1,0 +1,41 @@
+flowchart LR
+
+%% TRIGGERS
+
+    A[replayRequested] --> R[syncRuntimeListener]
+    B[syncDecideRequested] --> R
+    C[syncDeltaRequested] --> R
+    D[syncFullRequested] --> R
+
+%% RUNTIME
+
+subgraph SYNC_RUNTIME
+R --> S1[Lecture snapshot meta
+cursor sessionId lastActiveAt]
+R --> STRAT[resolveStrategy
+delta full deltaWithFallback]
+STRAT --> GW[SyncEventsGateway
+delta full ou replay]
+end
+
+GW --> EV[syncEventsReceived
+liste de SyncEvent]
+
+%% EVENTS APPLIER
+
+subgraph APPLY_EVENTS
+EV --> L[syncEventsListener
+tri et dedup]
+L --> L1[Like ack usecases]
+L --> L2[Comment ack usecases]
+L --> L3[Ticket ack usecases]
+end
+
+%% META STORAGE
+
+subgraph META_STORAGE
+S1 --> M1[SyncMetaStorage
+mis a jour avec cursor sessionId lastActiveAt]
+L --> M2[SyncMetaStorage
+mis a jour avec appliedEventIds]
+end

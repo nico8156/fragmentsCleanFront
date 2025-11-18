@@ -1,0 +1,35 @@
+flowchart TD
+
+    subgraph HYDRATE Outbox
+        A[App boot or restore] --> B[rehydrateOutboxFactory]
+        B --> C[outboxRehydrateCommitted]
+        C --> D[Etat outbox en memoire]
+    end
+
+    subgraph PROCESS Outbox
+        E[outboxProcessOnce] --> F[Selection d un outboxId eligible]
+        F -->|aucun eligible| G[Arret silencieux]
+        F -->|un element| H[markProcessing]
+
+        H --> I[Appel du gateway metier]
+
+        I -->|succes| J[markAwaitingAck]
+        J --> K[dequeueCommitted]
+        K --> D
+
+        I -->|erreur| L[Rollback metier like comment ticket]
+        L --> M[markFailed]
+        M --> N[scheduleRetry avec backoff]
+        N --> D
+    end
+
+subgraph PERSIST Outbox
+P[Actions modifiant outbox
+enqueue markProcessing markFailed
+dequeue markAwaitingAck drop scheduleRetry]
+P --> Q[buildOutboxSnapshot]
+Q --> R[saveSnapshot via OutboxStorageGateway]
+end
+
+D --> E
+D --> P

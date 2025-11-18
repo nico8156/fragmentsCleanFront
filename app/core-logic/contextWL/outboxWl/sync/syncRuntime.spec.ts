@@ -5,7 +5,7 @@ import {
     SyncEventsGateway,
     CursorUnknownSyncError,
 } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
-import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/syncRuntimeListenerFactory";
+import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync/syncRuntimeListenerFactory";
 import {
     replayRequested,
     syncDecideRequested,
