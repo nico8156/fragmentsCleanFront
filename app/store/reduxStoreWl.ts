@@ -15,6 +15,7 @@ import {openingHoursReducer as ohState} from "@/app/core-logic/contextWL/opening
 import {locationReducer as lcState} from "@/app/core-logic/contextWL/locationWl/reducer/location.reducer";
 import {articleWlReducer as arState} from "@/app/core-logic/contextWL/articleWl/reducer/articleWl.reducer";
 import {authReducer as aState} from "@/app/core-logic/contextWL/userWl/reducer/user.reducer";
+import {appReducer as appState} from "@/app/core-logic/contextWL/appWl/reducer/app.reducer";
 
 export const initReduxStoreWl = (config: {
     dependencies: Partial<DependenciesWl>;
@@ -35,6 +36,7 @@ export const initReduxStoreWl = (config: {
             ohState,
             arState,
             aState,
+            appState,
             ...(config.extraReducers ?? {})
         },
         middleware: (getDefaultMiddleware) => {

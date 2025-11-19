@@ -4,12 +4,13 @@ import {
     appBecameActive,
     appBecameBackground,
     appBecameInactive, appBootFailed, appBootRequested, appBootSucceeded,
-    appConnectivityChanged, appHydrationDone, appWarmupDone
+    appConnectivityChanged, appHydrationDone, appWarmupDone, markHasCompletedOnboarding, markHasNotCompletedOnboarding
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 const initialState: AppRuntimeState = {
     phase: "cold",
     online: true,
+    hasCompletedOnboarding: false,
     boot: { doneHydration: false, doneWarmup: false },
 };
 
@@ -36,5 +37,11 @@ export const appReducer = createReducer(
             .addCase(appBootRequested, (s) => { s.phase = "booting"; s.boot.error = null; })
             .addCase(appBootSucceeded, (s) => { s.phase = "ready"; s.boot.error = null; })
             .addCase(appBootFailed, (s, a) => { s.phase = "error"; s.boot.error = a.payload.message; })
+            .addCase(markHasCompletedOnboarding,(s,_) => {
+                s.hasCompletedOnboarding = true
+            })
+            .addCase(markHasNotCompletedOnboarding,(s, _) => {
+                s.hasCompletedOnboarding = false
+        })
     }
 )

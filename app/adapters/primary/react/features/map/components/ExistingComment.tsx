@@ -1,5 +1,5 @@
 import {CommentItemVM} from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
-import {Pressable, Text, View} from "react-native";
+import {Pressable, Text, View, StyleSheet} from "react-native";
 import {Image} from "expo-image";
 import {SymbolView} from "expo-symbols";
 import React, {useState} from "react";
@@ -57,13 +57,14 @@ const ExistingComment = (props:Props) => {
                 <Text style={styles.commentBody}>{comment.body}</Text>
             </View>
             <View>
-                <Text style={styles.dateFromComment}>{comment.relativeTime}</Text><View style={styles.statusBadge}>
-                <View
-                    style={[
-                        styles.statusLight,
-                        { backgroundColor: STATUS_COLORS[comment.transportStatus] },
-                    ]}
-                />
+                <Text style={styles.dateFromComment}>{comment.relativeTime}</Text>
+                <View style={styles.statusBadge}>
+                    <View
+                        style={[
+                            styles.statusLight,
+                            { backgroundColor: STATUS_COLORS[comment.transportStatus] },
+                        ]}
+                    />
                 <Text style={styles.statusText}>{STATUS_LABELS[comment.transportStatus]}</Text>
             </View>
 
@@ -74,7 +75,7 @@ const ExistingComment = (props:Props) => {
 
 export default ExistingComment;
 
-const styles = {
+const styles = StyleSheet.create({
     commentContainer: {
         borderWidth: 1,
         borderColor: palette.textMuted_30,
@@ -98,7 +99,6 @@ const styles = {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-
     },
     commentHeaderMeta: {
         flexDirection: "row",
@@ -147,4 +147,4 @@ const styles = {
         paddingVertical: 4,
         borderRadius: 999,
     },
-}
+})

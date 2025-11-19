@@ -11,6 +11,7 @@ import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigatio
 import {useNavigation} from "@react-navigation/native";
 
 export function AppSettingsScreen() {
+    //TODO ajouter un bouton pour flag false onboarding
     const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut } = useAuthUser();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const navigation = useNavigation<ProfileStackNavigationProp>();

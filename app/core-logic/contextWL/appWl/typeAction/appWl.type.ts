@@ -6,6 +6,7 @@ export interface AppRuntimeState {
     lastActiveAt?: ISODate;   // horodatage utile pour “stale”
     online: boolean;          // réseau
     lastOnlineAt?: ISODate;
+    hasCompletedOnboarding: boolean;
     boot: {
         doneHydration: boolean; // redux-persist rehydration ok ?
         doneWarmup: boolean;    // caches chargés (ex: coffees summaries)

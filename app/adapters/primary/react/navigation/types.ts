@@ -17,6 +17,7 @@ export type RootTabsParamList = {
 };
 
 export type RootStackParamList = {
+    Onboarding: undefined;
     Tabs: NavigatorScreenParams<RootTabsParamList>;
     CafeDetails: { id: string };
     Article: { slug: string };

@@ -26,6 +26,8 @@ import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/scr
 import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
 import { AppSettingsScreen } from "@/app/adapters/primary/react/features/profile/screens/AppSettingsScreen";
 import {ActivityIndicator, View} from "react-native";
+import {selectHasCompletedOnboarding} from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import {OnboardingScreen} from "@/app/adapters/primary/react/features/onboarding/screens/OnboardingScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();
@@ -35,6 +37,7 @@ const linking: LinkingOptions<RootStackParamList> = {
     prefixes: ["fragments://"],
     config: {
         screens: {
+            Onboarding: "onboarding",
             CafeDetails: "coffee/:id",
             Article: "article/:slug",
             Login: "login",
@@ -161,9 +164,23 @@ function SignedOutNavigator() {
     );
 }
 
+const OnboardingStack = createNativeStackNavigator<RootStackParamList>();
+
+function OnboardingNavigator() {
+    return (
+        <OnboardingStack.Navigator
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: palette.bg_light_90 } }}
+        >
+            <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
+        </OnboardingStack.Navigator>
+    );
+}
+
 export function RootNavigator() {
 
     const status = useSelector(selectAuthStatus);
+    const HasCompletedOnboarding = useSelector(selectHasCompletedOnboarding);
+
     console.log("[NAV] auth status =", status);
     const LoadingScreen = () => (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -173,6 +190,10 @@ export function RootNavigator() {
     const content = useMemo(() => {
         if (status === "loading") {
             return <LoadingScreen/>;
+        }
+        // 2. Si l'onboarding n’est pas encore fait → on montre l’onboarding
+        if (!HasCompletedOnboarding) {
+            return <OnboardingNavigator />;
         }
         if (status === "signedIn") {
             return <SignedInNavigator />;
