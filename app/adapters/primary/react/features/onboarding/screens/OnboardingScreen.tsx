@@ -1,15 +1,14 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { useDispatch } from "react-redux";
-import {markHasCompletedOnboarding} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import Onboarding from "@/app/adapters/primary/react/features/onboarding/components/Onboarding";
+import {useOnBoarding} from "@/app/adapters/secondary/viewModel/useOnBoarding";
 
 
 export function OnboardingScreen() {
-    const dispatch = useDispatch();
+    const {markOnBoardingAsCompleted} = useOnBoarding()
 
     const handleFinish = () => {
-        dispatch(markHasCompletedOnboarding());
+        markOnBoardingAsCompleted()
     };
 
     return (

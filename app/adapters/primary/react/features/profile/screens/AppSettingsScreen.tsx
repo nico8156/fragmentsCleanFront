@@ -9,6 +9,7 @@ import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import {SymbolView} from "expo-symbols";
 import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
 import {useNavigation} from "@react-navigation/native";
+import {useOnBoarding} from "@/app/adapters/secondary/viewModel/useOnBoarding";
 
 export function AppSettingsScreen() {
     //TODO ajouter un bouton pour flag false onboarding
@@ -16,6 +17,11 @@ export function AppSettingsScreen() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const navigation = useNavigation<ProfileStackNavigationProp>();
     const statusLabel = useMemo(() => (isSignedIn ? "Connecté" : "Hors connexion"), [isSignedIn]);
+    const {markHasNOTCompletedOnboarding} = useOnBoarding()
+
+    const handleOnBoardingButton = () => {
+        markHasNOTCompletedOnboarding()
+    }
 
     return (
         <ProfileLayout title="SETTINGS">
@@ -38,6 +44,12 @@ export function AppSettingsScreen() {
                     </View>
                 </View>
             </ProfileCard>
+            <View>
+                <Pressable onPress={handleOnBoardingButton} style={[styles.col,styles.obButton]}>
+                    <Text style={styles.obText}>
+                        onboarding
+                    </Text>
+                </Pressable>
                 <Pressable onPress={signOut} style={[styles.col,styles.logoutButton]}>
                     <Text style={styles.signOut} >
                         Se déconnecter
@@ -46,11 +58,23 @@ export function AppSettingsScreen() {
                         <Text style={styles.rowSubtitle}>Termine ta session en toute sécurité</Text>
                     </View>
                 </Pressable>
+            </View>
         </ProfileLayout>
     );
 }
 
 const styles = StyleSheet.create({
+    obButton:{
+        backgroundColor: palette.secondary_30,
+        padding: 16,
+        borderRadius: 24,
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: palette.secondary_90,
+    },
+    obText:{
+      color: palette.textPrimary_1,
+    },
     logoutButton:{
       backgroundColor: palette.primary_30,
         padding: 16,

@@ -1,4 +1,4 @@
-export const palette = {
+  export const palette = {
   background: "#0A0705",
   surface: "#15100E",
   elevated: "#1E1713",

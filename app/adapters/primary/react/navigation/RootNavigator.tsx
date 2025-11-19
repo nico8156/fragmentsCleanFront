@@ -28,6 +28,7 @@ import { AppSettingsScreen } from "@/app/adapters/primary/react/features/profile
 import {ActivityIndicator, View} from "react-native";
 import {selectHasCompletedOnboarding} from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import {OnboardingScreen} from "@/app/adapters/primary/react/features/onboarding/screens/OnboardingScreen";
+import {useOnBoarding} from "@/app/adapters/secondary/viewModel/useOnBoarding";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabsParamList>();
@@ -179,7 +180,7 @@ function OnboardingNavigator() {
 export function RootNavigator() {
 
     const status = useSelector(selectAuthStatus);
-    const HasCompletedOnboarding = useSelector(selectHasCompletedOnboarding);
+    const {HasCompletedOnboarding} = useOnBoarding()
 
     console.log("[NAV] auth status =", status);
     const LoadingScreen = () => (
@@ -199,7 +200,7 @@ export function RootNavigator() {
             return <SignedInNavigator />;
         }
         return <SignedOutNavigator />;
-    }, [status]);
+    }, [status, HasCompletedOnboarding]);
 
     return (
         <NavigationIndependentTree>

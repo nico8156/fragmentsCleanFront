@@ -1,4 +1,3 @@
-// adapters/presentation/hooks/useUserLocationFromStore.ts
 import { useDispatch, useSelector } from 'react-redux';
 import {
     selectLocationLastUpdated,

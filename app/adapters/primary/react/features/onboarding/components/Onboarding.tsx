@@ -8,25 +8,25 @@ const slides = [
         key: "1",
         title: "Découvrez les cafés de spécialité à Rennes",
         text: "Une sélection de coffee shops indépendants, choisis pour la qualité de leurs cafés.",
-        illustration: require("../assets/onboarding1.png"),
+        illustration: require("@/assets/images/onboarding/onboarding.png"),
     },
     {
         key: "2",
         title: "Articles & guides pour mieux déguster",
         text: "Origines, profils aromatiques, méthodes d’extraction…",
-        illustration: require("../assets/onboarding2.png"),
+        illustration: require("@/assets/images/onboarding/onboarding.png"),
     },
     {
         key: "3",
         title: "Scannez vos tickets et progressez",
         text: "Chaque visite vous fait gagner des badges et débloque de nouvelles possibilités.",
-        illustration: require("../assets/onboarding3.png"),
+        illustration: require("@/assets/images/onboarding/onboarding.png"),
     },
     {
         key: "4",
         title: "Participez à la communauté",
         text: "Liker, commenter, proposer des cafés : vos actions comptent.",
-        illustration: require("../assets/onboarding4.png"),
+        illustration: require("@/assets/images/onboarding/onboarding.png"),
     },
 ];
 

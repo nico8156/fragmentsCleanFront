@@ -11,4 +11,4 @@ export const appBootFailed    = createAction<{ message: string }>("APP/BOOT_FAIL
 export const appHydrationDone = createAction("APP/HYDRATION_DONE");
 export const appWarmupDone = createAction<{ message: string }>("APP/WARMUP_DONE");
 export const markHasCompletedOnboarding = createAction("APP/MARK_HAS_COMPLETED_ONBOARDING");
-export const markHasNotCompletedOnboarding = createAction("APP/MARK_HAS_COMPLETED_ONBOARDING");
+export const markHasNotCompletedOnboarding = createAction("APP/MARK_HAS_NOT_COMPLETED_ONBOARDING");
