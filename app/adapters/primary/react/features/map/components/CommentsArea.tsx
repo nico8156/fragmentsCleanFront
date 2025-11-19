@@ -1,24 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Image } from "expo-image";
-import { SymbolView } from "expo-symbols";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { CafeId } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import {parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-
-const STATUS_COLORS = {
-    pending: palette.warning_70,
-    success: palette.success_1,
-    failed: palette.danger_1,
-} as const;
-
-const STATUS_LABELS = {
-    pending: "En validation",
-    success: "Validé",
-    failed: "Erreur",
-} as const;
+import ExistingComment from "@/app/adapters/primary/react/features/map/components/ExistingComment";
 
 type CommentsAreaProps = {
     coffeeId?: CafeId | null;
@@ -63,39 +50,7 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
             ) : (
                 <View style={styles.commentsList}>
                     {comments.map((comment) => (
-                        <View
-                            key={comment.id}
-                            style={[
-                                styles.commentContainer,
-                                comment.isOptimistic && styles.commentContainerOptimistic,
-                                comment.transportStatus === "failed" && styles.commentContainerFailed,
-                            ]}
-                        >
-                            <View style={styles.commentHeader}>
-                                <View style={styles.commentUserHeader}>
-                                    <Image source={{ uri: comment.avatarUrl }} style={styles.avatar} />
-                                    <Text style={styles.userName}>{comment.authorName}</Text>
-                                </View>
-                                <View style={styles.commentHeaderMeta}>
-                                    <SymbolView name="ellipsis" size={18} tintColor="black" />
-                                </View>
-                            </View>
-                            <View>
-                                <Text style={styles.commentBody}>{comment.body}</Text>
-                            </View>
-                            <View>
-                                <Text style={styles.dateFromComment}>{comment.relativeTime}</Text><View style={styles.statusBadge}>
-                                <View
-                                    style={[
-                                        styles.statusLight,
-                                        { backgroundColor: STATUS_COLORS[comment.transportStatus] },
-                                    ]}
-                                />
-                                <Text style={styles.statusText}>{STATUS_LABELS[comment.transportStatus]}</Text>
-                            </View>
-
-                            </View>
-                        </View>
+                        <ExistingComment key={comment.id} comment={comment}/>
                     ))}
                 </View>
             )}
@@ -144,77 +99,6 @@ const styles = StyleSheet.create({
     },
     commentsList: {
         gap: 12,
-    },
-    commentContainer: {
-        borderWidth: 1,
-        borderColor: palette.textMuted_30,
-        borderRadius: 18,
-        padding: 12,
-        gap: 10,
-    },
-    commentContainerOptimistic: {
-        opacity: 0.7,
-    },
-    commentContainerFailed: {
-        borderColor: palette.danger_60 ?? palette.danger,
-    },
-    commentHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-
-    },
-    commentHeaderMeta: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        flexShrink: 0,
-    },
-    commentUserHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        minWidth:0,
-        gap: 8,
-    },
-    avatar: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-    },
-    userName: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: palette.background_1,
-    },
-    commentBody: {
-        color: palette.background_1,
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    dateFromComment: {
-        fontWeight: "500",
-        color: palette.background_30,
-        marginBottom: 4,
-        fontSize: 12,
-    },
-    statusBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        backgroundColor: palette.textPrimary_30,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 999,
-    },
-    statusLight: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    statusText: {
-        color: palette.background_1,
-        fontSize: 12,
-        fontWeight: "600",
     },
     inputText: {
         backgroundColor: palette.textPrimary_1,

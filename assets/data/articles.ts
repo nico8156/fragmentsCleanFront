@@ -14,14 +14,14 @@ export const specialtyArticles: Article[] = [
         slug: toSlug("quest-ce-que-le-cafe-de-specialite"),
         locale: "fr-FR",
         title: "Qu'est-ce que le café de spécialité ?",
-        intro: "Comprendre le café de spécialité, c'est plonger dans une filière où la qualité prime à chaque étape, du terroir à la tasse.",
+        intro: "Le café de spécialité désigne une approche où chaque étape — culture, récolte, traitement, torréfaction et préparation — vise l’excellence. Contrairement aux cafés standards, il met en lumière l’origine, le terroir et le travail minutieux des producteurs. Comprendre ce qu’est un café de spécialité, c’est découvrir un univers où l’exigence, la transparence et le goût s’unissent pour révéler la vraie personnalité du grain.",
         blocks: [
             {
                 heading: "Une histoire de terroir",
                 paragraph:
-                    "Chaque café de spécialité commence par un terroir unique. L'altitude, le climat et la composition des sols confèrent des arômes singuliers aux cerises mûries lentement.",
+                    "Un café de spécialité ne naît jamais par hasard : il est intimement lié au terroir qui l’a vu pousser. Altitude élevée, sols riches en minéraux, microclimats stables… autant de facteurs qui influencent la maturation des cerises et façonnent le futur profil aromatique. Quand un producteur parle de son terroir, il évoque bien plus qu’un lieu : c’est une signature naturelle, aussi unique qu’un cru de vin.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1470583190240-bcaa01721dbb?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1677505306286-0cb8de36fadb?q=80&w=1473&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Plantation de café verdoyante sous le soleil.",
@@ -30,9 +30,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Des standards de qualité stricts",
                 paragraph:
-                    "Les lots sont évalués par des Q-graders, des experts capables d'identifier les défauts et de noter les qualités organoleptiques. Seuls les cafés dépassant 80/100 obtiennent la mention 'spécialité'.",
+                    "Pour être reconnu comme café de spécialité, un lot doit répondre à des exigences très précises. Les Q-graders — véritables sommeliers du café — évaluent chaque échantillon selon une grille internationale : propreté de la tasse, complexité, corps, acidité, équilibre, finale… Tout défaut, même léger, est éliminatoire. Seuls les cafés obtenant une note supérieure à 80 sur 100 sont certifiés “spécialité”, preuve d’un savoir-faire exemplaire du producteur jusqu’à la tasse.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1607681034512-1c9c5fbda608?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Expert en train de déguster plusieurs tasses de café.",
@@ -41,9 +41,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Une expérience sensorielle unique",
                 paragraph:
-                    "La torréfaction légère révèle la diversité aromatique : notes florales, fruitées ou chocolatées. C'est cette palette qui fait vibrer les amateurs de cafés fins.",
+                    "La torréfaction légère est souvent utilisée pour préserver l’intégrité aromatique du grain et mettre en valeur la particularité de chaque origine. On y découvre des cafés lumineux, délicats, parfois déroutants : fleurs blanches, fruits rouges, agrumes, caramel clair, chocolat… Une palette vivante qui change selon la méthode d’extraction et l’eau utilisée. C’est cette richesse sensorielle qui passionne les amateurs et fait du café de spécialité une expérience plus qu’une simple boisson.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1485808191679-5f86510681a2?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1534942063564-d32dce367e4b?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1000,
                     alt: "Tasse de café fumante posée sur une table en bois.",
@@ -51,9 +51,9 @@ export const specialtyArticles: Article[] = [
             },
         ],
         conclusion:
-            "Le café de spécialité n'est pas un simple produit : c'est l'aboutissement d'une chaîne de passionnés qui valorisent la qualité, la traçabilité et la durabilité.",
+            "Le café de spécialité n’est pas seulement un niveau de qualité : c’est la rencontre entre un terroir singulier, un producteur passionné et une chaîne d’acteurs engagés. Choisir un tel café, c’est soutenir des pratiques plus durables, rémunératrices et respectueuses de l’environnement. C’est aussi redécouvrir le café comme un produit vivant, nuancé et profond. Chaque tasse devient alors une invitation à explorer, comprendre et apprécier toute la richesse de ce monde.",
         cover: ensureImage({
-            url: "https://images.unsplash.com/photo-1470583190240-bcaa01721dbb?auto=format&fit=crop&w=1600&q=80",
+            url: "https://images.unsplash.com/photo-1595259602106-9b5d5a7c825e?q=80&w=687&auto=format&ffit=crop&w=1600&q=80",
             width: 1600,
             height: 1067,
             alt: "Branches de caféier chargées de cerises rouges.",
@@ -77,9 +77,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Un coup de pouce énergétique maîtrisé",
                 paragraph:
-                    "La caféine stimule le système nerveux et améliore la concentration. Une consommation modérée, répartie dans la journée, aide à rester alerte sans provoquer de nervosité.",
+                    "La caféine agit comme un léger stimulant du système nerveux : elle aide à rester concentré, à lutter contre la somnolence et à se sentir plus alerte. Tout l’enjeu est dans la mesure. Mieux vaut répartir ses tasses au cours de la journée plutôt que de tout boire d’un coup, et éviter d’en rajouter si l’on sent apparaître nervosité, palpitations ou agitation. Apprendre à observer ces signaux permet de profiter de l’effet “coup de boost” sans basculer dans l’excès.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1485808191679-5f86510681a2?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://plus.unsplash.com/premium_vector-1732124695975-83d2ac0bf0d7?q=80&w=960&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1000,
                     alt: "Main tenant une tasse de café au-dessus d'un carnet.",
@@ -88,9 +88,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Des antioxydants précieux",
                 paragraph:
-                    "Les polyphénols présents dans le café contribuent à lutter contre le stress oxydatif. Ils accompagnent le bon fonctionnement du cœur et du métabolisme.",
+                    "Le café n’apporte pas seulement de la caféine : il est aussi riche en polyphénols, des antioxydants qui aident l’organisme à lutter contre le stress oxydatif, un phénomène lié au vieillissement cellulaire. Intégré à une alimentation variée et équilibrée, il peut participer au bon fonctionnement du cœur et du métabolisme. Bien sûr, tout dépend aussi de ce qu’on y ajoute : un café de qualité, peu sucré et sans excès de sirops ou de crème, reste la meilleure option pour en tirer les bénéfices.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1523942839745-7848d4b29468?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://plus.unsplash.com/premium_photo-1664302148512-ddea30cd2a92?q=80&w=1469&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1000,
                     alt: "Grains de café fraîchement torréfiés dans un sac en toile.",
@@ -99,9 +99,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Écouter ses besoins",
                 paragraph:
-                    "Chaque organisme réagit différemment. Opter pour des cafés filtrés, hydratés et consommés avant la fin de l'après-midi permet de profiter des bienfaits sans perturber le sommeil.",
+                    "Nous ne réagissons pas tous de la même façon au café : certains dorment très bien après une tasse, d’autres se sentent immédiatement tendus ou ont le cœur qui s’emballe. Mieux vaut adapter sa consommation à sa propre sensibilité : privilégier des cafés filtrés, boire suffisamment d’eau à côté, éviter les grandes doses à jeun et limiter les tasses tardives pour ne pas perturber le sommeil. En cas de doute ou de condition particulière (grossesse, problèmes cardiaques, etc.), l’avis d’un professionnel de santé reste la meilleure boussole.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1570381039627-fb3348f2a719?q=80&w=1632&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Moment détente avec une tasse de café et un plaid.",
@@ -129,15 +129,15 @@ export const specialtyArticles: Article[] = [
         id: toArticleId("article-003"),
         slug: toSlug("comment-est-cultive-le-cafe"),
         locale: "fr-FR",
-        title: "Comment est cultivé le café ?",
-        intro: "Découvrir la culture du café, c'est partir à la rencontre des producteurs qui façonnent les arômes grain après grain.",
+        title: "Cultiver le café ?",
+        intro: "Comprendre comment le café est cultivé, c’est remonter à la source de chaque tasse. Derrière chaque grain se cachent des producteurs, des gestes précis et des choix agricoles qui influencent directement les arômes que vous dégustez. Explorer cette chaîne de culture permet non seulement d’apprécier la complexité du café, mais aussi de saisir tout le travail humain et naturel qui donne vie à vos boissons préférées.",
         blocks: [
             {
                 heading: "Du semis à la floraison",
                 paragraph:
-                    "Les caféiers poussent à l'ombre d'arbres protecteurs pendant plusieurs années. Les fleurs blanches, éphémères, laissent place aux cerises qui mûrissent lentement.",
+                    "Un caféier commence sa vie comme une petite graine plantée dans des pépinières ombragées. Durant ses premières années, il grandit lentement, protégé par des arbres plus hauts qui régulent la lumière et la température. Quand l’arbre atteint sa maturité, il fleurit : de petites fleurs blanches, très parfumées, apparaissent seulement quelques jours. Elles se transforment ensuite en “cerises” de café, qui mettront plusieurs mois à mûrir. Cette progression lente est essentielle : plus la maturation est régulière, plus les futurs arômes seront précis et équilibrés.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1462690417829-5b41247f6b0e?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Fleurs blanches d'un caféier sous la rosée.",
@@ -146,9 +146,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Une récolte méticuleuse",
                 paragraph:
-                    "Les cueilleurs sélectionnent uniquement les cerises à maturité optimale. Ce tri manuel garantit une uniformité indispensable aux cafés de spécialité.",
+                    "La récolte du café est un travail minutieux. Les cerises ne mûrissent pas toutes au même rythme, c’est pourquoi les producteurs reviennent plusieurs fois sur les mêmes arbres pour ne cueillir que les fruits parfaitement rouges. Ce tri manuel, appelé “picking”, demande patience et savoir-faire. Il constitue l’une des clés de la qualité des cafés de spécialité : en sélectionnant uniquement les cerises mûres, on obtient une tasse plus douce, plus aromatique et plus propre.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1662559102063-a665b04771fd?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Cueilleur récoltant des cerises de café à la main.",
@@ -157,9 +157,16 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Des méthodes de traitement variées",
                 paragraph:
-                    "Lavé, nature ou honey : chaque méthode influe sur le profil aromatique. Les producteurs adaptent les procédés pour révéler le potentiel du terroir.",
+                    "Une fois les cerises récoltées, il faut séparer le grain du fruit. Cette étape, appelée “traitement”, influence fortement le goût final.\n" +
+                    "\n" +
+                    "Méthode lavée : la pulpe est retirée puis les grains fermentent dans l’eau. Le résultat est souvent un café propre, vif et lumineux.\n" +
+                    "\n" +
+                    "Méthode nature : les cerises sèchent entières au soleil, ce qui donne des cafés plus sucrés et fruités.\n" +
+                    "\n" +
+                    "Méthode honey : seule une partie de la pulpe est retirée, apportant douceur et rondeur.\n" +
+                    "Les producteurs choisissent la méthode qui mettra le mieux en valeur leur terroir, leur climat et leur variété de café.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1535480424501-7711c98712c9?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1645480064897-4e4755b75144?q=80&w=1074&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Grains de café en cours de séchage au soleil.",
@@ -167,9 +174,9 @@ export const specialtyArticles: Article[] = [
             },
         ],
         conclusion:
-            "De la graine à la tasse, la culture du café est une aventure collective où chaque geste compte. Respecter ce travail, c'est valoriser les producteurs et la planète.",
+            "La culture du café est un processus long et minutieux, où chaque étape — de la graine au séchage — joue un rôle essentiel dans le goût final. En connaissant ce parcours, on mesure mieux la valeur du travail des producteurs et la fragilité de leur environnement. Déguster un café devient alors un acte plus conscient : une manière de soutenir des pratiques durables et de célébrer celles et ceux qui rendent chaque tasse possible.",
         cover: ensureImage({
-            url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80",
+            url: "https://images.unsplash.com/photo-1559556064-4161b6be179b?q=80&w=735&auto=format&fit=crop&w=1600&q=80",
             width: 1600,
             height: 1067,
             alt: "Plant de café avec cerises rouges et feuilles brillantes.",
@@ -193,9 +200,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Choisir le bon moulin",
                 paragraph:
-                    "La fraîcheur du grain est primordiale. Un moulin à meules coniques vous garantit une mouture régulière adaptée à votre méthode d'extraction.",
+                    "Le moulin est le cœur de votre café maison. Plus la mouture est fraîche et régulière, plus votre tasse gagne en clarté et en intensité. Les moulins à meules coniques offrent une finesse de mouture stable, essentielle pour révéler les arômes propres à chaque méthode — espresso, filtre, piston ou italienne. Investir dans un bon moulin, c’est déjà franchir la moitié du chemin vers un café vraiment réussi.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1581446974083-41ed1a460587?q=80&w=687&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Moulin à café manuel posé sur un plan de travail.",
@@ -204,9 +211,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Maîtriser la recette",
                 paragraph:
-                    "Dosez 60 g de café par litre d'eau filtrée et ajustez selon vos goûts. Un chronomètre vous aide à reproduire l'extraction idéale.",
+                    "Une bonne extraction repose sur la précision : commencez avec un ratio de 60 g de café par litre d’eau filtrée, puis affinez selon votre palais. Pesez votre café, mesurez votre eau, lancez un chrono : ce trio simple vous garantit des résultats constants. Plus vous jouerez sur les variables — mouture, temps, température — plus vous comprendrez comment façonner une tasse parfaitement adaptée à vos goûts.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1620051524347-854568bb2e0f?q=80&w=765&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Préparation d'un café filtre avec une balance et un chronomètre.",
@@ -215,9 +222,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Soigner le service",
                 paragraph:
-                    "Préchauffez vos tasses et remuez la cafetière avant de servir pour harmoniser les arômes. Un détail qui change tout !",
+                    "Le service est la touche finale qui magnifie votre préparation. Préchauffez vos tasses pour éviter le choc thermique et préserver les arômes volatils. Avant de verser, donnez un léger mouvement à la carafe ou à la cafetière : cela homogénéise la boisson et évite que les arômes les plus intenses restent au fond. Un geste simple, mais capable de transformer une tasse ordinaire en un vrai moment de dégustation.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1670404161009-29548c027d06?q=80&w=765&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Deux tasses de café servies sur un plateau en bois.",
@@ -227,7 +234,7 @@ export const specialtyArticles: Article[] = [
         conclusion:
             "Prendre le temps de bien faire, c'est s'offrir un rituel quotidien. Chaque geste intentionnel révèle une nouvelle nuance dans votre tasse.",
         cover: ensureImage({
-            url: "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?auto=format&fit=crop&w=1600&q=80",
+            url: "https://images.unsplash.com/photo-1670404161009-29548c027d06?q=80&w=765&auto=format&fit=crop&w=1600&q=80",
             width: 1600,
             height: 1067,
             alt: "Barista versant un café filtre dans une tasse.",
@@ -245,15 +252,15 @@ export const specialtyArticles: Article[] = [
         id: toArticleId("article-005"),
         slug: toSlug("comment-decouvrir-et-choisir-son-cafe"),
         locale: "fr-FR",
-        title: "Comment découvrir et choisir son café",
+        title: "Découvrir et choisir son café",
         intro: "Identifier ses préférences gustatives ouvre la porte à des découvertes infinies dans l'univers du café.",
         blocks: [
             {
                 heading: "Comprendre ses goûts",
                 paragraph:
-                    "Commencez par définir vos sensations favorites : acidité vive, douceur chocolatée, longueur épicée… Tenez un carnet de dégustation pour mémoriser vos coups de cœur.",
+                    "Avant de partir à la découverte du café, il est essentiel de comprendre ce que vous aimez réellement. Préférez-vous une acidité lumineuse et fruitée, une douceur chocolatée enveloppante, ou plutôt une tasse au caractère épicé et profond ? Prenez le temps d’observer vos sensations — arômes au nez, texture en bouche, longueur en finale. Tenir un carnet de dégustation, même minimaliste, vous aidera à repérer des motifs et à affiner votre palette au fil des explorations.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1523365280197-f1783db9fe62?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://plus.unsplash.com/premium_vector-1723956533153-d042bb99634a?q=80&w=880&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Carnet de notes à côté d'une tasse de café.",
@@ -262,9 +269,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "Explorer les origines",
                 paragraph:
-                    "Éthiopie, Colombie, Guatemala… Chaque origine possède une identité. Testez des torréfacteurs artisanaux pour voyager tasse après tasse.",
+                    "Chaque pays producteur porte une signature gustative façonnée par son climat, son altitude et son savoir-faire. L’Éthiopie offre souvent des cafés floraux et fruités, la Colombie un équilibre soyeux, le Guatemala des notes cacao-épices. En vous tournant vers des torréfacteurs artisanaux, vous découvrirez le véritable potentiel de chaque terroir. Essayez plusieurs origines côte à côte : c’est l’un des moyens les plus passionnants de voyager… sans quitter votre tasse.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1515446134809-993c501ca304?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://images.unsplash.com/photo-1515694590185-73647ba02c10?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1000,
                     alt: "Cartes et sachets de café de différentes origines.",
@@ -273,9 +280,9 @@ export const specialtyArticles: Article[] = [
             {
                 heading: "S'appuyer sur la communauté",
                 paragraph:
-                    "Participez à des cuppings, échangez avec des baristas et utilisez l'application Fragments pour noter vos découvertes et débloquer des privilèges.",
+                    "Le café se savoure d’autant mieux qu’il se partage. Assistez à des sessions de cupping, discutez avec des baristas passionnés, comparez vos notes avec d’autres amateurs. Avec l’application Fragments, vous pouvez enregistrer vos découvertes, suivre vos progrès, et débloquer des avantages exclusifs dans les cafés partenaires. En vous connectant à la communauté, vous transformez chaque dégustation en une expérience collective et inspirante.",
                 photo: ensureImage({
-                    url: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=1600&q=80",
+                    url: "https://plus.unsplash.com/premium_photo-1723813229606-0ba813aa6f0e?q=80&w=1470&auto=format&fit=crop&w=1600&q=80",
                     width: 1600,
                     height: 1067,
                     alt: "Groupe de personnes dégustant du café autour d'une table.",
@@ -285,14 +292,14 @@ export const specialtyArticles: Article[] = [
         conclusion:
             "En cultivant votre curiosité, vous bâtissez une cartographie gustative personnelle. Chaque tasse devient une aventure, partagée avec la communauté Fragments !",
         cover: ensureImage({
-            url: "https://images.unsplash.com/photo-1523365280197-f1783db9fe62?auto=format&fit=crop&w=1600&q=80",
+            url: "https://plus.unsplash.com/premium_vector-1709299690215-e3cdddb3060e?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             width: 1600,
             height: 1067,
             alt: "Carnet de dégustation de café rempli de notes.",
         }),
         tags: ["Découverte", "Torréfacteurs", "Communauté"],
         author: { id: toUserId("author-jules-moreau"), name: "Jules Moreau" },
-        readingTimeMin: 6,
+        readingTimeMin: 5,
         publishedAt: toISODate("2024-05-02T10:10:00.000Z"),
         updatedAt: toISODate("2024-05-05T14:20:00.000Z"),
         version: 1,
