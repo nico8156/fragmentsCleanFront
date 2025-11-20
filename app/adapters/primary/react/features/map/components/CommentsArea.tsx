@@ -4,7 +4,7 @@ import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, Vi
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { CafeId } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import {parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import ExistingComment from "@/app/adapters/primary/react/features/map/components/ExistingComment";
 
 type CommentsAreaProps = {
@@ -17,7 +17,15 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
 
     const [text, setText] = useState("");
 
-    const { comments, isLoading, error, isRefreshing, uiViaHookCreateComment } = useCommentsForCafe(coffeeId ?? undefined);
+    const {
+        comments,
+        isLoading,
+        error,
+        isRefreshing,
+        uiViaHookCreateComment,
+        uiViaHookUpdateComment,
+        uiViaHookDeleteComment,
+    } = useCommentsForCafe(coffeeId ?? undefined);
 
     const canSubmit = useMemo(() => {
         if (!coffeeId) return false;
@@ -28,11 +36,11 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
     const handleSubmit = useCallback(() => {
         if (!canSubmit || !coffeeId) return;
 
-        uiViaHookCreateComment({targetId:parseToCoffeeId(coffeeId), body:text.trim()})
+        uiViaHookCreateComment({ targetId: parseToCoffeeId(coffeeId), body: text.trim() });
 
         Keyboard.dismiss();
         setText("");
-    }, [canSubmit, coffeeId, text]);
+    }, [canSubmit, coffeeId, text, uiViaHookCreateComment]);
 
     return (
         <View style={styles.container}>
@@ -50,7 +58,14 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
             ) : (
                 <View style={styles.commentsList}>
                     {comments.map((comment) => (
-                        <ExistingComment key={comment.id} comment={comment}/>
+                        <ExistingComment
+                            key={comment.id}
+                            comment={comment}
+                            onUpdateComment={(body) =>
+                                uiViaHookUpdateComment({ commentId: comment.id, body })
+                            }
+                            onDeleteComment={() => uiViaHookDeleteComment({ commentId: comment.id })}
+                        />
                     ))}
                 </View>
             )}
