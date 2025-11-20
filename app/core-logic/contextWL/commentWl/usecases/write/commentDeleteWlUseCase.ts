@@ -15,6 +15,7 @@ export const commentDeleteUseCaseFactory = (deps: DependenciesWl, callback?:()=>
     listen({
         actionCreator: uiCommentDeleteRequested,
         effect: async ({ payload: { commentId } }, api) => {
+            console.log("commentDeleteUseCaseFactory", commentId);
             const state: any = api.getState();
             const cur = state.cState.entities.entities[commentId];
             if (!cur) {

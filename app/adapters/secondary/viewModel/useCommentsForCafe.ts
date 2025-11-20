@@ -109,6 +109,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 
     const uiViaHookDeleteComment = useCallback(
         ({ commentId }: { commentId: string }) => {
+            console.log("uiViaHookDeleteComment", commentId);
             dispatch(uiCommentDeleteRequested({ commentId }));
         },
         [dispatch],
@@ -140,6 +141,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
     }, [outboxRecords]);
 
     const viewModel: CommentItemVM[] = useMemo(
+
         () =>
             comments
                 .filter(
@@ -177,6 +179,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
                         isAuthor: isCurrentUser,
                     };
                 }),
+
         [comments, outboxStatusByTempId, currentUser],
     );
 

@@ -53,6 +53,8 @@ import { userLocationListenerFactory } from "@/app/core-logic/contextWL/location
 
 import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync/syncRuntimeListenerFactory";
 import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
+import {commentDeleteUseCaseFactory} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
+import {commentUpdateWlUseCase} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
 // ---- types ----
 
@@ -168,6 +170,14 @@ export const createWlStore = (): ReduxStoreWl => {
         gateways,
         helpers,
     }).middleware;
+    const commentDeleteMiddleware = commentDeleteUseCaseFactory({
+        gateways,
+        helpers,
+    }).middleware;
+    const commentUpdateMiddleware = commentUpdateWlUseCase({
+        gateways,
+        helpers,
+    }).middleware;
     const commentAckMiddleware = ackListenerFactory({
         gateways,
         helpers,
@@ -198,6 +208,8 @@ export const createWlStore = (): ReduxStoreWl => {
         dependencies: { gateways, helpers },
         listeners: [
             commentCreateMiddleware,
+            commentDeleteMiddleware,
+            commentUpdateMiddleware,
             commentAckMiddleware,
             likeToggleMiddleware,
             likeAckMiddleware,
