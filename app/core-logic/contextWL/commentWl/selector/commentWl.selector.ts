@@ -1,6 +1,12 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { CafeId, CommentEntity, LoadingState, loadingStates } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {
+    CafeId,
+    CommentEntity,
+    LoadingState,
+    loadingStates,
+    moderationTypes,
+} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
 
 type CommentsSlice = RootStateWl["cState"];
@@ -34,7 +40,11 @@ export const selectCommentsForTarget = (targetId: CafeId) =>
 
             const comments = (view.ids ?? [])
                 .map((id) => entities[id])
-                .filter((comment): comment is CommentEntity => Boolean(comment));
+                .filter((comment): comment is CommentEntity => Boolean(comment))
+                .filter(
+                    (comment) =>
+                        !comment.deletedAt && comment.moderation !== moderationTypes.SOFT_DELETED,
+                );
 
             return {
                 comments,
