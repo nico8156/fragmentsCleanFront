@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View, Image, Pressable, ActivityIndicator } from "react-native";
 
 import { useScanTicketScreenVM } from "@/app/adapters/secondary/viewModel/useScanTicketScreenVM";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 export function ScanTicketScreen() {
     const { imageUri, ocrText, isProcessing, error, canSubmit, onPickImage, onSubmit } = useScanTicketScreenVM();
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     },
     captureButton: {
         marginTop: 12,
-        backgroundColor: "#1C1C1E",
+        backgroundColor: palette.bg_light_90,
         paddingVertical: 14,
         borderRadius: 28,
         alignItems: "center",
@@ -74,9 +75,10 @@ const styles = StyleSheet.create({
         opacity: 0.85,
     },
     captureLabel: {
-        color: "#FFFFFF",
+        color: palette.accent_1,
         fontSize: 16,
         fontWeight: "600",
+
     },
     processing: {
         flexDirection: "row",
@@ -120,6 +122,8 @@ const styles = StyleSheet.create({
     submitButton: {
         marginTop: 16,
         backgroundColor: "#4F46E5",
+        borderWidth:1,
+        borderColor:palette.secondary_90,
         borderRadius: 28,
         paddingVertical: 16,
         alignItems: "center",

@@ -146,7 +146,7 @@ function SignedInNavigator() {
             <Stack.Screen
                 name="ScanTicketModal"
                 component={ScanTicketScreen}
-                options={{ presentation: "modal", title: "Scanner un ticket" }}
+                options={{ presentation: "modal", title: "Scanner un ticket", headerTitleStyle:{color:palette.accent_1, fontWeight:"bold"}  }}
             />
             <Stack.Screen
                 name="Search"
@@ -183,6 +183,7 @@ export function RootNavigator() {
     const {HasCompletedOnboarding} = useOnBoarding()
 
     console.log("[NAV] auth status =", status);
+
     const LoadingScreen = () => (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <ActivityIndicator />
@@ -192,7 +193,6 @@ export function RootNavigator() {
         if (status === "loading") {
             return <LoadingScreen/>;
         }
-        // 2. Si l'onboarding n’est pas encore fait → on montre l’onboarding
         if (!HasCompletedOnboarding) {
             return <OnboardingNavigator />;
         }
