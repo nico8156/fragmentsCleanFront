@@ -1,7 +1,10 @@
 import { nanoid } from "@reduxjs/toolkit";
 import { CommentEntity, Op, opTypes, moderationTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
-import { onCommentCreatedAck } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {
+    onCommentCreatedAck,
+    onCommentUpdatedAck
+} from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
 const seedComments: Record<string, CommentEntity[]> = {
     "07dae867-1273-4d0f-b1dd-f206b290626b": [
@@ -113,6 +116,17 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         });
     }
 
+    private findCommentById(commentId: string): { targetId: string; collection: CommentEntity[]; index: number } | null {
+        for (const [targetId, collection] of this.commentsByTarget.entries()) {
+            const index = collection.findIndex((c) => c.id === commentId);
+            if (index !== -1) {
+                return { targetId, collection, index };
+            }
+        }
+        return null;
+    }
+
+
     setAckDispatcher(dispatcher: AckDispatcher) {
         this.ackDispatcher = dispatcher;
     }
@@ -193,7 +207,36 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         }, delay);
     }
 
-    async list({ targetId }: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<{
+    private scheduleUpdateAck(params: {
+        commandId: string;
+        commentId: string;
+        editedAt: string;
+        version: number;
+        body: string;
+    }) {
+        const { commandId, commentId, editedAt, version , body} = params;
+        const delay = this.randomAckDelayMs();
+
+        setTimeout(() => {
+            if (!this.ackDispatcher) return;
+
+            this.ackDispatcher(
+                onCommentUpdatedAck({
+                    commandId,
+                    commentId,
+                    server: {
+                        version,
+                        editedAt,
+                        body
+                    },
+                }),
+            );
+        }, delay);
+    }
+
+
+
+async list({ targetId }: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<{
         targetId: string;
         op: Op;
         items: CommentEntity[];
@@ -236,11 +279,44 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         return Promise.resolve();
     }
 
-    async update({ commandId, commentId, body, updatedAt }: { commandId: string; commentId: string; body: string; updatedAt: string }): Promise<void> {
+    async update({ commandId, commentId, body, editedAt }: { commandId: string; commentId: string; body: string; editedAt: string }): Promise<void> {
         void commandId;
         void commentId;
         void body;
-        void updatedAt;
+        void editedAt;
+        if (this.willFail) {
+            throw new Error("Fake error from fakeCommentsWlGateway");
+        }
+
+        const found = this.findCommentById(commentId);
+        if (!found) {
+            // Tu peux throw si tu veux tester les erreurs réseau/serveur
+            return;
+        }
+
+        const { collection, index } = found;
+        const existing = collection[index];
+
+        const version = ++this.versionCounter;
+
+        const updatedComment: CommentEntity = {
+            ...existing,
+            body,
+            // si CommentEntity ne déclare pas updatedAt, enlève cette ligne :
+            editedAt,
+            version,
+        };
+
+        collection[index] = updatedComment;
+
+        // Simule l’ACK serveur (comme si ça venait du socket)
+        this.scheduleUpdateAck({
+            commandId,
+            commentId: updatedComment.id,
+            editedAt,
+            version,
+            body: updatedComment.body
+        });
         return Promise.resolve();
     }
 
