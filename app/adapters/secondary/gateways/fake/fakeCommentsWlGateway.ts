@@ -2,7 +2,7 @@ import { nanoid } from "@reduxjs/toolkit";
 import { CommentEntity, Op, opTypes, moderationTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import {
-    onCommentCreatedAck,
+    onCommentCreatedAck, onCommentDeletedAck,
     onCommentUpdatedAck
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
@@ -233,6 +233,30 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
             );
         }, delay);
     }
+    private scheduleDeleteAck(params: {
+        commandId: string;
+        commentId: string;
+        deletedAt: string;
+        version: number;
+    }) {
+        const { commandId, commentId, deletedAt, version } = params;
+        const delay = this.randomAckDelayMs();
+
+        setTimeout(() => {
+            if (!this.ackDispatcher) return;
+
+            this.ackDispatcher(
+                onCommentDeletedAck({
+                    commandId,
+                    commentId,
+                    server: {
+                        deletedAt,
+                        version
+                    },
+                }),
+            );
+        }, delay);
+    }
 
 
 
@@ -321,9 +345,38 @@ async list({ targetId }: { targetId: string; cursor: string; limit: number; sign
     }
 
     async delete({ commandId, commentId, deletedAt }: { commandId: string; commentId: string; deletedAt: string }): Promise<void> {
-        void commandId;
-        void commentId;
-        void deletedAt;
+            if (this.willFail) {
+            throw new Error("Fake error from fakeCommentsWlGateway");
+        }
+
+        const found = this.findCommentById(commentId);
+        if (!found) {
+            // Si tu veux tester les erreurs, tu peux throw ici
+            return;
+        }
+
+        const { targetId, collection, index } = found;
+        const toDelete = collection[index];
+
+        // Si c'était une réponse, décrémente replyCount du parent
+        if (toDelete.parentId) {
+            const parent = collection.find((c) => c.id === toDelete.parentId);
+            if (parent) {
+                parent.replyCount = Math.max(0, (parent.replyCount ?? 0) - 1);
+            }
+        }
+
+        // Suppression "serveur" en mémoire
+        collection.splice(index, 1);
+
+        // Et on simule l’ACK serveur
+        this.scheduleDeleteAck({
+            commandId,
+            commentId: toDelete.id,
+            deletedAt,
+            version: toDelete.version
+        });
+        
         return Promise.resolve();
     }
 }

@@ -57,6 +57,5 @@ export const ackListenerFactory =  (deps:DependenciesWl, callback?:() => void) =
             if (outboxId) api.dispatch(dropCommitted({ commandId }));
         },
     });
-
     return ackReceivedBySocketUseCase
 }
