@@ -22,7 +22,7 @@ import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNo
 import { useDistanceToPoint } from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
-import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {CoffeeId, GeoPoint, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 import ListViewForCoffees from "@/app/adapters/primary/react/features/map/screens/ListViewForCoffees";
 import ActionButtonsWrapper from "@/app/adapters/primary/react/features/map/components/ActionButtonsWrapper";
@@ -335,7 +335,7 @@ export function MapScreen() {
 
                     </>
                 ) : (
-                    <ListViewForCoffees toggleViewMode={toggleViewMode} />
+                    <ListViewForCoffees toggleViewMode={toggleViewMode}/>
                 )}
             </View>
         </GestureHandlerRootView>

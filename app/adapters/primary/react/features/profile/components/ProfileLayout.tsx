@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import {ScrollView, StyleSheet, Text, View} from "react-native";
+import {ScrollView, StyleSheet, View} from "react-native";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 
@@ -11,9 +11,6 @@ interface ProfileLayoutProps {
 export function ProfileLayout({ title, children }: ProfileLayoutProps) {
     return (
         <ScrollView style={styles.root}>
-            <View style={styles.header}>
-                <Text style={styles.title}>{title}</Text>
-            </View>
             <View style={styles.content}>{children}</View>
         </ScrollView>
     );

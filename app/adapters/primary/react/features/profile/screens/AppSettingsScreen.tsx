@@ -6,16 +6,12 @@ import { ProfileHero } from "@/app/adapters/primary/react/features/profile/compo
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
-import {SymbolView} from "expo-symbols";
-import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
-import {useNavigation} from "@react-navigation/native";
 import {useOnBoarding} from "@/app/adapters/secondary/viewModel/useOnBoarding";
 
 export function AppSettingsScreen() {
     //TODO ajouter un bouton pour flag false onboarding
     const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut } = useAuthUser();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const navigation = useNavigation<ProfileStackNavigationProp>();
     const statusLabel = useMemo(() => (isSignedIn ? "Connecté" : "Hors connexion"), [isSignedIn]);
     const {markHasNOTCompletedOnboarding} = useOnBoarding()
 
@@ -25,9 +21,7 @@ export function AppSettingsScreen() {
 
     return (
         <ProfileLayout title="SETTINGS">
-            <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-                <SymbolView name={"chevron.backward"} weight={"bold"} size={24} tintColor={palette.accent}/>
-            </Pressable>
+
             <ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail ?? "Non renseigné"} />
             <ProfileCard title="Préférences">
                 <View style={styles.row}>

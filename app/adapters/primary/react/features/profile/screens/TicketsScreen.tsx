@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, Text, View} from "react-native";
+import { StyleSheet, Text, View} from "react-native";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
@@ -6,9 +6,7 @@ import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/com
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { useTicketsHistory } from "@/app/adapters/secondary/viewModel/useTicketsHistory";
-import {SymbolView} from "expo-symbols";
-import {useNavigation} from "@react-navigation/native";
-import {ProfileStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
+
 
 const toneColors: Record<"pending" | "success" | "error", { backgroundColor: string; textColor: string }> = {
     pending: { backgroundColor: "#FFF5E0", textColor: "#8D5C00" },
@@ -32,12 +30,9 @@ const formatLineAmount = (amountCents?: number, currency?: string) => {
 export function TicketsScreen() {
     const { displayName, primaryEmail, avatarUrl } = useAuthUser();
     const { items, isEmpty } = useTicketsHistory();
-    const navigation = useNavigation<ProfileStackNavigationProp>();
+
     return (
         <ProfileLayout title="TICKETS">
-            <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-                <SymbolView name={"chevron.backward"} weight={"bold"} size={24} tintColor={palette.accent}/>
-            </Pressable>
             <ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail ?? "Non renseigné"} />
             <ProfileCard title="Historique des tickets" subtitle="Surveille l'analyse de chaque justificatif.">
                 {isEmpty ? (

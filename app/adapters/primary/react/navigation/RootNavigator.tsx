@@ -79,12 +79,12 @@ const theme = {
 
 function ProfileNavigator() {
     return (
-        <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-            <ProfileStack.Screen name="ProfileHome" component={ProfileScreen} />
-            <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
-            <ProfileStack.Screen name="Tickets" component={TicketsScreen} />
-            <ProfileStack.Screen name="Favorites" component={FavoritesScreen} />
-            <ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} />
+        <ProfileStack.Navigator screenOptions={{ headerShown: true, headerTitleStyle:{color:palette.accent_1, fontWeight:"bold"}, headerStyle:{backgroundColor:palette.primary_30} }}>
+            <ProfileStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: "Profil" }} />
+            <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Modifier mon profil" }} />
+            <ProfileStack.Screen name="Tickets" component={TicketsScreen} options={{ title: "Mes tickets" }}/>
+            <ProfileStack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "Mes favoris" }}/>
+            <ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} options={{title:"Paramètres"}}/>
         </ProfileStack.Navigator>
     );
 }

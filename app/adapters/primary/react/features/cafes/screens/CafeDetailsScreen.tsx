@@ -3,7 +3,6 @@ import {
     FlatList,
     Linking,
     Pressable,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -18,6 +17,7 @@ import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import { RootStackParamList, RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 import {palette} from "@/app/adapters/primary/react/css/colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;

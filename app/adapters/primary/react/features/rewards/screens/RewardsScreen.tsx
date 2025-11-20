@@ -1,9 +1,9 @@
-import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSelector } from "react-redux";
 import { ScanTicketFab } from "@/app/adapters/primary/react/features/scan/components/ScanTicketFab";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import {selectSortedTickets} from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 
