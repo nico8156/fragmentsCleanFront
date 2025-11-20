@@ -36,19 +36,12 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditingBody, setIsEditingBody] = useState(false);
     const [draftBody, setDraftBody] = useState(comment.body);
-    const [localBodyOverride, setLocalBodyOverride] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isEditingBody) {
             setDraftBody(comment.body);
         }
     }, [comment.body, isEditingBody]);
-
-    useEffect(() => {
-        if (localBodyOverride && localBodyOverride === comment.body) {
-            setLocalBodyOverride(null);
-        }
-    }, [comment.body, localBodyOverride]);
 
     const handleOpenModal = () => {
         setIsModalOpen(true);
@@ -69,7 +62,6 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
             return;
         }
         onUpdateComment(trimmed);
-        setLocalBodyOverride(trimmed);
         setIsEditingBody(false);
     };
 
@@ -134,7 +126,7 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
                         </View>
                     </View>
                 ) : (
-                    <Text style={styles.commentBody}>{localBodyOverride ?? comment.body}</Text>
+                    <Text style={styles.commentBody}>{comment.body}</Text>
                 )}
             </View>
             <View>

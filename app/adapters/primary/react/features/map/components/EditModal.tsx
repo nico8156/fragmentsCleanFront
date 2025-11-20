@@ -1,13 +1,5 @@
 import React from "react";
-import {
-    Dimensions,
-    GestureResponderEvent,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Dimensions, GestureResponderEvent, Pressable, StyleSheet, Text } from "react-native";
 import { SymbolView } from "expo-symbols";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -26,29 +18,27 @@ const EditModal = ({ closeModal, isAuthor, onEdit, onDelete, onReport }: Props) 
     };
 
     return (
-        <Modal transparent animationType="fade" onRequestClose={closeModal}>
-            <Pressable onPress={closeModal} style={styles.inlay}>
-                <View style={styles.container}>
-                    {isAuthor ? (
-                        <>
-                            <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onEdit(); }}>
-                                <SymbolView name="pencil" size={22} tintColor={palette.background_1} />
-                                <Text style={styles.buttonLabel}>Éditer</Text>
-                            </Pressable>
-                            <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onDelete(); }}>
-                                <SymbolView name="trash" size={22} tintColor={palette.danger} />
-                                <Text style={[styles.buttonLabel, styles.deleteLabel]}>Supprimer</Text>
-                            </Pressable>
-                        </>
-                    ) : (
-                        <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onReport(); }}>
-                            <SymbolView name="exclamationmark.bubble" size={22} tintColor={palette.warning_70} />
-                            <Text style={styles.buttonLabel}>Signaler</Text>
+        <Pressable onPress={closeModal} style={styles.inlay}>
+            <Pressable onPress={stopPropagation} style={styles.container}>
+                {isAuthor ? (
+                    <>
+                        <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onEdit(); }}>
+                            <SymbolView name="pencil" size={22} tintColor={palette.background_1} />
+                            <Text style={styles.buttonLabel}>Éditer</Text>
                         </Pressable>
-                    )}
-                </View>
+                        <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onDelete(); }}>
+                            <SymbolView name="trash" size={22} tintColor={palette.danger} />
+                            <Text style={[styles.buttonLabel, styles.deleteLabel]}>Supprimer</Text>
+                        </Pressable>
+                    </>
+                ) : (
+                    <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onReport(); }}>
+                        <SymbolView name="exclamationmark.bubble" size={22} tintColor={palette.warning_70} />
+                        <Text style={styles.buttonLabel}>Signaler</Text>
+                    </Pressable>
+                )}
             </Pressable>
-        </Modal>
+        </Pressable>
     );
 };
 
@@ -56,7 +46,8 @@ export default EditModal;
 
 const styles = StyleSheet.create({
     inlay: {
-        flex: 1,
+        zIndex: 100,
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.2)",
         justifyContent: "center",
         alignItems: "center",
