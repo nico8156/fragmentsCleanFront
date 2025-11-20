@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from "react-native";
+import {palette} from "@/app/adapters/primary/react/css/colors";
 
 const { width } = Dimensions.get("window");
 
@@ -8,25 +9,25 @@ const slides = [
         key: "1",
         title: "Découvrez les cafés de spécialité à Rennes",
         text: "Une sélection de coffee shops indépendants, choisis pour la qualité de leurs cafés.",
-        illustration: require("@/assets/images/onboarding/onboarding.png"),
+        illustration: require("@/assets/images/onboarding/onboardingWb1.webp"),
     },
     {
         key: "2",
         title: "Articles & guides pour mieux déguster",
         text: "Origines, profils aromatiques, méthodes d’extraction…",
-        illustration: require("@/assets/images/onboarding/onboarding.png"),
+        illustration: require("@/assets/images/onboarding/onboardingWb2.webp"),
     },
     {
         key: "3",
         title: "Scannez vos tickets et progressez",
         text: "Chaque visite vous fait gagner des badges et débloque de nouvelles possibilités.",
-        illustration: require("@/assets/images/onboarding/onboarding.png"),
+        illustration: require("@/assets/images/onboarding/onboardingWb3.webp"),
     },
     {
         key: "4",
         title: "Participez à la communauté",
         text: "Liker, commenter, proposer des cafés : vos actions comptent.",
-        illustration: require("@/assets/images/onboarding/onboarding.png"),
+        illustration: require("@/assets/images/onboarding/onboardingWb4.webp"),
     },
 ];
 
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
     },
     illustration: {
         width: width - 48,
-        height: "40%",
+        height: "45%",
         alignSelf: "center",
     },
     content: {
@@ -97,14 +98,14 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     title: {
-        fontSize: 24,
+        fontSize: 32,
         fontWeight: "700",
-        color: "#FFFFFF",
+        color: palette.primary_90,
         marginBottom: 8,
     },
     text: {
-        fontSize: 15,
-        color: "#B0B4C0",
+        fontSize: 18,
+        color: palette.primary_50,
         lineHeight: 22,
     },
     dots: {
@@ -116,21 +117,28 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 999,
-        backgroundColor: "#3A3F52",
+        backgroundColor: palette.secondary_30,
     },
     dotActive: {
         width: 20,
-        backgroundColor: "#C28A52",
+        backgroundColor: palette.secondary_90,
     },
     buttonsRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 32,
+        marginTop: 24,
+        marginBottom: 32,
+        paddingHorizontal:18
     },
     secondaryButton: {
         color: "#B0B4C0",
         fontSize: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderWidth:1,
+        borderColor:palette.secondary_30,
+        borderRadius: 999
     },
     primaryButton: {
         paddingHorizontal: 24,
