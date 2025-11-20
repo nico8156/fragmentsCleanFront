@@ -12,6 +12,8 @@ import {
 } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
+import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
@@ -37,6 +39,7 @@ export type CommentItemVM = {
     relativeTime: string;
     isOptimistic: boolean;
     transportStatus: "pending" | "success" | "failed";
+    isAuthor: boolean;
 };
 
 type CommentsSelectorResult = {
@@ -93,6 +96,20 @@ export function useCommentsForCafe(targetId?: CafeId) {
     const uiViaHookCreateComment = useCallback(
         ({ targetId, body }: { targetId: CoffeeId; body: string }) => {
             dispatch(uiCommentCreateRequested({ targetId, body }));
+        },
+        [dispatch],
+    );
+
+    const uiViaHookUpdateComment = useCallback(
+        ({ commentId, body }: { commentId: string; body: string }) => {
+            dispatch(cuAction({ commentId, newBody: body }));
+        },
+        [dispatch],
+    );
+
+    const uiViaHookDeleteComment = useCallback(
+        ({ commentId }: { commentId: string }) => {
+            dispatch(uiCommentDeleteRequested({ commentId }));
         },
         [dispatch],
     );
@@ -157,6 +174,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
                             }
                             return "pending" as const;
                         })(), // <- appel de la IIFE
+                        isAuthor: isCurrentUser,
                     };
                 }),
         [comments, outboxStatusByTempId, currentUser],
@@ -204,5 +222,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
         error,
         isRefreshing,
         uiViaHookCreateComment,
+        uiViaHookUpdateComment,
+        uiViaHookDeleteComment,
     } as const;
 }
