@@ -1,4 +1,3 @@
-// ticketWl/usecases/read/ackTickets.spec.ts
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // même action utilisée pour enregistrer l'item outbox
 
@@ -66,15 +65,6 @@ describe("Tickets ACK (reconcile tkState + entitlements + drop outbox)", () => {
         expect(tk.amountCents).toBe(920);
         expect(tk.optimistic).toBe(false);
 
-        // entitlements (read model)
-        // const en = store.getState().enState.byUser["user_test"];
-        // expect(en).toBeDefined();
-        // expect(en.confirmedTickets).toBe(1);
-        // expect(en.rights).toContain("LIKE"); // palier 1
-        // // pas encore COMMENT/SUBMIT_CAFE (selon seuils 3 et 5)
-        // expect(en.rights).not.toContain("COMMENT");
-        // expect(en.rights).not.toContain("SUBMIT_CAFE");
-
         // outbox droppée
         const o = store.getState().oState;
 
@@ -102,10 +92,6 @@ describe("Tickets ACK (reconcile tkState + entitlements + drop outbox)", () => {
         expect(tk.status).toBe("REJECTED");
         expect(tk.rejectionReason).toBe("duplicate");
         expect(tk.optimistic).toBe(false);
-
-        // const en = store.getState().enState.byUser["user_test"];
-        // // non créé/inchangé
-        // expect(en).toBeUndefined();
 
         const o = store.getState().oState;
         expect(o.byId["obx_tk_001"]).toBeUndefined();
