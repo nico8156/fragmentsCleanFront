@@ -55,6 +55,7 @@ import { syncRuntimeListenerFactory } from "@/app/core-logic/contextWL/outboxWl/
 import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
 import {commentDeleteUseCaseFactory} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import {commentUpdateWlUseCase} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
 
 // ---- types ----
 
@@ -112,17 +113,26 @@ export const gateways: GatewaysWl = {
 
 export const outboxStorage = createNativeOutboxStorage();
 
+export const syncMetaStorage = createNativeSyncMetaStorage();
+
+
 // ---- wiring spécifique store <-> gateways ----
 
 export const wireGatewaysForStore = (store: ReduxStoreWl) => {
     console.log("[STORE] wireGatewaysForStore: start");
     // currentUserId getter pour les likes
     const likeGateway = gateways.likes as FakeLikesGateway;
-    if (likeGateway.setCurrentUserIdGetter) {
-        likeGateway.setCurrentUserIdGetter(
-            () => store.getState().aState.currentUser?.id ?? "anonymous",
-        );
+    if ("setAckDispatcher" in likeGateway) {
+        likeGateway.setAckDispatcher((action) => {
+            store.dispatch(action);
+        });
+        if (likeGateway.setCurrentUserIdGetter) {
+            likeGateway.setCurrentUserIdGetter(
+                () => store.getState().aState.currentUser?.id ?? "anonymous",
+            );
+        }
     }
+
 
     // ACK dispatcher pour les comments
     const commentsGateway = gateways.comments as FakeCommentsWlGateway;
@@ -193,16 +203,20 @@ export const createWlStore = (): ReduxStoreWl => {
         gateways,
         helpers,
     }).middleware;
-    console.log("[STORE] createWlStore: create middlewares");
 
     const syncRuntimeListener = syncRuntimeListenerFactory({
         eventsGateway: gateways.events,
-        metaStorage: createNativeSyncMetaStorage(),
+        metaStorage: syncMetaStorage
     });
+
+    const syncEventsListener = syncEventsListenerFactory({
+        metaStorage: syncMetaStorage,
+    })
 
     const outboxPersistenceMiddleware = outboxPersistenceMiddlewareFactory({
         storage: outboxStorage,
     });
+    console.log("[STORE] createWlStore: create middlewares");
 
     const store = initReduxStoreWl({
         dependencies: { gateways, helpers },
@@ -217,7 +231,8 @@ export const createWlStore = (): ReduxStoreWl => {
             ticketSubmitMiddleware,
             ticketAckMiddleware,
             entitlementAckMiddleware,
-            syncRuntimeListener.middleware,
+            syncRuntimeListener,
+            syncEventsListener,
             authListenerFactory({ gateways, helpers: {} }),
             userLocationListenerFactory({ gateways, helpers: {} }),
         ],

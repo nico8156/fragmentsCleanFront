@@ -28,7 +28,7 @@ export const ticketSubmitUseCaseFactory = (deps: {
             const ticketId = (helpers.newTicketIdForTests?.() ?? (`tk_${Math.random().toString(36).slice(2)}`)) as any;
             const commandId = (helpers.getCommandIdForTests?.() ?? (`cmd_${Date.now()}`)) as any;
 
-            // 1) Créer l’agg local en optimistic
+
             api.dispatch(
                 ticketOptimisticCreated({
                     ticketId,
@@ -39,7 +39,7 @@ export const ticketSubmitUseCaseFactory = (deps: {
                 })
             );
 
-            // 2) Enqueue outbox (commande TicketVerify)
+
             api.dispatch(
                 enqueueCommitted({
                     id: `obx_${commandId}`,

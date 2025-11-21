@@ -144,7 +144,7 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             commandId: cmd.commandId,
                             commentId: cmd.commentId,
                             body: cmd.newBody,
-                            updatedAt: cmd.at,
+                            editedAt: cmd.at,
                         });
                         const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
                         api.dispatch(markAwaitingAck({ id, ackBy }));

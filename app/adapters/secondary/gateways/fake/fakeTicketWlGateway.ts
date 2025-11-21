@@ -1,19 +1,27 @@
 import { TicketLineItem } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
-import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
+import { syncEventsReceived } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { parseToCommandId } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { parseToTicketId } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import { nanoid } from "@reduxjs/toolkit";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const TOTAL_KEYWORDS = /(total|montant|à payer|a payer|ttc|payé|paye)/i;
 const BLOCKED_LINE_ITEM_KEYWORDS = /(total|tva|taxe|paiement|merci|remerciements|carte|cb|visa|master|amex|contact)/i;
 const ADDRESS_KEYWORDS = /(rue|avenue|av\.?|bd\.?|boulevard|place|pl\.?|chemin|impasse|allee|allée)/i;
 const PAYMENT_KEYWORDS: Record<string, RegExp> = {
-    "CB": /(carte bancaire|cb|cb sans contact)/i,
-    "VISA": /visa/i,
-    "MASTERCARD": /mastercard/i,
-    "AMEX": /american express|amex/i,
-    "ESPECES": /(espèces|especes|cash)/i,
+    CB: /(carte bancaire|cb|cb sans contact)/i,
+    VISA: /visa/i,
+    MASTERCARD: /mastercard/i,
+    AMEX: /american express|amex/i,
+    ESPECES: /(espèces|especes|cash)/i,
 };
 
-const randomAckDelayMs = () => 1500 + Math.floor(Math.random() * 2000);
+const randomAckDelayMs = () => {
+    const delay = 1500 + Math.floor(Math.random() * 2000);
+    console.log("[FAKE_TICKETS] randomAckDelayMs ->", delay);
+    return delay;
+};
 
 const parseAmount = (line: string) => {
     const match = line.match(/(\d+[.,]\d{2})/);
@@ -168,34 +176,46 @@ export class FakeTicketsGateway {
     willFailVerify = false;
 
     private ackDispatcher?: AckDispatcher;
-
     private currentUserIdGetter?: () => string;
 
     setAckDispatcher(dispatcher: AckDispatcher) {
+        console.log("[FAKE_TICKETS] setAckDispatcher");
         this.ackDispatcher = dispatcher;
     }
 
     setCurrentUserIdGetter(getter: () => string) {
+        console.log("[FAKE_TICKETS] setCurrentUserIdGetter");
         this.currentUserIdGetter = getter;
     }
 
     private getCurrentUserId() {
-        return this.currentUserIdGetter?.() ?? "anonymous";
+        const id = this.currentUserIdGetter?.() ?? "anonymous";
+        console.log("[FAKE_TICKETS] getCurrentUserId ->", id);
+        return id;
     }
 
-    private dispatchAck(action: { type: string; payload?: any }) {
-        if (this.ackDispatcher) {
-            this.ackDispatcher(action);
+    private dispatchSyncEvent(evt: SyncEvent) {
+        if (!this.ackDispatcher) {
+            console.log("[FAKE_TICKETS] dispatchSyncEvent: no ackDispatcher, abort", {
+                eventId: evt.id,
+                type: evt.type,
+            });
+            return;
         }
+        console.log("[FAKE_TICKETS] dispatchSyncEvent", {
+            eventId: evt.id,
+            type: evt.type,
+        });
+        this.ackDispatcher(syncEventsReceived([evt]));
     }
 
     async verify({
-        commandId,
-        ticketId,
-        imageRef,
-        ocrText,
-        at,
-    }: {
+                     commandId,
+                     ticketId,
+                     imageRef,
+                     ocrText,
+                     at,
+                 }: {
         commandId: string;
         ticketId?: string;
         imageRef?: string;
@@ -203,18 +223,37 @@ export class FakeTicketsGateway {
         at: string;
     }) {
         void imageRef;
-        if (this.willFailVerify) throw new Error("ticket verify failed");
+
+        console.log("[FAKE_TICKETS] verify", {
+            commandId,
+            ticketId,
+            hasOcrText: !!ocrText,
+            at,
+            willFailVerify: this.willFailVerify,
+        });
+
+        if (this.willFailVerify) {
+            console.log("[FAKE_TICKETS] verify: throwing fake error");
+            throw new Error("ticket verify failed");
+        }
 
         const parsed = parseTicket(ocrText, at);
         const delay = randomAckDelayMs();
+
         setTimeout(() => {
-            const id = ticketId ?? `tk_${commandId}`;
+            const id = ticketId ?? parseToTicketId(`tkt_${commandId}`) as any;
             const userId = this.getCurrentUserId();
+
             if (parsed.ok) {
-                this.dispatchAck(
-                    onTicketConfirmedAck({
+                console.log("[FAKE_TICKETS] verify: parsed OK", parsed);
+
+                const evt: SyncEvent = {
+                    id: `evt_ticket_conf_${nanoid()}`,
+                    happenedAt: parseToISODate(at),
+                    type: "ticket.confirmedAck",
+                    payload: {
                         commandId: parseToCommandId(commandId),
-                        ticketId: id as any,
+                        ticketId: id,
                         userId,
                         server: {
                             status: "CONFIRMED",
@@ -228,13 +267,20 @@ export class FakeTicketsGateway {
                             paymentMethod: parsed.paymentMethod,
                             lineItems: parsed.lineItems,
                         },
-                    }),
-                );
+                    },
+                };
+
+                this.dispatchSyncEvent(evt);
             } else {
-                this.dispatchAck(
-                    onTicketRejectedAck({
+                console.log("[FAKE_TICKETS] verify: parsed FAILED", { reason: parsed.reason });
+
+                const evt: SyncEvent = {
+                    id: `evt_ticket_rej_${nanoid()}`,
+                    happenedAt: parseToISODate(at),
+                    type: "ticket.rejectedAck",
+                    payload: {
                         commandId: parseToCommandId(commandId),
-                        ticketId: id as any,
+                        ticketId: id,
                         userId,
                         server: {
                             status: "REJECTED",
@@ -244,12 +290,14 @@ export class FakeTicketsGateway {
                             merchantName: undefined,
                             merchantAddress: undefined,
                         },
-                    }),
-                );
+                    },
+                };
+
+                this.dispatchSyncEvent(evt);
             }
         }, delay);
     }
 }
 
-// Petit helper async, identique à tes likes
+// Petit helper async
 export const flush = () => new Promise<void>((r) => setTimeout(r, 0));

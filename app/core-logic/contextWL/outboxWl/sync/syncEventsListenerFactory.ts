@@ -31,6 +31,11 @@ export const syncEventsListenerFactory = (deps: Deps) => {
     startListening({
         actionCreator: syncEventsReceived,
         effect: async (action, api) => {
+            console.log("[SYNC_EVENTS] received", action.payload.map(e => ({
+                id: e.id,
+                type: e.type,
+                happenedAt: e.happenedAt,
+            })));
             const events = action.payload;
             if (!events.length) return;
 
@@ -40,28 +45,39 @@ export const syncEventsListenerFactory = (deps: Deps) => {
             const newlyApplied: string[] = [];
 
             for (const evt of sorted) {
-                if (known.has(evt.id)) continue;
+                if (known.has(evt.id)) {
+                    console.log("[SYNC_EVENTS] skip already applied", { id: evt.id, type: evt.type });
+                    continue;
+                }
+                console.log("[SYNC_EVENTS] applying", { id: evt.id, type: evt.type });
 
                 switch (evt.type) {
                     case "like.addedAck":
+                        console.log("[SYNC_EVENTS] dispatch onLikeAddedAck");
                         api.dispatch(onLikeAddedAck(evt.payload));
                         break;
                     case "like.removedAck":
+                        console.log("[SYNC_EVENTS] dispatch onLikeRemovedAck");
                         api.dispatch(onLikeRemovedAck(evt.payload));
                         break;
                     case "comment.createdAck":
+                        console.log("[SYNC_EVENTS] dispatch onCommentCreatedAck");
                         api.dispatch(onCommentCreatedAck(evt.payload));
                         break;
                     case "comment.updatedAck":
+                        console.log("[SYNC_EVENTS] dispatch onCommentUpdatedAck");
                         api.dispatch(onCommentUpdatedAck(evt.payload));
                         break;
                     case "comment.deletedAck":
+                        console.log("[SYNC_EVENTS] dispatch onCommentDeletedAck");
                         api.dispatch(onCommentDeletedAck(evt.payload));
                         break;
                     case "ticket.confirmedAck":
+                        console.log("[SYNC_EVENTS] dispatch onTicketConfirmedAck");
                         api.dispatch(onTicketConfirmedAck(evt.payload));
                         break;
                     case "ticket.rejectedAck":
+                        console.log("[SYNC_EVENTS] dispatch onTicketRejectedAck");
                         api.dispatch(onTicketRejectedAck(evt.payload));
                         break;
                     default:
@@ -74,6 +90,7 @@ export const syncEventsListenerFactory = (deps: Deps) => {
             }
 
             if (newlyApplied.length) {
+                console.log("[SYNC_EVENTS] markEventsApplied", newlyApplied.length);
                 await deps.metaStorage.markEventsApplied(newlyApplied, MAX_APPLIED_EVENT_IDS);
             }
         },

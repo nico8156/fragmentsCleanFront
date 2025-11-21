@@ -1,4 +1,8 @@
-import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
+import { nanoid } from "@reduxjs/toolkit";
+import { LikeWlGateway } from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
+import { syncEventsReceived } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const DEFAULT_STALE_DELAY_MS = 80;
 
@@ -14,6 +18,8 @@ type LikeRecord = {
     version: number;
     updatedAt: string;
 };
+
+type AckDispatcher = (action: { type: string; payload?: any }) => void;
 
 const DEFAULT_SEED: LikeSeed[] = [
     {
@@ -77,16 +83,14 @@ const createAbortError = () => {
 
 export class FakeLikesGateway implements LikeWlGateway {
     willFailGet = false;
-
     willFailAdd = false;
-
     willFailRemove = false;
 
     private readonly store = new Map<string, LikeRecord>();
-
     private readonly delayMs: number;
 
     private currentUserIdGetter?: () => string;
+    private ackDispatcher?: AckDispatcher;
 
     nextGetResponse:
         | { count: number; me: boolean; version: number; serverTime?: string }
@@ -102,15 +106,26 @@ export class FakeLikesGateway implements LikeWlGateway {
                 updatedAt,
             });
         });
+
+        console.log("[FAKE_LIKES] init with seeds", {
+            targets: Array.from(this.store.keys()),
+        });
     }
 
     setCurrentUserIdGetter(getter: () => string) {
+        console.log("[FAKE_LIKES] setCurrentUserIdGetter");
         this.currentUserIdGetter = getter;
+    }
+
+    setAckDispatcher(dispatcher: AckDispatcher) {
+        console.log("[FAKE_LIKES] setAckDispatcher");
+        this.ackDispatcher = dispatcher;
     }
 
     private ensureRecord(targetId: string): LikeRecord {
         let record = this.store.get(targetId);
         if (!record) {
+            console.log("[FAKE_LIKES] ensureRecord: init new record for", targetId);
             record = {
                 likers: new Set(),
                 count: 0,
@@ -123,7 +138,9 @@ export class FakeLikesGateway implements LikeWlGateway {
     }
 
     private getCurrentUserId(fallback?: string) {
-        return fallback ?? this.currentUserIdGetter?.() ?? "anonymous";
+        const id = fallback ?? this.currentUserIdGetter?.() ?? "anonymous";
+        console.log("[FAKE_LIKES] getCurrentUserId ->", id);
+        return id;
     }
 
     private async simulateDelay(signal?: AbortSignal) {
@@ -142,11 +159,132 @@ export class FakeLikesGateway implements LikeWlGateway {
         });
     }
 
+    private randomAckDelayMs() {
+        const delay = 200 + Math.floor(Math.random() * 400); // un peu plus long que le stale, mais pas 4s
+        console.log("[FAKE_LIKES] randomAckDelayMs ->", delay);
+        return delay;
+    }
+
+    private scheduleAddAck(params: {
+        commandId: string;
+        targetId: string;
+        userId: string;
+        at: string;
+        record: LikeRecord;
+    }) {
+        const { commandId, targetId, userId, at, record } = params;
+        const delay = this.randomAckDelayMs();
+
+        console.log("[FAKE_LIKES] scheduleAddAck", {
+            commandId,
+            targetId,
+            userId,
+            at,
+            version: record.version,
+            count: record.count,
+            delay,
+        });
+
+        setTimeout(() => {
+            if (!this.ackDispatcher) {
+                console.log("[FAKE_LIKES] scheduleAddAck: no ackDispatcher, abort");
+                return;
+            }
+
+            const evt: SyncEvent = {
+                id: `evt_like_add_${nanoid()}`,
+                happenedAt: parseToISODate(at),
+                type: "like.addedAck",
+                payload: {
+                    commandId,
+                    targetId,
+                    server: {
+                        count: record.count,
+                        me: true,
+                        version: record.version,
+                        updatedAt: parseToISODate(record.updatedAt),
+                    },
+                },
+            };
+
+            console.log("[FAKE_LIKES] scheduleAddAck: dispatch syncEventsReceived(like.addedAck)", {
+                eventId: evt.id,
+                commandId,
+                targetId,
+            });
+
+            this.ackDispatcher(syncEventsReceived([evt]));
+        }, delay);
+    }
+
+    private scheduleRemoveAck(params: {
+        commandId: string;
+        targetId: string;
+        userId: string;
+        at: string;
+        record: LikeRecord;
+    }) {
+        const { commandId, targetId, userId, at, record } = params;
+        const delay = this.randomAckDelayMs();
+
+        console.log("[FAKE_LIKES] scheduleRemoveAck", {
+            commandId,
+            targetId,
+            userId,
+            at,
+            version: record.version,
+            count: record.count,
+            delay,
+        });
+
+        setTimeout(() => {
+            if (!this.ackDispatcher) {
+                console.log("[FAKE_LIKES] scheduleRemoveAck: no ackDispatcher, abort");
+                return;
+            }
+
+            const evt: SyncEvent = {
+                id: `evt_like_remove_${nanoid()}`,
+                happenedAt: parseToISODate(at),
+                type: "like.removedAck",
+                payload: {
+                    commandId,
+                    targetId,
+                    server: {
+                        count: record.count,
+                        me: false,
+                        version: record.version,
+                        updatedAt: parseToISODate(record.updatedAt),
+                    },
+                },
+            };
+
+            console.log("[FAKE_LIKES] scheduleRemoveAck: dispatch syncEventsReceived(like.removedAck)", {
+                eventId: evt.id,
+                commandId,
+                targetId,
+            });
+
+            this.ackDispatcher(syncEventsReceived([evt]));
+        }, delay);
+    }
+
     async get({ targetId, signal }: { targetId: string; signal: AbortSignal }) {
-        if (this.willFailGet) throw new Error("likes get failed");
+        console.log("[FAKE_LIKES] get", {
+            targetId,
+            willFailGet: this.willFailGet,
+        });
+
+        if (this.willFailGet) {
+            console.log("[FAKE_LIKES] get: throwing fake error");
+            throw new Error("likes get failed");
+        }
+
         const record = this.ensureRecord(targetId);
         const override = this.nextGetResponse;
+
         if (override) {
+            console.log("[FAKE_LIKES] get: using nextGetResponse override");
             this.nextGetResponse = null;
             record.count = override.count;
             record.version = override.version;
@@ -158,36 +296,119 @@ export class FakeLikesGateway implements LikeWlGateway {
             }
             return override;
         }
+
         await this.simulateDelay(signal);
+
         const currentUserId = this.getCurrentUserId();
-        return {
+        const response = {
             count: record.count,
             me: record.likers.has(currentUserId),
             version: record.version,
             serverTime: record.updatedAt,
         };
+
+        console.log("[FAKE_LIKES] get: returning response", {
+            targetId,
+            ...response,
+        });
+
+        return response;
     }
 
-    async add({ commandId, targetId, userId, at }: { commandId: string; targetId: string; userId: string; at: string }) {
-        void commandId;
-        if (this.willFailAdd) throw new Error("likes add failed");
+    async add({
+                  commandId,
+                  targetId,
+                  userId,
+                  at,
+              }: {
+        commandId: string;
+        targetId: string;
+        userId: string;
+        at: string;
+    }) {
+        console.log("[FAKE_LIKES] add", {
+            commandId,
+            targetId,
+            userId,
+            at,
+            willFailAdd: this.willFailAdd,
+        });
+
+        if (this.willFailAdd) {
+            console.log("[FAKE_LIKES] add: throwing fake error");
+            throw new Error("likes add failed");
+        }
+
         const record = this.ensureRecord(targetId);
         const actor = this.getCurrentUserId(userId);
+
         record.likers.add(actor);
         record.count = Math.max(record.count + 1, record.likers.size);
         record.version += 1;
         record.updatedAt = at;
+
+        console.log("[FAKE_LIKES] add: updated local record", {
+            targetId,
+            count: record.count,
+            version: record.version,
+            updatedAt: record.updatedAt,
+        });
+
+        this.scheduleAddAck({
+            commandId,
+            targetId,
+            userId: actor,
+            at,
+            record,
+        });
     }
 
-    async remove({ commandId, targetId, userId, at }: { commandId: string; targetId: string; userId: string; at: string }) {
-        void commandId;
-        if (this.willFailRemove) throw new Error("likes remove failed");
+    async remove({
+                     commandId,
+                     targetId,
+                     userId,
+                     at,
+                 }: {
+        commandId: string;
+        targetId: string;
+        userId: string;
+        at: string;
+    }) {
+        console.log("[FAKE_LIKES] remove", {
+            commandId,
+            targetId,
+            userId,
+            at,
+            willFailRemove: this.willFailRemove,
+        });
+
+        if (this.willFailRemove) {
+            console.log("[FAKE_LIKES] remove: throwing fake error");
+            throw new Error("likes remove failed");
+        }
+
         const record = this.ensureRecord(targetId);
         const actor = this.getCurrentUserId(userId);
+
         record.likers.delete(actor);
         record.count = Math.max(0, record.count - 1);
         record.version += 1;
         record.updatedAt = at;
+
+        console.log("[FAKE_LIKES] remove: updated local record", {
+            targetId,
+            count: record.count,
+            version: record.version,
+            updatedAt: record.updatedAt,
+        });
+
+        this.scheduleRemoveAck({
+            commandId,
+            targetId,
+            userId: actor,
+            at,
+            record,
+        });
     }
 }
 

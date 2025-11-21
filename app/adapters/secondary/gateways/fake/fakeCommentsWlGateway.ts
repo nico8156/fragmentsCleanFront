@@ -1,10 +1,14 @@
 import { nanoid } from "@reduxjs/toolkit";
-import { CommentEntity, Op, opTypes, moderationTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import {
-    onCommentCreatedAck, onCommentDeletedAck,
-    onCommentUpdatedAck
-} from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+    CommentEntity,
+    Op,
+    opTypes,
+    moderationTypes,
+} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
+import { syncEventsReceived } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 const seedComments: Record<string, CommentEntity[]> = {
     "07dae867-1273-4d0f-b1dd-f206b290626b": [
@@ -114,6 +118,11 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
                 }
             });
         });
+
+        console.log("[FAKE_COMMENTS] init with seed", {
+            targets: Array.from(this.commentsByTarget.keys()),
+            versionCounter: this.versionCounter,
+        });
     }
 
     private findCommentById(commentId: string): { targetId: string; collection: CommentEntity[]; index: number } | null {
@@ -126,39 +135,59 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         return null;
     }
 
-
     setAckDispatcher(dispatcher: AckDispatcher) {
+        console.log("[FAKE_COMMENTS] setAckDispatcher");
         this.ackDispatcher = dispatcher;
     }
 
     setCurrentUserIdGetter(getter: () => string) {
+        console.log("[FAKE_COMMENTS] setCurrentUserIdGetter");
         this.currentUserIdGetter = getter;
     }
 
     private getCurrentUserId() {
-        return this.currentUserIdGetter?.() ?? "anonymous";
+        const id = this.currentUserIdGetter?.() ?? "anonymous";
+        // log léger, utile en debug
+        console.log("[FAKE_COMMENTS] getCurrentUserId ->", id);
+        return id;
     }
 
     private ensureComments(targetId: string) {
         if (!this.commentsByTarget.has(targetId)) {
+            console.log("[FAKE_COMMENTS] ensureComments: init empty collection for", targetId);
             this.commentsByTarget.set(targetId, []);
         }
         return this.commentsByTarget.get(targetId)!;
     }
 
     private cloneComments(targetId: string) {
-        return this.ensureComments(targetId).map((comment) => ({ ...comment }));
+        const cloned = this.ensureComments(targetId).map((comment) => ({ ...comment }));
+        console.log("[FAKE_COMMENTS] cloneComments", {
+            targetId,
+            count: cloned.length,
+        });
+        return cloned;
     }
 
     private randomAckDelayMs() {
-        return 2000 + Math.floor(Math.random() * 2001); // 2000ms → 4000ms
+        const delay = 2000 + Math.floor(Math.random() * 2001); // 2000ms → 4000ms
+        console.log("[FAKE_COMMENTS] randomAckDelayMs ->", delay);
+        return delay;
     }
 
     private scheduleAck(pending: PendingCreate) {
         const delay = this.randomAckDelayMs();
+        console.log("[FAKE_COMMENTS] scheduleAck (create)", {
+            commandId: pending.commandId,
+            tempId: pending.tempId,
+            targetId: pending.targetId,
+            delay,
+        });
+
         setTimeout(() => {
             const record = this.pendingCreates.get(pending.commandId);
             if (!record) {
+                console.log("[FAKE_COMMENTS] scheduleAck: pending command not found, abort", pending.commandId);
                 return;
             }
             this.pendingCreates.delete(pending.commandId);
@@ -166,6 +195,13 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
             const serverId = `cmt_srv_${nanoid()}`;
             const createdAt = new Date().toISOString();
             const version = ++this.versionCounter;
+
+            console.log("[FAKE_COMMENTS] scheduleAck create -> applying server state", {
+                serverId,
+                targetId: record.targetId,
+                version,
+                createdAt,
+            });
 
             const newComment: CommentEntity = {
                 id: serverId,
@@ -192,8 +228,11 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
             }
 
             if (record.tempId && this.ackDispatcher) {
-                this.ackDispatcher(
-                    onCommentCreatedAck({
+                const evt: SyncEvent = {
+                    id: `evt_${nanoid()}`,
+                    happenedAt: parseToISODate(createdAt),
+                    type: "comment.createdAck",
+                    payload: {
                         commandId: record.commandId,
                         tempId: record.tempId,
                         server: {
@@ -201,8 +240,16 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
                             createdAt: newComment.createdAt,
                             version: newComment.version,
                         },
-                    }),
-                );
+                    },
+                };
+
+                console.log("[FAKE_COMMENTS] scheduleAck: dispatch syncEventsReceived(comment.createdAck)", {
+                    eventId: evt.id,
+                    commandId: record.commandId,
+                    tempId: record.tempId,
+                });
+
+                this.ackDispatcher(syncEventsReceived([evt]));
             }
         }, delay);
     }
@@ -214,25 +261,48 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         version: number;
         body: string;
     }) {
-        const { commandId, commentId, editedAt, version , body} = params;
+        const { commandId, commentId, editedAt, version, body } = params;
         const delay = this.randomAckDelayMs();
 
-        setTimeout(() => {
-            if (!this.ackDispatcher) return;
+        console.log("[FAKE_COMMENTS] scheduleUpdateAck", {
+            commandId,
+            commentId,
+            editedAt,
+            version,
+            delay,
+        });
 
-            this.ackDispatcher(
-                onCommentUpdatedAck({
+        setTimeout(() => {
+            if (!this.ackDispatcher) {
+                console.log("[FAKE_COMMENTS] scheduleUpdateAck: no ackDispatcher, abort");
+                return;
+            }
+
+            const evt: SyncEvent = {
+                id: `evt_${nanoid()}`,
+                happenedAt: parseToISODate(editedAt),
+                type: "comment.updatedAck",
+                payload: {
                     commandId,
                     commentId,
                     server: {
                         version,
                         editedAt,
-                        body
+                        body,
                     },
-                }),
-            );
+                },
+            };
+
+            console.log("[FAKE_COMMENTS] scheduleUpdateAck: dispatch syncEventsReceived(comment.updatedAck)", {
+                eventId: evt.id,
+                commandId,
+                commentId,
+            });
+
+            this.ackDispatcher(syncEventsReceived([evt]));
         }, delay);
     }
+
     private scheduleDeleteAck(params: {
         commandId: string;
         commentId: string;
@@ -242,25 +312,52 @@ export class FakeCommentsWlGateway implements CommentsWlGateway {
         const { commandId, commentId, deletedAt, version } = params;
         const delay = this.randomAckDelayMs();
 
-        setTimeout(() => {
-            if (!this.ackDispatcher) return;
+        console.log("[FAKE_COMMENTS] scheduleDeleteAck", {
+            commandId,
+            commentId,
+            deletedAt,
+            version,
+            delay,
+        });
 
-            this.ackDispatcher(
-                onCommentDeletedAck({
+        setTimeout(() => {
+            if (!this.ackDispatcher) {
+                console.log("[FAKE_COMMENTS] scheduleDeleteAck: no ackDispatcher, abort");
+                return;
+            }
+
+            const evt: SyncEvent = {
+                id: `evt_${nanoid()}`,
+                happenedAt: parseToISODate(deletedAt),
+                type: "comment.deletedAck",
+                payload: {
                     commandId,
                     commentId,
                     server: {
                         deletedAt,
-                        version
+                        version,
                     },
-                }),
-            );
+                },
+            };
+
+            console.log("[FAKE_COMMENTS] scheduleDeleteAck: dispatch syncEventsReceived(comment.deletedAck)", {
+                eventId: evt.id,
+                commandId,
+                commentId,
+            });
+
+            this.ackDispatcher(syncEventsReceived([evt]));
         }, delay);
     }
 
-
-
-async list({ targetId }: { targetId: string; cursor: string; limit: number; signal: AbortSignal }): Promise<{
+    async list({
+                   targetId,
+               }: {
+        targetId: string;
+        cursor: string;
+        limit: number;
+        signal: AbortSignal;
+    }): Promise<{
         targetId: string;
         op: Op;
         items: CommentEntity[];
@@ -268,24 +365,55 @@ async list({ targetId }: { targetId: string; cursor: string; limit: number; sign
         prevCursor?: string | undefined;
         serverTime?: string | undefined;
     }> {
+        console.log("[FAKE_COMMENTS] list", { targetId, willFail: this.willFail });
+
         if (this.willFail) {
+            console.log("[FAKE_COMMENTS] list: throwing fake error");
             throw new Error("Fake error from fakeCommentsWlGateway");
         }
         if (this.nextCommentsResponse) {
+            console.log("[FAKE_COMMENTS] list: returning nextCommentsResponse override");
             return this.nextCommentsResponse;
         }
 
         const items = this.cloneComments(targetId);
-        return {
+        const response = {
             targetId,
             op: opTypes.RETRIEVE,
             items,
             serverTime: new Date().toISOString(),
         };
+
+        console.log("[FAKE_COMMENTS] list: returning response", {
+            count: items.length,
+        });
+
+        return response;
     }
 
-    async create({ commandId, targetId, parentId, body, tempId }: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }): Promise<void> {
+    async create({
+                     commandId,
+                     targetId,
+                     parentId,
+                     body,
+                     tempId,
+                 }: {
+        commandId: string;
+        targetId: string;
+        parentId?: string | null;
+        body: string;
+        tempId?: string;
+    }): Promise<void> {
+        console.log("[FAKE_COMMENTS] create", {
+            commandId,
+            targetId,
+            parentId,
+            hasTempId: !!tempId,
+            willFail: this.willFail,
+        });
+
         if (this.willFail) {
+            console.log("[FAKE_COMMENTS] create: throwing fake error");
             throw new Error("Fake error from fakeCommentsWlGateway");
         }
 
@@ -299,22 +427,42 @@ async list({ targetId }: { targetId: string; cursor: string; limit: number; sign
         };
 
         this.pendingCreates.set(commandId, pending);
+
+        console.log("[FAKE_COMMENTS] create: pending stored, scheduling ACK", {
+            commandId,
+            targetId,
+        });
+
         this.scheduleAck(pending);
         return Promise.resolve();
     }
 
-    async update({ commandId, commentId, body, editedAt }: { commandId: string; commentId: string; body: string; editedAt: string }): Promise<void> {
-        void commandId;
-        void commentId;
-        void body;
-        void editedAt;
+    async update({
+                     commandId,
+                     commentId,
+                     body,
+                     editedAt,
+                 }: {
+        commandId: string;
+        commentId: string;
+        body: string;
+        editedAt: string;
+    }): Promise<void> {
+        console.log("[FAKE_COMMENTS] update", {
+            commandId,
+            commentId,
+            editedAt,
+            willFail: this.willFail,
+        });
+
         if (this.willFail) {
+            console.log("[FAKE_COMMENTS] update: throwing fake error");
             throw new Error("Fake error from fakeCommentsWlGateway");
         }
 
         const found = this.findCommentById(commentId);
         if (!found) {
-            // Tu peux throw si tu veux tester les erreurs réseau/serveur
+            console.log("[FAKE_COMMENTS] update: comment not found", { commentId });
             return;
         }
 
@@ -326,39 +474,58 @@ async list({ targetId }: { targetId: string; cursor: string; limit: number; sign
         const updatedComment: CommentEntity = {
             ...existing,
             body,
-            // si CommentEntity ne déclare pas updatedAt, enlève cette ligne :
             editedAt,
             version,
         };
 
         collection[index] = updatedComment;
 
-        // Simule l’ACK serveur (comme si ça venait du socket)
+        console.log("[FAKE_COMMENTS] update: updated local comment", {
+            commentId: updatedComment.id,
+            version,
+            editedAt,
+        });
+
         this.scheduleUpdateAck({
             commandId,
             commentId: updatedComment.id,
             editedAt,
             version,
-            body: updatedComment.body
+            body: updatedComment.body,
         });
         return Promise.resolve();
     }
 
-    async delete({ commandId, commentId, deletedAt }: { commandId: string; commentId: string; deletedAt: string }): Promise<void> {
-            if (this.willFail) {
+    async delete({
+                     commandId,
+                     commentId,
+                     deletedAt,
+                 }: {
+        commandId: string;
+        commentId: string;
+        deletedAt: string;
+    }): Promise<void> {
+        console.log("[FAKE_COMMENTS] delete", {
+            commandId,
+            commentId,
+            deletedAt,
+            willFail: this.willFail,
+        });
+
+        if (this.willFail) {
+            console.log("[FAKE_COMMENTS] delete: throwing fake error");
             throw new Error("Fake error from fakeCommentsWlGateway");
         }
 
         const found = this.findCommentById(commentId);
         if (!found) {
-            // Si tu veux tester les erreurs, tu peux throw ici
+            console.log("[FAKE_COMMENTS] delete: comment not found", { commentId });
             return;
         }
 
         const { targetId, collection, index } = found;
         const toDelete = collection[index];
 
-        // Si c'était une réponse, décrémente replyCount du parent
         if (toDelete.parentId) {
             const parent = collection.find((c) => c.id === toDelete.parentId);
             if (parent) {
@@ -366,17 +533,21 @@ async list({ targetId }: { targetId: string; cursor: string; limit: number; sign
             }
         }
 
-        // Suppression "serveur" en mémoire
         collection.splice(index, 1);
 
-        // Et on simule l’ACK serveur
+        console.log("[FAKE_COMMENTS] delete: removed from local store", {
+            targetId,
+            commentId: toDelete.id,
+            version: toDelete.version,
+        });
+
         this.scheduleDeleteAck({
             commandId,
             commentId: toDelete.id,
             deletedAt,
-            version: toDelete.version
+            version: toDelete.version,
         });
-        
+
         return Promise.resolve();
     }
 }

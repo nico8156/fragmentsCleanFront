@@ -117,11 +117,6 @@ export function RewardsScreen() {
                     </View>
                 </View>
 
-                <View style={styles.asciiCard}>
-                    <Text style={styles.sectionLabel}>Mock ASCII</Text>
-                    <Text style={styles.ascii}>{ASCII_MOCK}</Text>
-                </View>
-
                 <View style={styles.section}>
                     <Text style={styles.sectionLabel}>Badges</Text>
                     <Text style={styles.sectionHint}>

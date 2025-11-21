@@ -18,18 +18,26 @@ export const ackLikesListenerFactory = () => {
     listen({
         actionCreator: onLikeAddedAck,
         effect: async ({ payload: { commandId, targetId, server } }, api) => {
+            console.log("[ACK_LIKES] onLikeAddedAck", { commandId, targetId, server });
             api.dispatch(likeReconciled({ targetId, server }));
             const outboxId = byCmd(api.getState(), commandId);
-            if (outboxId) api.dispatch(dropCommitted({ commandId }));
+            if (outboxId) {
+                console.log("[ACK_LIKES] dropCommitted", { commandId, outboxId });
+                api.dispatch(dropCommitted({ commandId }));
+            }
         },
     });
 
     listen({
         actionCreator: onLikeRemovedAck,
         effect: async ({ payload: { commandId, targetId, server } }, api) => {
+            console.log("[ACK_LIKES] onLikeRemovedAck", { commandId, targetId, server });
             api.dispatch(likeReconciled({ targetId, server }));
             const outboxId = byCmd(api.getState(), commandId);
-            if (outboxId) api.dispatch(dropCommitted({ commandId }));
+            if (outboxId) {
+                console.log("[ACK_LIKES] dropCommitted", { commandId, outboxId });
+                api.dispatch(dropCommitted({ commandId }));
+            }
         },
     });
 

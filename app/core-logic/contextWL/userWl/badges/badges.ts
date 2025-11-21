@@ -30,7 +30,7 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
         description: "Tu dégustes régulièrement dans les cafés visités.",
         requirements: {
             exploration: 0,
-            gout: 3,
+            gout: 1,
             social: 0,
         },
     },

@@ -157,5 +157,5 @@ export const syncRuntimeListenerFactory = ({
         },
     });
 
-    return middleware;
+    return middleware.middleware;
 };
