@@ -4,6 +4,8 @@ import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import {TicketConfirmedAck, TicketRejectedAck, UserId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {ticketReconciledConfirmed, ticketReconciledRejected} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import {dropCommitted} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import { computeBadgeProgressFromState } from "@/app/core-logic/contextWL/userWl/badges/computeBadgeProgress";
+import { userBadgeProgressUpdated } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 // ⚠️ adapte vers ton action réelle qui supprime l’outbox par commandId
 export const outboxDropByCommandId = (payload: { commandId: string }) =>
@@ -27,6 +29,7 @@ export const ackTicketsListenerFactory = () => {
                     userId: action.payload.userId as UserId,
                 })
             );
+            api.dispatch(userBadgeProgressUpdated({ badgeProgress: computeBadgeProgressFromState(api.getState()) }));
             // → entitlements seront gérés dans la prochaine étape (projection)
             api.dispatch(dropCommitted({ commandId: action.payload.commandId }));
         },
