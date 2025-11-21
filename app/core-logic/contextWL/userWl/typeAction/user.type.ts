@@ -41,6 +41,14 @@ export interface UserPreferences {
     marketingOptIn?: boolean;
     pushOptIn?: boolean;
     theme?: "light" | "dark" | "system";
+    badgeProgress?: BadgeProgress;
+}
+
+export interface BadgeProgress {
+    exploration: number;
+    gout: number;
+    social: number;
+    unlockedBadges: string[];
 }
 
 export interface AppUser {

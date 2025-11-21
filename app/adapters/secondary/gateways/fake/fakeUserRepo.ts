@@ -1,5 +1,6 @@
 import { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import { AppUser, toUserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import { getDefaultBadgeProgress } from "@/app/core-logic/contextWL/userWl/badges/badges";
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 export class FakeUserRepo implements UserRepo {
@@ -27,6 +28,9 @@ export const makeDemoUser = (): AppUser => ({
     avatarUrl: "https://i.pravatar.cc/150?u=fake-user",
     identities: [],
     roles: ["user"],
+    preferences: {
+        badgeProgress: getDefaultBadgeProgress(),
+    },
     likedCoffeeIds: [],
     version: 1,
 });
