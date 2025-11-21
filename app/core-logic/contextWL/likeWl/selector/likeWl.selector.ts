@@ -19,6 +19,8 @@ type LikeSelectorResult = {
 };
 
 const selectLikesState = (state: RootStateWl): LikeSlice => state.lState;
+export const selectAllLikeAggs = (state: RootStateWl) => state.lState.byTarget;
+
 
 export const selectLikesForTarget = (targetId: string) =>
     createSelector(

@@ -57,7 +57,7 @@ describe("On Coffee retrieval (single) : ", () => {
         expect(c.byId["4302ac89-13ad-415b-9edf-d9c52957ac33"]).toBeDefined()
         expect(c.byId["4302ac89-13ad-415b-9edf-d9c52957ac33"].name).toEqual("GANG Café de quartier")
         expect(c.byId["4302ac89-15ad-415b-9edf-d9c52957ac33"]).toBeUndefined()
-        expect(c.byCity["rennes"].length).toEqual(16)
-        expect(c.ids.length).toEqual(17)
+        expect(c.byCity["rennes"].length).toEqual(14)
+        expect(c.ids.length).toEqual(15)
     })
 });

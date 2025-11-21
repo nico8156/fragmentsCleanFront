@@ -1,4 +1,4 @@
-import {Action, AnyAction, Middleware} from "@reduxjs/toolkit";
+import {Action, Middleware} from "@reduxjs/toolkit";
 import {
     SyncEventsGateway,
     CursorUnknownSyncError,

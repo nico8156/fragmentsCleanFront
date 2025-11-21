@@ -56,6 +56,7 @@ import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/o
 import {commentDeleteUseCaseFactory} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import {commentUpdateWlUseCase} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
+import {runtimeListenerFactory} from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
 // ---- types ----
 
@@ -208,6 +209,7 @@ export const createWlStore = (): ReduxStoreWl => {
         eventsGateway: gateways.events,
         metaStorage: syncMetaStorage
     });
+    const runtimeListener = runtimeListenerFactory()
 
     const syncEventsListener = syncEventsListenerFactory({
         metaStorage: syncMetaStorage,
@@ -233,6 +235,7 @@ export const createWlStore = (): ReduxStoreWl => {
             entitlementAckMiddleware,
             syncRuntimeListener,
             syncEventsListener,
+            runtimeListener,
             authListenerFactory({ gateways, helpers: {} }),
             userLocationListenerFactory({ gateways, helpers: {} }),
         ],

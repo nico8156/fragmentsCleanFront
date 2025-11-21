@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 
-import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
+import {selectCurrentUser, selectUserSocialStats} from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import {
     BADGE_DEFINITIONS,
     computeBadgeCompletion,
@@ -10,6 +10,7 @@ import {
 } from "@/app/core-logic/contextWL/userWl/badges/badges";
 import { BadgeProgress } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+import {selectVisitedCafesCount} from "@/app/core-logic/contextWL/locationWl/selector/location.selector";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -28,11 +29,16 @@ export type RewardsViewModel = {
     badges: DecoratedBadge[];
     unlockedCount: number;
     isEmpty: boolean;
+    commentCount: number;
+    likeCount: number;
+    visitedCafesCount: number;
 };
 
 export function useRewardsViewModel(): RewardsViewModel {
     const user = useSelector(selectCurrentUser);
     const tickets = useSelector(selectSortedTickets);
+    const { commentCount, likeCount } = useSelector(selectUserSocialStats);
+    const visitedCafesCount = useSelector(selectVisitedCafesCount);
 
     const progress: BadgeProgress = user?.preferences?.badgeProgress ?? getDefaultBadgeProgress();
 
@@ -84,5 +90,8 @@ export function useRewardsViewModel(): RewardsViewModel {
         badges,
         unlockedCount,
         isEmpty: badges.length === 0,
+        commentCount,
+        likeCount,
+        visitedCafesCount,
     };
 }

@@ -21,6 +21,8 @@ type CommentsSelectorResult = {
 
 const selectCommentsState = (state: RootStateWl): CommentsSlice => state.cState;
 
+export const selectAllComments = (state: RootStateWl) => state.cState.entities.entities;
+
 export const selectCommentsForTarget = (targetId: CafeId) =>
     createSelector(
         [

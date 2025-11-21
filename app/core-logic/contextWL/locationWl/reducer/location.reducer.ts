@@ -49,9 +49,7 @@ export const locationReducer = createReducer(
                     existing.lastSeenAt = payload.seenAt;
                     existing.count += 1;
                 }
-
-                // optionnel : garder l’historique raisonnable
-                const MAX_HISTORY = 100;
+                const MAX_HISTORY = 100;// optionnel : garder l’historique raisonnable
                 if (state.nearbyHistory.length > MAX_HISTORY) {
                     state.nearbyHistory.splice(0, state.nearbyHistory.length - MAX_HISTORY);
                 }
