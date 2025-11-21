@@ -1,8 +1,8 @@
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
-import {AppDispatchWl} from "@/app/store/reduxStoreWl";
+import {AppDispatchWl, RootStateWl} from "@/app/store/reduxStoreWl";
 import {
-    getOnceRequested,
+    getOnceRequested, locationNearbyCafeUpdated,
     locationUpdated, permissionCheckRequested,
     permissionUpdated,
     requestPermission,
@@ -12,10 +12,12 @@ import {
     watchStarted,
     watchStopped
 } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action"
+import {selectCoffeesList} from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
+import {findClosestCafeWithinRadius} from "@/app/core-logic/utils/geo/distance";
 
 export const userLocationListenerFactory = (deps:DependenciesWl) => {
     const mw = createListenerMiddleware()
-    const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>
+    const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>
 
     listen({
         actionCreator: permissionCheckRequested,
@@ -83,6 +85,32 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
             }
         }
     })
+    listen({
+        actionCreator: locationUpdated,
+        effect: async (action, api) => {
+            const state = (api.getState()) as RootStateWl;
+
+            const cafes = selectCoffeesList(state as RootStateWl)
+            const { coords } = action.payload;
+
+            // à adapter au shape exact de coords (latitude/longitude vs lat/lng)
+            const pos = {
+                lat: coords.lat,
+                lng: coords.lng,
+            };
+
+            const result = findClosestCafeWithinRadius(pos, cafes, 100); // 100m par ex.
+
+            api.dispatch(
+                locationNearbyCafeUpdated({
+                    cafeId: result?.cafeId,
+                    distanceMeters: result?.distanceMeters,
+                    seenAt: Date.now(),
+                }),
+            );
+        },
+    });
+
 
     return mw.middleware
 }

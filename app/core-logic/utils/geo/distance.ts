@@ -1,4 +1,6 @@
 // 1) Calcul pur (km)
+import {Coffee} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+
 export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
     //Use of Haversine formula ...
     // check all params are numbers
@@ -19,6 +21,21 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return Math.max(0, R * c); // clamp à 0 pour éviter -0 dû aux flottants
+}
+
+export function findClosestCafeWithinRadius(pos:{lat:number, lng:number},cafes:Coffee[],radius:number):any{
+    let best: { cafeId: string; distanceMeters: number } | undefined;
+
+    for (const cafe of cafes) {
+
+        const d = haversineKm(pos.lat, pos.lng, cafe.location.lat, cafe.location.lon);
+
+        if (d <= radius && (!best || d < best.distanceMeters)) {
+            best = { cafeId: cafe.id, distanceMeters: d };
+        }
+    }
+
+    return best;
 }
 
 // 2) Formatage (retourne une string localisée)

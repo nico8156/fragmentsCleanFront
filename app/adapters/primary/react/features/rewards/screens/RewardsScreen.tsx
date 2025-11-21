@@ -1,16 +1,12 @@
-import { useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSelector } from "react-redux";
+// RewardsScreen.tsx
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScanTicketFab } from "@/app/adapters/primary/react/features/scan/components/ScanTicketFab";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
-import { BADGE_DEFINITIONS, computeBadgeCompletion, getDefaultBadgeProgress } from "@/app/core-logic/contextWL/userWl/badges/badges";
-import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
-import { BadgeProgress } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+import {useRewardsViewModel} from "@/app/adapters/secondary/viewModel/useRewardsVM";
 
 const BADGE_ICONS: Record<string, string> = {
     urban_explorer: "🧭",
@@ -19,192 +15,148 @@ const BADGE_ICONS: Record<string, string> = {
     fragments_master: "🏆",
 };
 
-const ASCII_MOCK = `
-┌───────────────────────────────┐
-│            BADGES             │
-│───────────────────────────────│
-
- Urban Explorer          Coffee Taster
- [ ● icon ]              [ ○ lock ]
- Progress 3/5            Progress 1/3
- --------------------    --------------------
-
- Social Bean             Fragments Master
- [ ○ lock ]              [ ○ lock ]
- Progress 4/10           Progress 2/13
- --------------------    --------------------
-└───────────────────────────────┘
-`;
-
-const clamp = (value: number) => Math.max(0, Math.min(1, value));
-
 export function RewardsScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
     const inset = useSafeAreaInsets();
 
-    const sortedTickets = useSelector(selectSortedTickets);
-    const user = useSelector(selectCurrentUser);
-    const progress: BadgeProgress = user?.preferences?.badgeProgress ?? getDefaultBadgeProgress();
-
-    const decoratedBadges = useMemo(
-        () =>
-            BADGE_DEFINITIONS.map((badge) => {
-                const completion = computeBadgeCompletion(progress, badge);
-                const totalRequired =
-                    badge.requirements.exploration + badge.requirements.gout + badge.requirements.social || 1;
-                const currentSteps =
-                    Math.min(progress.exploration, badge.requirements.exploration) +
-                    Math.min(progress.gout, badge.requirements.gout) +
-                    Math.min(progress.social, badge.requirements.social);
-
-                const status = progress.unlockedBadges.includes(badge.id)
-                    ? "unlocked"
-                    : completion > 0
-                        ? "in_progress"
-                        : "locked";
-
-                return {
-                    ...badge,
-                    completion,
-                    currentSteps,
-                    totalRequired,
-                    status,
-                };
-            }),
-        [progress],
-    );
-
-    const [selectedBadgeId, setSelectedBadgeId] = useState<string>(decoratedBadges[0]?.id ?? BADGE_DEFINITIONS[0].id);
-
-    const selectedBadge = useMemo(
-        () => decoratedBadges.find((badge) => badge.id === selectedBadgeId) ?? decoratedBadges[0],
-        [decoratedBadges, selectedBadgeId],
-    );
-
-    const confirmedTickets = useMemo(
-        () => sortedTickets.filter((ticket) => ticket.status === "CONFIRMED").length,
-        [sortedTickets],
-    );
+    const { progress, confirmedTickets, badges, unlockedCount } = useRewardsViewModel();
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.header}>
-                    <View style={styles.headerText}>
-                        <Text style={styles.title}>Badges progressifs</Text>
-                        <Text style={styles.subtitle}>
-                            Quatre badges simples, basés sur l'exploration, le goût et les interactions sociales. La progression est
-                            stockée dans ton profil utilisateur.
-                        </Text>
-                        <View style={styles.statsRow}>
-                            <View style={styles.statPill}>
-                                <Text style={styles.statValue}>{progress.exploration}</Text>
-                                <Text style={styles.statLabel}>Exploration</Text>
+            <FlatList
+                data={badges}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.container}
+                ListHeaderComponent={
+                    <View style={styles.header}>
+                        <View style={styles.headerTopRow}>
+                            <View style={styles.headerTitleBlock}>
+                                <Text style={styles.title}>Tes badges</Text>
+                                <Text style={styles.subtitle}>
+                                    Trois axes simples : exploration, goût, social. Tout est calculé à partir de ton activité.
+                                </Text>
                             </View>
-                            <View style={styles.statPill}>
-                                <Text style={styles.statValue}>{progress.gout}</Text>
-                                <Text style={styles.statLabel}>Goût</Text>
-                            </View>
-                            <View style={styles.statPill}>
-                                <Text style={styles.statValue}>{progress.social}</Text>
-                                <Text style={styles.statLabel}>Social</Text>
-                            </View>
-                            <View style={styles.statPill}>
-                                <Text style={styles.statValue}>{confirmedTickets}</Text>
-                                <Text style={styles.statLabel}>Tickets validés</Text>
+
+                            <View style={styles.unlockedCard}>
+                                <Text style={styles.unlockedCount}>{unlockedCount}</Text>
+                                <Text style={styles.unlockedCaption}>sur {badges.length}</Text>
+                                <Text style={styles.unlockedLabel}>badges débloqués</Text>
                             </View>
                         </View>
+
+                        <View style={styles.axisRow}>
+                            <View style={styles.axisCard}>
+                                <Text style={styles.axisIcon}>🔍</Text>
+                                <View>
+                                    <Text style={styles.axisValue}>{progress.exploration}</Text>
+                                    <Text style={styles.axisLabel}>Exploration</Text>
+                                </View>
+                            </View>
+                            <View style={styles.axisCard}>
+                                <Text style={styles.axisIcon}>☕️</Text>
+                                <View>
+                                    <Text style={styles.axisValue}>{progress.gout}</Text>
+                                    <Text style={styles.axisLabel}>Goût</Text>
+                                </View>
+                            </View>
+                            <View style={styles.axisCard}>
+                                <Text style={styles.axisIcon}>💬</Text>
+                                <View>
+                                    <Text style={styles.axisValue}>{progress.social}</Text>
+                                    <Text style={styles.axisLabel}>Social</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.ticketsCard}>
+                            <View>
+                                <Text style={styles.ticketsLabel}>Tickets validés</Text>
+                                <Text style={styles.ticketsHint}>Chaque ticket confirmé fait progresser tes badges.</Text>
+                            </View>
+                            <Text style={styles.ticketsValue}>{confirmedTickets}</Text>
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Badges</Text>
-                    <Text style={styles.sectionHint}>
-                        3 axes (exploration, goût, social) → progression cumulée. Sélectionne un badge pour voir le détail.
-                    </Text>
-                    <FlatList
-                        data={decoratedBadges}
-                        keyExtractor={(item) => item.id}
-                        numColumns={2}
-                        scrollEnabled={false}
-                        columnWrapperStyle={styles.badgeRow}
-                        contentContainerStyle={styles.badgeGrid}
-                        renderItem={({ item }) => {
-                            const isSelected = selectedBadge?.id === item.id;
-                            const remaining = Math.max(0, item.totalRequired - item.currentSteps);
-                            const statusStyle =
-                                item.status === "unlocked"
-                                    ? styles.unlocked
-                                    : item.status === "in_progress"
-                                        ? styles.in_progress
-                                        : styles.locked;
-                            return (
-                                <Pressable
-                                    onPress={() => setSelectedBadgeId(item.id)}
-                                    style={[styles.badgeCard, isSelected && styles.badgeCardSelected]}
-                                >
-                                    <Text style={styles.badgeIcon}>{BADGE_ICONS[item.id] ?? "🎖️"}</Text>
+                }
+                renderItem={({ item }) => {
+                    const remaining = Math.max(0, item.totalRequired - item.currentSteps);
+                    const progressPercent = item.completion * 100;
+
+                    const statusLabel =
+                        item.status === "unlocked"
+                            ? "Débloqué"
+                            : item.status === "in_progress"
+                                ? "En cours"
+                                : "Verrouillé";
+
+                    const statusStyle =
+                        item.status === "unlocked"
+                            ? styles.unlocked
+                            : item.status === "in_progress"
+                                ? styles.in_progress
+                                : styles.locked;
+
+                    return (
+                        <View style={styles.badgeCard}>
+                            <View style={styles.badgeHeaderRow}>
+                                <Text style={styles.badgeIcon}>{BADGE_ICONS[item.id] ?? "🎖️"}</Text>
+                                <View style={styles.badgeHeaderText}>
                                     <Text style={styles.badgeName}>{item.label}</Text>
-                                    <Text style={styles.badgeDescription}>{item.description}</Text>
-                                    <Text style={styles.badgeProgress}>
-                                        Progression {item.currentSteps}/{item.totalRequired}
-                                    </Text>
-                                    <View style={styles.progressBarBackground}>
-                                        <View style={[styles.progressBarFill, { width: `${clamp(item.completion) * 100}%` }]} />
-                                    </View>
-                                    <View style={styles.badgeStatusRow}>
-                                        <Text style={[styles.statusPill, statusStyle]}>
-                                            {item.status === "unlocked" ? "Débloqué" : item.status === "in_progress" ? "En cours" : "Verrouillé"}
-                                        </Text>
-                                        <Text style={styles.statusPill}>🔒 {remaining} restant</Text>
-                                    </View>
-                                </Pressable>
-                            );
-                        }}
-                    />
-                </View>
+                                    <Text style={styles.badgeStatusLabel}>{statusLabel}</Text>
+                                </View>
+                                <Text style={[styles.statusPill, statusStyle]}>{statusLabel}</Text>
+                            </View>
 
-                {selectedBadge ? (
-                    <View style={styles.detailSection}>
-                        <Text style={styles.sectionLabel}>Détail du badge</Text>
-                        <View style={styles.detailCard}>
-                            <Text style={styles.detailIcon}>{BADGE_ICONS[selectedBadge.id] ?? "🎖️"}</Text>
-                            <Text style={styles.detailTitle}>{selectedBadge.label}</Text>
-                            <Text style={styles.detailDescription}>{selectedBadge.description}</Text>
+                            <Text style={styles.badgeDescription}>{item.description}</Text>
 
-                            <View style={styles.requirementRow}>
-                                <Text style={styles.requirementLabel}>Exploration</Text>
-                                <Text style={styles.requirementValue}>
-                                    {Math.min(progress.exploration, selectedBadge.requirements.exploration)} /
-                                    {" "}
-                                    {selectedBadge.requirements.exploration}
+                            <View style={styles.progressRow}>
+                                <Text style={styles.badgeProgressText}>
+                                    Progression {item.currentSteps}/{item.totalRequired}
                                 </Text>
+                                <Text style={styles.badgeProgressPercent}>{progressPercent.toFixed(0)}%</Text>
                             </View>
-                            <View style={styles.requirementRow}>
-                                <Text style={styles.requirementLabel}>Goût</Text>
-                                <Text style={styles.requirementValue}>
-                                    {Math.min(progress.gout, selectedBadge.requirements.gout)} / {selectedBadge.requirements.gout}
-                                </Text>
-                            </View>
-                            <View style={styles.requirementRow}>
-                                <Text style={styles.requirementLabel}>Social</Text>
-                                <Text style={styles.requirementValue}>
-                                    {Math.min(progress.social, selectedBadge.requirements.social)} / {selectedBadge.requirements.social}
-                                </Text>
-                            </View>
+
                             <View style={styles.progressBarBackground}>
                                 <View
-                                    style={[styles.progressBarFill, { width: `${clamp(selectedBadge.completion) * 100}%` }]}
+                                    style={[
+                                        styles.progressBarFill,
+                                        { width: `${progressPercent}%` },
+                                    ]}
                                 />
                             </View>
-                            <Text style={styles.detailFootnote}>
-                                Progression globale : {(clamp(selectedBadge.completion) * 100).toFixed(0)}%
-                            </Text>
+
+                            <View style={styles.requirementsRow}>
+                                <Text style={styles.requirementTiny}>
+                                    🔍 Explo.{" "}
+                                    {Math.min(progress.exploration, item.requirements.exploration)} /
+                                    {item.requirements.exploration}
+                                </Text>
+                                <Text style={styles.requirementTiny}>
+                                    ☕️ Goût {Math.min(progress.gout, item.requirements.gout)} /
+                                    {item.requirements.gout}
+                                </Text>
+                                <Text style={styles.requirementTiny}>
+                                    💬 Social {Math.min(progress.social, item.requirements.social)} /
+                                    {item.requirements.social}
+                                </Text>
+                            </View>
+
+                            {remaining > 0 ? (
+                                <Text style={styles.badgeFootnote}>
+                                    Encore {remaining} point(s) d’activité avant de débloquer ce badge.
+                                </Text>
+                            ) : (
+                                <Text style={styles.badgeFootnoteUnlocked}>Badge débloqué 🎉</Text>
+                            )}
                         </View>
-                    </View>
-                ) : null}
-            </ScrollView>
-            <ScanTicketFab onPress={() => navigation.navigate("ScanTicketModal")} insetBottom={inset.bottom} />
+                    );
+                }}
+            />
+
+            <ScanTicketFab
+                onPress={() => navigation.navigate("ScanTicketModal")}
+                insetBottom={inset.bottom}
+            />
         </SafeAreaView>
     );
 }
@@ -218,7 +170,7 @@ const styles = StyleSheet.create({
         paddingBottom: 160,
         paddingHorizontal: 20,
         paddingTop: 24,
-        gap: 24,
+        gap: 16,
     },
     header: {
         backgroundColor: palette.elevated,
@@ -226,12 +178,11 @@ const styles = StyleSheet.create({
         padding: 20,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
-    },
-    headerText: {
-        gap: 12,
+        gap: 16,
+        marginBottom: 8,
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: "700",
         color: palette.textPrimary,
     },
@@ -244,15 +195,16 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 10,
         flexWrap: "wrap",
+        marginTop: 4,
     },
     statPill: {
         backgroundColor: palette.overlay,
         borderRadius: 14,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
-        minWidth: 86,
+        minWidth: 80,
     },
     statValue: {
         color: palette.textPrimary,
@@ -263,71 +215,100 @@ const styles = StyleSheet.create({
         color: palette.textMuted,
         fontSize: 12,
     },
-    section: {
-        gap: 12,
+    badgeSummaryRow: {
+        marginTop: 6,
+        gap: 2,
     },
-    sectionLabel: {
-        fontSize: 16,
-        fontWeight: "700",
+    badgeSummaryText: {
         color: palette.textPrimary,
+        fontWeight: "600",
+        fontSize: 14,
     },
-    sectionHint: {
+    badgeSummaryHint: {
         color: palette.textMuted,
-        fontSize: 13,
-    },
-    badgeGrid: {
-        gap: 14,
-    },
-    badgeRow: {
-        gap: 12,
+        fontSize: 12,
     },
     badgeCard: {
-        flex: 1,
         backgroundColor: palette.elevated,
-        borderRadius: 16,
-        padding: 14,
+        borderRadius: 18,
+        padding: 16,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
         gap: 8,
     },
-    badgeCardSelected: {
-        borderColor: palette.accent,
-        shadowColor: palette.accent,
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
+    badgeHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
     },
     badgeIcon: {
         fontSize: 28,
     },
+    badgeHeaderText: {
+        flex: 1,
+        gap: 2,
+    },
     badgeName: {
         color: palette.textPrimary,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: "700",
+    },
+    badgeStatusLabel: {
+        color: palette.textMuted,
+        fontSize: 12,
     },
     badgeDescription: {
         color: palette.textSecondary,
-        fontSize: 12,
+        fontSize: 13,
         lineHeight: 18,
     },
-    badgeProgress: {
+    progressRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 4,
+    },
+    badgeProgressText: {
         color: palette.textPrimary,
         fontSize: 12,
         fontWeight: "600",
     },
-    badgeStatusRow: {
-        flexDirection: "row",
-        gap: 8,
-        flexWrap: "wrap",
+    badgeProgressPercent: {
+        color: palette.textMuted,
+        fontSize: 12,
     },
-    statusPill: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 10,
-        color: palette.textPrimary,
+    progressBarBackground: {
+        height: 8,
+        borderRadius: 999,
         backgroundColor: palette.overlay,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
-        fontSize: 12,
+        overflow: "hidden",
+        marginTop: 2,
+    },
+    progressBarFill: {
+        height: "100%",
+        backgroundColor: palette.accent,
+    },
+    requirementsRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        marginTop: 6,
+        gap: 4,
+    },
+    requirementTiny: {
+        color: palette.textMuted,
+        fontSize: 11,
+    },
+    statusPill: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 999,
+        borderWidth: StyleSheet.hairlineWidth,
+        fontSize: 11,
+        overflow: "hidden",
+        color: palette.textPrimary,
     },
     unlocked: {
         backgroundColor: "rgba(79,178,142,0.16)",
@@ -341,77 +322,108 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.04)",
         borderColor: palette.border,
     },
-    asciiCard: {
-        backgroundColor: palette.elevated,
-        padding: 12,
-        borderRadius: 16,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: palette.border,
+    badgeFootnote: {
+        marginTop: 4,
+        color: palette.textMuted,
+        fontSize: 11,
     },
-    ascii: {
-        color: palette.textSecondary,
-        fontFamily: "Menlo",
-        marginTop: 6,
-    },
-    detailSection: {
-        gap: 10,
-    },
-    detailCard: {
-        backgroundColor: palette.elevated,
-        borderRadius: 24,
-        padding: 20,
-        gap: 10,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: palette.border,
-    },
-    detailIcon: {
-        fontSize: 40,
-        textAlign: "center",
-    },
-    detailTitle: {
-        color: palette.textPrimary,
-        fontSize: 20,
-        fontWeight: "700",
-        textAlign: "center",
-    },
-    detailDescription: {
-        color: palette.textSecondary,
-        fontSize: 14,
-        lineHeight: 20,
-        textAlign: "center",
-    },
-    requirementRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingVertical: 4,
-    },
-    requirementLabel: {
-        color: palette.textPrimary,
-        fontSize: 14,
+    badgeFootnoteUnlocked: {
+        marginTop: 4,
+        color: palette.success,
+        fontSize: 11,
         fontWeight: "600",
     },
-    requirementValue: {
-        color: palette.textSecondary,
-        fontSize: 14,
+
+    headerTopRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
     },
-    progressBarBackground: {
-        height: 10,
-        borderRadius: 999,
+    headerTitleBlock: {
+        flex: 1,
+        gap: 6,
+    },
+    unlockedCard: {
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 16,
         backgroundColor: palette.overlay,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: palette.border,
-        overflow: "hidden",
+        alignItems: "center",
+        minWidth: 90,
     },
-    progressBarFill: {
-        height: "100%",
-        backgroundColor: palette.accent,
+    unlockedCount: {
+        fontSize: 24,
+        fontWeight: "800",
+        color: palette.accent,
     },
-    detailFootnote: {
+    unlockedCaption: {
+        fontSize: 12,
+        color: palette.textSecondary,
+    },
+    unlockedLabel: {
+        fontSize: 11,
+        color: palette.textMuted,
+    },
+
+    axisRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 10,
+    },
+    axisCard: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: palette.overlay,
+        borderRadius: 14,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
+    },
+    axisIcon: {
+        fontSize: 18,
+    },
+    axisValue: {
+        color: palette.textPrimary,
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    axisLabel: {
         color: palette.textMuted,
         fontSize: 12,
-        textAlign: "center",
     },
+
+    ticketsCard: {
+        marginTop: 4,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 14,
+        backgroundColor: palette.overlay,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: palette.border,
+    },
+    ticketsLabel: {
+        color: palette.textPrimary,
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    ticketsHint: {
+        color: palette.textMuted,
+        fontSize: 11,
+    },
+    ticketsValue: {
+        color: palette.textPrimary,
+        fontSize: 20,
+        fontWeight: "700",
+    },
+
 });
 
 export default RewardsScreen;

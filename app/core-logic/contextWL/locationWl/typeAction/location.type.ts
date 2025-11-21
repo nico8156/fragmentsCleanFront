@@ -13,4 +13,14 @@ export interface LocationStateWl {
     permission: 'granted'|'denied'|'undetermined';
     error?: string;
     isWatching: boolean;
+    nearbyCafeId?: string;
+    nearbyDistanceMeters?: number;
+    nearbyHistory: NearbyCafeVisit[];
+}
+
+export interface NearbyCafeVisit {
+    cafeId: string;
+    firstSeenAt: number;
+    lastSeenAt: number;
+    count: number;
 }

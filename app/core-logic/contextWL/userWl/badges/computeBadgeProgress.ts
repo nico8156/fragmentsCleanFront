@@ -6,6 +6,8 @@ const unique = <T>(items: T[]) => Array.from(new Set(items));
 
 export const computeBadgeProgressFromState = (state: RootStateWl): BadgeProgress => {
     const currentUser = state.aState.currentUser;
+    if (!currentUser) return getDefaultBadgeProgress();
+
     const base = currentUser?.preferences?.badgeProgress ?? getDefaultBadgeProgress();
 
     const confirmedTickets = Object.values(state.tState.byId).filter((ticket) => ticket.status === "CONFIRMED");
@@ -25,7 +27,7 @@ export const computeBadgeProgressFromState = (state: RootStateWl): BadgeProgress
         exploration,
         gout,
         social,
-        unlockedBadges: base.unlockedBadges,
+        unlockedBadges: []
     };
 
     nextProgress.unlockedBadges = computeUnlockedBadges(nextProgress);

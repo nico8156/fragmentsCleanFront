@@ -31,16 +31,6 @@ export const coffeeData: CoffeeFromOldServer[] =[
         "longitude": -1.7060210999999998
     },
     {
-        "id": "30a291bb-7c35-44fa-aa57-b1861920b5de",
-        "google_id": "ChIJzet7pDbeDkgRiUjvd8xjlfw",
-        "display_name": "Mokka Coffee House",
-        "formatted_address": "14 Rue le Bastard, 35000 Rennes, France",
-        "national_phone_number": "default phone number",
-        "website_uri": "http://www.mokkacoffeehouse.fr/",
-        "latitude": 48.113240499999996,
-        "longitude": -1.6792452
-    },
-    {
         "id": "3d8a2920-4ed8-4925-8e72-8e0d8675332a",
         "google_id": "ChIJUZihnSXfDkgRlqPpSJIQtc8",
         "display_name": "Oh my Biche - COLOMBIER",
@@ -79,16 +69,6 @@ export const coffeeData: CoffeeFromOldServer[] =[
         "website_uri": "https://www.oko-cafe.fr/",
         "latitude": 48.1104935,
         "longitude": -1.6785500000000002
-    },
-    {
-        "id": "546500f9-0140-43d9-90a6-80b30571c3e8",
-        "google_id": "ChIJNYCZmV7fDkgR9CftUJevo10",
-        "display_name": "Mokka Coffee House",
-        "formatted_address": "2 Rue Tronjolly, 35000 Rennes, France",
-        "national_phone_number": "default phone number",
-        "website_uri": "http://www.mokkacoffeehouse.fr/",
-        "latitude": 48.107301,
-        "longitude": -1.680607
     },
     {
         "id": "8da64cd1-0881-4186-aecd-a577276e9c8a",

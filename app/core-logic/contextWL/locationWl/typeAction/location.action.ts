@@ -20,3 +20,8 @@ export const locationUpdated = createAction<{coords: LocationCoords; at: number 
 export const watchStarted = createAction('PHONE/LOCATION/WATCH_STARTED');
 export const watchStopped = createAction('PHONE/LOCATION/WATCH_STOPPED');
 export const watchError = createAction<{scope: string; message: string }>('PHONE/LOCATION/WATCH_ERROR');
+export const locationNearbyCafeUpdated = createAction<{
+    cafeId?: string;
+    distanceMeters?: number;
+    seenAt: number;
+}>("location/nearbyCafeUpdated");
