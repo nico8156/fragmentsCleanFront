@@ -1,6 +1,4 @@
-// outboxWl/runtime/syncRuntimeListener.spec.ts
-
-import { AnyAction, Middleware } from "@reduxjs/toolkit";
+import {Action, AnyAction, Middleware} from "@reduxjs/toolkit";
 import {
     SyncEventsGateway,
     CursorUnknownSyncError,
@@ -17,20 +15,19 @@ import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/s
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {RecordingGateway} from "@/app/adapters/secondary/gateways/fake/fakeSyncRecordEventGateway";
 
-// ---- helpers de test ----
 
 const captureActions =
-    (bag: AnyAction[]): Middleware =>
+    (bag: Action[]): Middleware =>
         () =>
             (next) =>
                 (action) => {
-                    bag.push(action as AnyAction);
+                    bag.push(action as Action);
                     return next(action);
                 };
 
 const waitFor = async (assertion: () => void, timeoutMs = 500) => {
     const start = Date.now();
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
         try {
             assertion();
@@ -43,12 +40,11 @@ const waitFor = async (assertion: () => void, timeoutMs = 500) => {
         }
     }
 };
-// ---- helper pour créer un store avec initReduxStoreWl ----
 
 const makeStore = (opts: {
     gateway: SyncEventsGateway;
     metaStorage: ReturnType<typeof createMemorySyncMetaStorage>;
-    actionsBag?: AnyAction[];
+    actionsBag?: any[];
     nowMs?: () => number;
 }): ReduxStoreWl => {
     const { gateway, metaStorage, actionsBag, nowMs } = opts;
@@ -66,7 +62,7 @@ const makeStore = (opts: {
             gateways: {},
             helpers: {},
         },
-        listeners: [listener.middleware],
+        listeners: [listener],
         extraMiddlewares: actionsBag ? [captureActions(actionsBag)] : [],
     });
 };
@@ -84,7 +80,7 @@ describe("sync runtime listener (outboxWl)", () => {
         await metaStorage.updateLastActiveAt(now - 2 * 60_000); // 2 minutes d'inactivité
 
         const gateway = new RecordingGateway();
-        const actions: AnyAction[] = [];
+        const actions: any[] = [];
 
         const store = makeStore({
             gateway,
@@ -177,7 +173,7 @@ describe("sync runtime listener (outboxWl)", () => {
         const metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
 
-        const actions: AnyAction[] = [];
+        const actions: any[] = [];
         const gateway = new RecordingGateway();
         gateway.eventsForReplay = [event];
 

@@ -3,7 +3,7 @@
 flowchart LR
     Intent[UI: uiTicketSubmitRequested] --> UseCase[ticketSubmitUseCaseFactory]
     UseCase --> Optimistic[ticketOptimisticCreated]
-    UseCase --> Enqueue[enqueueCommitted (TicketVerify)]
+    UseCase --> Enqueue[enqueueCommitted TicketVerify]
     Enqueue --> Outbox[outboxProcessOnce]
     Outbox --> Gateway[gateway.tickets.verify]
     Gateway --> Ack[onTicketConfirmedAck / onTicketRejectedAck]
