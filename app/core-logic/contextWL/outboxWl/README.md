@@ -354,3 +354,12 @@ Les tests d’intégration plus complets (avec gateways fake, rollback, backoff,
    * une architecture claire (ports/adaptateurs, DDD).
 
 ---
+
+Roadmap outbox:
+
+[ ] Introduire OutboxPort (interface + adapter Redux)
+[ ] Centraliser les actions outbox dans un seul module
+[ ] Migrer outboxWl.reducer vers un outboxSlice RTK
+[ ] Extraire la logique "domaine" de l’outbox (backoff, statuses...) dans des fonctions pures
+
+---

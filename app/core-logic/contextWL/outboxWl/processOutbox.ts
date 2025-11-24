@@ -37,7 +37,10 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
 
             const state = api.getState() as RootStateWl;
             const queue:OutboxStateWl["queue"] = selectOutboxQueue(state);
-            if (!queue.length) return;
+            if (!queue.length) {
+                console.log("[OUTBOX] processOnce: skipped (queue empty)");
+                return;
+            }
 
             const byId:OutboxStateWl["byId"] = selectOutboxById(state);
             const now  = Date.now();
@@ -55,13 +58,16 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 return true;
             });
 
-            if (!eligibleId) return;
+            if (!eligibleId) {
+                console.log("[OUTBOX] processOnce: no eligible record (all waiting for retry or not queued)");
+                return;
+            }
 
             const id = eligibleId;
             const record = byId[id];
 
             if (!record) {
-                // garde-fou: nettoie si incohérent
+                console.warn("[OUTBOX] processOnce: record missing for id, dequeuing", { id });
                 api.dispatch(dequeueCommitted({ id }));
                 return;
             }
@@ -87,6 +93,11 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             const gw = need(cmd.kind as any);
 
             if (!gw) {
+                console.error("[OUTBOX] processOnce: no gateway for command kind, dropping", {
+                    id,
+                    kind: cmd.kind,
+                    commandId: (cmd as any).commandId,
+                });
                 api.dispatch(markFailed({ id, error: "no GW" }));
                 api.dispatch(dequeueCommitted({ id }));
                 api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
@@ -94,6 +105,12 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
             }
 
             api.dispatch(markProcessing({ id }));
+
+            console.log("[OUTBOX] processOnce: processing record", {
+                id,
+                kind: cmd.kind,
+                commandId: (cmd as any).commandId,
+            });
 
             try {
                 switch (cmd.kind) {
@@ -107,7 +124,6 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                             at: cmd.at,
                         });
                         const ackBy = deps.helpers.nowPlusMs?.(30_000) ?? new Date(Date.now()+30_000).toISOString()
-                        console.log('ackBy', ackBy)
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -180,11 +196,24 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
 
                     default: {
                         // commande inconnue → drop soft
+                        console.warn("[OUTBOX] processOnce: unknown command kind, dropping", {
+                            id,
+                            kind: (cmd as any).kind,
+                            commandId: (cmd as any).commandId,
+                        });
                         api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
                         api.dispatch(dequeueCommitted({ id }));
                     }
                 }
             } catch (e: any) {
+
+                console.error("[OUTBOX] processOnce: error while processing command", {
+                    id,
+                    kind: (record.item as OutboxItem).command.kind,
+                    commandId: (record.item as OutboxItem).command.commandId,
+                    error: e?.message ?? String(e),
+                });
+
                 const item = record.item as OutboxItem;
 
                 switch (item.command.kind) {
@@ -235,12 +264,19 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
                 const jitter = Math.floor(Math.random() * 300);
                 const next = Date.now() + base + jitter;
 
+                console.log("[OUTBOX] processOnce: scheduling retry", {
+                    id,
+                    attemptsSoFar,
+                    nextAttemptAt: next,
+                });
+
                 api.dispatch(scheduleRetry({ id, nextAttemptAt: next }));
             }
-            console.log(
-                "[OUTBOX] processOnce: after, queue length =",
-                api.getState().oState.queue.length,
-            );
+
+            const finalState = api.getState() as RootStateWl;
+            console.log("[OUTBOX] processOnce: after", {
+                queueLength: selectOutboxQueue(finalState).length,
+            });
 
             if (callback) callback();
         },
