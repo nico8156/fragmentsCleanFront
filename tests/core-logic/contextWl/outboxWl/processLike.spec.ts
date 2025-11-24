@@ -154,4 +154,46 @@ describe("Outbox process — Likes", () => {
         expect(o.queue).toEqual(["obx_unlike_002"]);
         expect(o.byCommandId["cmd_unlike_002"]).toBe("obx_unlike_002");
     });
+    it("LikeAdd — no likes gateway: markFailed + drop + dequeue", async () => {
+        likes = new FakeLikesGateway();
+        comments = new FakeCommentsWlGateway();
+
+        // ⚠️ on n'enregistre PAS likes dans gateways, donc need(LikeAdd) retournera null
+        store = init({ comments }); // pas de { likes }
+
+        store.dispatch(
+            enqueueCommitted({
+                id: "obx_like_003",
+                item: {
+                    command: {
+                        kind: commandKinds.LikeAdd,
+                        commandId: "cmd_like_003",
+                        targetId: "cafe_A",
+                        at: "2025-10-10T07:03:40.000Z",
+                        userId: "user_test",
+                    },
+                    undo: {
+                        kind: commandKinds.LikeAdd,
+                        targetId: "cafe_A",
+                        prevCount: 10,
+                        prevMe: false,
+                        prevVersion: 1,
+                    },
+                },
+                enqueuedAt: "2025-10-10T07:03:41.000Z",
+            })
+        );
+
+        store.dispatch(outboxProcessOnce());
+        await flush();
+
+        const o = store.getState().oState;
+
+        // record supprimé (dropCommitted)
+        expect(o.byId["obx_like_003"]).toBeUndefined();
+        // mapping supprimé
+        expect(o.byCommandId["cmd_like_003"]).toBeUndefined();
+        // queue vide
+        expect(o.queue).toEqual([]);
+    });
 });
