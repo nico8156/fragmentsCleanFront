@@ -1,10 +1,8 @@
-// app/core-logic/contextWL/appWl/usecases/runtimeListener.spec.ts
-
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/app/store/middleware/actionRecorder";
 
 import {
-    appBecameActive,
+    appBecameActive, appBecameBackground,
     appConnectivityChanged,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
@@ -13,9 +11,10 @@ import {
     syncDecideRequested,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {outboxProcessOnce, outboxSuspendRequested} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
+
 
 describe("runtimeListener (appWl) :", () => {
     let store: ReduxStoreWl;
@@ -75,4 +74,25 @@ describe("runtimeListener (appWl) :", () => {
             ]),
         );
     });
+    it("should, on appBecameBackground, dispatch outboxSuspendRequested only (no sync/outboxProcessOnce)", () => {
+        store.dispatch(appBecameBackground());
+
+        const types = rec.getTypes();
+
+        // ✅ on demande la suspension de l'outbox
+        expect(types).toEqual(
+            expect.arrayContaining([outboxSuspendRequested.type]),
+        );
+
+        // ❌ pas de sync ni de process outbox en background
+        expect(types).not.toEqual(
+            expect.arrayContaining([
+                outboxProcessOnce.type,
+                syncDecideRequested.type,
+                replayRequested.type,
+            ]),
+        );
+    });
+
+
 });

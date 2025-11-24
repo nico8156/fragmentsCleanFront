@@ -5,3 +5,4 @@ export const outboxRehydrateCommitted = createAction<OutboxStateWl>("OUTBOX/REHY
 export const scheduleRetry = createAction<{ id: string; nextAttemptAt: number }>("OUTBOX/SCHEDULE_RETRY");
 
 export const outboxProcessOnce = createAction("OUTBOX/PROCESS_ONCE");
+export const outboxSuspendRequested = createAction("OUTBOX/SUSPEND_REQUESTED");

@@ -15,7 +15,11 @@ import {
     selectOutboxById,
     selectOutboxQueue,
 } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-import {outboxProcessOnce, scheduleRetry} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {
+    outboxProcessOnce,
+    outboxSuspendRequested,
+    scheduleRetry
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 export const markProcessing = createAction<{id:string}>("OUTBOX/MARK_PROCESSING")
 export const createReconciled = createAction<{ tempId: string; server: { id: string; createdAt: string; version: number }}>("COMMENT/CREATE_RECONCILED")
@@ -280,6 +284,22 @@ export const processOutboxFactory = (deps:DependenciesWl, callback?: () => void)
 
             if (callback) callback();
         },
+    })
+    listener({
+        actionCreator: outboxSuspendRequested,
+        effect: async (_, api) => {
+            const state = api.getState();
+
+            // si ta shape outbox est oState.byId, tu peux compter les commandes en attente
+            const pendingCount = Object.keys(state.oState?.byId ?? {}).length;
+
+            console.log("[OUTBOX] suspend requested (app went background)", {
+                pendingCount,
+                timestamp: new Date().toISOString(),
+            });
+
+            // rien d'autre pour l’instant : juste un trace runtime
+        }
     })
     return processOutboxUseCase;
 }

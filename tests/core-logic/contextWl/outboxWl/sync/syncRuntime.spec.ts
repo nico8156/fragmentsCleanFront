@@ -193,4 +193,30 @@ describe("sync runtime listener (outboxWl)", () => {
             expect(received[0].payload).toEqual([event]);
         });
     });
+    it("runs a FULL sync when no cursor is present (fresh meta)", async () => {
+        const now = Date.now();
+        const metaStorage = createMemorySyncMetaStorage();
+        await metaStorage.loadOrDefault();
+
+        // On aligne la session avec getSessionStamp pour ne pas déclencher une logique de changement de session
+        await metaStorage.setSessionId("user:1:123");
+        await metaStorage.updateLastActiveAt(now); // même si lastActiveAt est récent, l'absence de cursor doit forcer un FULL
+
+        const gateway = new RecordingGateway();
+
+        const store = makeStore({
+            gateway,
+            metaStorage,
+            // pas besoin de bag ici, on vérifie juste les appels au gateway
+        });
+
+        store.dispatch(syncDecideRequested());
+
+        await waitFor(() => {
+            expect(gateway.fullCalls).toBe(1);
+            expect(gateway.deltaCalls).toBe(0);
+        });
+    });
+
+
 });

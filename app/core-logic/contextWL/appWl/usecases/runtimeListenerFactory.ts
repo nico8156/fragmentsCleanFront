@@ -2,11 +2,11 @@
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import {
-    appBecameActive,
+    appBecameActive, appBecameBackground,
     appConnectivityChanged,
 } from "../typeAction/appWl.action";
 import {
-    outboxProcessOnce,
+    outboxProcessOnce, outboxSuspendRequested,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {
     replayRequested,
@@ -38,6 +38,13 @@ export const runtimeListenerFactory = () => {
                 api.dispatch(outboxProcessOnce());
                 api.dispatch(syncDecideRequested());
             }
+        },
+    });
+    listener({
+        actionCreator: appBecameBackground,
+        effect: async (_, api) => {
+            api.dispatch(outboxSuspendRequested());
+            // pas de syncDecideRequested, pas de replay, pas de outboxProcessOnce
         },
     });
 

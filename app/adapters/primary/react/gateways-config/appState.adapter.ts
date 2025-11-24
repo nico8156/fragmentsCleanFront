@@ -1,6 +1,6 @@
 import { AppState, AppStateStatus } from "react-native";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { appBecameActive } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import {appBecameActive, appBecameBackground} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
 type AppStateAdapterOptions = { ignoreFirstActive?: boolean; };
@@ -21,6 +21,11 @@ export function mountAppStateAdapter(
                 return;
             }
             store.dispatch(appBecameActive());
+        }
+
+        if (status === "background") {
+            store.dispatch(appBecameBackground());
+            return;
         }
     };
 
