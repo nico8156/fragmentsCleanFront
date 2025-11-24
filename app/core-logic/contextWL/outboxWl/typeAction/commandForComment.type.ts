@@ -43,7 +43,7 @@ export type CommentDeleteCommand = {
 export type CommentDeleteUndo = {
     kind: typeof commandKinds.CommentDelete;
     commentId: string;
-    prevBody:string
+    prevBody?:string
     prevDeletedAt?: ISODate | string; // soft delete
     prevVersion?: number;
 };
