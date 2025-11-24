@@ -1,199 +1,109 @@
+# appWl – Runtime de l'application & orchestration Offline/Sync
+
+`appWl` représente le **runtime de l'application** côté client.
+
+Il orchestre :
+- la **boucle de vie** de l’app (boot, foreground/background, changement de réseau)
+- le **traitement de l’outbox** (`outboxWl/processOutbox.ts`)
+- la **sync** avec le backend (`outboxWl/sync/...`)
+- la coordination entre les contexts métier (`commentWl`, `ticketWl`, `likeWl`, `userWl`, etc.)
 
 ---
 
-> **Le point d’entrée conceptuel de l’architecture *runtime* de l’app pour les reprises.**
-> Ce document répond à :
-> *“Que se passe-t-il quand l’app redevient active ou retrouve le réseau ?”*
+## 🌍 Vue d’ensemble
+
+Diagramme : `appFlow.mmd`
+
+En résumé :
+1. L’UI déclenche des **usecases WL** (ex : `commentCreateWlUseCase`).
+2. Ces usecases poussent des **commandes dans l’outbox** (`outboxWl`).
+3. Le **runtime** (appWl) :
+  - surveille l’état `appState` (foreground/background, réseau up/down)
+  - déclenche le traitement de l’outbox quand c’est pertinent
+4. La **sync** :
+  - envoie les commandes au backend
+  - écoute les événements / ACK
+  - applique les ACK dans les bons contexts (commentWl, ticketWl, likeWl, userWl…)
 
 ---
 
-# 🌎 `appWl` — Application Lifecycle Orchestration (Reprise & Réseau)
+## 🧠 Responsabilités de `appWl`
 
-`appWl` est le **bounded context qui orchestre la reprise du runtime de l’application**.
-
-Il ne contient **aucune règle métier** et **ne gère plus le boot initial** (hydratation, premiers fetch, etc.).
-Son rôle est désormais ciblé :
-
-* **Relancer l’Outbox** lorsque :
-
-  * l’app repasse en **foreground** (`appBecameActive`)
-  * la connectivité réseau redevient **online** (`appConnectivityChanged({ online: true })`)
-* **Ré-enclencher la mécanique SYNC** (replay + decide) à ces moments clés.
-
-`appWl` fonctionne comme un **superviseur léger** qui active l’Outbox/SYNC au bon moment, en réponse aux signaux de l’environnement.
-
-> Les signaux bruts (`AppState`, `NetInfo`) sont capturés par des **adaptateurs runtime** :
->
-> * `mountAppStateAdapter` → dispatch `appBecameActive`
-> * `connectivityAdapter` (NetInfo) → dispatch `appConnectivityChanged({ online })`
->
-> `appWl` ne parle jamais directement à React Native.
+- connaître **l’état global de l’app** :
+  - focus (foreground/background)
+  - connectivité réseau
+  - état de la session utilisateur
+- décider **quand** :
+  - rehydrater l’outbox (`outboxWl/runtime/rehydrateOutbox.ts`)
+  - démarrer / arrêter la sync (`outboxWl/sync/syncEventsListenerFactory.ts`)
+  - traiter un batch de commandes d’outbox (`outboxWl/processOutbox.ts`)
+- garder la boucle **robuste** :
+  - retry/backoff (délégué à l’outbox)
+  - ne jamais bloquer l’UI
+  - tolérer les transitions réseau fréquentes
 
 ---
 
-# 🧩 Architecture d’ensemble
+## 🔗 Interaction avec `outboxWl` et la Sync
 
-```txt
-+---------------------+           +-------------------------+
-|     appWl           | ------->  |   outboxWl (runtime)    |
-| (orchestrateur)     |           | (processing + sync)     |
-+---------------------+           +-------------------------+
+L’outbox est découpée en 3 briques principales :
 
-+---------------------+           +-------------------------+
-|  coffeeWl / ...     | <-------  |   syncEventsListener    |
-|   (read models)     |           | (events → BC reducers)  |
-+---------------------+           +-------------------------+
-```
+1. **API métier de l’outbox**
+  - `outboxWl/processOutbox.ts`
+  - `outboxWl/utils/outboxSnapshot.ts`
+2. **Runtime Outbox** (persistance & rehydratation)
+  - `outboxWl/runtime/*`
+3. **Sync** (communication serveur + ACK)
+  - `outboxWl/sync/*`
 
-* `appWl` ne connaît que des **actions Redux** (`outboxProcessOnce`, `replayRequested`, `syncDecideRequested`, …).
-* `outboxWl` se charge de l’exécution réelle (process de la queue, sync, replay).
-* Les autres BC (ex : `coffeeWl`) consomment les événements produits par la SYNC via un `syncEventsListener` dédié.
+`appWl` ne connaît pas les détails bas niveau.  
+Il pilote ces briques via :
+- des usecases (`runtimeListenerFactory.ts`)
+- des actions Redux sur `appStateWl` + `outboxWl`
 
----
-
-# 🔄 Foreground Resumption — `appBecameActive`
-
-Quand l’app sort du background (signalé par `AppState` via `mountAppStateAdapter`) :
-
-```txt
-appBecameActive()
-   → outboxProcessOnce()
-   → replayRequested()
-   → syncDecideRequested()
-```
-
-On peut voir ça comme un **mini-boot** focalisé sur :
-
-* vider/traiter la file Outbox au moins une fois
-* rejouer les événements en attente (replay)
-* décider s’il faut lancer une SYNC complémentaire (delta/full)
-
-C’est ce qui garantit que l’utilisateur, en revenant sur l’app, retrouve un état **cohérent et à jour autant que possible**.
+👉 Les détails d’implémentation sont documentés dans :
+- `../outboxWl/README.md` (modèle + invariants outbox)
+- `../outboxWl/runtime/README.md` (persistance & rehydratation)
+- `../outboxWl/sync/README.md` (stratégie de sync)
 
 ---
 
-# 📶 Reconnexion réseau — `appConnectivityChanged({ online: true })`
+## 🏁 Cycle de vie – scénarios clés
 
-Dès que la connectivité passe d’**offline → online** (via l’adaptateur NetInfo) :
+### Boot de l'application
 
-```txt
-appConnectivityChanged({ online: true })
-   → outboxProcessOnce()
-   → syncDecideRequested()
-```
+1. Création du store WL (`store/reduxStoreWl.ts`)
+2. Rehydratation de l’outbox (`outboxWl/runtime/rehydrateOutbox.ts`)
+3. Démarrage des listeners runtime (`appWl/usecases/runtimeListenerFactory.ts`)
+4. Démarrage éventuel de la sync (si user connecté + réseau OK)
 
-Le système essaie aussitôt :
+### Passage en foreground/background
 
-* d’envoyer les **commandes en attente** dans l’Outbox
-* de **synchroniser l’état serveur** (via la logique de SYNC : `syncDecideRequested`)
+- foreground :
+  - re-check réseau
+  - éventuellement relancer la sync
+  - retrigger un traitement d’outbox
+- background :
+  - stop listeners de sync
+  - persister l’état critique (outbox, session…)
 
----
+### Changement de réseau
 
-# 🧠 Rôle exact de `runtimeListenerFactory`
-
-```ts
-// appWl/runtimeListenerFactory.ts
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
-import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import {
-    appBecameActive,
-    appConnectivityChanged,
-} from "../typeAction/appWl.action";
-import {
-    outboxProcessOnce,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
-import {
-    replayRequested,
-    syncDecideRequested,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-
-export const runtimeListenerFactory = () => {
-    const runtimeListener = createListenerMiddleware<RootStateWl, AppDispatchWl>();
-    const listener = runtimeListener.startListening as TypedStartListening<
-        RootStateWl,
-        AppDispatchWl
-    >;
-
-    listener({
-        actionCreator: appBecameActive,
-        effect: async (_, api) => {
-            console.log("[APP RUNTIME] appBecameActive: resume outbox + sync");
-            api.dispatch(outboxProcessOnce());
-            api.dispatch(replayRequested());
-            api.dispatch(syncDecideRequested());
-        },
-    });
-
-    listener({
-        actionCreator: appConnectivityChanged,
-        effect: async (action, api) => {
-            if (action.payload.online) {
-                console.log("[APP RUNTIME] appConnectivityChanged: online, resume outbox + sync");
-                api.dispatch(outboxProcessOnce());
-                api.dispatch(syncDecideRequested());
-            }
-        },
-    });
-
-    return runtimeListener.middleware;
-};
-```
-
-Le listener de `appWl` est uniquement un **dispatcher ordonné** :
-
-| Trigger                          | Actions déclenchées                 |
-| -------------------------------- | ----------------------------------- |
-| `appBecameActive`                | `outboxProcessOnce` + replay + sync |
-| `appConnectivityChanged(online)` | `outboxProcessOnce` + sync          |
-
-Il ne contient :
-
-* aucun accès direct au réseau
-* aucune règle métier
-* aucun accès aux gateways métier
-
-Il se contente de **coordonner les bounded contexts existants** en fonction de l’état runtime de l’app.
+- passage offline :
+  - traitement d’outbox suspendu
+  - sync stoppée
+- passage online :
+  - re-lancement de la sync
+  - reprise du traitement d’outbox (avec backoff/reset)
 
 ---
 
-# 🧪 Tests (philosophie)
+## ➕ Ajouter un nouveau “job” runtime
 
-Les tests de `runtimeListener` vérifient essentiellement :
+Exemple : ajouter un nouveau type de commande outbox (ex: `Comment.Edit` a déjà `Comment.Create`).
 
-### ✔ `appBecameActive`
-
-* que `outboxProcessOnce` est dispatché
-* que `replayRequested` est dispatché
-* que `syncDecideRequested` est dispatché
-* **et rien d’autre**
-
-### ✔ `appConnectivityChanged({ online: true })`
-
-* que `outboxProcessOnce` est dispatché
-* que `syncDecideRequested` est dispatché
-
-> On reste aligné avec la philosophie :
-> **on vérifie les actions dispatchées, pas les gateways.**
-
----
-
-# 📦 Résumé : la responsabilité exacte de `appWl` (version actuelle)
-
-`appWl` garantit que, à chaque **reprise foreground** ou **reconnexion réseau** :
-
-* l’Outbox est **relancée** au moins une fois
-* la mécanique SYNC peut **décider** et **tourner en fond**
-* les autres BC peuvent retrouver un état cohérent via les événements de sync
-
-Il ne s’occupe plus :
-
-* du **boot initial** (hydratation, premiers fetch, etc.)
-* de la configuration des gateways
-* des règles métier
-
-C’est un **chef d’orchestre runtime minimaliste** qui réagit uniquement :
-
-* quand l’app redevient **active**
-* quand le réseau redevient **online**
-
----
+1. Définir les types de commande dans `outboxWl/typeAction/...`
+2. Ajouter le traitement métier dans `outboxWl/processOutbox.ts`
+3. Câbler le usecase côté WL (ex: `commentUpdateWlUseCase.ts`)
+4. S’assurer que la sync expose les bons événements/ACK
+5. Si besoin, étendre `runtimeListenerFactory.ts` pour déclencher ce traitement dans des cas particuliers (ex : au login, après un full resync…)
