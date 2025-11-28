@@ -24,8 +24,11 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "package": "com.nico8156.fragmentsCleanFront"
     },
     "web": {
       "bundler": "metro",
@@ -56,7 +59,8 @@
         {
           "launchMode": "most-recent"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -65,7 +69,8 @@
       "router": {},
       "eas": {
         "projectId": "138089c2-0d66-415d-baa4-46495ea3a90b"
-      }
+      },
+      "googleClientId": "255942605258-08bb4vadcl7ea1o0cu9v7u0mru6b0ioq.apps.googleusercontent.com"
     }
   }
 }

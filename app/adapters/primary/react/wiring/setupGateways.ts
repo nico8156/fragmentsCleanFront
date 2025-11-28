@@ -57,6 +57,7 @@ import {commentDeleteUseCaseFactory} from "@/app/core-logic/contextWL/commentWl/
 import {commentUpdateWlUseCase} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
 import {runtimeListenerFactory} from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
+import {googleOAuthGateway} from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
 
 // ---- types ----
 
@@ -93,7 +94,7 @@ const articles = new StaticArticleWlGateway();
 const events = new FakeEventsGateway();
 
 const auth = {
-    oauth: new DemoOAuthGateway(),
+    oauth: googleOAuthGateway,
     secureStore: new ExpoSecureAuthSessionStore(),
     userRepo: new DemoUserRepo(),
 } as const;
