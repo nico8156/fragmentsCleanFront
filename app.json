@@ -36,6 +36,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.255942605258-kjbb93iq5tlhpc74d75h8jntajvqpilt"
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
