@@ -34,6 +34,7 @@ const GOOGLE_CLIENT_ID = Constants.expoConfig?.extra?.googleClientId as string;
 
 const makeRedirectUri = () =>
     AuthSession.makeRedirectUri({
+        native: "http://localhost:8081",
         // doit matcher ton scheme dans app.json / app.config.ts
         // ex: scheme: "fragments"
         // native: "fragments://redirect"
@@ -93,6 +94,7 @@ export const googleOAuthGateway: OAuthGateway = {
         await request.getAuthRequestConfigAsync();
 
         const result = await request.promptAsync(discovery);
+        console.log("result : ",{result});
 
         if (result.type !== "success" || !result.params.code) {
             throw new Error(result.type === "cancel" ? "Sign-in cancelled" : "OAuth error");
