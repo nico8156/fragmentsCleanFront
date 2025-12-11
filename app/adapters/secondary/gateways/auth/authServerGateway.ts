@@ -11,7 +11,8 @@ import {
 } from "./mappers";
 import {AuthServerGateway} from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 
-//const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
+const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
+console.log("API_BASE_URL", API_BASE_URL);
 
 
 export const authServerGateway: AuthServerGateway = {
