@@ -10,6 +10,7 @@ import {
 import { signInWithProvider, signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import type { AppUser } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { DEFAULT_COMMUNITY_PROFILE } from "@/app/adapters/secondary/fakeData/communityProfiles";
+import {authMaybeRefreshRequested} from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 const GOOGLE_SCOPES = ["openid", "email", "profile"] as const;
 
@@ -53,6 +54,10 @@ export function useAuthUser() {
         dispatch(signOut());
     }, [dispatch, isLoading]);
 
+    const refreshToken = useCallback(() => {
+        dispatch(authMaybeRefreshRequested())
+    },[dispatch])
+
     const authSummary = useMemo(
         () => ({
             user,
@@ -85,6 +90,7 @@ export function useAuthUser() {
     return {
         ...authSummary,
         signInWithGoogle,
+        refreshToken,
         signOut: signOutUser,
     } as const;
 }

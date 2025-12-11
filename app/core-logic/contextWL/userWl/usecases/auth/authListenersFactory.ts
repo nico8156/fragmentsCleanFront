@@ -29,7 +29,7 @@ import { toSessionSnapshot } from "@/app/core-logic/contextWL/userWl/utils/sessi
 const deriveUserId = (profile: OAuthProfile): AuthSession["userId"] =>
     toUserId(`${profile.provider}:${profile.providerUserId}`);
 
-const MINIMUM_TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MINIMUM_TOKEN_TTL_MS =  60 * 1000; // 1 minute
 
 export const authListenerFactory = (deps: DependenciesWl) => {
     const middleware = createListenerMiddleware();
@@ -73,21 +73,40 @@ export const authListenerFactory = (deps: DependenciesWl) => {
         effect: async (action, api) => {
             const oAuthGateway = getOAuthGateway();
             const secureStore = getSecureStore();
+            const authServerGateway = getAuthServer();
+
             try {
                 if (!oAuthGateway) throw new Error("oauth gateway unavailable");
                 if (!secureStore) throw new Error("auth secure store unavailable");
-                const { profile, tokens } = await oAuthGateway.startSignIn(action.payload.provider, {
-                    scopes: action.payload.scopes,
-                });
-                const session: AuthSession = {
-                    userId: deriveUserId(profile),
-                    tokens,
+                if (!authServerGateway) throw new Error("auth server gateway unavailable");
+
+                // 1️⃣ Step provider : Google Sign-In
+                const { profile, tokens: providerTokens } =
+                    await oAuthGateway.startSignIn(action.payload.provider, {
+                        scopes: action.payload.scopes,
+                    });
+
+                const authorizationCode = providerTokens.accessToken; // on sait que c'est le serverAuthCode
+                const idToken = providerTokens.idToken;
+
+                if (!authorizationCode) {
+                    throw new Error("No authorization code from provider");
+                }
+
+                // 2️⃣ Step backend : échange code → tokens app + user
+
+                const { session, user } = await authServerGateway.signInWithProvider({
                     provider: profile.provider,
+                    authorizationCode,
+                    idToken,
                     scopes: action.payload.scopes ?? [],
-                    establishedAt: Date.now(),
-                };
+                });
+
+                // 3️⃣ On persiste la session app
                 activeSession = session;
                 await secureStore.saveSession(session);
+
+                // 4️⃣ On met à jour le store auth
                 api.dispatch(
                     authSignInSucceeded({
                         session: toSessionSnapshot(session),
@@ -97,7 +116,13 @@ export const authListenerFactory = (deps: DependenciesWl) => {
                         },
                     }),
                 );
-                api.dispatch(authUserHydrationRequested({ userId: session.userId }));
+
+                if (user) {
+                    api.dispatch(authUserHydrationSucceeded({ user }));
+                } else {
+                    api.dispatch(authUserHydrationRequested({ userId: session.userId }));
+                }
+
                 api.dispatch(authMaybeRefreshRequested());
             } catch (error: any) {
                 activeSession = undefined;
@@ -110,27 +135,37 @@ export const authListenerFactory = (deps: DependenciesWl) => {
         },
     });
 
+
     listen({
         actionCreator: authMaybeRefreshRequested,
         effect: async (_action, api) => {
-            if (!activeSession) return;
+            if (!activeSession) {
+                console.log("[REFRESH] no activeSession, skipping");
+                return;
+            }
             const { tokens } = activeSession;
             const now = Date.now();
+            console.log("[REFRESH] now=", now, "expiresAt=", tokens.expiresAt, "delta=", tokens.expiresAt - now);
             if (tokens.expiresAt - now > MINIMUM_TOKEN_TTL_MS) {
+                console.log("[REFRESH] token still fresh, skipping");
                 return;
             }
             const authServer = getAuthServer();
             const secureStore = getSecureStore();
             if (!authServer) {
+                console.log("[REFRESH] no authServerGateway");
                 api.dispatch(authSessionExpired({ reason: "Session expirée" }));
                 return;
             }
             if (!secureStore) {
+                console.log("[REFRESH] no secureStore");
                 api.dispatch(authSessionRefreshFailed({ error: "auth secure store unavailable" }));
                 return;
             }
             try {
+                console.log("[REFRESH] calling backend /auth/refresh with refreshToken=", activeSession.tokens.refreshToken);
                 const refreshed = await authServer.refreshSession(activeSession);
+                console.log("[REFRESH] success, new accessToken=", refreshed.session.tokens.accessToken);
                 activeSession = refreshed.session;
                 await secureStore.saveSession(refreshed.session);
                 api.dispatch(authSessionRefreshed({ session: toSessionSnapshot(refreshed.session) }));
@@ -138,6 +173,7 @@ export const authListenerFactory = (deps: DependenciesWl) => {
                     api.dispatch(authUserHydrationSucceeded({ user: refreshed.user }));
                 }
             } catch (error: any) {
+                console.log("[REFRESH] FAILED", error);
                 activeSession = undefined;
                 await secureStore.clearSession().catch(() => undefined);
                 api.dispatch(
@@ -174,20 +210,30 @@ export const authListenerFactory = (deps: DependenciesWl) => {
         effect: async (_action, api) => {
             const oAuthGateway = getOAuthGateway();
             const secureStore = getSecureStore();
-            const provider: ProviderId | undefined = activeSession?.provider;
-            activeSession = undefined;
+            const authServer = getAuthServer();
+
+            const session = activeSession;
+
             try {
-                await secureStore?.clearSession();
-            } catch (error) {
-                console.warn("Failed to clear auth session", error);
-            }
-            if (provider && oAuthGateway) {
-                try {
-                    await oAuthGateway.signOut(provider);
-                } catch (error) {
-                    console.warn("Failed to sign out from provider", error);
+                if (session && authServer) {
+                    // 1️⃣ prévenir le backend pour révoquer le refreshToken
+                    await authServer.logout(session);
                 }
+
+                if (session && oAuthGateway) {
+                    // 2️⃣ optionnel : logout provider (Google)
+                    await oAuthGateway.signOut(session.provider);
+                }
+            } catch (e) {
+                console.warn("[LOGOUT] error during remote logout", e);
             }
+
+            // 3️⃣ toujours nettoyer en local
+            activeSession = undefined;
+            if (secureStore) {
+                await secureStore.clearSession().catch(() => undefined);
+            }
+
             api.dispatch(authSignedOut());
         },
     });

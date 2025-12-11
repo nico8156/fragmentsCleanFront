@@ -10,7 +10,7 @@ import {useOnBoarding} from "@/app/adapters/secondary/viewModel/useOnBoarding";
 
 export function AppSettingsScreen() {
     //TODO ajouter un bouton pour flag false onboarding
-    const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut } = useAuthUser();
+    const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut, refreshToken } = useAuthUser();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const statusLabel = useMemo(() => (isSignedIn ? "Connecté" : "Hors connexion"), [isSignedIn]);
     const {markHasNOTCompletedOnboarding} = useOnBoarding()
@@ -52,6 +52,11 @@ export function AppSettingsScreen() {
                         <Text style={styles.rowSubtitle}>Termine ta session en toute sécurité</Text>
                     </View>
                 </Pressable>
+                {/*<Pressable onPress={refreshToken} style={[styles.col,styles.logoutButton]}>*/}
+                {/*    <Text style={styles.signOut} >*/}
+                {/*        rafraichir*/}
+                {/*    </Text>*/}
+                {/*</Pressable>*/}
             </View>
         </ProfileLayout>
     );

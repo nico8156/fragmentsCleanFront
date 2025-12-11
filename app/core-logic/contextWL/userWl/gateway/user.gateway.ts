@@ -16,6 +16,7 @@ export interface OAuthGateway {
 
     // Déconnexion au niveau provider (facultatif selon besoin)
     signOut(provider: ProviderId): Promise<void>;
+    // tres bien mais on veut du oauth2 with pkce ;)
 }
 
 // Persistance secure des tokens/session (SecureStore/Keychain)
@@ -32,8 +33,20 @@ export interface UserRepo {
 }
 
 export interface AuthServerGateway {
+    signInWithProvider(input: {
+        provider: ProviderId;
+        authorizationCode: string; // serverAuthCode
+        idToken?: string | null;
+        scopes: string[];
+    }): Promise<{
+        session: AuthSession;
+        user?: AppUser;
+    }>;
     refreshSession(session: AuthSession): Promise<{
         session: AuthSession;
         user?: AppUser;
     }>;
+    logout(session: AuthSession): Promise<void>;
+
+    //prevoir
 }

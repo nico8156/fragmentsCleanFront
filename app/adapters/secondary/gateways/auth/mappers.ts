@@ -5,8 +5,9 @@ import {
     SignInResponseDTO,
     toUserId,
     toIdentityId,
-    toProviderUserId,
+    toProviderUserId, AuthTokens, ProviderId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+
 
 export const mapUserDtoToDomain = (dto: AppUserDTO): AppUser => ({
     id: toUserId(dto.id),
@@ -45,3 +46,86 @@ export const mapSignInDtoToSession = (dto: SignInResponseDTO): AuthSession => ({
     scopes: dto.scopes,
     establishedAt: Date.now(),
 });
+
+const ACCESS_TOKEN_LIFETIME_MS = 15 * 60 * 1000; // TODO: aligner avec ton backend
+const REFRESH_TOKEN_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // optionnel
+
+export interface GoogleLoginResponseDTO {
+    accessToken: string;
+    refreshToken: string;
+    user: {
+        id: string;          // UUID -> string
+        displayName: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+    };
+}
+
+export interface RefreshTokenResponseDTO {
+    accessToken: string;
+    refreshToken: string;
+}
+
+export const mapGoogleLoginDtoToSession = (
+    dto: GoogleLoginResponseDTO,
+    provider: ProviderId,
+    scopes: string[]
+): AuthSession => {
+    const now = Date.now();
+
+    const tokens: AuthTokens = {
+        accessToken: dto.accessToken,
+        refreshToken: dto.refreshToken,
+        idToken: undefined,
+        issuedAt: now,
+        // ⚠️ ici on fait une estimation : idéalement, ton backend renverrait `expiresAt`
+        expiresAt: now + ACCESS_TOKEN_LIFETIME_MS,
+        tokenType: "Bearer",
+        scope: scopes.join(" "),
+    };
+
+    return {
+        userId: toUserId(dto.user.id),
+        tokens,
+        provider,
+        scopes,
+        establishedAt: now,
+    };
+};
+export const mapGoogleUserSummaryToAppUser = (dto: GoogleLoginResponseDTO["user"]): AppUser => {
+    const nowIso = new Date().toISOString() as any;
+    return {
+        id: toUserId(dto.id),
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        displayName: dto.displayName ?? undefined,
+        avatarUrl: dto.avatarUrl ?? undefined,
+        bio: undefined,
+        identities: [],       // on ne les connaît pas encore (ou tu peux peupler avec Google plus tard)
+        roles: ["user"],      // safe default
+        flags: {},
+        preferences: undefined,
+        likedCoffeeIds: [],
+        version: 0,           // version initiale / optimiste
+    };
+};
+
+export const applyRefreshToSession = (
+    prev: AuthSession,
+    dto: RefreshTokenResponseDTO
+): AuthSession => {
+    const now = Date.now();
+
+    const nextTokens: AuthTokens = {
+        ...prev.tokens,
+        accessToken: dto.accessToken,
+        refreshToken: dto.refreshToken,
+        issuedAt: now,
+        expiresAt: now + ACCESS_TOKEN_LIFETIME_MS,
+    };
+
+    return {
+        ...prev,
+        tokens: nextTokens,
+    };
+};

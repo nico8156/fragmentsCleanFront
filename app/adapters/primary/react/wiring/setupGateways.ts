@@ -58,6 +58,7 @@ import {commentUpdateWlUseCase} from "@/app/core-logic/contextWL/commentWl/useca
 import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
 import {runtimeListenerFactory} from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 import {googleOAuthGateway} from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
+import {authServerGateway} from "@/app/adapters/secondary/gateways/auth/authServerGateway";
 
 // ---- types ----
 
@@ -97,6 +98,7 @@ const auth = {
     oauth: googleOAuthGateway,
     secureStore: new ExpoSecureAuthSessionStore(),
     userRepo: new DemoUserRepo(),
+    server: authServerGateway,
 } as const;
 
 export const gateways: GatewaysWl = {
