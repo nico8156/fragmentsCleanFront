@@ -30,8 +30,14 @@ const deriveUserId = (profile: OAuthProfile): AuthSession["userId"] =>
     toUserId(`${profile.provider}:${profile.providerUserId}`);
 
 const MINIMUM_TOKEN_TTL_MS =  60 * 1000; // 1 minute
+type AuthListenerDeps = {
+    gateways: DependenciesWl["gateways"];
+    helpers?: Partial<DependenciesWl["helpers"]>;
+    onSessionChanged?: (session: AuthSession | undefined) => void;
 
-export const authListenerFactory = (deps: DependenciesWl) => {
+};
+
+export const authListenerFactory = (deps: AuthListenerDeps) => {
     const middleware = createListenerMiddleware();
     const listen = middleware.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
     let activeSession: AuthSession | undefined;
@@ -50,15 +56,18 @@ export const authListenerFactory = (deps: DependenciesWl) => {
                 const stored = await secureStore.loadSession();
                 if (!stored) {
                     activeSession = undefined;
+                    deps.onSessionChanged?.(activeSession);
                     api.dispatch(authSignedOut());
                     return;
                 }
                 activeSession = stored;
+                deps.onSessionChanged?.(activeSession);
                 api.dispatch(authSessionLoaded({ session: toSessionSnapshot(stored) }));
                 api.dispatch(authMaybeRefreshRequested());
                 api.dispatch(authUserHydrationRequested({ userId: stored.userId }));
             } catch (error: any) {
                 activeSession = undefined;
+                deps.onSessionChanged?.(activeSession);
                 api.dispatch(
                     authSessionLoadFailed({
                         error: error?.message ?? "Unable to load session",
@@ -104,6 +113,7 @@ export const authListenerFactory = (deps: DependenciesWl) => {
 
                 // 3️⃣ On persiste la session app
                 activeSession = session;
+                deps.onSessionChanged?.(activeSession);
                 await secureStore.saveSession(session);
 
                 // 4️⃣ On met à jour le store auth
@@ -167,6 +177,7 @@ export const authListenerFactory = (deps: DependenciesWl) => {
                 const refreshed = await authServer.refreshSession(activeSession);
                 console.log("[REFRESH] success, new accessToken=", refreshed.session.tokens.accessToken);
                 activeSession = refreshed.session;
+                deps.onSessionChanged?.(activeSession);
                 await secureStore.saveSession(refreshed.session);
                 api.dispatch(authSessionRefreshed({ session: toSessionSnapshot(refreshed.session) }));
                 if (refreshed.user) {
@@ -175,6 +186,7 @@ export const authListenerFactory = (deps: DependenciesWl) => {
             } catch (error: any) {
                 console.log("[REFRESH] FAILED", error);
                 activeSession = undefined;
+                deps.onSessionChanged?.(activeSession);
                 await secureStore.clearSession().catch(() => undefined);
                 api.dispatch(
                     authSessionRefreshFailed({
@@ -230,6 +242,7 @@ export const authListenerFactory = (deps: DependenciesWl) => {
 
             // 3️⃣ toujours nettoyer en local
             activeSession = undefined;
+            deps.onSessionChanged?.(activeSession);
             if (secureStore) {
                 await secureStore.clearSession().catch(() => undefined);
             }

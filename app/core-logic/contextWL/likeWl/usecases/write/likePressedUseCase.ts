@@ -17,6 +17,11 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
         actionCreator: uiLikeToggleRequested,
         effect: async ({ payload: { targetId } }, api) => {
             const state: any = api.getState();
+            const authStatus = state.aState.status;
+            if (authStatus !== "signedIn") {
+                console.log("[LIKE] user not signed in → ignoring like toggle");
+                return;
+            }
             const me = state.lState.byTarget?.[targetId]?.me ?? false;
             const outboxId  = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid() ?? Math.random()}`;
             const commandId = `cmd_${nanoid() ?? Math.random()}` as CommandId;

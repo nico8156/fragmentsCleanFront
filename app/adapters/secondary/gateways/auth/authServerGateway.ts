@@ -30,7 +30,7 @@ export const authServerGateway: AuthServerGateway = {
             throw new Error(`Unsupported provider: ${provider}`);
         }
 
-        const response = await fetch(`http://192.168.1.16:8080/auth/google/exchange`, {
+        const response = await fetch(`${API_BASE_URL}/auth/google/exchange`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export const authServerGateway: AuthServerGateway = {
             throw new Error("No refresh token available for session");
         }
 
-        const response = await fetch(`http://192.168.1.16:8080/auth/refresh`, {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -93,7 +93,7 @@ export const authServerGateway: AuthServerGateway = {
         }
 
         try {
-            await fetch(`http://192.168.1.16:8080/auth/logout`, {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ refreshToken }),

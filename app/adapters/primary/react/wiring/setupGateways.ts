@@ -20,7 +20,6 @@ import {
 
 import { FakeCommentsWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import { FakeCoffeeGateway } from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import { FakeLikesGateway } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import { FakeCfPhotoWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
@@ -59,6 +58,11 @@ import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/syn
 import {runtimeListenerFactory} from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 import {googleOAuthGateway} from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
 import {authServerGateway} from "@/app/adapters/secondary/gateways/auth/authServerGateway";
+import {HttpLikesGateway} from "@/app/adapters/secondary/gateways/like/HttpLikesGateway";
+import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
+import {AuthSession} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import Constants from "expo-constants";
+import {NoopEventsGateway} from "@/app/adapters/secondary/gateways/NoopEventsGateway";
 
 // ---- types ----
 
@@ -80,25 +84,36 @@ export type GatewaysWl = {
         server?: AuthServerGateway;
     };
 };
-
+const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
 // ---- instantiation des gateways ----
+const authTokenBridge = new AuthTokenBridge();
 
 const coffees = new FakeCoffeeGateway();
 const cfPhotos = new FakeCfPhotoWlGateway();
 const openingHours = new FakeOpeningHoursWlGateway();
 const comments = new FakeCommentsWlGateway();
-const likes = new FakeLikesGateway();
+const likes = new HttpLikesGateway(
+    {
+        baseUrl: API_BASE_URL,
+        getAccessToken: authTokenBridge.getAccessToken,
+    }
+);
+//const likes = new FakeLikesGateway();
 const tickets = new FakeTicketsGateway();
 const entitlements = new FakeEntitlementWlGateway();
 const locations = new ExpoLocationGateway();
 const articles = new StaticArticleWlGateway();
-const events = new FakeEventsGateway();
+const events = new NoopEventsGateway();
+
 
 const auth = {
     oauth: googleOAuthGateway,
     secureStore: new ExpoSecureAuthSessionStore(),
     userRepo: new DemoUserRepo(),
     server: authServerGateway,
+    onSessionChanged: (session:AuthSession |undefined) => {
+        authTokenBridge.setSession(session);
+    },
 } as const;
 
 export const gateways: GatewaysWl = {
@@ -119,22 +134,33 @@ export const outboxStorage = createNativeOutboxStorage();
 
 export const syncMetaStorage = createNativeSyncMetaStorage();
 
+type AckCapableLikesGateway = {
+    setAckDispatcher: (action: any) => void;
+    setCurrentUserIdGetter?: (fn: () => string) => void;
+};
 
+const isAckCapableLikesGateway = (g: any): g is AckCapableLikesGateway => {
+    return g && typeof g.setAckDispatcher === "function";
+};
 // ---- wiring spécifique store <-> gateways ----
 
 export const wireGatewaysForStore = (store: ReduxStoreWl) => {
     console.log("[STORE] wireGatewaysForStore: start");
-    // currentUserId getter pour les likes
-    const likeGateway = gateways.likes as FakeLikesGateway;
-    if ("setAckDispatcher" in likeGateway) {
-        likeGateway.setAckDispatcher((action) => {
+    //currentUserId getter pour les likes
+    const likeGateway = gateways.likes;
+    if (isAckCapableLikesGateway(likeGateway)) {
+        // 👇 ici, on est dans le cas FakeLikesGateway
+        likeGateway.setAckDispatcher((action:any) => {
             store.dispatch(action);
         });
-        if (likeGateway.setCurrentUserIdGetter) {
-            likeGateway.setCurrentUserIdGetter(
-                () => store.getState().aState.currentUser?.id ?? "anonymous",
-            );
-        }
+
+        likeGateway.setCurrentUserIdGetter?.(
+            () => store.getState().aState.currentUser?.id ?? "anonymous",
+        );
+
+        console.log("[STORE] wireGatewaysForStore: ACK wiring enabled for FakeLikesGateway");
+    } else {
+        console.log("[STORE] wireGatewaysForStore: no ACK wiring for likes gateway (probably HttpLikesGateway)");
     }
 
 
@@ -239,7 +265,11 @@ export const createWlStore = (): ReduxStoreWl => {
             syncRuntimeListener,
             syncEventsListener,
             runtimeListener,
-            authListenerFactory({ gateways, helpers: {} }),
+            authListenerFactory({
+                gateways,
+                helpers: {},
+                onSessionChanged: auth.onSessionChanged
+            }),
             userLocationListenerFactory({ gateways, helpers: {} }),
         ],
         extraMiddlewares: [outboxPersistenceMiddleware],
