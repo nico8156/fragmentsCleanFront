@@ -20,21 +20,14 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import {
     AuthSession,
-    OAuthProfile,
-    ProviderId,
-    toUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { toSessionSnapshot } from "@/app/core-logic/contextWL/userWl/utils/sessionSnapshot";
-
-const deriveUserId = (profile: OAuthProfile): AuthSession["userId"] =>
-    toUserId(`${profile.provider}:${profile.providerUserId}`);
 
 const MINIMUM_TOKEN_TTL_MS =  60 * 1000; // 1 minute
 type AuthListenerDeps = {
     gateways: DependenciesWl["gateways"];
     helpers?: Partial<DependenciesWl["helpers"]>;
     onSessionChanged?: (session: AuthSession | undefined) => void;
-
 };
 
 export const authListenerFactory = (deps: AuthListenerDeps) => {

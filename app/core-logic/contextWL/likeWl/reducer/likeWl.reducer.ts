@@ -76,6 +76,9 @@ export const likeWlReducer = createReducer(
 
         // RECONCILE
         builder.addCase(likeReconciled, (state, { payload: { targetId, server } }) => {
+            if (server.version < state.byTarget[targetId]?.version) {
+                return; // ignore ACK plus vieux
+            }
             const v = ensureAgg(state, targetId);
             v.count = server.count;
             v.me = server.me;

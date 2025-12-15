@@ -74,12 +74,6 @@ export interface AppUser {
     version: number;           // idempotence
 }
 
-// Scopes/claims que l’app demande (dépend du provider)
-export interface AuthScope {
-    provider: ProviderId;
-    scopes: string[]; // ex: ["openid","email","profile"]
-}
-
 // Tokens (OPAQUE côté app — pas besoin de parser JWT ici)
 export interface AuthTokens {
     accessToken: string;         // court terme

@@ -24,6 +24,8 @@ export const selectIsSignedIn = createSelector(
     selectAuthStatus,
     (status) => status === "signedIn",
 );
+
+
 export const selectUserSocialStats = createSelector(
     [selectCurrentUserId, selectAllComments, selectAllLikeAggs],
     (userId, comments, likesAgg) => {

@@ -12,8 +12,8 @@ import {getOnceRequested, requestPermission} from "@/app/core-logic/contextWL/lo
 import {initializeAuth} from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import {replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
-import {mountAppStateAdapter} from "@/app/adapters/primary/react/gateways-config/appState.adapter";
-import {mountNetInfoAdapter} from "@/app/adapters/primary/react/gateways-config/netInfo.adapter";
+import {mountAppStateAdapter} from "@/app/adapters/primary/gateways-config/appState.adapter";
+import {mountNetInfoAdapter} from "@/app/adapters/primary/gateways-config/netInfo.adapter";
 import {useEffect} from "react";
 import {RootStateWl} from "@/app/store/reduxStoreWl";
 import { useStore } from "react-redux";
