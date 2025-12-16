@@ -1,32 +1,34 @@
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+// commandForComment.type.ts
+import { CommandId, commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
-// ===== Comments =====
-
+// ===== CREATE =====
 export type CommentCreateCommand = {
     kind: typeof commandKinds.CommentCreate;
     commandId: CommandId | string;
-    tempId: string;                  // id client provisoire
-    targetId: string;                // ressource commentée
+    tempId: string;       // ✅ indispensable
+    targetId: string;
     body: string;
     at: ISODate | string;
-    parentId?: string | null;        // thread
+    parentId?: string | null;
     version?: number;
-};
-export type CommentCreateUndo = {
-    kind: typeof commandKinds.CommentCreate;
-    tempId: string;                  // pour rollback local (supprimer le ghost)
-    targetId: string;
-    parentId?: string;
 };
 
+export type CommentCreateUndo = {
+    kind: typeof commandKinds.CommentCreate;
+    commentId: string;
+    targetId: string;
+    parentId?: string | null;
+};
+
+// ===== UPDATE =====
 export type CommentUpdateCommand = {
     kind: typeof commandKinds.CommentUpdate;
-    commandId: CommandId | string;
+    commandId: CommandId;
     commentId: string;
     newBody: string;
-    at?: ISODate | string;
-    version?: number;
+    at: ISODate;
 };
+
 export type CommentUpdateUndo = {
     kind: typeof commandKinds.CommentUpdate;
     commentId: string;
@@ -34,16 +36,18 @@ export type CommentUpdateUndo = {
     prevVersion?: number;
 };
 
+// ===== DELETE =====
 export type CommentDeleteCommand = {
     kind: typeof commandKinds.CommentDelete;
-    commandId: CommandId | string;
+    commandId: CommandId;
     commentId: string;
-    at: ISODate | string;
+    at: ISODate;
 };
+
 export type CommentDeleteUndo = {
     kind: typeof commandKinds.CommentDelete;
     commentId: string;
-    prevBody?:string
-    prevDeletedAt?: ISODate | string; // soft delete
+    prevBody?: string;
+    prevDeletedAt?: ISODate;
     prevVersion?: number;
 };

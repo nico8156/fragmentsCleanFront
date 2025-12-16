@@ -9,6 +9,7 @@ import {
 } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
 import {createReconciled, createRollback, deleteRollback, updateRollback} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 import {
+    commentsRetrievalCancelled,
     commentsRetrievalFailed,
     commentsRetrievalPending,
     commentsRetrieved
@@ -98,26 +99,21 @@ export const commentWlReducer = createReducer(
                     }
                 });
             })
-            .addCase(createReconciled,(state, action) => {
-                const { tempId, server } = action.payload;
-                const temp = state.entities.entities[tempId];
-                if (!temp) return;
+            .addCase(createReconciled, (state, action) => {
+                const { commentId, server } = action.payload;
+                const cur = state.entities.entities[commentId];
+                if (!cur) return;
 
-                const { targetId } = temp;
-                // remplace l’entité
-                adapter.removeOne(state.entities, tempId);
-                adapter.addOne(state.entities, {
-                    ...temp,
-                    id: server.id,
-                    optimistic: false,
-                    createdAt: server.createdAt,
-                    version: server.version,
+                console.log("[REDUCER] createReconciled", { id: commentId, before: cur.optimistic, after: false });
+
+                adapter.updateOne(state.entities, {
+                    id: commentId,
+                    changes: {
+                        optimistic: false,
+                        createdAt: server.createdAt,
+                        version: server.version,
+                    },
                 });
-                // remplace dans les vues
-                const v = state.byTarget[targetId];
-                if (v?.ids) {
-                    for (let i = 0; i < v.ids.length; i++) if (v.ids[i] === tempId) v.ids[i] = server.id;
-                }
             })
             .addCase(updateReconciled, (state, action)=> {
                 const { commentId, server } = action.payload;
@@ -132,6 +128,13 @@ export const commentWlReducer = createReducer(
                         optimistic: false,
                     },
                 });
+            })
+            .addCase(commentsRetrievalCancelled, (state, action) => {
+                const { targetId } = action.payload;
+                const v = ensureView(state, targetId);
+                // ✅ on sort du PENDING
+                v.loading = loadingStates.IDLE;
+                // on ne met pas d’erreur, c’est juste un cancel
             })
             .addCase(deleteReconciled, (state, { payload: { commentId, server } }) => {
                 const c = state.entities.entities[commentId];

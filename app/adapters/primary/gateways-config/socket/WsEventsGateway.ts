@@ -39,6 +39,8 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
                 this.sub = this.client!.subscribe("/user/queue/acks", (msg: IMessage) => {
                     const raw = safeJsonParse(msg.body);
                     console.log("[WS] inbound raw", raw);
+                    console.log("[WS] inbound validated -> forwarding to onEvent", raw.type);
+
                     if (!isWsInboundEvent(raw)) return;
                     params.onEvent(raw);
                 });

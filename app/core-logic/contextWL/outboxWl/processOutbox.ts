@@ -24,8 +24,8 @@ import {
 
 export const markProcessing = createAction<{ id: string }>("OUTBOX/MARK_PROCESSING");
 export const createReconciled = createAction<{
-    tempId: string;
-    server: { id: string; createdAt: string; version: number };
+    commentId: string; // ✅ stable id (UUID) déjà connu
+    server: { createdAt: string; version: number };
 }>("COMMENT/CREATE_RECONCILED");
 export const markFailed = createAction<{ id: string; error: string }>("OUTBOX/MARK_FAILED");
 export const createRollback = createAction<{ tempId: string; targetId: string; parentId?: string }>(
@@ -60,6 +60,10 @@ const getAuthedUserId = (s: RootStateWl): string | undefined => {
     return fromUser ?? undefined;
 };
 
+const isCommentCreateUndo = (u: any): u is { tempId: string; targetId: string; parentId?: string } => {
+    return !!u && typeof u.tempId === "string" && typeof u.targetId === "string";
+};
+
 export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void) => {
     const processOutboxUseCase = createListenerMiddleware();
     const listener = processOutboxUseCase.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
@@ -69,14 +73,20 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
         effect: async (_action, api) => {
             const state = api.getState() as RootStateWl;
 
-            // ✅ GARDE AUTH: aucune commande "write" outbox ne doit partir si pas signed-in
-            if (!isSignedIn(state)) {
-                console.log("[OUTBOX] processOnce: skipped (not signedIn)");
-                return;
-            }
-            const authedUserId = getAuthedUserId(state);
-            if (!authedUserId) {
-                console.log("[OUTBOX] processOnce: skipped (signedIn but no userId yet)");
+            // // ✅ GARDE AUTH: aucune commande "write" outbox ne doit partir si pas signed-in
+            // if (!isSignedIn(state)) {
+            //     console.log("[OUTBOX] processOnce: skipped (not signedIn)");
+            //     return;
+            // }
+            // const authedUserId = getAuthedUserId(state);
+            // if (!authedUserId) {
+            //     console.log("[OUTBOX] processOnce: skipped (signedIn but no userId yet)");
+            //     return;
+            // }
+
+            const token = await deps.gateways.authToken?.getAccessToken?.();
+            if (!token) {
+                console.log("[OUTBOX] processOnce: skipped (no token)");
                 return;
             }
 
@@ -158,14 +168,11 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                 switch (cmd.kind) {
                     // ===== Likes =====
                     case commandKinds.LikeAdd: {
-                        // ✅ IMPORTANT: jamais "anonymous"
-                        const userId = (cmd as any).userId ?? authedUserId;
 
                         await deps.gateways.likes!.add({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId,
-                            at: cmd.at,
+                            at: cmd.at
                         });
 
                         const ackBy =
@@ -176,13 +183,10 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                     }
 
                     case commandKinds.LikeRemove: {
-                        // ✅ IMPORTANT: jamais "anonymous"
-                        const userId = (cmd as any).userId ?? authedUserId;
 
                         await deps.gateways.likes!.remove({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            userId,
                             at: cmd.at,
                         });
 
@@ -198,10 +202,11 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                         await deps.gateways.comments!.create({
                             commandId: cmd.commandId,
                             targetId: cmd.targetId,
-                            parentId: cmd.parentId,
+                            parentId: cmd.parentId ?? null,
                             body: cmd.body,
-                            tempId: cmd.tempId,
+                            tempId: cmd.tempId, // ✅ IMPORTANT : requis par HttpCommentsGateway
                         });
+
                         const ackBy =
                             deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
@@ -287,8 +292,13 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                     }
 
                     case commandKinds.CommentCreate: {
-                        const u = item.undo as { tempId: string; targetId: string; parentId?: string };
-                        api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
+                        const u = item.undo;
+
+                        if (isCommentCreateUndo(u)) {
+                            api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
+                        } else {
+                            console.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
+                        }
                         break;
                     }
 

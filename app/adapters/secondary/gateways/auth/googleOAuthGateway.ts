@@ -1,11 +1,7 @@
-import * as WebBrowser from "expo-web-browser";
-
 import {
     GoogleSignin,
-    GoogleSigninButton, isErrorWithCode, isSuccessResponse,
-    statusCodes,
+    isSuccessResponse,
 } from '@react-native-google-signin/google-signin';
-
 
 import {
     AuthTokens,
@@ -15,14 +11,11 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import {OAuthGateway} from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 
-WebBrowser.maybeCompleteAuthSession();
-
 GoogleSignin.configure({
     iosClientId: "255942605258-kjbb93iq5tlhpc74d75h8jntajvqpilt.apps.googleusercontent.com",
     offlineAccess: true,
     webClientId: "255942605258-5errelo3uh5perq07b4cnj87l6rgsplp.apps.googleusercontent.com",
 })
-
 
 export const googleOAuthGateway: OAuthGateway = {
     async startSignIn(provider: ProviderId, opts?: { scopes?: string[] }) {

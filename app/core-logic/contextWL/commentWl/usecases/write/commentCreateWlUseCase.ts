@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from "uuid";
 import {createAction, createListenerMiddleware, TypedStartListening, nanoid} from "@reduxjs/toolkit";
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
@@ -27,10 +29,18 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                 }
                 return
             }; // rien à faire
-            const me = deps.helpers.currentUserId?.() ?? "me";
-            const tempId = deps.helpers.getCommentIdForTests?.() ?? `cmt_tmp_${nanoid()}`;
-            const outboxId = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;
-            const commandId = `cmd_${nanoid()}`;
+            const me = deps.helpers.currentUserId?.() ?? "me"; // (tu peux le garder si tu l'utilises vraiment)
+
+            const tempId =
+                deps.helpers.getCommentIdForTests?.() ??
+                uuidv4(); // ✅ tempId MUST be UUID if backend does UUID.fromString(tempId)
+
+            const outboxId =
+                deps.helpers?.getCommandIdForTests?.() ??
+                `obx_${nanoid()}`; // ✅ interne outbox, nanoid OK
+
+            const commandId = deps.helpers.newCommandId?.() ?? (uuidv4() as any);
+            // ✅ corrélation front/back, UUID v4 (pas cmd_...)
             const createdAt = deps.helpers.nowIso ? deps.helpers.nowIso() : new Date().toISOString();
             const enqueuedAt = createdAt;
 

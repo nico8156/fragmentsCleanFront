@@ -10,6 +10,10 @@ import {
     CommentUpdateCommand, CommentUpdateUndo
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 import {TicketVerifyCommand, TicketVerifyUndo} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
+import { v4 as uuidv4 } from "uuid";
+
+export const newCommandId = (): CommandId => parseToCommandId(uuidv4());
+
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };

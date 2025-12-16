@@ -103,6 +103,11 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
                     idToken,
                     scopes: action.payload.scopes ?? [],
                 });
+                console.log("[AUTH] backend signInWithProvider returned session", {
+                    userId: (session as any)?.userId,
+                    accessTokenPrefix: (session as any)?.tokens?.accessToken?.slice?.(0, 20),
+                    hasRefresh: !!(session as any)?.tokens?.refreshToken,
+                });
 
                 // 3️⃣ On persiste la session app
                 activeSession = session;

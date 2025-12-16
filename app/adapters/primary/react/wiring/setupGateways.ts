@@ -1,5 +1,6 @@
 // /app/adapters/primary/react/wiring/setupGateways.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import 'react-native-get-random-values';
 
 import { CoffeeWlGateway } from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 import { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
@@ -29,8 +30,6 @@ import { ExpoLocationGateway } from "@/app/adapters/secondary/gateways/locationG
 import { StaticArticleWlGateway } from "@/app/adapters/secondary/gateways/articles/staticArticleWlGateway";
 
 import { ExpoSecureAuthSessionStore } from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
-import { DemoUserRepo } from "@/app/adapters/secondary/gateways/auth/demoUserRepo";
-
 import { SyncEventsGateway } from "@/app/core-logic/contextWL/outboxWl/gateway/eventsGateway";
 import { createNativeOutboxStorage } from "@/app/adapters/secondary/gateways/outbox/nativeOutboxStorage";
 import { createNativeSyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
@@ -68,6 +67,10 @@ import { WsStompEventsGateway } from "@/app/adapters/primary/gateways-config/soc
 
 // ✅ AJOUT : WS listener global
 import { wsListenerFactory } from "@/app/core-logic/contextWL/wsWl/usecases/wsListenerFactory";
+import {HttpCommentsGateway} from "@/app/adapters/secondary/gateways/comments/HttpCommentsGateway";
+import {HttpUserRepo} from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
+import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { v4 as uuidv4 } from "uuid";
 
 // ---- types ----
 export type GatewaysWl = {
@@ -80,7 +83,7 @@ export type GatewaysWl = {
     entitlements: EntitlementWlGateway;
     locations: LocationWlGateway;
     articles: ArticleWlGateway;
-    events: SyncEventsGateway;
+    //events: SyncEventsGateway;
     auth: {
         oauth: OAuthGateway;
         secureStore: AuthSecureStore;
@@ -88,6 +91,7 @@ export type GatewaysWl = {
         server?: AuthServerGateway;
     };
     ws: WsEventsGatewayPort;
+    authToken: AuthTokenBridge;
 };
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
@@ -99,6 +103,11 @@ const authTokenBridge = new AuthTokenBridge();
 const sessionRef: { current?: AuthSession } = { current: undefined };
 
 const onSessionChanged = (session: AuthSession | undefined) => {
+    console.log("[AUTH] onSessionChanged", {
+        hasSession: !!session,
+        hasToken: !!session?.tokens?.accessToken,
+        userId: session?.userId,
+    });
     authTokenBridge.setSession(session); // HTTP
     sessionRef.current = session;        // WS
 };
@@ -106,24 +115,32 @@ const onSessionChanged = (session: AuthSession | undefined) => {
 const coffees = new FakeCoffeeGateway();
 const cfPhotos = new FakeCfPhotoWlGateway();
 const openingHours = new FakeOpeningHoursWlGateway();
-const comments = new FakeCommentsWlGateway();
+
+const comments = new HttpCommentsGateway({
+    baseUrl: API_BASE_URL,
+    getAccessToken: authTokenBridge.getAccessToken,
+});
 
 const likes = new HttpLikesGateway({
     baseUrl: API_BASE_URL,
-    getAccessToken: authTokenBridge.getAccessToken,
+    authToken: authTokenBridge
 });
 
 const tickets = new FakeTicketsGateway();
 const entitlements = new FakeEntitlementWlGateway();
 const locations = new ExpoLocationGateway();
 const articles = new StaticArticleWlGateway();
-const events = new NoopEventsGateway();
+//const events = new NoopEventsGateway();
 const ws = new WsStompEventsGateway();
 
 const auth = {
     oauth: googleOAuthGateway,
     secureStore: new ExpoSecureAuthSessionStore(),
-    userRepo: new DemoUserRepo(),
+    userRepo: new HttpUserRepo(
+        {
+            baseUrl: API_BASE_URL,
+            getAccessToken: authTokenBridge.getAccessToken,
+        }),
     server: authServerGateway,
 } as const;
 
@@ -137,9 +154,10 @@ export const gateways: GatewaysWl = {
     entitlements,
     locations,
     articles,
-    events,
+    //events,
     auth,
     ws,
+    authToken: authTokenBridge,
 };
 
 export const outboxStorage = createNativeOutboxStorage();
@@ -158,17 +176,11 @@ const isAckCapableLikesGateway = (g: any): g is AckCapableLikesGateway => {
 export const wireGatewaysForStore = (store: ReduxStoreWl) => {
     console.log("[STORE] wireGatewaysForStore: start");
 
+
     const likeGateway = gateways.likes;
     if (isAckCapableLikesGateway(likeGateway)) {
-        likeGateway.setAckDispatcher((action: any) => {
-            store.dispatch(action);
-        });
-
+        likeGateway.setAckDispatcher((action: any) => store.dispatch(action));
         likeGateway.setCurrentUserIdGetter?.(() => store.getState().aState.currentUser?.id ?? "anonymous");
-
-        console.log("[STORE] wireGatewaysForStore: ACK wiring enabled for FakeLikesGateway");
-    } else {
-        console.log("[STORE] wireGatewaysForStore: no ACK wiring for likes gateway (probably HttpLikesGateway)");
     }
 
     const commentsGateway = gateways.comments as FakeCommentsWlGateway;
@@ -183,9 +195,7 @@ export const wireGatewaysForStore = (store: ReduxStoreWl) => {
 
     const ticketsGateway = gateways.tickets as FakeTicketsGateway;
     if ("setAckDispatcher" in ticketsGateway) {
-        ticketsGateway.setAckDispatcher((action) => {
-            store.dispatch(action);
-        });
+        ticketsGateway.setAckDispatcher((action) => store.dispatch(action));
         ticketsGateway.setCurrentUserIdGetter(() => store.getState().aState.currentUser?.id ?? "anonymous");
     }
 
@@ -200,13 +210,14 @@ export const createWlStore = (): ReduxStoreWl => {
     const helpers = {
         nowIso: () => new Date().toISOString() as any,
         currentUserId: () => storeRef?.getState().aState.currentUser?.id ?? "anonymous",
+        newCommandId: () => parseToCommandId(uuidv4()),
     };
 
     const ticketSubmitMiddleware = ticketSubmitUseCaseFactory({ gateways, helpers });
     const commentCreateMiddleware = createCommentUseCaseFactory({ gateways, helpers }).middleware;
     const commentDeleteMiddleware = commentDeleteUseCaseFactory({ gateways, helpers }).middleware;
     const commentUpdateMiddleware = commentUpdateWlUseCase({ gateways, helpers }).middleware;
-    const commentAckMiddleware = ackListenerFactory({ gateways, helpers }).middleware;
+    const commentAckMiddleware = ackListenerFactory().middleware;
 
     const likeToggleMiddleware = likeToggleUseCaseFactory({ gateways, helpers }).middleware;
     const likeAckMiddleware = ackLikesListenerFactory().middleware;
@@ -216,10 +227,10 @@ export const createWlStore = (): ReduxStoreWl => {
 
     const outboxMiddleware = processOutboxFactory({ gateways, helpers }).middleware;
 
-    const syncRuntimeListener = syncRuntimeListenerFactory({
-        eventsGateway: gateways.events,
-        metaStorage: syncMetaStorage,
-    });
+    // const syncRuntimeListener = syncRuntimeListenerFactory({
+    //     eventsGateway: gateways.events,
+    //     metaStorage: syncMetaStorage,
+    // });
 
     const runtimeListener = runtimeListenerFactory();
 
@@ -249,8 +260,8 @@ export const createWlStore = (): ReduxStoreWl => {
             ticketAckMiddleware,
             entitlementAckMiddleware,
 
-            syncRuntimeListener,
-            syncEventsListener,
+            // syncRuntimeListener,
+            // syncEventsListener,
             runtimeListener,
 
             authListenerFactory({
@@ -258,8 +269,6 @@ export const createWlStore = (): ReduxStoreWl => {
                 helpers: {},
                 onSessionChanged, // ✅ callback unique
             }),
-
-            // ✅ WS listener global (routing inbound + connect/disconnect via token)
             wsListenerFactory({
                 gateways,
                 wsUrl,

@@ -10,6 +10,7 @@ import {
     mapGoogleUserSummaryToAppUser, RefreshTokenResponseDTO,
 } from "./mappers";
 import {AuthServerGateway} from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import {getJwtSub} from "@/app/adapters/secondary/gateways/auth/authUtils";
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
 console.log("API_BASE_URL", API_BASE_URL);
@@ -39,21 +40,29 @@ export const authServerGateway: AuthServerGateway = {
                 authorizationCode,
             }),
         });
-
         if (!response.ok) {
-            throw new Error(`Sign-in failed: ${response.status}`);
+            const errText = await response.text().catch(() => "");
+            throw new Error(`Sign-in failed: ${response.status} ${errText}`);
         }
+
+        console.log("[AUTH] signInWithProvider res", {
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+        });
 
         const dto = (await response.json()) as GoogleLoginResponseDTO;
 
         const session = mapGoogleLoginDtoToSession(dto, provider, scopes);
 
-        // 👉 option 1 : on construit un AppUser minimal à partir du summary
-        const user = mapGoogleUserSummaryToAppUser(dto.user);
+// ✅ IMPORTANT : userId = sub du JWT app
+        try {
+            const sub = getJwtSub(session.tokens.accessToken);
+            (session as any).userId = sub; // ou session.userId = sub as UserId
+        } catch (e) {
+            console.warn("[AUTH] cannot extract sub from accessToken", e);
+        }
 
-        // 👉 option 2 : si tu préfères passer par ton read model,
-        // tu peux simplement retourner { session } et laisser authUserHydrationRequested
-        // aller chercher le user complet plus tard.
+        const user = mapGoogleUserSummaryToAppUser(dto.user);
 
         return { session, user };
     },
@@ -82,10 +91,16 @@ export const authServerGateway: AuthServerGateway = {
         const dto = (await response.json()) as RefreshTokenResponseDTO;
 
         const nextSession = applyRefreshToSession(session, dto);
+        try {
+            const sub = getJwtSub(nextSession.tokens.accessToken);
+            (nextSession as any).userId = sub;
+        } catch (e) {
+            console.warn("[AUTH] cannot extract sub on refresh", e);
+        }
 
-        // Le backend ne renvoie pas de user ici -> pas de changement de currentUser
         return { session: nextSession, user: undefined };
     },
+
     async logout(session: AuthSession): Promise<void> {
         const refreshToken = session.tokens.refreshToken;
         if (!refreshToken) {

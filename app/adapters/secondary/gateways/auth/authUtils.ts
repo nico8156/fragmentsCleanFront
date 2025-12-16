@@ -34,3 +34,17 @@ export const generatePkceChallenge = async () => {
 
     return { codeVerifier, codeChallenge };
 };
+
+const base64UrlDecode = (input: string) => {
+    const pad = "=".repeat((4 - (input.length % 4)) % 4);
+    const base64 = (input + pad).replace(/-/g, "+").replace(/_/g, "/");
+    return atob(base64);
+};
+
+export const getJwtSub = (jwt: string): string => {
+    const [, payload] = jwt.split(".");
+    if (!payload) throw new Error("Invalid JWT");
+    const json = JSON.parse(base64UrlDecode(payload));
+    if (!json.sub) throw new Error("JWT missing sub");
+    return String(json.sub);
+};

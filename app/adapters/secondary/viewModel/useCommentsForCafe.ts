@@ -1,6 +1,8 @@
+// app/adapters/secondary/viewModel/useCommentsForCafe.ts
 import { useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { selectCommentsForTarget } from "@/app/core-logic/contextWL/commentWl/selector/commentWl.selector";
 import {
     CafeId,
@@ -14,21 +16,17 @@ import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
-import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import {selectCurrentUser, selectEffectiveUserId} from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import {
     DEFAULT_COMMUNITY_PROFILE,
     getCommunityProfile,
 } from "@/app/adapters/secondary/fakeData/communityProfiles";
-import { selectCurrentUser } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 const buildFallbackAvatarUrl = (id: string) => `https://i.pravatar.cc/120?u=${encodeURIComponent(id)}`;
 
-const normalizeAuthorId = (authorId: string) => {
-    const parts = authorId.split(":").filter(Boolean);
-    return parts[parts.length - 1] ?? authorId;
-};
+const normalizeAuthorId = (authorId: string) => authorId;
+
 
 export type CommentItemVM = {
     id: string;
@@ -58,19 +56,14 @@ const EMPTY_COMMENTS_RESULT: CommentsSelectorResult = {
     staleAfterMs: 30_000,
 };
 
-// Selector "safe" pour le cas sans targetId : toujours la même ref
-const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () =>
-    EMPTY_COMMENTS_RESULT;
+const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () => EMPTY_COMMENTS_RESULT;
 
 const formatRelativeTime = (isoDate: string): string => {
-    const createdAt = new Date(isoDate);
-    if (Number.isNaN(createdAt.getTime())) {
-        return "Date inconnue";
-    }
+    const d = new Date(isoDate);
+    if (Number.isNaN(d.getTime())) return "Date inconnue";
 
-    const diffMs = Date.now() - createdAt.getTime();
+    const diffMs = Date.now() - d.getTime();
     const diffSec = Math.max(1, Math.floor(diffMs / 1000));
-
     if (diffSec < 60) return "À l'instant";
 
     const diffMin = Math.floor(diffSec / 60);
@@ -85,16 +78,18 @@ const formatRelativeTime = (isoDate: string): string => {
     const diffWeeks = Math.floor(diffDays / 7);
     if (diffWeeks < 5) return `Il y a ${diffWeeks} sem`;
 
-    return createdAt.toLocaleDateString("fr-FR");
+    return d.toLocaleDateString("fr-FR");
 };
 
 export function useCommentsForCafe(targetId?: CafeId) {
     const dispatch = useDispatch<any>();
-
     const currentUser = useSelector(selectCurrentUser);
+    const effectiveUserId = useSelector(selectEffectiveUserId);
+
+
 
     const uiViaHookCreateComment = useCallback(
-        ({ targetId, body }: { targetId: CoffeeId; body: string }) => {
+        ({ targetId, body }: { targetId: string; body: string }) => {
             dispatch(uiCommentCreateRequested({ targetId, body }));
         },
         [dispatch],
@@ -109,110 +104,101 @@ export function useCommentsForCafe(targetId?: CafeId) {
 
     const uiViaHookDeleteComment = useCallback(
         ({ commentId }: { commentId: string }) => {
-            console.log("uiViaHookDeleteComment", commentId);
             dispatch(uiCommentDeleteRequested({ commentId }));
         },
         [dispatch],
     );
 
-    // IMPORTANT : on ne crée plus un () => ({...}) à chaque fois
     const selector = useMemo(() => {
-        if (!targetId) {
-            return selectEmptyComments;
-        }
-        return selectCommentsForTarget(targetId); // factory Reselect, OK
+        if (!targetId) return selectEmptyComments;
+        return selectCommentsForTarget(targetId);
     }, [targetId]);
 
-    const { comments, loading, error, lastFetchedAt, staleAfterMs } =
-        useSelector(selector);
+    const { comments, loading, error, lastFetchedAt, staleAfterMs } = useSelector(selector);
 
     const outboxRecords = useSelector((state: RootStateWl) => state.oState.byId);
 
+    // status des créations optimistic (tempId = comment.id tant que non réconcilié)
     const outboxStatusByTempId = useMemo(() => {
         const result: Record<string, string> = {};
-        Object.values(outboxRecords ?? {}).forEach((record: any) => {
-            const command = record?.item?.command;
-            if (!command) return;
-            if (command.kind === commandKinds.CommentCreate) {
-                result[command.tempId] = record.status;
+        for (const rec of Object.values(outboxRecords ?? {}) as any[]) {
+            const cmd = rec?.item?.command;
+            if (!cmd) continue;
+            if (cmd.kind === commandKinds.CommentCreate) {
+                // cmd.tempId existe chez toi
+                result[String(cmd.tempId)] = rec.status;
             }
-        });
+        }
         return result;
     }, [outboxRecords]);
 
-    const viewModel: CommentItemVM[] = useMemo(
 
-        () =>
-            comments
-                .filter(
-                    (comment) =>
-                        !comment.deletedAt &&
-                        comment.moderation !== moderationTypes.SOFT_DELETED,
-                )
-                .map((comment) => {
-                    const normalizedAuthorId = normalizeAuthorId(comment.authorId);
-                    const isCurrentUser = currentUser?.id === comment.authorId;
-                    const communityProfile = getCommunityProfile(normalizedAuthorId);
+    const normalizedCurrentUserId = currentUser?.id ? normalizeAuthorId(currentUser.id) : undefined;
 
-                    return {
-                        id: comment.id,
-                        authorName: isCurrentUser
-                            ? currentUser.displayName ?? DEFAULT_COMMUNITY_PROFILE.displayName
-                            : communityProfile?.displayName ?? normalizedAuthorId,
-                        avatarUrl: isCurrentUser
-                            ? currentUser.avatarUrl ?? DEFAULT_COMMUNITY_PROFILE.avatarUrl
-                            : communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId),
-                        body: comment.body,
-                        createdAt: comment.createdAt,
-                        relativeTime: formatRelativeTime(comment.createdAt),
-                        isOptimistic: Boolean(comment.optimistic),
-                        transportStatus: (() => {
-                            if (!comment.optimistic) {
-                                return "success" as const;
-                            }
-                            const status = outboxStatusByTempId[comment.id];
-                            if (status === statusTypes.failed) {
-                                return "failed" as const;
-                            }
-                            return "pending" as const;
-                        })(), // <- appel de la IIFE
-                        isAuthor: isCurrentUser,
-                    };
-                }),
+    const viewModel: CommentItemVM[] = useMemo(() => {
+        return comments
+            .filter((c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED)
+            .map((c) => {
 
-        [comments, outboxStatusByTempId, currentUser],
-    );
+                const normalizedAuthorId = normalizeAuthorId(c.authorId);
 
+                const isCurrentUser = Boolean(
+                    effectiveUserId && String(effectiveUserId) === String(c.authorId)
+                );
+
+                const communityProfile = getCommunityProfile(normalizedAuthorId);
+
+                // const avatarUrl =
+                //     (isCurrentUser ? currentUser?.avatarUrl : communityProfile?.avatarUrl) ??
+                //     buildFallbackAvatarUrl(normalizedAuthorId);
+                //
+                // const authorName =
+                //     (isCurrentUser ? currentUser?.displayName : communityProfile?.displayName) ??
+                //     DEFAULT_COMMUNITY_PROFILE.displayName;
+
+                // ✅ transportStatus: si optimistic=false => success
+                // sinon on regarde outboxStatusByCommentId
+                let transportStatus: "pending" | "success" | "failed" = "success";
+                if (c.optimistic) {
+                    const status = outboxStatusByTempId[c.id]; // ici c.id == commentId stable
+                    transportStatus = status === statusTypes.failed ? "failed" : "pending";
+                }
+
+                return {
+                    id: c.id,
+                    authorName: isCurrentUser
+                        ? (currentUser?.displayName ?? "Moi")
+                        : (communityProfile?.displayName ?? normalizedAuthorId),
+                    avatarUrl: isCurrentUser
+                        ? (currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(effectiveUserId)))
+                        : (communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId)),
+                    body: c.body,
+                    createdAt: c.createdAt,
+                    relativeTime: formatRelativeTime(c.createdAt),
+                    isOptimistic: Boolean(c.optimistic),
+                    transportStatus,
+                    isAuthor: isCurrentUser,
+                };
+            });
+    }, [comments, outboxStatusByTempId, currentUser, normalizedCurrentUserId]);
 
     useEffect(() => {
         if (!targetId) return;
-        if (loading === loadingStates.PENDING) return;
 
         const hasFetchedOnce = Boolean(lastFetchedAt);
         const lastFetchTime = lastFetchedAt ? Date.parse(lastFetchedAt) : 0;
-        const isStale = Date.now() - lastFetchTime > staleAfterMs;
+        const isStale = !lastFetchTime || Number.isNaN(lastFetchTime) ? true : Date.now() - lastFetchTime > staleAfterMs;
+
+        // ✅ on évite de spam si déjà pending
+        if (loading === loadingStates.PENDING) return;
 
         if (!hasFetchedOnce) {
-            dispatch(
-                commentRetrieval({
-                    targetId,
-                    op: opTypes.RETRIEVE,
-                    cursor: "",
-                    limit: 10,
-                }),
-            );
+            dispatch(commentRetrieval({ targetId, op: opTypes.RETRIEVE, cursor: "", limit: 10 }));
             return;
         }
 
         if (isStale) {
-            dispatch(
-                commentRetrieval({
-                    targetId,
-                    op: opTypes.REFRESH,
-                    cursor: "",
-                    limit: 10,
-                }),
-            );
+            dispatch(commentRetrieval({ targetId, op: opTypes.REFRESH, cursor: "", limit: 10 }));
         }
     }, [dispatch, targetId, loading, lastFetchedAt, staleAfterMs]);
 

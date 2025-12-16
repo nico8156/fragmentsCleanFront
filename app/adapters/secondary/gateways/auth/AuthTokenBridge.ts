@@ -1,4 +1,4 @@
-import type { AuthSession, UserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import {AuthSession, UserId} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export class AuthTokenBridge {
     private session?: AuthSession;
@@ -11,7 +11,7 @@ export class AuthTokenBridge {
         return this.session?.tokens.accessToken ?? null;
     };
 
-    getCurrentUserId = (): UserId | "anonymous" => {
-        return this.session?.userId ?? ("anonymous" as any);
+    getCurrentUserId = (): UserId | null => {
+        return this.session?.userId ?? null;
     };
 }

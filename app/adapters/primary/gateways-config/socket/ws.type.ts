@@ -1,54 +1,124 @@
+// ----------------------------------------------------------------------------
+// Shared
+// ----------------------------------------------------------------------------
 export type ISODate = string & { readonly __brand: "ISODate" };
 
-// --- event type strings (wire) ---
-export type WsInboundType =
-    | "social.like.added_ack"
-    | "social.like.removed_ack"
-    | "social.comment.created_ack"
-    | "social.comment.updated_ack"
-    | "social.comment.deleted_ack"
-    | "ticket.verify.accepted_ack"
-    | "ticket.verify.rejected_ack";
-
-// --- base ---
-export type WsInboundBase = {
-    type: WsInboundType;
+// ----------------------------------------------------------------------------
+// Flat events (matches backend logs)
+// ----------------------------------------------------------------------------
+export type LikeAddedAck = {
+    type: "social.like.added_ack";
     commandId: string;
-    updatedAt?: ISODate;
-};
-
-// --- likes ---
-export type LikeAckWire = WsInboundBase & {
-    type: "social.like.added_ack" | "social.like.removed_ack";
     targetId: string;
     count: number;
     me: boolean;
     version: number;
+    updatedAt: string; // ou ISODate si tu castes
 };
 
-// --- comments ---
-export type CommentAckWire = WsInboundBase & {
-    type:
-        | "social.comment.created_ack"
-        | "social.comment.updated_ack"
-        | "social.comment.deleted_ack";
+export type LikeRemovedAck = {
+    type: "social.like.removed_ack";
+    commandId: string;
+    targetId: string;
+    count: number;
+    me: boolean;
+    version: number;
+    updatedAt: string;
+};
+
+export type CommentCreatedAck = {
+    type: "social.comment.created_ack";
+    commandId: string;
     targetId: string;
     commentId: string;
     version: number;
-    // optionnel: payload minimal (ex: text) si tu veux reconciler sans refetch
-    // text?: string;
+    updatedAt: string;
 };
 
-// --- tickets verify ---
-export type TicketVerifyAckWire = WsInboundBase & {
-    type: "ticket.verify.accepted_ack" | "ticket.verify.rejected_ack";
-    ticketId: string;
-    targetId?: string;
-    // optionnel: reason / score / etc
-    reason?: string;
+export type CommentUpdatedAck = {
+    type: "social.comment.updated_ack";
+    commandId: string;
+    targetId: string;
+    commentId: string;
+    body: string;
+    version: number;
+    editedAt: string;
 };
 
-export type WsInboundEvent = LikeAckWire | CommentAckWire | TicketVerifyAckWire;
+export type CommentDeletedAck = {
+    type: "social.comment.deleted_ack";
+    commandId: string;
+    targetId: string;
+    commentId: string;
+    version: number;
+    deletedAt: string;
+};
 
-export const isWsInboundEvent = (x: any): x is WsInboundEvent =>
-    !!x && typeof x === "object" && typeof x.type === "string" && typeof x.commandId === "string";
+export type WsInboundEvent =
+    | LikeAddedAck
+    | LikeRemovedAck
+    | CommentCreatedAck
+    | CommentUpdatedAck
+    | CommentDeletedAck;
+
+// ----------------------------------------------------------------------------
+// Guard (narrowing réel)
+// ----------------------------------------------------------------------------
+const isStr = (v: unknown): v is string => typeof v === "string";
+const isNum = (v: unknown): v is number => typeof v === "number";
+const isBool = (v: unknown): v is boolean => typeof v === "boolean";
+
+// export const isWsInboundEvent = (x: unknown): x is WsInboundEvent => {
+//     if (!x || typeof x !== "object") return false;
+//     const o = x as any;
+//     if (!isStr(o.type) || !isStr(o.commandId)) return false;
+//
+//     // likes
+//     if (o.type === "social.like.added_ack" || o.type === "social.like.removed_ack") {
+//         return (
+//             isStr(o.targetId) &&
+//             isNum(o.count) &&
+//             isBool(o.me) &&
+//             isNum(o.version) &&
+//             isStr(o.updatedAt)
+//         );
+//     }
+//
+//     // comment created
+//     if (o.type === "social.comment.created_ack") {
+//         return (
+//             isStr(o.targetId) &&
+//             isStr(o.commentId) &&
+//             isNum(o.version) &&
+//             isStr(o.updatedAt)
+//         );
+//     }
+//
+//     // comment updated
+//     if (o.type === "social.comment.updated_ack") {
+//         return (
+//             isStr(o.targetId) &&
+//             isStr(o.commentId) &&
+//             isStr(o.body) &&
+//             isNum(o.version) &&
+//             isStr(o.editedAt)
+//         );
+//     }
+//
+//     // comment deleted
+//     if (o.type === "social.comment.deleted_ack") {
+//         return (
+//             isStr(o.targetId) &&
+//             isStr(o.commentId) &&
+//             isNum(o.version) &&
+//             isStr(o.deletedAt)
+//         );
+//     }
+//
+//     return false;
+// };
+export const isWsInboundEvent = (x: unknown): x is WsInboundEvent => {
+    if (!x || typeof x !== "object") return false;
+    const o = x as any;
+    return typeof o.type === "string" && typeof o.commandId === "string";
+};

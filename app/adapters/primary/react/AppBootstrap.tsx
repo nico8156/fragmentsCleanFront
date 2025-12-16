@@ -10,7 +10,7 @@ import {onCfPhotoRetrieval} from "@/app/core-logic/contextWL/cfPhotosWl/usecases
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import {getOnceRequested, requestPermission} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import {initializeAuth} from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
-import {replayRequested, syncDecideRequested } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+
 import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {mountAppStateAdapter} from "@/app/adapters/primary/gateways-config/appState.adapter";
 import {mountNetInfoAdapter} from "@/app/adapters/primary/gateways-config/netInfo.adapter";
@@ -40,9 +40,12 @@ export const AppBootstrap = () => {
 
             try {
                 // 1. hydratation app (si redux-persist)
+                console.log("[BOOT] DEV: clearing outbox storage");
+                await outboxStorage.clear();
                 console.log("[BOOT] appHydrationDone");
                 store.dispatch(appHydrationDone());
-
+                console.log("[BOOT] Init auth (early)");
+                await dispatch(initializeAuth());
                 // 2. rehydrate outbox + premier process
                 console.log("[BOOT] Rehydrate outbox: start");
                 const snapshot = await runRehydrateOutbox(store);
@@ -62,15 +65,11 @@ export const AppBootstrap = () => {
                 }
 
                 // 3. premier sync events (équivalent à ce que tu faisais en fin de boot)
-                console.log("[BOOT] Dispatch replayRequested");
-                store.dispatch(replayRequested());
-
-                console.log("[BOOT] Dispatch syncDecideRequested");
-                store.dispatch(syncDecideRequested());
-
-                // 4. init auth + location
-                console.log("[BOOT] Init auth");
-                await dispatch(initializeAuth());
+                // console.log("[BOOT] Dispatch replayRequested");
+                // store.dispatch(replayRequested());
+                //
+                // console.log("[BOOT] Dispatch syncDecideRequested");
+                // store.dispatch(syncDecideRequested());
 
                 console.log("[BOOT] Request location permission");
                 store.dispatch(requestPermission());

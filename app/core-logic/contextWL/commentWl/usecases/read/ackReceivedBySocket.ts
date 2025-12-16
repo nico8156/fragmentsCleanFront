@@ -1,124 +1,131 @@
 import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
-import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
-import { AppDispatchWl } from "@/app/store/reduxStoreWl";
-import { createReconciled, dropCommitted } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import type { AppStateWl } from "@/app/store/appStateWl";
+import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
-export const onCommentCreatedAck = createAction<{
+import {createReconciled, dropCommitted} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+
+// ---- Types ----
+type ISODate = string;
+
+export type CommentCreatedAckActionPayload = {
     commandId: string;
-    tempId: string;
-    server: { id: string; createdAt: string; version: number };
-}>("SERVER/COMMENT/ON_COMMENT_CREATED_ACK");
+    commentId: string; // ✅ c'est ton tempId côté front (UUID) et le même côté back
+    targetId: string;
+    server: { createdAt: ISODate; version: number };
+};
 
-export const onCommentUpdatedAck = createAction<{
+export type CommentUpdatedAckActionPayload = {
     commandId: string;
     commentId: string;
-    server: { editedAt: string; version: number; body?: string };
-}>("SERVER/COMMENT/ON_COMMENT_UPDATED_ACK");
+    server: { editedAt: ISODate; version: number; body?: string };
+};
 
-export const onCommentDeletedAck = createAction<{
+export type CommentDeletedAckActionPayload = {
     commandId: string;
     commentId: string;
-    server: { deletedAt: string; version: number };
-}>("SERVER/COMMENT/ON_COMMENT_DELETED_ACK");
+    server: { deletedAt: ISODate; version: number };
+};
+
+// ---- Actions ----
+export const onCommentCreatedAck = createAction<CommentCreatedAckActionPayload>(
+    "SERVER/COMMENT/CREATED_ACK",
+);
+
+export const onCommentUpdatedAck = createAction<CommentUpdatedAckActionPayload>(
+    "SERVER/COMMENT/UPDATED_ACK",
+);
+
+export const onCommentDeletedAck = createAction<CommentDeletedAckActionPayload>(
+    "SERVER/COMMENT/DELETED_ACK",
+);
+
+// Ces actions doivent être consommées par ton reducer comment.
+// Elles “confirment” l’état côté front (pas de remap id nécessaire).
+export const createConfirmed = createAction<{
+    commentId: string;
+    targetId: string;
+    server: { createdAt: ISODate; version: number };
+}>("COMMENT/CREATE_CONFIRMED");
 
 export const updateReconciled = createAction<{
     commentId: string;
-    server: { editedAt: string; version: number; body?: string };
+    server: { editedAt: ISODate; version: number; body?: string };
 }>("COMMENT/UPDATE_RECONCILED");
 
 export const deleteReconciled = createAction<{
     commentId: string;
-    server: { deletedAt: string; version: number };
+    server: { deletedAt: ISODate; version: number };
 }>("COMMENT/DELETE_RECONCILED");
 
-const selectOutboxByCommandId = (s: AppStateWl, cmdId: string) =>
-    (s as any).oState?.byCommandId?.[cmdId];
+// ---- Selector optionnel (si tu as un index byCommandId) ----
+const selectOutboxIdByCommandId = (s: AppStateWl, commandId: string): string | undefined => {
+    const anyState = s as any;
+    return anyState?.oState?.byCommandId?.[commandId];
+};
 
-export const ackListenerFactory = (deps: DependenciesWl, callback?: () => void) => {
-    const ackReceivedBySocketUseCase = createListenerMiddleware();
-    const listener = ackReceivedBySocketUseCase.startListening as TypedStartListening<
-        AppStateWl,
-        AppDispatchWl
-    >;
+// ---- Listener factory ----
+export const ackListenerFactory = (callback?: () => void) => {
+    const mw = createListenerMiddleware<AppStateWl, AppDispatchWl>();
+    const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
 
-    listener({
+    listen({
         actionCreator: onCommentCreatedAck,
-        effect: async (action, api) => {
-            const { commandId, tempId, server } = action.payload;
-            const outboxId = (api.getState() as any).oState.byCommandId?.[commandId];
+        effect: async ({ payload }, api) => {
+            const { commandId, commentId, targetId, server } = payload;
+            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
 
-            console.log("[ACK_COMMENTS] onCommentCreatedAck", {
-                commandId,
-                tempId,
-                server,
-                outboxId,
-            });
+            console.log("[ACK_COMMENTS] created", { commandId, commentId, targetId, server, outboxId });
 
-            api.dispatch(createReconciled({ tempId, server }));
+            // ✅ pas de reconcile tempId->serverId : l'id est déjà le bon
+            //api.dispatch(createConfirmed({ commentId, targetId, server }));
 
-            if (outboxId) {
-                console.log("[ACK_COMMENTS] dropCommitted (created)", {
-                    commandId,
-                    outboxId,
-                });
-                api.dispatch(dropCommitted({ commandId }));
-            }
+            api.dispatch(createReconciled({ commentId, server }));
 
-            if (callback) callback();
+            api.dispatch(dropCommitted({ commandId }));
+
+            callback?.();
         },
     });
 
-    listener({
+    listen({
         actionCreator: onCommentUpdatedAck,
-        effect: async (action, api) => {
-            const { commandId, commentId, server } = action.payload;
+        effect: async ({ payload }, api) => {
+            const { commandId, commentId, server } = payload;
+            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
 
-            console.log("[ACK_COMMENTS] onCommentUpdatedAck", {
-                commandId,
-                commentId,
-                server,
-            });
+            console.log("[ACK_COMMENTS] updated", { commandId, commentId, server, outboxId });
 
-            // 1) reconcile
             api.dispatch(updateReconciled({ commentId, server }));
 
-            // 2) drop outbox if present
-            const outboxId = selectOutboxByCommandId(api.getState(), commandId);
             if (outboxId) {
-                console.log("[ACK_COMMENTS] dropCommitted (updated)", {
-                    commandId,
-                    outboxId,
-                });
+                api.dispatch(dropCommitted({ commandId }));
+            } else {
                 api.dispatch(dropCommitted({ commandId }));
             }
 
-            if (callback) callback();
+            callback?.();
         },
     });
 
-    listener({
+    listen({
         actionCreator: onCommentDeletedAck,
-        effect: async ({ payload: { commandId, commentId, server } }, api) => {
-            console.log("[ACK_COMMENTS] onCommentDeletedAck", {
-                commandId,
-                commentId,
-                server,
-            });
+        effect: async ({ payload }, api) => {
+            const { commandId, commentId, server } = payload;
+            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
+
+            console.log("[ACK_COMMENTS] deleted", { commandId, commentId, server, outboxId });
 
             api.dispatch(deleteReconciled({ commentId, server }));
 
-            const outboxId = (api.getState() as any).oState?.byCommandId?.[commandId];
             if (outboxId) {
-                console.log("[ACK_COMMENTS] dropCommitted (deleted)", {
-                    commandId,
-                    outboxId,
-                });
+                api.dispatch(dropCommitted({ commandId }));
+            } else {
                 api.dispatch(dropCommitted({ commandId }));
             }
 
-            if (callback) callback();
+            callback?.();
         },
     });
 
-    return ackReceivedBySocketUseCase;
+    return mw;
 };

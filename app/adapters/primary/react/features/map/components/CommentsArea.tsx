@@ -46,7 +46,9 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
         <View style={styles.container}>
             <View style={styles.headerRow}>
                 <Text style={styles.sectionTitle}>Commentaires</Text>
-                {(isLoading || isRefreshing) && <ActivityIndicator size="small" color={palette.accent} />}
+                {coffeeId && (isLoading || isRefreshing) && (
+                    <ActivityIndicator size="small" color={palette.accent} />
+                )}
             </View>
 
             {!coffeeId ? (

@@ -1,27 +1,21 @@
 import {computeLikeId} from "@/app/adapters/secondary/gateways/like/helpers/likeId";
 import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
 import Constants from "expo-constants";
+import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
 
 type HttpLikesGatewayDeps = {
     baseUrl: string;                    // ex: "https://api.fragments.app"
-    getAccessToken: () => Promise<string | null>; // ou sync si tu l’as en mémoire
+    authToken: AuthTokenBridge; // <= au lieu de getAccessToken seul
 };
 
 export class HttpLikesGateway implements LikeWlGateway {
-    private readonly baseUrl: string;
-    private readonly getAccessToken: () => Promise<string | null>;
-
-    constructor(deps: HttpLikesGatewayDeps) {
-        this.baseUrl = deps.baseUrl.replace(/\/+$/, "");
-        this.getAccessToken = deps.getAccessToken;
-    }
+    constructor(private readonly deps: HttpLikesGatewayDeps) {}
 
     async get({ targetId, signal }: { targetId: string; signal: AbortSignal }) {
         console.log("[HTTP_LIKES] get called", { targetId });
-        const token = await this.getAccessToken();
-
+        const token = await this.deps.authToken.getAccessToken();
         console.log("[HTTP_LIKES] accessToken =", token ? token.slice(0, 12) + "..." : "<null>");
         if (!token) {
             throw new Error("Not authenticated");
@@ -59,34 +53,20 @@ export class HttpLikesGateway implements LikeWlGateway {
         };
     }
 
-    async add({ commandId, targetId, userId, at }: {
-        commandId: string;
-        targetId: string;
-        userId: string;
-        at: string;
-    }) {
-        const token = await this.getAccessToken();
-        if (!token) {
-            throw new Error("Not authenticated");
-        }
+    async add({ commandId, targetId, at }: { commandId: string; targetId: string; at: string }) {
+        const token = await this.deps.authToken.getAccessToken();
+        if (!token) throw new Error("Not authenticated");
+
+        const userId = this.deps.authToken.getCurrentUserId();
+        if (!userId) throw new Error("No userId yet");
 
         const likeId = computeLikeId(userId, targetId);
 
-        const body = {
-            commandId,
-            likeId,
-            targetId,
-            value: true,
-            at,
-            // 👇 on n'envoie PAS userId au back, il vient du JWT
-        };
+        const body = { commandId, likeId, targetId, value: true, at };
 
         const res = await fetch(`${API_BASE_URL}/api/social/likes`, {
             method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify(body),
         });
 
@@ -95,33 +75,20 @@ export class HttpLikesGateway implements LikeWlGateway {
         }
     }
 
-    async remove({ commandId, targetId, userId, at }: {
-        commandId: string;
-        targetId: string;
-        userId: string;
-        at: string;
-    }) {
-        const token = await this.getAccessToken();
-        if (!token) {
-            throw new Error("Not authenticated");
-        }
+    async remove({ commandId, targetId, at }: { commandId: string; targetId: string; at: string }) {
+        const token = await this.deps.authToken.getAccessToken();
+        if (!token) throw new Error("Not authenticated");
+
+        const userId = this.deps.authToken.getCurrentUserId();
+        if (!userId) throw new Error("No userId yet");
 
         const likeId = computeLikeId(userId, targetId);
 
-        const body = {
-            commandId,
-            likeId,
-            targetId,
-            value: false,
-            at,
-        };
+        const body = { commandId, likeId, targetId, value: false, at };
 
         const res = await fetch(`${API_BASE_URL}/api/social/likes`, {
             method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify(body),
         });
 
