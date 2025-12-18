@@ -29,19 +29,21 @@ export interface AppStateWl {
     authState: AuthState
 }
 
+export type HelpersCore = {
+    nowIso: () => string;
+    currentUserId: () => string;
+    currentUserProfile: () => { displayName?: string; avatarUrl?: string } | null;
+    newCommandId: () => CommandId;
+};
+
+export type HelpersTest = {
+    getCommentIdForTests?: () => string;
+    getCommandIdForTests?: () => string;
+};
+
+export type Helpers = HelpersCore & HelpersTest;
+
 export interface DependenciesWl {
-    gateways: Partial<GatewaysWl>
-    helpers: Partial<helpersType>
+    gateways: Partial<GatewaysWl>;
+    helpers: Helpers;
 }
-
-export type helpersType = {
-    nowIso: () => string
-    currentUserId: () => string
-    getCommentIdForTests: () => string
-    getCommandIdForTests: () => string
-    nowMs: () => number,
-    nowPlusMs: (ms:number) => string,
-    newCommandId:()=>CommandId
-}
-
-

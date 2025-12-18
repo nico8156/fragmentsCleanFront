@@ -71,6 +71,7 @@ import {HttpCommentsGateway} from "@/app/adapters/secondary/gateways/comments/Ht
 import {HttpUserRepo} from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
 import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { v4 as uuidv4 } from "uuid";
+import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 // ---- types ----
 export type GatewaysWl = {
@@ -130,7 +131,7 @@ const tickets = new FakeTicketsGateway();
 const entitlements = new FakeEntitlementWlGateway();
 const locations = new ExpoLocationGateway();
 const articles = new StaticArticleWlGateway();
-//const events = new NoopEventsGateway();
+
 const ws = new WsStompEventsGateway();
 
 const auth = {
@@ -163,41 +164,31 @@ export const gateways: GatewaysWl = {
 export const outboxStorage = createNativeOutboxStorage();
 export const syncMetaStorage = createNativeSyncMetaStorage();
 
-type AckCapableLikesGateway = {
-    setAckDispatcher: (action: any) => void;
+type AckDispatcher = (action: any) => void;
+
+type AckCapableGateway = {
+    setAckDispatcher: (dispatch: AckDispatcher) => void;
     setCurrentUserIdGetter?: (fn: () => string) => void;
 };
 
-const isAckCapableLikesGateway = (g: any): g is AckCapableLikesGateway => {
-    return g && typeof g.setAckDispatcher === "function";
+const isAckCapableGateway = (gw: any): gw is AckCapableGateway => {
+    return gw && typeof gw.setAckDispatcher === "function";
 };
+
+const wireAck = (store: ReduxStoreWl, gw: unknown) => {
+    if (!isAckCapableGateway(gw)) return;
+    gw.setAckDispatcher((action) => store.dispatch(action));
+    gw.setCurrentUserIdGetter?.(() => store.getState().aState.currentUser?.id ?? "anonymous");
+};
+
 
 // ---- wiring spécifique store <-> gateways ----
 export const wireGatewaysForStore = (store: ReduxStoreWl) => {
     console.log("[STORE] wireGatewaysForStore: start");
 
-
-    const likeGateway = gateways.likes;
-    if (isAckCapableLikesGateway(likeGateway)) {
-        likeGateway.setAckDispatcher((action: any) => store.dispatch(action));
-        likeGateway.setCurrentUserIdGetter?.(() => store.getState().aState.currentUser?.id ?? "anonymous");
-    }
-
-    const commentsGateway = gateways.comments as FakeCommentsWlGateway;
-    if ("setAckDispatcher" in commentsGateway) {
-        commentsGateway.setAckDispatcher((action) => {
-            store.dispatch(action);
-        });
-        if (commentsGateway.setCurrentUserIdGetter) {
-            commentsGateway.setCurrentUserIdGetter(() => store.getState().aState.currentUser?.id ?? "anonymous");
-        }
-    }
-
-    const ticketsGateway = gateways.tickets as FakeTicketsGateway;
-    if ("setAckDispatcher" in ticketsGateway) {
-        ticketsGateway.setAckDispatcher((action) => store.dispatch(action));
-        ticketsGateway.setCurrentUserIdGetter(() => store.getState().aState.currentUser?.id ?? "anonymous");
-    }
+    wireAck(store, gateways.likes);
+    wireAck(store, gateways.comments);
+    wireAck(store, gateways.tickets);
 
     console.log("[STORE] wireGatewaysForStore: done");
 };
@@ -205,13 +196,26 @@ export const wireGatewaysForStore = (store: ReduxStoreWl) => {
 // ---- création du store + middlewares/metier/runtime/sync ----
 export const createWlStore = (): ReduxStoreWl => {
     console.log("[STORE] createWlStore: start");
+
     let storeRef: ReduxStoreWl | null = null;
+    const getStore = () => {
+        if (!storeRef) throw new Error("Store not ready yet");
+        return storeRef;
+    };
 
     const helpers = {
-        nowIso: () => new Date().toISOString() as any,
-        currentUserId: () => storeRef?.getState().aState.currentUser?.id ?? "anonymous",
+        nowIso: () => parseToISODate(new Date().toISOString()),
+        currentUserId: () => {
+            const a = storeRef?.getState().aState;
+            return a?.session?.userId ?? a?.currentUser?.id ?? "anonymous";
+        },
+        currentUserProfile: () => {
+            const u = getStore().getState().aState.currentUser;
+            return u ? { displayName: u.displayName, avatarUrl: u.avatarUrl } : null;
+        },
         newCommandId: () => parseToCommandId(uuidv4()),
     };
+
 
     const ticketSubmitMiddleware = ticketSubmitUseCaseFactory({ gateways, helpers });
     const commentCreateMiddleware = createCommentUseCaseFactory({ gateways, helpers }).middleware;
@@ -275,7 +279,7 @@ export const createWlStore = (): ReduxStoreWl => {
                 sessionRef,
             }),
 
-            userLocationListenerFactory({ gateways, helpers: {} }),
+            userLocationListenerFactory({ gateways, helpers }),
         ],
         extraMiddlewares: [outboxPersistenceMiddleware],
     });

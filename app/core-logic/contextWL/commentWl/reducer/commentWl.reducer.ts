@@ -30,8 +30,14 @@ import {
 import { updateReconciled, deleteReconciled } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
 const adapter = createEntityAdapter<CommentEntity>({
-    sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
+    sortComparer: (a, b) => {
+        const ac = typeof a.createdAt === "string" ? a.createdAt : "";
+        const bc = typeof b.createdAt === "string" ? b.createdAt : "";
+        // plus récent d'abord (DESC)
+        return bc.localeCompare(ac);
+    },
 });
+
 
 const initialState: AppStateWl["comments"] = {
     entities: adapter.getInitialState(),
@@ -139,7 +145,7 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
                 id: commentId,
                 changes: {
                     body: server.body ?? cur.body,
-                    editedAt: server.editedAt,
+                    editedAt: server.editedAt ?? cur.editedAt,
                     version: server.version,
                     optimistic: false,
                 },
@@ -225,8 +231,19 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
         .addCase(commentsRetrieved, (state, action) => {
             const { targetId, op, items, nextCursor, prevCursor, serverTime } = action.payload;
 
-            // catalogue
-            adapter.upsertMany(state.entities, items);
+            const normalizeIso = (v: any): string | undefined => {
+                if (typeof v === "string") return v;
+                return undefined;
+            };
+
+            const normalized = items.map(i => ({
+                ...i,
+                createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
+                editedAt: normalizeIso(i.editedAt),
+                deletedAt: normalizeIso(i.deletedAt),
+            }));
+
+            adapter.upsertMany(state.entities, normalized);
 
             // view
             const v = ensureView(state, targetId);

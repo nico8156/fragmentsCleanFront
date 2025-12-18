@@ -138,30 +138,36 @@ export function useCommentsForCafe(targetId?: CafeId) {
         return comments
             .filter((c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED)
             .map((c) => {
-
                 const normalizedAuthorId = normalizeAuthorId(c.authorId);
 
-                const isCurrentUser = Boolean(
-                    effectiveUserId && String(effectiveUserId) === String(c.authorId)
-                );
+                const isCurrentUser =
+                    Boolean(effectiveUserId) && String(effectiveUserId) === String(c.authorId);
 
                 const communityProfile = getCommunityProfile(normalizedAuthorId);
 
-                // ✅ transportStatus: si optimistic=false => success
-                // sinon on regarde outboxStatusByCommentId
+                // ✅ transportStatus
                 let transportStatus: "pending" | "success" | "failed" = "success";
                 if (c.optimistic) {
-                    const status = outboxStatusByTempId[c.id]; // ici c.id == commentId stable
+                    const status = outboxStatusByTempId[c.id];
                     transportStatus = status === statusTypes.failed ? "failed" : "pending";
                 }
+
+                const fallbackName = isCurrentUser
+                    ? (currentUser?.displayName ?? "Moi")
+                    : (communityProfile?.displayName ?? normalizedAuthorId);
+
+                const fallbackAvatar = isCurrentUser
+                    ? (currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(effectiveUserId)))
+                    : (communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId));
+
+// ✅ priorité au serveur / optimistic enrichi
+                const authorName = c.authorName ?? fallbackName;
+                const avatarUrl  = (c.avatarUrl ?? undefined) ?? fallbackAvatar;
+
                 return {
                     id: c.id,
-                    authorName: isCurrentUser
-                        ? (currentUser?.displayName ?? "Moi")
-                        : (communityProfile?.displayName ?? normalizedAuthorId),
-                    avatarUrl: isCurrentUser
-                        ? (currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(effectiveUserId)))
-                        : (communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId)),
+                    authorName,
+                    avatarUrl,
                     body: c.body,
                     createdAt: c.createdAt,
                     relativeTime: formatRelativeTime(c.createdAt),

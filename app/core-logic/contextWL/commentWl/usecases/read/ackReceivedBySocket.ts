@@ -17,12 +17,14 @@ export type CommentCreatedAckActionPayload = {
 export type CommentUpdatedAckActionPayload = {
     commandId: string;
     commentId: string;
-    server: { editedAt: ISODate; version: number; body?: string };
+    targetId:string;
+    server: { editedAt: ISODate; version: number };
 };
 
 export type CommentDeletedAckActionPayload = {
     commandId: string;
     commentId: string;
+    targetId:string;
     server: { deletedAt: ISODate; version: number };
 };
 
@@ -73,7 +75,11 @@ export const ackListenerFactory = (callback?: () => void) => {
         effect: async ({ payload }, api) => {
             const { commandId, commentId, targetId, server } = payload;
             const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
-
+            //idempotent aussi cote ack
+            if (!outboxId) {
+                console.log("[ACK_COMMENTS] created: duplicate ack ignored", { commandId, commentId });
+                return;
+            }
             console.log("[ACK_COMMENTS] created", { commandId, commentId, targetId, server, outboxId });
 
             // ✅ pas de reconcile tempId->serverId : l'id est déjà le bon
@@ -90,10 +96,15 @@ export const ackListenerFactory = (callback?: () => void) => {
     listen({
         actionCreator: onCommentUpdatedAck,
         effect: async ({ payload }, api) => {
-            const { commandId, commentId, server } = payload;
+            const { commandId, commentId,server } = payload;
             const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
+            //idempotent aussi cote ack
+            if (!outboxId) {
+                console.log("[ACK_COMMENTS] updated: duplicate ack ignored", { commandId, commentId });
+                return;
+            }
+            console.log("[ACK_COMMENTS] updated", { commandId, commentId, server, outboxId});
 
-            console.log("[ACK_COMMENTS] updated", { commandId, commentId, server, outboxId });
 
             api.dispatch(updateReconciled({ commentId, server }));
 
@@ -111,8 +122,14 @@ export const ackListenerFactory = (callback?: () => void) => {
         actionCreator: onCommentDeletedAck,
         effect: async ({ payload }, api) => {
             const { commandId, commentId, server } = payload;
-            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
 
+
+            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
+            // ✅ si on n'a plus de trace du commandId → ACK déjà traité → ignore
+            if (!outboxId) {
+                console.log("[ACK_COMMENTS] deleted: duplicate ack ignored", { commandId, commentId });
+                return;
+            }
             console.log("[ACK_COMMENTS] deleted", { commandId, commentId, server, outboxId });
 
             api.dispatch(deleteReconciled({ commentId, server }));

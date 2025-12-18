@@ -127,9 +127,8 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
                         commentId: (evt as any).commentId,
                         targetId: (evt as any).targetId,
                         server: {
-                            editedAt: (evt as any).editedAt,
+                            editedAt: (evt as any).updatedAt,
                             version: (evt as any).version,
-                            body: (evt as any).body,
                         },
                     }),
                 );
@@ -143,7 +142,7 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
                         commentId: (evt as any).commentId,
                         targetId: (evt as any).targetId,
                         server: {
-                            deletedAt: (evt as any).deletedAt,
+                            deletedAt: (evt as any).updatedAt,
                             version: (evt as any).version,
                         },
                     }),

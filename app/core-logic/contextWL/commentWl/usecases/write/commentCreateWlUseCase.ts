@@ -29,7 +29,16 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                 }
                 return
             }; // rien à faire
-            const me = deps.helpers.currentUserId?.() ?? "me"; // (tu peux le garder si tu l'utilises vraiment)
+            console.log("[commentCreateRequested] / / current user : ",deps.helpers.currentUserId?.())
+            const me = deps.helpers.currentUserId?.() ?? "anonymous";
+            if (me === "anonymous") return;
+
+            const meProfile = deps.helpers.currentUserProfile();
+
+            const authorName = meProfile?.displayName ?? "Moi";
+            const avatarUrl = meProfile?.avatarUrl ?? undefined;
+            console.log("authorName from usecase",authorName)
+            console.log("avatarUrl from usecase",avatarUrl)
 
             const tempId =
                 deps.helpers.getCommentIdForTests?.() ??
@@ -51,6 +60,8 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                         parentId,
                         body: trimmed,
                         authorId: me,
+                        authorName,
+                        avatarUrl,
                         createdAt,
                         likeCount: 0,
                         replyCount: 0,
@@ -65,7 +76,7 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                 id: outboxId,
                 item: {
                     command: { kind: commandKinds.CommentCreate, commandId, tempId, targetId, parentId, body: trimmed, at:createdAt },
-                    undo: { kind: commandKinds.CommentCreate, tempId, targetId, parentId },
+                    undo: { kind: commandKinds.CommentCreate, commentId: tempId, targetId, parentId },
                 },
                 enqueuedAt,
             }))
