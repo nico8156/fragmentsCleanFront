@@ -1,6 +1,6 @@
+// HttpCommentsGateway.ts
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import {computeCommentId} from "@/app/adapters/secondary/gateways/comments/helpers/commentId";
 
 type HttpCommentsGatewayDeps = {
     baseUrl: string;
@@ -18,8 +18,8 @@ export class HttpCommentsGateway implements CommentsWlGateway {
 
     async list(params: {
         targetId: string;
-        cursor: string;
-        limit: number;
+        cursor?: string | null;
+        limit?: number;
         signal: AbortSignal;
         op?: "retrieve" | "refresh" | "older";
     }): Promise<ListCommentsResult> {
@@ -27,22 +27,19 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         if (!token) throw new Error("Not authenticated");
 
         const qs = new URLSearchParams();
-        qs.set("targetId", params.targetId);               // ✅ back attend targetId en query param
+        qs.set("targetId", params.targetId);
+        qs.set("op", params.op ?? "retrieve");
         if (params.cursor) qs.set("cursor", params.cursor);
-        if (params.limit) qs.set("limit", String(params.limit));
-        qs.set("op", params.op ?? "retrieve");             // ✅ back a un param op
+        if (params.limit != null) qs.set("limit", String(params.limit));
 
-        const res = await fetch(
-            `${this.baseUrl}/api/social-context/comments?${qs.toString()}`, // ✅ route back
-            {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json",
-                },
-                signal: params.signal,
+        const res = await fetch(`${this.baseUrl}/api/social/comments?${qs.toString()}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
             },
-        );
+            signal: params.signal,
+        });
 
         if (!res.ok) {
             throw new Error(`Comments list failed with status ${res.status}`);
@@ -51,38 +48,24 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         return (await res.json()) as ListCommentsResult;
     }
 
-    async create({
-                     commandId,
-                     targetId,
-                     parentId,
-                     body,
-                     tempId,
-                 }: {
+    async create(input: {
         commandId: string;
         targetId: string;
         parentId?: string | null;
         body: string;
-        tempId?: string;
+        tempId: string; // commentId côté back (stable) = tempId RN
     }): Promise<void> {
         const token = await this.getAccessToken();
         if (!token) throw new Error("Not authenticated");
 
-        if (!tempId) {
-            throw new Error("HttpCommentsGateway.create requires tempId");
-        }
-
-        // ❌ SUPPRIMÉ : commandId = computeCommentId(commandId)
-
         const payload = {
-            commandId,          // ✅ inchangé => corrélation outbox OK
-            commentId: tempId,
-            targetId,
-            parentId: parentId ?? null,
-            body,
+            commandId: input.commandId,
+            commentId: input.tempId,
+            targetId: input.targetId,
+            parentId: input.parentId ?? null,
+            body: input.body,
             at: new Date().toISOString(),
         };
-
-        console.log("[HTTP_COMMENTS] create payload", payload);
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {
             method: "POST",
@@ -98,12 +81,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         }
     }
 
-    async update({
-                     commandId,
-                     commentId,
-                     body,
-                     editedAt,
-                 }: {
+    async update(input: {
         commandId: string;
         commentId: string;
         body: string;
@@ -112,12 +90,11 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         const token = await this.getAccessToken();
         if (!token) throw new Error("Not authenticated");
 
-        // ✅ ton back attend: commandId, commentId, body, editedAt
         const payload = {
-            commandId,
-            commentId,
-            body,
-            editedAt: editedAt ?? new Date().toISOString(),
+            commandId: input.commandId,
+            commentId: input.commentId,
+            body: input.body,
+            editedAt: input.editedAt ?? new Date().toISOString(),
         };
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {
@@ -134,23 +111,14 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         }
     }
 
-    async delete({
-                     commandId,
-                     commentId,
-                     deletedAt,
-                 }: {
-        commandId: string;
-        commentId: string;
-        deletedAt: string;
-    }): Promise<void> {
+    async delete(input: { commandId: string; commentId: string; deletedAt?: string }): Promise<void> {
         const token = await this.getAccessToken();
         if (!token) throw new Error("Not authenticated");
 
-        // ✅ ton back attend: commandId, commentId, deletedAt
         const payload = {
-            commandId,
-            commentId,
-            deletedAt,
+            commandId: input.commandId,
+            commentId: input.commentId,
+            deletedAt: input.deletedAt ?? new Date().toISOString(),
         };
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {

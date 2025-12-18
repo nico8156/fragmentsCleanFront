@@ -19,7 +19,6 @@ import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/co
 import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {selectCurrentUser, selectEffectiveUserId} from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import {
-    DEFAULT_COMMUNITY_PROFILE,
     getCommunityProfile,
 } from "@/app/adapters/secondary/fakeData/communityProfiles";
 
@@ -148,14 +147,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
 
                 const communityProfile = getCommunityProfile(normalizedAuthorId);
 
-                // const avatarUrl =
-                //     (isCurrentUser ? currentUser?.avatarUrl : communityProfile?.avatarUrl) ??
-                //     buildFallbackAvatarUrl(normalizedAuthorId);
-                //
-                // const authorName =
-                //     (isCurrentUser ? currentUser?.displayName : communityProfile?.displayName) ??
-                //     DEFAULT_COMMUNITY_PROFILE.displayName;
-
                 // ✅ transportStatus: si optimistic=false => success
                 // sinon on regarde outboxStatusByCommentId
                 let transportStatus: "pending" | "success" | "failed" = "success";
@@ -163,7 +154,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
                     const status = outboxStatusByTempId[c.id]; // ici c.id == commentId stable
                     transportStatus = status === statusTypes.failed ? "failed" : "pending";
                 }
-
                 return {
                     id: c.id,
                     authorName: isCurrentUser
