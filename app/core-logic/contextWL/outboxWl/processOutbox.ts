@@ -175,8 +175,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                             at: cmd.at
                         });
 
-                        const ackBy =
-                            deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -190,8 +189,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                             at: cmd.at,
                         });
 
-                        const ackBy =
-                            deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -207,8 +205,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                             tempId: cmd.tempId, // ✅ IMPORTANT : requis par HttpCommentsGateway
                         });
 
-                        const ackBy =
-                            deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -221,8 +218,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                             body: cmd.newBody,
                             editedAt: cmd.at,
                         });
-                        const ackBy =
-                            deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;
@@ -234,8 +230,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                             commentId: cmd.commentId,
                             deletedAt: cmd.at,
                         });
-                        const ackBy =
-                            deps.helpers?.nowPlusMs?.(30_000) ?? new Date(Date.now() + 30_000).toISOString();
+                        const ackBy = new Date(Date.now() + 30_000).toISOString();
                         api.dispatch(markAwaitingAck({ id, ackBy }));
                         api.dispatch(dequeueCommitted({ id }));
                         break;

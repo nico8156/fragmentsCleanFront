@@ -66,19 +66,7 @@ export const syncEventsListenerFactory = (deps: Deps) => {
                         break;
                     case "comment.updatedAck":
                         console.log("[SYNC_EVENTS] dispatch onCommentUpdatedAck");
-                        const p: any = evt.payload;
-
-                        api.dispatch(
-                            onCommentUpdatedAck({
-                                commandId: p.commandId,
-                                commentId: p.commentId,
-                                server: {
-                                    editedAt: p.updatedAt,   // ✅ updatedAt -> editedAt
-                                    version: p.version,
-                                    body: p.body,            // optionnel, si un jour présent
-                                },
-                            }),
-                        );
+                        api.dispatch(onCommentUpdatedAck(evt.payload));
                         break;
                     case "comment.deletedAck":
                         console.log("[SYNC_EVENTS] dispatch onCommentDeletedAck");

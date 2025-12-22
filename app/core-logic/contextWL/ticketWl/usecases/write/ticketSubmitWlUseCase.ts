@@ -1,12 +1,14 @@
-import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
-// ⚠️ adapte ce chemin vers TON action outbox existante
-import {enqueueCommitted} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {TicketSubmitHelpers} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {ticketOptimisticCreated} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
-import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import {AppStateWl} from "@/app/store/appStateWl";
-import {AppDispatchWl} from "@/app/store/reduxStoreWl";
-import {outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
+import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+
+import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+import { TicketSubmitHelpers } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { AppStateWl } from "@/app/store/appStateWl";
+import { AppDispatchWl } from "@/app/store/reduxStoreWl";
+import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 // Action UI (déclenchée depuis le composant)
 export const uiTicketSubmitRequested = createAction<{ imageRef?: string; ocrText?: string | null }>(
@@ -25,10 +27,16 @@ export const ticketSubmitUseCaseFactory = (deps: {
         effect: async (action, api) => {
             const { helpers } = deps;
             const at = helpers.nowIso();
-            const ticketId = (helpers.newTicketIdForTests?.() ?? (`tk_${Math.random().toString(36).slice(2)}`)) as any;
-            const commandId = (helpers.getCommandIdForTests?.() ?? (`cmd_${Date.now()}`)) as any;
 
+            // ✅ ticketId MUST be UUID because backend does UUID.fromString(body.ticketId())
+            const ticketId =
+                (helpers.newTicketIdForTests?.() ?? (uuidv4() as any)) as any;
 
+            // ✅ commandId MUST be UUID because backend does UUID.fromString(body.commandId())
+            const commandId =
+                (helpers.getCommandIdForTests?.() ?? (uuidv4() as any)) as any;
+
+            // 1) Optimistic UI
             api.dispatch(
                 ticketOptimisticCreated({
                     ticketId,
@@ -39,10 +47,10 @@ export const ticketSubmitUseCaseFactory = (deps: {
                 })
             );
 
-
+            // 2) Enqueue outbox command (id outbox = string libre, pas besoin UUID)
             api.dispatch(
                 enqueueCommitted({
-                    id: `obx_${commandId}`,
+                    id: `obx_${commandId}`, // ok: juste un id interne outbox
                     item: {
                         command: {
                             kind: commandKinds.TicketVerify,
@@ -57,6 +65,8 @@ export const ticketSubmitUseCaseFactory = (deps: {
                     enqueuedAt: at,
                 })
             );
+
+            // 3) Dispatch outbox
             api.dispatch(outboxProcessOnce());
         },
     });

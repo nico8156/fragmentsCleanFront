@@ -66,10 +66,6 @@ export interface TicketRetrievedPayload {
     rejectionReason?: string;
 }
 
-export interface UiTicketSubmitRequestedPayload {
-    imageRef?: string;        // si tu stockes l’URI de la photo locale
-    ocrText?: string | null;  // possible pré-OCR client
-}
 
 export interface TicketReconciledConfirmedPayload {
     ticketId: TicketId;
@@ -109,7 +105,9 @@ export interface TicketSubmitHelpers {
     getCommandIdForTests?: () => CommandId;   // tests
 }
 
+
 export interface TicketConfirmedAck {
+    kind: "TicketConfirmedAck";
     commandId: CommandId;
     ticketId: TicketId;
     userId: UserId | string;
@@ -126,8 +124,8 @@ export interface TicketConfirmedAck {
         lineItems?: TicketLineItem[];
     };
 }
-
 export interface TicketRejectedAck {
+    kind: "TicketRejectedAck";
     commandId: CommandId;
     ticketId: TicketId;
     userId: UserId | string;
@@ -140,3 +138,5 @@ export interface TicketRejectedAck {
         merchantAddress?: string;
     };
 }
+
+export type TicketAck = TicketConfirmedAck | TicketRejectedAck;

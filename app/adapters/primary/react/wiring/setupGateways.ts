@@ -72,6 +72,7 @@ import {HttpUserRepo} from "@/app/adapters/secondary/gateways/user/HttpUserRepo"
 import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { v4 as uuidv4 } from "uuid";
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {HttpTicketsGateway} from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
 
 // ---- types ----
 export type GatewaysWl = {
@@ -127,7 +128,8 @@ const likes = new HttpLikesGateway({
     authToken: authTokenBridge
 });
 
-const tickets = new FakeTicketsGateway();
+const tickets = new HttpTicketsGateway({ baseUrl:API_BASE_URL, auth: authTokenBridge })
+
 const entitlements = new FakeEntitlementWlGateway();
 const locations = new ExpoLocationGateway();
 const articles = new StaticArticleWlGateway();

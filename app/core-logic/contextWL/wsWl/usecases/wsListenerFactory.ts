@@ -25,6 +25,8 @@ import {
     onCommentDeletedAck,
     onCommentUpdatedAck
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {mapWsTicketCompletedAck} from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
+import {onTicketConfirmedAck, onTicketRejectedAck} from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 
 export type SessionRef = { current?: AuthSession };
 
@@ -147,6 +149,26 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
                         },
                     }),
                 );
+                return;
+            }
+
+            // -------------------
+            // Tickets (flat -> domain ack)
+            // -------------------
+            case "ticket.verification.completed_ack": {
+                console.log("[WS-RECEIVED-ROUTED] ticket.verification.completed_ack", {
+                    commandId: evt.commandId,
+                    ticketId: evt.ticketId,
+                    outcome: evt.outcome,
+                });
+
+                const ack = mapWsTicketCompletedAck(evt);
+
+                if (ack.kind === "TicketConfirmedAck") {
+                    dispatch(onTicketConfirmedAck(ack));
+                } else {
+                    dispatch(onTicketRejectedAck(ack));
+                }
                 return;
             }
 

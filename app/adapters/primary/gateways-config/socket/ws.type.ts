@@ -54,69 +54,30 @@ export type CommentDeletedAck = {
     deletedAt: string;
 };
 
+export type TicketVerificationOutcome =
+    | "APPROVED"
+    | "REJECTED"
+    | "FAILED_RETRYABLE"
+    | "FAILED_FINAL";
+
+export type TicketVerificationCompletedAck = {
+    type: "ticket.verification.completed_ack";
+    commandId: string;
+    ticketId: string;
+    outcome: TicketVerificationOutcome;
+    version: number;
+    updatedAt: string;
+    payloadJson: string; // JSON string de l'event complet
+};
+
 export type WsInboundEvent =
     | LikeAddedAck
     | LikeRemovedAck
     | CommentCreatedAck
     | CommentUpdatedAck
-    | CommentDeletedAck;
+    | CommentDeletedAck
+    | TicketVerificationCompletedAck
 
-// ----------------------------------------------------------------------------
-// Guard (narrowing réel)
-// ----------------------------------------------------------------------------
-const isStr = (v: unknown): v is string => typeof v === "string";
-const isNum = (v: unknown): v is number => typeof v === "number";
-const isBool = (v: unknown): v is boolean => typeof v === "boolean";
-
-// export const isWsInboundEvent = (x: unknown): x is WsInboundEvent => {
-//     if (!x || typeof x !== "object") return false;
-//     const o = x as any;
-//     if (!isStr(o.type) || !isStr(o.commandId)) return false;
-//
-//     // likes
-//     if (o.type === "social.like.added_ack" || o.type === "social.like.removed_ack") {
-//         return (
-//             isStr(o.targetId) &&
-//             isNum(o.count) &&
-//             isBool(o.me) &&
-//             isNum(o.version) &&
-//             isStr(o.updatedAt)
-//         );
-//     }
-//
-//     // comment created
-//     if (o.type === "social.comment.created_ack") {
-//         return (
-//             isStr(o.targetId) &&
-//             isStr(o.commentId) &&
-//             isNum(o.version) &&
-//             isStr(o.updatedAt)
-//         );
-//     }
-//
-//     // comment updated
-//     if (o.type === "social.comment.updated_ack") {
-//         return (
-//             isStr(o.targetId) &&
-//             isStr(o.commentId) &&
-//             isStr(o.body) &&
-//             isNum(o.version) &&
-//             isStr(o.editedAt)
-//         );
-//     }
-//
-//     // comment deleted
-//     if (o.type === "social.comment.deleted_ack") {
-//         return (
-//             isStr(o.targetId) &&
-//             isStr(o.commentId) &&
-//             isNum(o.version) &&
-//             isStr(o.deletedAt)
-//         );
-//     }
-//
-//     return false;
-// };
 export const isWsInboundEvent = (x: unknown): x is WsInboundEvent => {
     if (!x || typeof x !== "object") return false;
     const o = x as any;
