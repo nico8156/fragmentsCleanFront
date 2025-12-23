@@ -1,22 +1,12 @@
-import { createSelector } from "@reduxjs/toolkit";
-import { RootStateWl } from "@/app/store/reduxStoreWl";
-import { OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import type { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
-export const selectOutbox = (s: RootStateWl) => (s as any).outbox ?? (s as any).oState;
-export const selectOutboxQueue = (s: RootStateWl) => selectOutbox(s).queue;
-export const selectOutboxById  = (s: RootStateWl) => selectOutbox(s).byId;
+export const selectOutbox = (s: RootStateWl): OutboxStateWl => {
+    return (s as any).oState as OutboxStateWl;
+};
 
-export const selectNextOutboxRecord = createSelector(selectOutbox, (state): OutboxRecord | undefined => {
-    const nextId = state.queue[0];
-    return nextId ? state.byId[nextId] : undefined;
-});
+export const selectOutboxQueue = (s: RootStateWl): OutboxStateWl["queue"] =>
+    selectOutbox(s).queue;
 
-export const selectOutboxRecordByCommandId = createSelector(
-    selectOutbox,
-    (_: RootStateWl, commandId: string | undefined) => commandId,
-    (state, commandId): OutboxRecord | undefined => {
-        if (!commandId) return undefined;
-        const recordId = state.byCommandId[commandId];
-        return recordId ? state.byId[recordId] : undefined;
-    },
-);
+export const selectOutboxById = (s: RootStateWl): OutboxStateWl["byId"] =>
+    selectOutbox(s).byId;

@@ -12,9 +12,12 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
     private sub?: StompSubscription;
 
     connect(params: WsConnectParams): void {
-        if (this.client?.active || this.client?.connected) return;
+        // ✅ si déjà connecté, on ne refait rien
+        if (this.client?.connected) return;
 
-        // ✅ SockJS veut une URL HTTP (pas ws://)
+        // ⚠️ si "active mais pas connected" (reconnect en cours), on ne recrée pas un 2e client
+        if (this.client?.active && !this.client?.connected) return;
+
         const httpUrl = params.wsUrl
             .replace(/^ws:\/\//, "http://")
             .replace(/^wss:\/\//, "https://");
@@ -38,10 +41,13 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
                 this.sub?.unsubscribe();
                 this.sub = this.client!.subscribe("/user/queue/acks", (msg: IMessage) => {
                     const raw = safeJsonParse(msg.body);
-                    console.log("[WS] inbound raw", raw);
-                    console.log("[WS] inbound validated -> forwarding to onEvent", raw.type);
 
-                    if (!isWsInboundEvent(raw)) return;
+                    if (!isWsInboundEvent(raw)) {
+                        console.warn("[WS] inbound invalid event", raw);
+                        return;
+                    }
+
+                    console.log("[WS] inbound validated -> forwarding to onEvent", raw.type);
                     params.onEvent(raw);
                 });
 
@@ -65,11 +71,15 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
     disconnect(): void {
         this.sub?.unsubscribe();
         this.sub = undefined;
-        this.client?.deactivate();
+
+        const c = this.client;
         this.client = undefined;
+
+        c?.deactivate();
     }
 
+    // ✅ isActive = "connected" (utile pour ensureConnected)
     isActive(): boolean {
-        return !!this.client?.active;
+        return !!this.client?.connected;
     }
 }

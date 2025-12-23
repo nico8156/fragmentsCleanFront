@@ -1,5 +1,14 @@
-import {RootStateWl} from "@/app/store/reduxStoreWl";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
 
-export const selectHasCompletedOnboarding = (state:RootStateWl) => state.appState.hasCompletedOnboarding;
+export const selectAppPhase = (s: RootStateWl) => s.appState.phase;
 
-export const isOnline =(state:RootStateWl) => state.appState.online;
+export const selectIsOnline = (s: RootStateWl) => s.appState.online;
+
+export const selectHasCompletedOnboarding = (s: RootStateWl) =>
+    s.appState.hasCompletedOnboarding;
+
+export const selectBoot = (s: RootStateWl) => s.appState.boot;
+export const selectBootError = (s: RootStateWl) => s.appState.boot.error ?? null;
+
+export const selectIsBootDone = (s: RootStateWl) =>
+    Boolean(s.appState.boot.doneHydration && s.appState.boot.doneWarmup);

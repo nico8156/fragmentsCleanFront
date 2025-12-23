@@ -4,7 +4,9 @@ import type { DependenciesWl } from "@/app/store/appStateWl";
 
 import {
     wsEnsureConnectedRequested,
-    wsDisconnectRequested, wsConnected, wsDisconnected,
+    wsDisconnectRequested,
+    wsConnected,
+    wsDisconnected,
 } from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
 import {
@@ -13,26 +15,24 @@ import {
     authSignedOut,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
-import {
-    onLikeAddedAck,
-    onLikeRemovedAck,
-} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
-
-import type { WsInboundEvent } from "@/app/adapters/primary/gateways-config/socket/ws.type";
+import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
+import type { WsInboundEvent } from "@/app/adapters/primary/socket/ws.type";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+
 import {
     onCommentCreatedAck,
     onCommentDeletedAck,
-    onCommentUpdatedAck
+    onCommentUpdatedAck,
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
-import {mapWsTicketCompletedAck} from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
-import {onTicketConfirmedAck, onTicketRejectedAck} from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
+
+import { mapWsTicketCompletedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
+import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 
 export type SessionRef = { current?: AuthSession };
 
 type WsListenerDeps = {
     gateways: DependenciesWl["gateways"];
-    wsUrl: string; // en SockJS: "http://.../ws"
+    wsUrl: string; // SockJS: "http://.../ws"
     sessionRef?: SessionRef;
 };
 
@@ -52,16 +52,7 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 
     const routeInbound = (evt: WsInboundEvent, dispatch: AppDispatchWl) => {
         switch (evt.type) {
-            // -------------------
-            // Likes (flat)
-            // -------------------
             case "social.like.added_ack": {
-                // event réel: { type, commandId, targetId, count, me, version, updatedAt }
-                console.log("[WS-RECEIVED-ROUTED] like.added_ack", {
-                    commandId: (evt as any).commandId,
-                    targetId: (evt as any).targetId,
-                });
-
                 dispatch(
                     onLikeAddedAck({
                         commandId: (evt as any).commandId,
@@ -78,11 +69,6 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
             }
 
             case "social.like.removed_ack": {
-                console.log("[WS-RECEIVED-ROUTED] like.removed_ack", {
-                    commandId: (evt as any).commandId,
-                    targetId: (evt as any).targetId,
-                });
-
                 dispatch(
                     onLikeRemovedAck({
                         commandId: (evt as any).commandId,
@@ -98,23 +84,14 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
                 return;
             }
 
-            // -------------------
-            // Comments (flat)
-            // -------------------
             case "social.comment.created_ack": {
-                console.log("[WS-RECEIVED-ROUTED] comment.created_ack", {
-                    commandId: (evt as any).commandId,
-                    commentId: (evt as any).commentId,
-                    targetId: (evt as any).targetId,
-                });
-
                 dispatch(
                     onCommentCreatedAck({
                         commandId: (evt as any).commandId,
                         commentId: (evt as any).commentId,
                         targetId: (evt as any).targetId,
                         server: {
-                            createdAt: (evt as any).updatedAt, // ✅ mapping
+                            createdAt: (evt as any).updatedAt,
                             version: (evt as any).version,
                         },
                     }),
@@ -152,23 +129,9 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
                 return;
             }
 
-            // -------------------
-            // Tickets (flat -> domain ack)
-            // -------------------
             case "ticket.verification.completed_ack": {
-                console.log("[WS-RECEIVED-ROUTED] ticket.verification.completed_ack", {
-                    commandId: evt.commandId,
-                    ticketId: evt.ticketId,
-                    outcome: evt.outcome,
-                });
-
                 const ack = mapWsTicketCompletedAck(evt);
-
-                if (ack.kind === "TicketConfirmedAck") {
-                    dispatch(onTicketConfirmedAck(ack));
-                } else {
-                    dispatch(onTicketRejectedAck(ack));
-                }
+                dispatch(ack.kind === "TicketConfirmedAck" ? onTicketConfirmedAck(ack) : onTicketRejectedAck(ack));
                 return;
             }
 
@@ -182,7 +145,7 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
         const ws = getWsGateway();
         if (!ws) return;
 
-        // évite les reconnects inutiles
+        // ✅ évite reconnect si vraiment connecté
         if (ws.isActive()) return;
 
         const session = await readSession();
@@ -201,7 +164,13 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
     const disconnect = (api: { dispatch: AppDispatchWl }) => {
         const ws = getWsGateway();
         ws?.disconnect();
-        api.dispatch(wsDisconnected());
+        //api.dispatch(wsDisconnected()); ====> wsListenerFactory devient l’unique dispatcher via 1 dispatch (cf plus haut )
+    };
+
+    const forceReconnect = async (api: { dispatch: AppDispatchWl }) => {
+        // ✅ force un handshake STOMP avec le nouveau token
+        disconnect(api);
+        await ensureConnected(api);
     };
 
     // intents runtime
@@ -230,8 +199,8 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
     listen({
         actionCreator: authSessionRefreshed,
         effect: async (_, api) => {
-            // si déjà connecté, on laisse vivre (ou tu peux forcer reconnect si tu veux)
-            await ensureConnected(api);
+            // ✅ on force reconnect pour garantir que le token de connexion STOMP est à jour
+            await forceReconnect(api);
         },
     });
 

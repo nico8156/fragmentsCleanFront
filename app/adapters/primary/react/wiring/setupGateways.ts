@@ -19,9 +19,7 @@ import {
     AuthServerGateway,
 } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 
-import { FakeCommentsWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
 import { FakeCoffeeGateway } from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
-import { FakeTicketsGateway } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import { FakeCfPhotoWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
 import { FakeOpeningHoursWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
@@ -62,8 +60,8 @@ import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/u
 import Constants from "expo-constants";
 import { NoopEventsGateway } from "@/app/adapters/secondary/gateways/NoopEventsGateway";
 
-import { WsEventsGatewayPort } from "@/app/adapters/primary/gateways-config/socket/ws.gateway";
-import { WsStompEventsGateway } from "@/app/adapters/primary/gateways-config/socket/WsEventsGateway";
+import { WsEventsGatewayPort } from "@/app/adapters/primary/socket/ws.gateway";
+import { WsStompEventsGateway } from "@/app/adapters/primary/socket/WsEventsGateway";
 
 // ✅ AJOUT : WS listener global
 import { wsListenerFactory } from "@/app/core-logic/contextWL/wsWl/usecases/wsListenerFactory";
@@ -73,6 +71,9 @@ import {parseToCommandId} from "@/app/core-logic/contextWL/outboxWl/typeAction/o
 import { v4 as uuidv4 } from "uuid";
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {HttpTicketsGateway} from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
+import {CommandStatusGateway} from "@/app/core-logic/contextWL/outboxWl/gateway/commandStatus.gateway";
+import {HttpCommandStatusGateway} from "@/app/adapters/secondary/gateways/outbox/HttpCommandStatusGateway";
+import {outboxWatchdogFactory} from "@/app/core-logic/contextWL/outboxWl/observation/outboxWatchdogFactory";
 
 // ---- types ----
 export type GatewaysWl = {
@@ -85,7 +86,6 @@ export type GatewaysWl = {
     entitlements: EntitlementWlGateway;
     locations: LocationWlGateway;
     articles: ArticleWlGateway;
-    //events: SyncEventsGateway;
     auth: {
         oauth: OAuthGateway;
         secureStore: AuthSecureStore;
@@ -94,6 +94,7 @@ export type GatewaysWl = {
     };
     ws: WsEventsGatewayPort;
     authToken: AuthTokenBridge;
+    commandStatus: CommandStatusGateway
 };
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
@@ -128,7 +129,15 @@ const likes = new HttpLikesGateway({
     authToken: authTokenBridge
 });
 
-const tickets = new HttpTicketsGateway({ baseUrl:API_BASE_URL, auth: authTokenBridge })
+const tickets = new HttpTicketsGateway({
+    baseUrl:API_BASE_URL,
+    auth: authTokenBridge
+});
+
+const commandStatus = new HttpCommandStatusGateway({
+    baseUrl: API_BASE_URL,
+    authToken: authTokenBridge,
+});
 
 const entitlements = new FakeEntitlementWlGateway();
 const locations = new ExpoLocationGateway();
@@ -157,10 +166,10 @@ export const gateways: GatewaysWl = {
     entitlements,
     locations,
     articles,
-    //events,
     auth,
     ws,
     authToken: authTokenBridge,
+    commandStatus
 };
 
 export const outboxStorage = createNativeOutboxStorage();
@@ -240,8 +249,6 @@ export const createWlStore = (): ReduxStoreWl => {
 
     const runtimeListener = runtimeListenerFactory();
 
-    const syncEventsListener = syncEventsListenerFactory({ metaStorage: syncMetaStorage });
-
     const outboxPersistenceMiddleware = outboxPersistenceMiddlewareFactory({ storage: outboxStorage });
 
     // ✅ WS URL (endpoint backend "/ws")
@@ -252,11 +259,12 @@ export const createWlStore = (): ReduxStoreWl => {
     const store = initReduxStoreWl({
         dependencies: { gateways, helpers },
         listeners: [
+            //Comments
             commentCreateMiddleware,
             commentDeleteMiddleware,
             commentUpdateMiddleware,
             commentAckMiddleware,
-
+            //Likes
             likeToggleMiddleware,
             likeAckMiddleware,
 
@@ -267,7 +275,6 @@ export const createWlStore = (): ReduxStoreWl => {
             entitlementAckMiddleware,
 
             // syncRuntimeListener,
-            // syncEventsListener,
             runtimeListener,
 
             authListenerFactory({
@@ -279,6 +286,11 @@ export const createWlStore = (): ReduxStoreWl => {
                 gateways,
                 wsUrl,
                 sessionRef,
+            }),
+            outboxWatchdogFactory({
+                gateways,
+                enableTimer: true,
+                tickMs: 20_000,
             }),
 
             userLocationListenerFactory({ gateways, helpers }),

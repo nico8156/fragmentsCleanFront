@@ -1,12 +1,5 @@
-// app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-
-import {
-    appBecameActive,
-    appBecameBackground,
-    appConnectivityChanged,
-} from "../typeAction/appWl.action";
 
 import {
     outboxProcessOnce,
@@ -19,6 +12,13 @@ import {
 } from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
 import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
+import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import {
+    appBecameActive,
+    appBecameBackground,
+    appBecameInactive,
+    appConnectivityChanged
+} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 const isSignedIn = (state: RootStateWl) => state.aState?.status === "signedIn";
 
@@ -27,14 +27,20 @@ export const runtimeListenerFactory = () => {
     const listen = runtimeListener.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
     const kickOnlineAuthed = (api: { dispatch: AppDispatchWl; getState: () => RootStateWl }) => {
-        // WS
+        // Si offline, on ne force rien (ça évite des logs/bruit)
+        if (!selectIsOnline(api.getState())) return;
+
         api.dispatch(wsEnsureConnectedRequested());
-        // delivery
         api.dispatch(outboxProcessOnce());
-        // observation (rattrapage ACK manquant)
         api.dispatch(outboxWatchdogTick());
     };
 
+    const suspendRuntime = (api: { dispatch: AppDispatchWl }) => {
+        api.dispatch(outboxSuspendRequested());
+        api.dispatch(wsDisconnectRequested());
+    };
+
+    // ---- Active => (re)connect + process + watchdog (si signedIn)
     listen({
         actionCreator: appBecameActive,
         effect: async (_, api) => {
@@ -42,11 +48,29 @@ export const runtimeListenerFactory = () => {
             console.log("[APP RUNTIME] appBecameActive", { signedIn });
 
             if (!signedIn) return;
-
             kickOnlineAuthed(api);
         },
     });
 
+    // ---- Inactive => traité comme background (fiabilité WS)
+    listen({
+        actionCreator: appBecameInactive,
+        effect: async (_, api) => {
+            console.log("[APP RUNTIME] appBecameInactive: suspend outbox + ws disconnect");
+            suspendRuntime(api);
+        },
+    });
+
+    // ---- Background => suspend + disconnect
+    listen({
+        actionCreator: appBecameBackground,
+        effect: async (_, api) => {
+            console.log("[APP RUNTIME] appBecameBackground: suspend outbox + ws disconnect");
+            suspendRuntime(api);
+        },
+    });
+
+    // ---- Connectivity changes
     listen({
         actionCreator: appConnectivityChanged,
         effect: async (action, api) => {
@@ -54,8 +78,7 @@ export const runtimeListenerFactory = () => {
 
             if (!action.payload.online) {
                 console.log("[APP RUNTIME] connectivity offline: disconnect ws + suspend outbox");
-                api.dispatch(wsDisconnectRequested());
-                api.dispatch(outboxSuspendRequested()); // ✅ cohérent
+                suspendRuntime(api);
                 return;
             }
 
@@ -67,15 +90,6 @@ export const runtimeListenerFactory = () => {
             }
 
             kickOnlineAuthed(api);
-        },
-    });
-
-    listen({
-        actionCreator: appBecameBackground,
-        effect: async (_, api) => {
-            console.log("[APP RUNTIME] appBecameBackground: suspend outbox + ws disconnect");
-            api.dispatch(outboxSuspendRequested());
-            api.dispatch(wsDisconnectRequested());
         },
     });
 

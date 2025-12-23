@@ -1,7 +1,7 @@
 import { parseToCommandId } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {parseToTicketId, TicketAck} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import type { TicketConfirmedAck, TicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import type { TicketVerificationCompletedAck } from "@/app/adapters/primary/gateways-config/socket/ws.type";
+import type { TicketVerificationCompletedAck } from "@/app/adapters/primary/socket/ws.type";
 
 type TicketVerificationPayload = {
     userId?: string;
