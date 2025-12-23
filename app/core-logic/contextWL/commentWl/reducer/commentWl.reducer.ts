@@ -6,12 +6,8 @@ import type {
     CommentEntity,
     CommentsStateWl,
     View,
-} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-import { loadingStates, opTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
-
-import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
-import { deleteOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import { loadingStates, opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 import {
     commentsRetrievalCancelled,
@@ -20,14 +16,16 @@ import {
     commentsRetrieved,
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 
+import { updateReconciled, deleteReconciled } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import {
+    addOptimisticCreated, deleteOptimisticApplied,
+    updateOptimisticApplied
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import {
     createReconciled,
-    createRollback,
-    updateRollback,
-    deleteRollback,
-} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
-
-import { updateReconciled, deleteReconciled } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+    createRollback, deleteRollback,
+    updateRollback
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 
 const adapter = createEntityAdapter<CommentEntity>({
     sortComparer: (a, b) => {

@@ -1,4 +1,3 @@
-// commentUpdateWlUseCase.ts
 import {
     createAction,
     createListenerMiddleware,
@@ -10,16 +9,12 @@ import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {updateOptimisticApplied} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 
 export const cuAction = createAction<{ commentId: string; newBody: string }>(
     "UI/COMMENT/UPDATE",
 );
 
-export const updateOptimisticApplied = createAction<{
-    commentId: string;
-    newBody: string;
-    clientEditedAt: ISODate;
-}>("COMMENT/UPDATE_OPTIMISTIC");
 
 export const commentUpdateWlUseCase = (deps: DependenciesWl, callback?: () => void) => {
     const mw = createListenerMiddleware();

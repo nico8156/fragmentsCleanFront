@@ -1,6 +1,6 @@
 // commentUpdate.ack.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { moderationTypes, opTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import { moderationTypes, opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 import { ackListenerFactory, onCommentUpdatedAck } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";

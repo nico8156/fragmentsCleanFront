@@ -3,7 +3,7 @@ import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, Vi
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
-import { CafeId } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import { CafeId } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import ExistingComment from "@/app/adapters/primary/react/features/map/components/ExistingComment";
 

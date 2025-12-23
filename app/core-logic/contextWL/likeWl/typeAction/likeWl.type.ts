@@ -1,4 +1,3 @@
-// likeWl.type.ts
 import {commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 
@@ -13,22 +12,6 @@ export type LikeAggregate = {
     version: number;      // version serveur de l’agrégat
     updatedAt?: ISODate;  // watermark serveur
     optimistic?: boolean; // une action locale en vol ?
-};
-
-export type LikeAddCmd = {
-    kind: typeof commandKinds.LikeAdd;
-    commandId: string;      // idempotence
-    targetId: TargetId;
-    userId: UserId;
-    at: ISODate;            // horodatage client
-};
-
-export type LikeRemoveCmd = {
-    kind: typeof commandKinds.LikeRemove;
-    commandId: string;
-    targetId: TargetId;
-    userId: UserId;
-    at: ISODate;
 };
 
 // Undo minimal pour rollback

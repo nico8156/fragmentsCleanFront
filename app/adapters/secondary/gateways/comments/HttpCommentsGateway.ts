@@ -1,6 +1,6 @@
 // HttpCommentsGateway.ts
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
-import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 type HttpCommentsGatewayDeps = {
     baseUrl: string;

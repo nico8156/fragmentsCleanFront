@@ -1,4 +1,3 @@
-// usecases/read/likesRetrieval.ts
 import { AppThunkWl } from "@/app/store/reduxStoreWl";
 import { TargetId } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {

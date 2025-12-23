@@ -1,6 +1,6 @@
 // commentCreate.ack.integration.spec.ts
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { moderationTypes } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import { moderationTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 import {
     ackListenerFactory,

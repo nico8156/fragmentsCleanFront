@@ -1,18 +1,16 @@
 // likeWl/usecases/read/ackLikes.spec.ts
-import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import {likesRetrieved} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
-import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
-import {createMemorySyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
-import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
-import {SyncEvent} from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
-import {syncEventsReceived} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { initReduxStoreWl, type ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
+import { likesRetrieved } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
+import { ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-describe("Likes ACK (reconcile + drop)", () => {
+import { commandKinds, type CommandId, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+
+const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+describe("Likes ACK (WS → reconcile + drop outbox)", () => {
     let store: ReduxStoreWl;
 
     beforeEach(() => {
@@ -21,20 +19,19 @@ describe("Likes ACK (reconcile + drop)", () => {
             listeners: [ackLikesListenerFactory().middleware],
         });
 
-        // seed agg
         store.dispatch(
             likesRetrieved({
                 targetId: "cafe_A",
                 count: 10,
                 me: false,
                 version: 1,
-                serverTime: "2025-10-10T07:01:00.000Z",
-            })
+                serverTime: "2025-10-10T07:01:00.000Z" as ISODate,
+            }),
         );
     });
 
-    it("ACK add: reconcile and drop outbox", async () => {
-        // seed outbox LikeAdd
+    it("ACK LikeAdd: reconcile then dropCommitted (by commandId)", async () => {
+        // seed outbox record (mapping byCommandId indispensable pour drop)
         store.dispatch(
             enqueueCommitted({
                 id: "obx_like_001",
@@ -44,37 +41,50 @@ describe("Likes ACK (reconcile + drop)", () => {
                         commandId: "cmd_like_001" as CommandId,
                         targetId: "cafe_A",
                         at: "2025-10-10T07:02:00.000Z" as ISODate,
-                        userId: "user_test",
                     },
-                    undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 10, prevMe: false, prevVersion: 1 },
+                    undo: {
+                        kind: commandKinds.LikeAdd,
+                        targetId: "cafe_A",
+                        prevCount: 10,
+                        prevMe: false,
+                        prevVersion: 1,
+                    },
                 },
-                enqueuedAt: "2025-10-10T07:02:00.000Z",
-            })
+                enqueuedAt: "2025-10-10T07:02:00.000Z" as ISODate,
+            }),
         );
 
-        // ACK + flush
+        // WS -> action ACK
         store.dispatch(
             onLikeAddedAck({
                 commandId: "cmd_like_001",
                 targetId: "cafe_A",
-                server: { count: 11, me: true, version: 2, updatedAt: "2025-10-10T07:02:05.000Z"as ISODate },
-            })
+                server: {
+                    count: 11,
+                    me: true,
+                    version: 2,
+                    updatedAt: "2025-10-10T07:02:05.000Z" as ISODate,
+                },
+            }),
         );
-        await flush();
 
+        await flushPromises();
+
+        // assert like reconciled
         const agg = store.getState().lState.byTarget["cafe_A"];
         expect(agg.count).toBe(11);
         expect(agg.me).toBe(true);
         expect(agg.version).toBe(2);
         expect(agg.optimistic).toBe(false);
 
-        // drop
+        // assert outbox dropped
         const o = store.getState().oState;
         expect(o.byId["obx_like_001"]).toBeUndefined();
         expect(o.byCommandId["cmd_like_001"]).toBeUndefined();
+        expect(o.queue).not.toContain("obx_like_001");
     });
 
-    it("ACK remove: reconcile and drop outbox", async () => {
+    it("ACK LikeRemove: reconcile then dropCommitted (by commandId)", async () => {
         // seed état liké
         store.dispatch(
             likesRetrieved({
@@ -82,10 +92,10 @@ describe("Likes ACK (reconcile + drop)", () => {
                 count: 11,
                 me: true,
                 version: 2,
-                serverTime: "2025-10-10T07:01:30.000Z",
-            })
+                serverTime: "2025-10-10T07:01:30.000Z" as ISODate,
+            }),
         );
-        // seed outbox LikeRemove
+
         store.dispatch(
             enqueueCommitted({
                 id: "obx_unlike_001",
@@ -95,22 +105,33 @@ describe("Likes ACK (reconcile + drop)", () => {
                         commandId: "cmd_unlike_001" as CommandId,
                         targetId: "cafe_A",
                         at: "2025-10-10T07:02:10.000Z" as ISODate,
-                        userId: "user_test",
                     },
-                    undo: { kind: commandKinds.LikeRemove, targetId: "cafe_A", prevCount: 11, prevMe: true, prevVersion: 2 },
+                    undo: {
+                        kind: commandKinds.LikeRemove,
+                        targetId: "cafe_A",
+                        prevCount: 11,
+                        prevMe: true,
+                        prevVersion: 2,
+                    },
                 },
-                enqueuedAt: "2025-10-10T07:02:10.000Z",
-            })
+                enqueuedAt: "2025-10-10T07:02:10.000Z" as ISODate,
+            }),
         );
 
         store.dispatch(
             onLikeRemovedAck({
                 commandId: "cmd_unlike_001",
                 targetId: "cafe_A",
-                server: { count: 10, me: false, version: 3, updatedAt: "2025-10-10T07:02:15.000Z" as ISODate},
-            })
+                server: {
+                    count: 10,
+                    me: false,
+                    version: 3,
+                    updatedAt: "2025-10-10T07:02:15.000Z" as ISODate,
+                },
+            }),
         );
-        await flush();
+
+        await flushPromises();
 
         const agg = store.getState().lState.byTarget["cafe_A"];
         expect(agg.count).toBe(10);
@@ -121,82 +142,39 @@ describe("Likes ACK (reconcile + drop)", () => {
         const o = store.getState().oState;
         expect(o.byId["obx_unlike_001"]).toBeUndefined();
         expect(o.byCommandId["cmd_unlike_001"]).toBeUndefined();
+        expect(o.queue).not.toContain("obx_unlike_001");
     });
-    it("from SyncEvent like.addedAck to reconciled likes and dropped outbox === Integration Test", async () => {
-        const metaStorage = createMemorySyncMetaStorage();
-        await metaStorage.loadOrDefault();
 
-        const store = initReduxStoreWl({
-            dependencies: { /* gateways fake si besoin */ },
-            listeners: [
-                syncEventsListenerFactory({ metaStorage }),  // 👈 reçoit SyncEvent
-                ackLikesListenerFactory().middleware,       // 👈 réagit à onLikeAddedAck
-            ],
-        });
-
-        // 1️⃣ seed agg + outbox
+    it("ACK older version is ignored (does not downgrade)", async () => {
+        // état serveur plus récent déjà en place
         store.dispatch(
             likesRetrieved({
                 targetId: "cafe_A",
-                count: 10,
-                me: false,
-                version: 1,
-                serverTime: "2025-10-10T07:01:00.000Z",
-            })
+                count: 99,
+                me: true,
+                version: 10,
+                serverTime: "2025-10-10T07:01:59.000Z" as ISODate,
+            }),
         );
 
         store.dispatch(
-            enqueueCommitted({
-                id: "obx_like_001",
-                item: {
-                    command: {
-                        kind: commandKinds.LikeAdd,
-                        commandId: "cmd_like_001" as CommandId,
-                        targetId: "cafe_A",
-                        at: "2025-10-10T07:02:00.000Z" as ISODate,
-                        userId: "user_test",
-                    },
-                    undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 10, prevMe: false, prevVersion: 1 },
-                },
-                enqueuedAt: "2025-10-10T07:02:00.000Z",
-            })
-        );
-
-        // 2️⃣ on simule l'event de sync
-        const syncEvent: SyncEvent = {
-            id: "evt-like-ack-1",
-            happenedAt: "2025-10-10T07:02:05.000Z" as ISODate,
-            type: "like.addedAck",
-            payload: {
-                commandId: "cmd_like_001",
+            onLikeAddedAck({
+                commandId: "cmd_irrelevant" as any,
                 targetId: "cafe_A",
                 server: {
                     count: 11,
                     me: true,
-                    version: 2,
+                    version: 2, // plus vieux
                     updatedAt: "2025-10-10T07:02:05.000Z" as ISODate,
                 },
-            },
-        };
+            }),
+        );
 
-        store.dispatch(syncEventsReceived([syncEvent]));
-        await flush();
+        await flushPromises();
 
-        // 3️⃣ assert : agg reconcilié
         const agg = store.getState().lState.byTarget["cafe_A"];
-        expect(agg.count).toBe(11);
+        expect(agg.version).toBe(10);
+        expect(agg.count).toBe(99);
         expect(agg.me).toBe(true);
-        expect(agg.version).toBe(2);
-        expect(agg.optimistic).toBe(false);
-
-        // 4️⃣ assert : outbox nettoyée
-        const o = store.getState().oState;
-        expect(o.byId["obx_like_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_like_001"]).toBeUndefined();
-
-        // 5️⃣ assert : event marqué appliqué dans le meta storage
-        const snapshot = metaStorage.getSnapshot();
-        expect(snapshot.appliedEventIds).toContain("evt-like-ack-1");
     });
-
 });

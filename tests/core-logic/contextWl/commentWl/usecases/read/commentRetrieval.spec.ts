@@ -5,7 +5,7 @@ import {
     ListCommentsResult, loadingStates,
     moderationTypes,
     opTypes
-} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import {commentRetrieval} from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 
 describe('On comment retrieval : ', () => {

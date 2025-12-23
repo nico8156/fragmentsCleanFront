@@ -6,7 +6,7 @@ import {
     LoadingState,
     loadingStates,
     moderationTypes,
-} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
 
 type CommentsSlice = RootStateWl["cState"];

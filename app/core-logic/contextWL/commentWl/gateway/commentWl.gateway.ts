@@ -1,6 +1,6 @@
 
 //PORT === COMMENT
-import {ListCommentsResult, Op} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {ListCommentsResult, Op} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 export interface CommentsWlGateway{
     list(params: { targetId: string; cursor?: string; limit?: number; signal: AbortSignal, op?:Op }): Promise<ListCommentsResult>;

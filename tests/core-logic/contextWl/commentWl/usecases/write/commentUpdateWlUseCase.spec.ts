@@ -4,7 +4,7 @@ import {
 } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {commandKinds, OutboxItem, OutboxRecord} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import {moderationTypes} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {moderationTypes} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import {commentUpdateWlUseCase, cuAction} from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 import {CommentUpdateUndo} from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 

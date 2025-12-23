@@ -1,10 +1,10 @@
 import { createReducer } from "@reduxjs/toolkit";
 import { AppStateWl } from "@/app/store/appStateWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
+
 import { statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
     dequeueCommitted,
-    dropCommitted,
+    dropCommitted, enqueueCommitted,
     markAwaitingAck,
     markFailed,
     markProcessing,
@@ -12,13 +12,13 @@ import {
     scheduleRetry,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-export const initialOutboxState: AppStateWl["outbox"] = {
+export const initialOutboxState: AppStateWl["oState"] = {
     byId: {},
     queue: [],
     byCommandId: {},
 };
 
-const removeFromQueue = (state: AppStateWl["outbox"], id: string) => {
+const removeFromQueue = (state: AppStateWl["oState"], id: string) => {
     if (!state.queue.length) return;
     state.queue = state.queue.filter((x) => x !== id);
 };

@@ -1,13 +1,12 @@
 import { createListenerMiddleware, createAction, TypedStartListening, nanoid } from "@reduxjs/toolkit";
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from "uuid";
 
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
-import { CommandId, commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+
+import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { likeOptimisticApplied, unlikeOptimisticApplied } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+
 
 export const uiLikeToggleRequested = createAction<{ targetId: string }>("UI/LIKE/TOGGLE_REQUESTED");
 
@@ -36,7 +35,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
             const outboxId = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;
 
             // ✅ commandId: UUID v4 (corrélation back/front)
-            const commandId = uuidv4() as CommandId;
+            const commandId = deps.helpers.newCommandId();
 
             const at = (deps.helpers?.nowIso?.() ?? new Date().toISOString()) as ISODate;
 

@@ -30,26 +30,11 @@ import {
     selectOutboxById,
     selectOutboxQueue,
 } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-
-
-export const createReconciled = createAction<{
-    commentId: string;
-    server: { createdAt: string; version: number };
-}>("COMMENT/CREATE_RECONCILED");
-
-export const createRollback = createAction<{ tempId: string; targetId: string; parentId?: string }>(
-    "COMMENT/CREATE_ROLLBACK",
-);
-
-export const updateRollback = createAction<{ commentId?: string; prevBody?: string; prevVersion?: number }>(
-    "COMMENT/UPDATE_ROLLBACK",
-);
-export const deleteRollback = createAction<{
-    commentId: string;
-    prevBody: string;
-    prevVersion?: number;
-    prevDeletedAt?: string;
-}>("COMMENT/DELETE_ROLLBACK");
+import {
+    createRollback,
+    deleteRollback,
+    updateRollback
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 
 const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
 

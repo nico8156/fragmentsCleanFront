@@ -1,7 +1,7 @@
 // commentRetrieval.ts
 import { createAction } from "@reduxjs/toolkit";
 import type { AppThunkWl } from "@/app/store/reduxStoreWl";
-import type { CafeId, CommentEntity, ISODate, Op } from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import type { CafeId, CommentEntity, ISODate, Op } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 export const commentsRetrievalPending = createAction<{ targetId: CafeId; op: Op }>(
     "COMMENTS/RETRIEVAL_PENDING",

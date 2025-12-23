@@ -11,7 +11,7 @@ import {
     loadingStates,
     moderationTypes,
     opTypes,
-} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";

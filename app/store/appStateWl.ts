@@ -1,4 +1,4 @@
-import {CommentsStateWl} from "@/app/core-logic/contextWL/commentWl/type/commentWl.type";
+import {CommentsStateWl} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import {CommandId, OutboxStateWl} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { LikesStateWl} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import {TicketsStateWl} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
@@ -23,7 +23,7 @@ export interface AppStateWl {
     likes:LikesStateWl
     tickets:TicketsStateWl
     entitlement:EntitlementStateWl
-    outbox:OutboxStateWl
+    oState:OutboxStateWl
     location:LocationStateWl
     articles: ArticleStateWl
     authState: AuthState
