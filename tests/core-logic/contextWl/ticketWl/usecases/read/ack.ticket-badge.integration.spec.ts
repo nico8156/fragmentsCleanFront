@@ -16,7 +16,7 @@ import { authUserHydrationSucceeded } from "@/app/core-logic/contextWL/userWl/ty
 
 import {
     syncEventsListenerFactory,
-} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
+} from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
 import {
     syncEventsReceived,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";

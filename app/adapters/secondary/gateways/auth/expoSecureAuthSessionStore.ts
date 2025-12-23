@@ -20,7 +20,9 @@ export class ExpoSecureAuthSessionStore implements AuthSecureStore {
     }
 
     async saveSession(session: AuthSession): Promise<void> {
-        await SecureStore.setItemAsync(this.key, JSON.stringify(session));
+        await SecureStore.setItemAsync(this.key, JSON.stringify(session), {
+            keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+        });
     }
 
     async clearSession(): Promise<void> {

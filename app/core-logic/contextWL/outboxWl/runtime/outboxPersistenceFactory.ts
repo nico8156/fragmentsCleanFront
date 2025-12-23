@@ -1,13 +1,12 @@
 import { createListenerMiddleware, isAnyOf, TypedStartListening } from "@reduxjs/toolkit";
 import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {
-    dequeueCommitted,
-    dropCommitted,
-    markAwaitingAck,
+    dequeueCommitted, dropCommitted, markAwaitingAck,
     markFailed,
     markProcessing,
-} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
-import { outboxRehydrateCommitted, scheduleRetry } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+    outboxRehydrateCommitted,
+    scheduleRetry
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { selectOutbox } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import {
@@ -39,7 +38,7 @@ export const outboxPersistenceMiddlewareFactory = (deps: OutboxPersistenceDeps) 
         if (pending) clearTimeout(pending);
         pending = setTimeout(async () => {
             const root = api.getState();
-            const state = selectOutbox(root as any);
+            const state = selectOutbox(root);
             if (!state) return;
             const snapshot = buildOutboxSnapshot(state);
             try {

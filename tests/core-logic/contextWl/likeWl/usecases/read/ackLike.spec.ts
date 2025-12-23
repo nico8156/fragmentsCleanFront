@@ -6,7 +6,7 @@ import {CommandId, commandKinds, ISODate} from "@/app/core-logic/contextWL/outbo
 import { flush } from "@/app/adapters/secondary/gateways/fake/fakeLikesWlGateway";
 import {ackLikesListenerFactory, onLikeAddedAck, onLikeRemovedAck} from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import {createMemorySyncMetaStorage} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
-import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
+import {syncEventsListenerFactory} from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
 import {SyncEvent} from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 import {syncEventsReceived} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 

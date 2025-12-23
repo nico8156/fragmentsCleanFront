@@ -1,6 +1,6 @@
 // runtime/syncRuntimeListenerFactory.ts
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
-import { SyncEventsGateway, isCursorUnknownError } from "../gateway/eventsGateway";
+import { SyncEventsGateway, isCursorUnknownError } from "../../gateway/eventsGateway";
 
 import {
     replayRequested,
@@ -8,9 +8,9 @@ import {
     syncDeltaRequested,
     syncFullRequested,
     syncEventsReceived,
-} from "../typeAction/sync.action";
+} from "../../typeAction/sync.action";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import type { SyncResponse } from "../typeAction/syncEvent.type";
+import type { SyncResponse } from "../../typeAction/syncEvent.type";
 import {
     resolveStrategy,
     shouldSkip,

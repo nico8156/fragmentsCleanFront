@@ -1,7 +1,7 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/app/store/middleware/actionRecorder";
 
-import { syncEventsListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync/syncEventsListenerFactory";
+import { syncEventsListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
 import { syncEventsReceived } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
 import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
 import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";

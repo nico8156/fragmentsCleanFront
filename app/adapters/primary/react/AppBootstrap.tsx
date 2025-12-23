@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "react-redux";
-import type { ReduxStoreWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
 import {
     appBootFailed,
@@ -9,8 +9,8 @@ import {
     appWarmupDone,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
-import { mountAppStateAdapter } from "@/app/adapters/primary/runtime/appState.adapter";
 import { mountNetInfoAdapter } from "@/app/adapters/primary/runtime/netInfo.adapter";
+import { mountAppStateAdapter } from "@/app/adapters/primary/runtime/appState.adapter";
 
 import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 
@@ -25,21 +25,21 @@ import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursW
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 
 import { outboxStorage } from "@/app/adapters/primary/react/wiring/setupGateways";
+import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 
-// ✅ optionnel : dev flag explicite (au lieu d’un clear “sauvage”)
+// ---- dev guard (jamais en prod) ----
 const CLEAR_OUTBOX_ON_BOOT = false;
 
 const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
 
-const selectUserIdForEntitlements = (state: any): string | undefined => {
-    return (
-        state?.aState?.session?.userId ??
-        state?.aState?.currentUser?.id ??
-        state?.auth?.userId ??
-        state?.user?.id ??
-        undefined
-    );
-};
+const selectUserIdForEntitlements = (state: any): string | undefined =>
+    state?.aState?.session?.userId ??
+    state?.aState?.currentUser?.id ??
+    state?.auth?.userId ??
+    state?.user?.id ??
+    undefined;
+
+const isSignedIn = (state: any): boolean => state?.aState?.status === "signedIn";
 
 export const AppBootstrap = () => {
     const store = useStore() as unknown as ReduxStoreWl;
@@ -47,8 +47,9 @@ export const AppBootstrap = () => {
     useEffect(() => {
         console.log("[BOOT] AppBootstrap mounted");
 
-        const unmountNetInfo = mountNetInfoAdapter(store, { dispatchInitial: true });
-        const unmountAppState = mountAppStateAdapter(store);
+        // 0) Adapters (runtime signals)
+        const unmountNetInfo = mountNetInfoAdapter(store);
+        const unmountAppState = mountAppStateAdapter(store, { ignoreFirstActive: false });
 
         console.log("[BOOT] NetInfo + AppState adapters mounted");
 
@@ -56,35 +57,39 @@ export const AppBootstrap = () => {
         const dispatch: any = store.dispatch;
 
         const bootRuntime = async () => {
-            // 1) Hydration "app"
-            // (si redux-persist : remplace par le vrai signal rehydrate)
+            // 1) Hydration app
             store.dispatch(appHydrationDone());
 
-            // 2) Auth early
+            // 2) Auth early (charge session secure store)
             await dispatch(initializeAuth());
+            if (cancelled) return;
 
-            // 3) Outbox rehydrate
+            // 3) Outbox storage (DEV only)
             if (__DEV__ && CLEAR_OUTBOX_ON_BOOT) {
                 console.log("[BOOT] DEV: clearing outbox storage (flag enabled)");
                 await outboxStorage.clear();
             }
 
+            // 4) Outbox rehydrate
             console.log("[BOOT] Rehydrate outbox: start");
             const snapshot = await runRehydrateOutbox(store);
             console.log("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
-
             if (cancelled) return;
 
-            // 4) Si outbox non vide => process once
-            if (snapshot.queue.length) {
+            // 5) Optionnel: kick outbox once si on est déjà authed + online
+            // (sinon runtimeListener fera le job à appBecameActive / connectivity online)
+            const stateNow: any = store.getState();
+            if (snapshot.queue.length && isSignedIn(stateNow) && selectIsOnline(stateNow)) {
                 store.dispatch(outboxProcessOnce());
             }
         };
 
         const warmupData = async () => {
-            // Location permissions + once
-            store.dispatch(requestPermission());
-            store.dispatch(getOnceRequested({ accuracy: "high" }));
+            // Location permissions + once (ne bloque pas le boot si ça échoue)
+            try {
+                store.dispatch(requestPermission());
+                store.dispatch(getOnceRequested({ accuracy: "high" }));
+            } catch {}
 
             // Global data
             await dispatch(coffeeGlobalRetrieval());

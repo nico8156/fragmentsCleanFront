@@ -15,9 +15,15 @@ type RehydrateOutboxDeps = {
 const sanitizeRecord = (record: any): OutboxRecord | null => {
     if (!record || typeof record !== "object") return null;
     if (typeof record.id !== "string") return null;
-    if (!record.item || typeof record.item !== "object") return null;
-    if (!record.item.command || typeof record.item.command !== "object") return null;
-    if (!record.item.undo || typeof record.item.undo !== "object") return null;
+
+    const item = record.item;
+    if (!item || typeof item !== "object") return null;
+
+    const cmd = item.command;
+    if (!cmd || typeof cmd !== "object") return null;
+
+    const undo = item.undo; // peut être undefined / null / object
+
 
     const status = Object.values(statusTypes).includes(record.status)
         ? record.status
@@ -44,7 +50,7 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
 
     return {
         id: record.id,
-        item: record.item,
+        item: { command: cmd, undo: undo ?? {} },
         status,
         attempts,
         enqueuedAt,

@@ -1,7 +1,7 @@
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 
-import { syncEventsReceived } from "../typeAction/sync.action";
+import { syncEventsReceived } from "../../typeAction/sync.action";
 
 import {
     onLikeAddedAck,
