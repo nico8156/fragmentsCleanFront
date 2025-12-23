@@ -1,71 +1,64 @@
-# outboxWl – File de commandes offline
+# OutboxWL — Fiabilité des commandes utilisateur
 
-`outboxWl` gère la **file de commandes** à envoyer au backend.
+## Objectif
 
-Objectifs :
-- permettre à l’UI d’être **optimiste** (likes, commentaires, tickets…)
-- **persister** les commandes tant qu’elles ne sont pas confirmées
-- **rejouer** les commandes en cas de perte de réseau / crash app
-- traiter les commandes avec **backoff** + **idempotence**
-
----
-
-## 📦 Modèle
-
-### Types de commandes
-
-- `commandForComment` : création / update / delete de commentaire
-- `commandForLike` : toggles de like
-- `commandForTicket` : vérification / soumission de ticket
-
-Voir :
-- `typeAction/commandForComment.type.ts`
-- `typeAction/commandForLike.type.ts`
-- `typeAction/commandForTicket.type.ts`
-
-### État outbox
-
-- liste ordonnée de commandes
-- métadonnées de persistance (`outboxPersistence.types.ts`)
-- métadonnées de sync (`syncMeta.types.ts`)
+L’Outbox garantit que **toute intention utilisateur est traitée de manière fiable**,
+même en cas de :
+- perte réseau
+- fermeture de l’app
+- latence serveur
+- ACK WebSocket manquant
 
 ---
 
-## 🧠 Responsabilités de `outboxWl`
+## Cas couverts
 
-- enregistrer les commandes émises par les usecases WL
-- exposer un **snapshot** consommable par le runtime (`outboxSnapshot.ts`)
-- appliquer les effets d’ACK (succès/erreur) via les actions outbox
-- coopérer avec :
-  - le **runtime outbox** (`runtime/*`) pour la persistance
-  - la **sync** (`sync/*`) pour l’envoi au serveur
-
----
-
-## 🔁 Découpage interne
-
-- `processOutbox.ts`  
-  → logique de traitement métier d’un batch de commandes
-
-- `runtime/`  
-  → persistance & rehydratation outbox (voir `runtime/README.md`)
-
-- `sync/`  
-  → stratégie de sync + listeners réseau/ACK (voir `sync/README.md`)
+- Like / Unlike
+- Comment (create / update / delete)
+- Ticket submission / verification
+- Toute commande nécessitant :
+  - retry
+  - idempotence
+  - ACK serveur
 
 ---
 
-## 🔬 Tests
+## Principe
 
-Les tests dédiés à l’outbox sont dans :
+Intent utilisateur
+↓
+Outbox (persistée)
+↓
+HTTP command
+↓
+ACK WS (si reçu)
+↓
+Réconciliation + drop
 
-- `tests/core-logic/contextWl/outboxWl/processComment.spec.ts`
-- `tests/core-logic/contextWl/outboxWl/processLike.spec.ts`
-- `tests/core-logic/contextWl/outboxWl/processTicket.spec.ts`
-- `tests/core-logic/contextWl/outboxWl/runtime/*.spec.ts`
-- `tests/core-logic/contextWl/outboxWl/sync/*.spec.ts`
 
-Ils vérifient :
-- la transformation de l’état outbox
-- l’application correcte des ACK
-- la robustesse face aux cas réseau (retry, backoff…)
+---
+
+## Garanties
+
+| Garantie | Description |
+|--------|------------|
+| Idempotence | `commandId` |
+| Retry | backoff exponentiel |
+| Résilience mobile | persistance locale |
+| Pas de doublon | mapping `commandId → record` |
+| Rattrapage ACK | watchdog |
+
+---
+
+## Ce que l’outbox ne fait pas
+
+- Pas de synchronisation globale
+- Pas de logique métier
+- Pas de replay serveur automatique
+
+---
+
+## Philosophie
+
+> L’Outbox protège **l’intention utilisateur**,  
+> pas la cohérence globale du système.

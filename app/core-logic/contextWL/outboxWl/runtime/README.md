@@ -1,28 +1,79 @@
-# outboxWl/runtime – Persistance & Rehydratation
+# OutboxWL Runtime — Persistence, ACK & Watchdog
 
-Ce module encapsule **comment** l’outbox est stockée et restaurée.
+## Rôle
 
----
+Cette couche gère :
+- la persistance de l’outbox
+- la reprise après crash / kill
+- la récupération des ACK manquants
 
-## 🎯 Objectifs
-
-- persister l’outbox dans un storage natif (`outboxStorage.gateway.ts`)
-- recharger l’état au démarrage (`rehydrateOutbox.ts`)
-- exposer une **factory** qui câble tout avec les gateways d’implémentation (`outboxPersistenceFactory.ts`)
-
----
-
-## 🔌 Gateways
-
-- `outboxStorage.gateway.ts` : port abstrait vers le stockage
-  - implémentation concrète : `app/adapters/secondary/gateways/outbox/nativeOutboxStorage.ts`
+Elle est **100% technique**.
 
 ---
 
-## 🔁 Cycle
+## Persistance
 
-1. Au boot : `rehydrateOutbox.ts` lit depuis le storage natif.
-2. À chaque changement critique : l’état outbox est re-persisté.
-3. En cas de crash : au reboot, l’outbox est restaurée avant la reprise de la sync.
+### Stockage utilisé
 
-Les détails d’orchestration globale (quand on rehydrate, quand on persiste) se trouvent dans `appWl/README.md`.
+- MMKV (prioritaire)
+- AsyncStorage (fallback)
+- Memory (tests / dev)
+
+### Persisté
+- état de l’outbox (`byId`, `queue`, `byCommandId`)
+- état du watchdog
+
+---
+
+## Cycle d’un record
+
+| État | Description |
+|----|------------|
+| `queued` | prêt à être envoyé |
+| `processing` | HTTP en cours |
+| `awaitingAck` | HTTP OK, attente ACK |
+| `failed` | erreur définitive |
+| `dropped` | terminé |
+
+---
+
+## Problème clé : ACK perdu
+
+Cas typique :
+- HTTP OK
+- App quittée
+- ACK WS jamais reçu
+
+➡️ Le backend **ne rejoue pas les ACK**
+
+---
+
+## Solution : Watchdog
+
+- Chaque record `awaitingAck` est surveillé
+- Après timeout :
+  - appel `CommandStatusGateway`
+  - décision finale basée sur le backend
+
+### Résultat
+- ACK synthétique → drop
+- NACK → rollback / failed
+- Unknown → retry plus tard
+
+---
+
+## Intégration runtime
+
+Le watchdog est déclenché par :
+- app active
+- retour online
+- tick périodique
+
+---
+
+## Pourquoi ce choix
+
+- Le backend est source de vérité
+- Pas de dépendance au WS
+- Comportement déterministe
+- Design éprouvé en mobile offline-first
