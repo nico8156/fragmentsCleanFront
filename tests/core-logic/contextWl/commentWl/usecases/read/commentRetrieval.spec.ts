@@ -1,67 +1,115 @@
-import { initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
-import {FakeCommentsWlGateway} from "@/app/adapters/secondary/gateways/fake/fakeCommentsWlGateway";
-import {
-    CommentEntity,
-    ListCommentsResult, loadingStates,
-    moderationTypes,
-    opTypes
-} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
-import {commentRetrieval} from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { initReduxStoreWl, type ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
-describe('On comment retrieval : ', () => {
+import {
+    type CommentEntity,
+    type ListCommentsResult,
+    loadingStates,
+    moderationTypes,
+    opTypes,
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+
+import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
+
+describe("Comments retrieval", () => {
     let store: ReduxStoreWl;
-    let commentGateway: FakeCommentsWlGateway;
+    let comments: FakeCommentsWlGateway;
 
     beforeEach(() => {
-        commentGateway = new FakeCommentsWlGateway();
+        comments = new FakeCommentsWlGateway();
         store = initReduxStoreWl({
             dependencies: {
                 gateways: {
-                    comments: commentGateway,
-                }
-            }
+                    comments,
+                },
+            },
         });
-    })
+    });
 
     afterEach(() => {
-        commentGateway.willFail=false;
-        commentGateway.nextCommentsResponse = null;
-    })
-
-    it('should, before retrieving comment, no comment should be available ', () => {
-        expect(store.getState().cState).toEqual({"byTarget": {}, "entities": {"entities": {}, "ids": []}});
+        comments.willFailList = false;
+        comments.nextListResponse = {
+            items: [],
+            nextCursor: undefined,
+            prevCursor: undefined,
+            serverTime: undefined,
+        } as any;
     });
-    it("should, happy path, retrieve comment, create view with relevant states", async () => {
-        commentGateway.nextCommentsResponse = aResponseFromServer
-        await store.dispatch(commentRetrieval({
-            targetId: "post_42",
-            op: opTypes.RETRIEVE,
-            cursor:"cursor_0001",
-            limit:20
-        }) as any)
-        const { byTarget, entities } = store.getState().cState;
-        expect(entities.ids.length).toEqual(8)
-        expect(entities.entities["cmt_0001"]).toBeDefined()
-        expect(byTarget["post_42"].ids.every(id => entities.entities[id].targetId === "post_42")).toBe(true);
-        expect(byTarget["post_42"].ids.length).toEqual(5)
-        expect(byTarget["post_42"].loading).toEqual(loadingStates.SUCCESS)
-        expect(byTarget["post_42"].anchor).toEqual("2025-10-10T07:00:01.000Z")
-        //TODO verify good use of limit and cursor == false positive
-    })
 
-    it("should, with error, update state accordingly", async () => {
-        commentGateway.willFail = true
-        await store.dispatch(commentRetrieval({
+    it("initial: no comments, no view", () => {
+        const s: any = store.getState().cState;
+        expect(Object.keys(s.byTarget)).toHaveLength(0);
+        expect(s.entities.ids).toEqual([]);
+        expect(s.entities.entities).toEqual({});
+    });
+
+    it("happy path: retrieves comments, creates view, sets SUCCESS + anchor", async () => {
+        comments.nextListResponse = aResponseFromServer;
+
+        const p = store.dispatch(
+            commentRetrieval({
+                targetId: "post_42",
+                op: opTypes.RETRIEVE,
+                cursor: "cursor_0001",
+                limit: 20,
+            }) as any,
+        );
+
+        // pending visible
+        const pendingView: any = store.getState().cState.byTarget["post_42"];
+        expect(pendingView).toBeDefined();
+        expect(pendingView.loading).toBe(loadingStates.PENDING);
+
+        await p;
+
+        const { byTarget, entities }: any = store.getState().cState;
+
+        // entities: upsert tout (post_42 + post_99)
+        expect(entities.ids.length).toBe(8);
+        expect(entities.entities["cmt_0001"]).toBeDefined();
+
+        // view: uniquement post_42
+        expect(byTarget["post_42"]).toBeDefined();
+        expect(byTarget["post_42"].ids.length).toBe(5);
+        expect(byTarget["post_42"].ids.every((id: string) => entities.entities[id].targetId === "post_42")).toBe(true);
+
+        expect(byTarget["post_42"].loading).toBe(loadingStates.SUCCESS);
+        expect(byTarget["post_42"].error).toBeUndefined();
+        expect(byTarget["post_42"].anchor).toBe("2025-10-10T07:00:01.000Z");
+
+        // observabilité gateway
+        expect(comments.listCalls.length).toBe(1);
+        expect(comments.listCalls[0]).toMatchObject({
             targetId: "post_42",
+            cursor: "cursor_0001",
+            limit: 20,
             op: opTypes.RETRIEVE,
-            cursor:"cursor_0001",
-            limit:20
-        }) as any)
-        expect(store.getState().cState.entities.ids.length).toEqual(0)
-        expect(store.getState().cState.byTarget["post_42"].ids.length).toEqual(0)
-        expect(store.getState().cState.byTarget["post_42"].loading).toEqual(loadingStates.ERROR)
-        expect(store.getState().cState.byTarget["post_42"].error).toEqual("Fake error from fakeCommentsWlGateway")
-    })
+        });
+        expect(comments.listCalls[0].abortedAtCall).toBe(false);
+    });
+
+    it("error: sets view ERROR + message, keeps entities empty", async () => {
+        comments.willFailList = true;
+
+        await store.dispatch(
+            commentRetrieval({
+                targetId: "post_42",
+                op: opTypes.RETRIEVE,
+                cursor: "cursor_0001",
+                limit: 20,
+            }) as any,
+        );
+
+        const s: any = store.getState().cState;
+
+        expect(s.entities.ids.length).toBe(0);
+        expect(s.byTarget["post_42"]).toBeDefined();
+        expect(s.byTarget["post_42"].ids.length).toBe(0);
+        expect(s.byTarget["post_42"].loading).toBe(loadingStates.ERROR);
+        expect(s.byTarget["post_42"].error).toBe("comments list failed"); // <= failMessageList
+    });
+
+    // ---------------- fixtures ----------------
 
     const commentListEntity: CommentEntity[] = [
         {
@@ -73,7 +121,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 12,
             replyCount: 3,
             moderation: moderationTypes.PUBLISHED,
-            version: 3
+            version: 3,
         },
         {
             id: "cmt_0002",
@@ -85,7 +133,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 5,
             replyCount: 1,
             moderation: moderationTypes.PUBLISHED,
-            version: 1
+            version: 1,
         },
         {
             id: "cmt_0003",
@@ -98,7 +146,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 2,
             replyCount: 0,
             moderation: moderationTypes.PUBLISHED,
-            version: 2
+            version: 2,
         },
         {
             id: "cmt_0004",
@@ -110,7 +158,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 4,
             replyCount: 0,
             moderation: moderationTypes.PUBLISHED,
-            version: 1
+            version: 1,
         },
         {
             id: "cmt_0005",
@@ -122,7 +170,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 3,
             replyCount: 0,
             moderation: moderationTypes.PUBLISHED,
-            version: 1
+            version: 1,
         },
         {
             id: "cmt_0101",
@@ -133,7 +181,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 21,
             replyCount: 2,
             moderation: moderationTypes.PUBLISHED,
-            version: 4
+            version: 4,
         },
         {
             id: "cmt_0102",
@@ -145,7 +193,7 @@ describe('On comment retrieval : ', () => {
             likeCount: 6,
             replyCount: 0,
             moderation: moderationTypes.PUBLISHED,
-            version: 1
+            version: 1,
         },
         {
             id: "cmt_0103",
@@ -157,10 +205,16 @@ describe('On comment retrieval : ', () => {
             likeCount: 7,
             replyCount: 0,
             moderation: moderationTypes.PUBLISHED,
-            version: 1
-        }
-    ]
-    const aResponseFromServer : ListCommentsResult = {
-        targetId:"post_42", op: opTypes.RETRIEVE, items: commentListEntity, nextCursor: undefined, prevCursor: undefined, serverTime: "2025-10-10T07:00:01.000Z"
-    }
-})
+            version: 1,
+        },
+    ];
+
+    const aResponseFromServer: ListCommentsResult = {
+        targetId: "post_42",
+        op: opTypes.RETRIEVE,
+        items: commentListEntity,
+        nextCursor: undefined,
+        prevCursor: undefined,
+        serverTime: "2025-10-10T07:00:01.000Z",
+    };
+});

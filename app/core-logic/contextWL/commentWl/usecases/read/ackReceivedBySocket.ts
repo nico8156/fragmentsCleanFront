@@ -1,8 +1,8 @@
 import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import type { AppStateWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
-
-import {createReconciled, dropCommitted} from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import {createReconciled} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import {dropCommitted} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 // ---- Types ----
 type ISODate = string;

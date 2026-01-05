@@ -7,9 +7,8 @@ import {
 } from "@reduxjs/toolkit";
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {deleteOptimisticApplied} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 
 export const uiCommentDeleteRequested = createAction<{ commentId: string }>(
