@@ -36,7 +36,7 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
             console.log("authorName from usecase",authorName)
             console.log("avatarUrl from usecase",avatarUrl)
 
-            const tempId = deps.helpers.getCommentIdForTests?.() ?? `cmt_tmp_${nanoid()}`;
+            const tempId = deps.helpers.getCommentIdForTests?.() ?? deps.helpers.newCommandId();
 
 
             const outboxId =

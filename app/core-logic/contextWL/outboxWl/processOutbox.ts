@@ -1,4 +1,4 @@
-import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import { DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 

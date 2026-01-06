@@ -57,6 +57,7 @@ export const AppBootstrap = () => {
         const dispatch: any = store.dispatch;
 
         const bootRuntime = async () => {
+            await outboxStorage.clear();
             // 1) Hydration app
             store.dispatch(appHydrationDone());
 

@@ -1,223 +1,131 @@
-import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase"; // même action utilisée pour enregistrer l'item outbox
+import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
-import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import {CommandId, ISODate, TicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {flush} from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
+import { ISODate, TicketId, CommandId, UserId } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import { TicketVerifyCommand, TicketVerifyUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
 import {
     ackTicketsListenerFactory,
     onTicketConfirmedAck, onTicketRejectedAck
 } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
-import {computeBadgeProgressFromState} from "@/app/core-logic/contextWL/userWl/badges/computeBadgeProgress";
-import {UserId} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import {getDefaultBadgeProgress} from "@/app/core-logic/contextWL/userWl/badges/badges";
-import {authUserHydrationSucceeded} from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
-
-describe("Tickets ACK (reconcile tkState + entitlements + drop outbox)", () => {
-    let store: ReturnType<typeof initReduxStoreWl>;
-
-    beforeEach(() => {
-        store = initReduxStoreWl({
-            dependencies: {},
-            listeners: [ackTicketsListenerFactory()],
-        });
-        // seed outbox: la commande verify envoyée
-        store.dispatch(
-            enqueueCommitted({
-                id: "obx_tk_001",
-                item: {
-                    command: {
-                        kind: commandKinds.TicketVerify,
-                        commandId: "cmd_tk_verify_001" as CommandId,
-                        ticketId: "tk_001",
-                        imageRef: "file://local/photo1.jpg",
-                        at: "2025-10-10T07:07:00.000Z" as ISODate,
-                    },
-                    undo: { kind: commandKinds.TicketVerify, ticketId: "tk_001" },
-                },
-                enqueuedAt: "2025-10-10T07:07:00.000Z",
-            })
-        );
-    });
-
-    it("ACK confirmed: tkState=CONFIRMED, enState increments, outbox dropped", async () => {
-        store.dispatch(
-            onTicketConfirmedAck({
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
-                server: {
-                    status: "CONFIRMED",
-                    version: 2,
-                    amountCents: 920,
-                    currency: "EUR",
-                    ticketDate: "2025-10-09T12:00:00.000Z" as ISODate,
-                    updatedAt: "2025-10-10T07:07:05.000Z" as ISODate,
-                },
-                // l’ACK emporte l’info user courante (ou join côté listener)
-                userId: "user_test",
-            })
-        );
-        await flush();
-        // ticket reconcilié
-        const tk = store.getState().tState.byId["tk_001" as TicketId];
-        expect(tk.status).toBe("CONFIRMED");
-        expect(tk.version).toBe(2);
-        expect(tk.amountCents).toBe(920);
-        expect(tk.optimistic).toBe(false);
-
-        // outbox droppée
-        const o = store.getState().oState;
-
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
-    });
-
-    it("ACK rejected: tkState=REJECTED, entitlements unchanged, outbox dropped", async () => {
-        store.dispatch(
-            onTicketRejectedAck({
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
-                server: {
-                    status: "REJECTED",
-                    reason: "duplicate",
-                    version: 2,
-                    updatedAt: "2025-10-10T07:07:06.000Z" as ISODate,
-                },
-                userId: "user_test",
-            })
-        );
-        await flush();
-
-        const tk = store.getState().tState.byId["tk_001" as TicketId];
-        expect(tk.status).toBe("REJECTED");
-        expect(tk.rejectionReason).toBe("duplicate");
-        expect(tk.optimistic).toBe(false);
-
-        const o = store.getState().oState;
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
-    });
-});
 
 
-describe("Tickets ACK (reconcile tkState + badges + drop outbox)", () => {
-    let store: ReturnType<typeof initReduxStoreWl>;
+const flush = async () => await new Promise((r) => setTimeout(r, 0));
+
+describe("Tickets ACK listener", () => {
+    let store: ReduxStoreWl;
+
+    const TICKET_ID = "11111111-1111-1111-1111-111111111111" as TicketId;
+    const COMMAND_ID = "22222222-2222-2222-2222-222222222222" as CommandId;
+    const NOW = "2025-10-10T07:07:00.000Z" as ISODate;
+    const USER_ID = "user_test" as UserId;
+
+    const OUTBOX_ID = `obx_${COMMAND_ID}`;
 
     beforeEach(() => {
         store = initReduxStoreWl({
-            dependencies: {},
+            dependencies: { gateways: {} } as any,
             listeners: [ackTicketsListenerFactory()],
         });
 
-        // 1️⃣ seed outbox: la commande verify envoyée
+        // Arrange: outbox record présent + mapping byCommandId
         store.dispatch(
             enqueueCommitted({
-                id: "obx_tk_001",
+                id: OUTBOX_ID,
                 item: {
                     command: {
                         kind: commandKinds.TicketVerify,
-                        commandId: "cmd_tk_verify_001" as CommandId,
-                        ticketId: "tk_001",
+                        commandId: COMMAND_ID,
+                        ticketId: TICKET_ID,
                         imageRef: "file://local/photo1.jpg",
-                        at: "2025-10-10T07:07:00.000Z" as ISODate,
-                    },
-                    undo: { kind: commandKinds.TicketVerify, ticketId: "tk_001" },
+                        ocrText: null,
+                        at: NOW,
+                    } as TicketVerifyCommand,
+                    undo: {
+                        kind: commandKinds.TicketVerify,
+                        ticketId: TICKET_ID,
+                    } as TicketVerifyUndo,
                 },
-                enqueuedAt: "2025-10-10T07:07:00.000Z",
-            }),
+                enqueuedAt: NOW,
+            })
         );
 
-        // 2️⃣ seed user courant (pour que userBadgeProgressUpdated ait un currentUser)
-        store.dispatch(
-            authUserHydrationSucceeded({
-                user: {
-                    id: "user_test" as UserId,
-                    createdAt: "2025-10-01T00:00:00.000Z" as ISODate,
-                    updatedAt: "2025-10-01T00:00:00.000Z" as ISODate,
-                    identities: [],
-                    roles: [],
-                    flags: {},
-                    preferences: {
-                        // on part du default, comme en prod
-                        badgeProgress: getDefaultBadgeProgress(),
-                    },
-                    likedCoffeeIds: [],
-                    version: 1,
-                },
-            }),
-        );
+        const s = store.getState();
+        expect(s.oState.byId[OUTBOX_ID]).toBeDefined();
+        expect(s.oState.queue).toContain(OUTBOX_ID);
+        expect(s.oState.byCommandId[COMMAND_ID]).toBe(OUTBOX_ID);
     });
 
-    it("ACK confirmed: tkState=CONFIRMED, badges updated, outbox dropped", async () => {
+    it("CONFIRMED: reconciles ticket + drops outbox (queue/byId/byCommandId)", async () => {
         store.dispatch(
             onTicketConfirmedAck({
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
+                kind: "TicketConfirmedAck",
+                commandId: COMMAND_ID,
+                ticketId: TICKET_ID,
+                userId: USER_ID,
                 server: {
                     status: "CONFIRMED",
                     version: 2,
-                    amountCents: 920,
+                    amountCents: 950,
                     currency: "EUR",
-                    ticketDate: "2025-10-09T12:00:00.000Z" as ISODate,
-                    updatedAt: "2025-10-10T07:07:05.000Z" as ISODate,
+                    ticketDate: NOW,
+                    updatedAt: NOW,
+                    merchantName: "Café Test",
                 },
-                userId: "user_test",
-            }),
+            })
         );
 
         await flush();
 
-        // ✅ ticket reconcilié
-        const tk = store.getState().tState.byId["tk_001" as TicketId];
+        const s = store.getState();
+
+        // ✅ dropped everywhere
+        expect(s.oState.queue).not.toContain(OUTBOX_ID);
+        expect(s.oState.byId[OUTBOX_ID]).toBeUndefined();
+        expect(s.oState.byCommandId[COMMAND_ID]).toBeUndefined();
+
+        // ✅ ticket reconciled
+        const tk = s.tState.byId[TICKET_ID];
+        expect(tk).toBeDefined();
         expect(tk.status).toBe("CONFIRMED");
         expect(tk.version).toBe(2);
-        expect(tk.amountCents).toBe(920);
-        expect(tk.optimistic).toBe(false);
-
-        // ✅ badges mis à jour (intégration listener + compute)
-        const stateAfter = store.getState();
-        const badgeProgressFromStore = stateAfter.aState.currentUser?.preferences?.badgeProgress;
-        const recomputed = computeBadgeProgressFromState(stateAfter);
-
-        expect(badgeProgressFromStore).toBeDefined();
-        expect(badgeProgressFromStore).toEqual(recomputed);
-
-        // ✅ outbox droppée
-        const o = stateAfter.oState;
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
+        expect(tk.amountCents).toBe(950);
+        expect(tk.currency).toBe("EUR");
     });
-
-    it("ACK rejected: tkState=REJECTED, badges unchanged, outbox dropped", async () => {
-        // on capture l'état initial des badges pour vérifier qu'il ne bouge pas
-        const badgeProgressBefore = store.getState().aState.currentUser?.preferences?.badgeProgress;
-
+    it("REJECTED: reconciles ticket + drops outbox (queue/byId/byCommandId)", async () => {
         store.dispatch(
             onTicketRejectedAck({
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
+                kind: "TicketRejectedAck",
+                commandId: COMMAND_ID,
+                ticketId: TICKET_ID,
+                userId: USER_ID,
                 server: {
                     status: "REJECTED",
-                    reason: "duplicate",
+                    reason: "not a cafe receipt",
                     version: 2,
-                    updatedAt: "2025-10-10T07:07:06.000Z" as ISODate,
+                    updatedAt: NOW,
+                    merchantName: "??",
                 },
-                userId: "user_test",
-            }),
+            })
         );
+
         await flush();
 
-        const tk = store.getState().tState.byId["tk_001" as TicketId];
+        const s = store.getState();
+
+        // ✅ dropped everywhere
+        expect(s.oState.queue).not.toContain(OUTBOX_ID);
+        expect(s.oState.byId[OUTBOX_ID]).toBeUndefined();
+        expect(s.oState.byCommandId[COMMAND_ID]).toBeUndefined();
+
+        // ✅ ticket reconciled
+        const tk = s.tState.byId[TICKET_ID];
+        expect(tk).toBeDefined();
         expect(tk.status).toBe("REJECTED");
-        expect(tk.rejectionReason).toBe("duplicate");
-        expect(tk.optimistic).toBe(false);
+        expect(tk.version).toBe(2);
 
-        // ❌ pas de mise à jour des badges sur rejet
-        const badgeProgressAfter = store.getState().aState.currentUser?.preferences?.badgeProgress;
-        expect(badgeProgressAfter).toEqual(badgeProgressBefore);
-
-        const o = store.getState().oState;
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
+        // selon ton reducer: souvent "rejectionReason" côté aggregate
+        // si tu maps server.reason → rejectionReason
+        expect(tk.rejectionReason).toBe("not a cafe receipt");
     });
 });

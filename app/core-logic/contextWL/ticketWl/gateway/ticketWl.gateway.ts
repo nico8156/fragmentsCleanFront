@@ -1,11 +1,3 @@
-import {CommandId, ISODate, TicketId, UserId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-
-export interface TicketSubmitHelpers {
-    nowIso: () => ISODate;
-    currentUserId: () => UserId | string;
-    newTicketIdForTests?: () => TicketId;     // tests
-    getCommandIdForTests?: () => CommandId;   // tests
-}
 export interface TicketsWlGateway {
     verify(input: {
         commandId: string & { readonly __brand: "CommandId" };

@@ -1,10 +1,7 @@
-    // ticketsSelectors.ts
-    import { createSelector } from "@reduxjs/toolkit";
-    import {TicketAggregate, TicketsStateWl} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-    import {RootStateWl} from "@/app/store/reduxStoreWl";
+import { createSelector } from "@reduxjs/toolkit";
+import {TicketAggregate, TicketsStateWl} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import {RootStateWl} from "@/app/store/reduxStoreWl";
 
-
-    // 1) selectors de base
     export const selectTicketsState = (state: RootStateWl): TicketsStateWl =>
         state.tState;
 

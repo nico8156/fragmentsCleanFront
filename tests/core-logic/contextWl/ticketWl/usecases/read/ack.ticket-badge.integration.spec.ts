@@ -1,64 +1,58 @@
-// ticketBadges.ack.integration.spec.ts
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import { CommandId, ISODate, TicketId } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import { flush } from "@/app/adapters/secondary/gateways/fake/fakeTicketWlGateway";
 
-import {
-    ackTicketsListenerFactory,
-} from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
+import { CommandId, ISODate, TicketId } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+
+
 import { computeBadgeProgressFromState } from "@/app/core-logic/contextWL/userWl/badges/computeBadgeProgress";
 import { UserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { getDefaultBadgeProgress } from "@/app/core-logic/contextWL/userWl/badges/badges";
 import { authUserHydrationSucceeded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
-import {
-    syncEventsListenerFactory,
-} from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
-import {
-    syncEventsReceived,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
-import {
-    SyncEvent,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
-import {
-    createMemorySyncMetaStorage,
-} from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import { syncEventsListenerFactory } from "@/app/core-logic/contextWL/outboxWl/sync_PARKING/parking/syncEventsListenerFactory";
+import { syncEventsReceived } from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+import { SyncEvent } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncEvent.type";
+import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import {ackTicketsListenerFactory} from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 
 describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", () => {
     let store: ReturnType<typeof initReduxStoreWl>;
-    const flushMicro = () => new Promise<void>((r) => setTimeout(r, 0));
+    let metaStorage: ReturnType<typeof createMemorySyncMetaStorage>;
+
+    const flushMicro = async () => await new Promise<void>((r) => setTimeout(r, 0));
+
+    // ✅ UUIDs
+    const TICKET_ID = "11111111-1111-1111-1111-111111111111" as TicketId;
+    const COMMAND_ID = "22222222-2222-2222-2222-222222222222" as CommandId;
 
     beforeEach(async () => {
-        const metaStorage = createMemorySyncMetaStorage();
+        metaStorage = createMemorySyncMetaStorage();
         await metaStorage.loadOrDefault();
 
         store = initReduxStoreWl({
             dependencies: {},
-            listeners: [
-                syncEventsListenerFactory({ metaStorage }),
-                ackTicketsListenerFactory(),
-            ],
+            listeners: [syncEventsListenerFactory({ metaStorage }), ackTicketsListenerFactory()],
         });
 
         // 1️⃣ seed outbox: commande verify envoyée
         store.dispatch(
             enqueueCommitted({
-                id: "obx_tk_001",
+                id: `obx_${COMMAND_ID}`,
                 item: {
                     command: {
                         kind: commandKinds.TicketVerify,
-                        commandId: "cmd_tk_verify_001" as CommandId,
-                        ticketId: "tk_001" as TicketId,
+                        commandId: COMMAND_ID,
+                        ticketId: TICKET_ID,
                         imageRef: "file://local/photo1.jpg",
+                        ocrText: null,
                         at: "2025-10-10T07:07:00.000Z" as ISODate,
                     },
-                    undo: { kind: commandKinds.TicketVerify, ticketId: "tk_001" as TicketId },
+                    undo: { kind: commandKinds.TicketVerify, ticketId: TICKET_ID },
                 },
-                enqueuedAt: "2025-10-10T07:07:00.000Z",
-            }),
+                enqueuedAt: "2025-10-10T07:07:00.000Z" as ISODate,
+            })
         );
 
         // 2️⃣ seed user courant
@@ -71,27 +65,22 @@ describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", (
                     identities: [],
                     roles: [],
                     flags: {},
-                    preferences: {
-                        badgeProgress: getDefaultBadgeProgress(),
-                    },
+                    preferences: { badgeProgress: getDefaultBadgeProgress() },
                     likedCoffeeIds: [],
                     version: 1,
                 },
-            }),
+            })
         );
     });
 
-    it("SyncEvent ticket.confirmedAck → tkState=CONFIRMED, badges updated, outbox dropped", async () => {
-        const metaStorage = createMemorySyncMetaStorage();
-        await metaStorage.loadOrDefault();
-
+    it("ticket.confirmedAck → tk CONFIRMED, badges updated, outbox dropped", async () => {
         const evt: SyncEvent = {
             id: "evt-ticket-confirmed-badges-1",
             happenedAt: "2025-10-10T07:07:05.000Z" as ISODate,
             type: "ticket.confirmedAck",
             payload: {
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
+                commandId: COMMAND_ID,
+                ticketId: TICKET_ID,
                 server: {
                     status: "CONFIRMED",
                     version: 2,
@@ -105,35 +94,34 @@ describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", (
         };
 
         store.dispatch(syncEventsReceived([evt]));
-        await flush();
+        await flushMicro();
         await flushMicro();
 
         const stateAfter = store.getState();
 
         // ✅ ticket reconcilié
-        const tk = stateAfter.tState.byId["tk_001" as TicketId];
+        const tk = stateAfter.tState.byId[TICKET_ID];
         expect(tk.status).toBe("CONFIRMED");
         expect(tk.version).toBe(2);
         expect(tk.amountCents).toBe(920);
+        // si ton reducer le fait :
         expect(tk.optimistic).toBe(false);
 
-        // ✅ badges mis à jour (progress en store == progress recomputé à partir du state)
+        // ✅ badges mis à jour (store == recompute)
         const badgeProgressFromStore = stateAfter.aState.currentUser?.preferences?.badgeProgress;
         const recomputed = computeBadgeProgressFromState(stateAfter);
 
         expect(badgeProgressFromStore).toBeDefined();
         expect(badgeProgressFromStore).toEqual(recomputed);
 
-        // ✅ outbox droppée
+        // ✅ outbox droppée (3 index)
         const o = stateAfter.oState;
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
+        expect(o.byId[`obx_${COMMAND_ID}`]).toBeUndefined();
+        expect(o.byCommandId[COMMAND_ID]).toBeUndefined();
+        expect(o.queue).not.toContain(`obx_${COMMAND_ID}`);
     });
 
-    it("SyncEvent ticket.rejectedAck → tkState=REJECTED, badges unchanged, outbox dropped", async () => {
-        const metaStorage = createMemorySyncMetaStorage();
-        await metaStorage.loadOrDefault();
-
+    it("ticket.rejectedAck → tk REJECTED, badges unchanged, outbox dropped", async () => {
         const badgeProgressBefore = store.getState().aState.currentUser?.preferences?.badgeProgress;
 
         const evt: SyncEvent = {
@@ -141,8 +129,8 @@ describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", (
             happenedAt: "2025-10-10T07:07:06.000Z" as ISODate,
             type: "ticket.rejectedAck",
             payload: {
-                commandId: "cmd_tk_verify_001" as CommandId,
-                ticketId: "tk_001" as TicketId,
+                commandId: COMMAND_ID,
+                ticketId: TICKET_ID,
                 server: {
                     status: "REJECTED",
                     reason: "duplicate",
@@ -154,12 +142,12 @@ describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", (
         };
 
         store.dispatch(syncEventsReceived([evt]));
-        await flush();
+        await flushMicro();
         await flushMicro();
 
         const stateAfter = store.getState();
 
-        const tk = stateAfter.tState.byId["tk_001" as TicketId];
+        const tk = stateAfter.tState.byId[TICKET_ID];
         expect(tk.status).toBe("REJECTED");
         expect(tk.rejectionReason).toBe("duplicate");
         expect(tk.optimistic).toBe(false);
@@ -169,7 +157,8 @@ describe("SyncEvent → ticket.*Ack (integration: tkState + badges + outbox)", (
         expect(badgeProgressAfter).toEqual(badgeProgressBefore);
 
         const o = stateAfter.oState;
-        expect(o.byId["obx_tk_001"]).toBeUndefined();
-        expect(o.byCommandId["cmd_tk_verify_001"]).toBeUndefined();
+        expect(o.byId[`obx_${COMMAND_ID}`]).toBeUndefined();
+        expect(o.byCommandId[COMMAND_ID]).toBeUndefined();
+        expect(o.queue).not.toContain(`obx_${COMMAND_ID}`);
     });
 });

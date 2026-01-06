@@ -12,6 +12,7 @@ import {LocationStateWl} from "@/app/core-logic/contextWL/locationWl/typeAction/
 import {ArticleStateWl} from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import {AuthState} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import {GatewaysWl} from "@/app/adapters/primary/react/wiring/setupGateways";
+import {ISODate} from "@/assets/data/comment";
 
 
 export interface AppStateWl {
@@ -39,6 +40,7 @@ export type HelpersCore = {
 export type HelpersTest = {
     getCommentIdForTests?: () => string;
     getCommandIdForTests?: () => string;
+    newTicketIdForTests?: () => ISODate;
 };
 
 export type Helpers = HelpersCore & HelpersTest;

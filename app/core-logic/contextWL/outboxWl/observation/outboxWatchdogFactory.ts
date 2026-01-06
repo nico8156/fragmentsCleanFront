@@ -2,7 +2,6 @@ import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit"
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import type { DependenciesWl } from "@/app/store/appStateWl";
 
-import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { statusTypes, type OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { selectOutboxById } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
@@ -14,8 +13,22 @@ import {
     markFailed,
     outboxProcessOnce,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import {
+    outboxAwaitingAckAdded,
+    outboxWatchdogTick
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
+import {appBecameActive, appConnectivityChanged} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
-import { outboxAwaitingAckAdded, outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
+const assertAction = (a: any, name: string) => {
+    if (!a || typeof a.type !== "string" || typeof a.match !== "function") {
+        throw new Error(`[outboxWatchdogFactory] invalid action import: ${name}`);
+    }
+};
+
+assertAction(appBecameActive, "appBecameActive");
+assertAction(appConnectivityChanged, "appConnectivityChanged");
+assertAction(outboxAwaitingAckAdded, "outboxAwaitingAckAdded");
+assertAction(outboxWatchdogTick, "outboxWatchdogTick");
 
 const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
 
@@ -77,8 +90,8 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
             const commandStatus = deps.gateways?.commandStatus;
             if (!commandStatus) {
-                console.warn("[OUTBOX_WD] missing gateways.commandStatus");
-                return;
+                console.warn("[OUTBOX_WD] missing gateways.commandStatus")
+                return
             }
 
             const byId = selectOutboxById(state) as Record<string, OutboxRecord>;

@@ -1,7 +1,6 @@
 import { createListenerMiddleware, isAnyOf, TypedStartListening } from "@reduxjs/toolkit";
-import { enqueueCommitted } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import {
-    dequeueCommitted, dropCommitted, markAwaitingAck,
+    dequeueCommitted, dropCommitted, enqueueCommitted, markAwaitingAck,
     markFailed,
     markProcessing,
     outboxRehydrateCommitted,
