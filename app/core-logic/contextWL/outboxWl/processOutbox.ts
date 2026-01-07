@@ -79,12 +79,12 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                     console.log("[OUTBOX] processOnce: skipped (signedIn but no userId yet)");
                     return;
                 }
-
                 const token = await deps.gateways.authToken?.getAccessToken?.();
                 if (!token) {
                     console.log("[OUTBOX] processOnce: skipped (no token)");
                     return;
                 }
+
 
                 const queue: OutboxStateWl["queue"] = selectOutboxQueue(state);
                 if (!queue.length) {
@@ -108,6 +108,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                     return;
                 }
 
+
                 const id = eligibleId;
                 const record = byId[id];
 
@@ -116,6 +117,8 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                     api.dispatch(dequeueCommitted({ id }));
                     return;
                 }
+
+
 
                 const cmd = (record.item as OutboxItem).command;
 
@@ -160,6 +163,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                 try {
                     switch (cmd.kind) {
                         case commandKinds.LikeAdd: {
+                            console.log("we pass in process")
                             await deps.gateways.likes!.add({
                                 commandId: cmd.commandId,
                                 targetId: cmd.targetId,
@@ -321,7 +325,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
                         default:
                             break;
                     }
-
+                    console.log("error from processoutbox",e)
                     api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 
                     const stateAfterFail = api.getState() as RootStateWl;

@@ -49,3 +49,11 @@ export class FakeLikesGateway implements LikeWlGateway {
         this.removeCalls.push({ commandId, targetId, at });
     }
 }
+
+export class FailingLikesGateway extends FakeLikesGateway {
+    override async add({ commandId, targetId, at }: { commandId: string; targetId: string; at: string }) {
+        this.addCalls.push({ commandId, targetId, at });
+        throw new Error("likes add failed");
+    }
+}
+
