@@ -1,4 +1,3 @@
-// tests/testUtils/actionsRecorder.ts
 import type {Middleware} from "@reduxjs/toolkit";
 
 export type RecordedAction = { type: string; payload?: unknown };

@@ -1,4 +1,3 @@
-// likeWl/usecases/read/ackLikes.spec.ts
 import { initReduxStoreWl, type ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
 import { likesRetrieved } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";

@@ -1,98 +1,152 @@
 import { initReduxStoreWl, ReduxStoreWl } from "@/app/store/reduxStoreWl";
-import { createActionsRecorder } from "@/app/store/middleware/actionRecorder";
+import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 
 import {
-    appBecameActive, appBecameBackground,
-    appConnectivityChanged,
+	appBecameActive,
+	appBecameBackground,
+	appConnectivityChanged,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 import {
-    replayRequested,
-    syncDecideRequested,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/sync.action";
+	outboxProcessOnce,
+	outboxSuspendRequested,
+} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-import {outboxProcessOnce, outboxSuspendRequested} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
+
+import {
+	wsEnsureConnectedRequested,
+	wsDisconnectRequested,
+} from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
+import { seedSignedIn, seedOnline, seedOffline } from "@/tests/core-logic/fakes/wlSeeds";
 
-describe("runtimeListener (appWl) :", () => {
-    let store: ReduxStoreWl;
-    let rec: ReturnType<typeof createActionsRecorder>;
+const flush = () => new Promise<void>((r) => setImmediate(r));
 
-    beforeEach(() => {
-        rec = createActionsRecorder();
+describe("runtimeListenerFactory (appWl)", () => {
+	let store: ReduxStoreWl;
+	let rec: ReturnType<typeof createActionsRecorder>;
 
-        store = initReduxStoreWl({
-            dependencies: {
-                // runtimeListenerFactory ne dépend plus de gateways,
-                // on peut donc passer un stub minimal ici.
-                gateways: {} as any,
-                helpers: {} as any,
-            },
-            listeners: [runtimeListenerFactory()],
-            extraMiddlewares: [rec.middleware],
-        });
-    });
+	beforeEach(() => {
+		rec = createActionsRecorder({
+			filter: (a) =>
+				a.type.startsWith("APP/") ||
+				a.type.startsWith("OUTBOX/") ||
+				a.type.startsWith("WS/"),
+		});
 
-    it("should, on appBecameActive, dispatch outboxProcessOnce + replayRequested + syncDecideRequested", () => {
-        store.dispatch(appBecameActive());
+		store = initReduxStoreWl({
+			dependencies: {
+				gateways: {} as any,
+				helpers: {} as any,
+			},
+			listeners: [
+				rec.middleware,          // toujours en premier
+				runtimeListenerFactory(),
+			],
+		});
+	});
 
-        const types = rec.getTypes();
+	// ─────────────────────────────────────────────────────────────
+	// appBecameActive
+	// ─────────────────────────────────────────────────────────────
 
-        expect(types).toEqual(
-            expect.arrayContaining([
-                outboxProcessOnce.type,
-                replayRequested.type,
-                syncDecideRequested.type,
-            ]),
-        );
-    });
+	it("appBecameActive / not signedIn => no side effects", async () => {
+		rec.clear();
 
-    it("should, on appConnectivityChanged(online: true), dispatch outboxProcessOnce + syncDecideRequested", () => {
-        store.dispatch(appConnectivityChanged({ online: true }));
+		store.dispatch(appBecameActive());
+		await flush();
 
-        const types = rec.getTypes();
+		expect(rec.getTypes()).toEqual(["APP/BECAME_ACTIVE"]);
+	});
 
-        expect(types).toEqual(
-            expect.arrayContaining([
-                outboxProcessOnce.type,
-                syncDecideRequested.type,
-            ]),
-        );
-    });
+	it("appBecameActive / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
+		seedSignedIn(store, { userId: "u1" });
 
-    it("should, on appConnectivityChanged(online: false), NOT dispatch outboxProcessOnce nor syncDecideRequested", () => {
-        store.dispatch(appConnectivityChanged({ online: false }));
+		rec.clear();
+		store.dispatch(appBecameActive());
+		await flush();
 
-        const types = rec.getTypes();
+		const types = rec.getTypes();
 
-        expect(types).not.toEqual(
-            expect.arrayContaining([
-                outboxProcessOnce.type,
-                syncDecideRequested.type,
-            ]),
-        );
-    });
-    it("should, on appBecameBackground, dispatch outboxSuspendRequested only (no sync/outboxProcessOnce)", () => {
-        store.dispatch(appBecameBackground());
+		expect(types).toEqual(
+			expect.arrayContaining([
+				wsEnsureConnectedRequested.type,
+				outboxProcessOnce.type,
+				outboxWatchdogTick.type,
+			]),
+		);
+	});
 
-        const types = rec.getTypes();
+	// ─────────────────────────────────────────────────────────────
+	// appConnectivityChanged
+	// ─────────────────────────────────────────────────────────────
 
-        // ✅ on demande la suspension de l'outbox
-        expect(types).toEqual(
-            expect.arrayContaining([outboxSuspendRequested.type]),
-        );
+	it("connectivity offline => wsDisconnect + outboxSuspend", async () => {
+		seedSignedIn(store, { userId: "u1" });
 
-        // ❌ pas de sync ni de process outbox en background
-        expect(types).not.toEqual(
-            expect.arrayContaining([
-                outboxProcessOnce.type,
-                syncDecideRequested.type,
-                replayRequested.type,
-            ]),
-        );
-    });
+		rec.clear();
+		store.dispatch(appConnectivityChanged({ online: false }));
+		await flush();
 
+		const types = rec.getTypes();
 
+		expect(types).toEqual(
+			expect.arrayContaining([
+				wsDisconnectRequested.type,
+				outboxSuspendRequested.type,
+			]),
+		);
+	});
+
+	it("connectivity online / not signedIn => nothing", async () => {
+		rec.clear();
+
+		store.dispatch(appConnectivityChanged({ online: true }));
+		await flush();
+
+		expect(rec.getTypes()).toEqual(["APP/CONNECTIVITY_CHANGED"]);
+	});
+
+	it("connectivity online / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
+		seedSignedIn(store, { userId: "u1" });
+
+		rec.clear();
+		store.dispatch(appConnectivityChanged({ online: true }));
+		await flush();
+
+		const types = rec.getTypes();
+
+		expect(types).toEqual(
+			expect.arrayContaining([
+				wsEnsureConnectedRequested.type,
+				outboxProcessOnce.type,
+				outboxWatchdogTick.type,
+			]),
+		);
+	});
+
+	// ─────────────────────────────────────────────────────────────
+	// appBecameBackground
+	// ─────────────────────────────────────────────────────────────
+
+	it("appBecameBackground => outboxSuspend + wsDisconnect", async () => {
+		seedSignedIn(store, { userId: "u1" });
+
+		rec.clear();
+		store.dispatch(appBecameBackground());
+		await flush();
+
+		const types = rec.getTypes();
+
+		expect(types).toEqual(
+			expect.arrayContaining([
+				outboxSuspendRequested.type,
+				wsDisconnectRequested.type,
+			]),
+		);
+	});
 });
+

@@ -73,7 +73,7 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
         expect(agg.optimistic).toBe(true);
 
         // Outbox record
-        const rec = s.oState.byId["obx_like_001"];
+	const rec = s.oState.byId["obx_like_001"];
         expect(rec).toBeDefined();
         expect(s.oState.queue).toContain("obx_like_001");
 

@@ -96,8 +96,8 @@ describe("rehydrateOutboxFactory", () => {
 
         const result = await rehydrate(store);
 
-        expect(logger.logs.length).toBe(1);
-        expect(logger.logs[0].message).toBe("[outbox] rehydrate: failed to load snapshot");
+        expect(logger.logs.some(l => l.message === "[outbox] rehydrate: read from storage")).toBe(true);
+        expect(logger.logs.some(l => l.message === "[outbox] rehydrate: failed to load snapshot")).toBe(true);
         expect(result).toEqual({ byId: {}, queue: [], byCommandId: {} });
     });
 });
