@@ -1,278 +1,277 @@
-// commentWl.reducer.ts
-import { createEntityAdapter, createReducer } from "@reduxjs/toolkit";
-import type { AppStateWl } from "@/app/store/appStateWl";
 import type {
-    CafeId,
-    CommentEntity,
-    CommentsStateWl,
-    View,
+	CafeId,
+	CommentEntity,
+	CommentsStateWl,
+	View,
 } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { loadingStates, opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import type { AppStateWl } from "@/app/store/appStateWl";
+import { createEntityAdapter, createReducer } from "@reduxjs/toolkit";
 
 import {
-    commentsRetrievalCancelled,
-    commentsRetrievalFailed,
-    commentsRetrievalPending,
-    commentsRetrieved,
+	commentsRetrievalCancelled,
+	commentsRetrievalFailed,
+	commentsRetrievalPending,
+	commentsRetrieved,
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 
-import { updateReconciled, deleteReconciled } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
+import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
 import {
-    addOptimisticCreated, deleteOptimisticApplied,
-    updateOptimisticApplied
+	addOptimisticCreated, deleteOptimisticApplied,
+	updateOptimisticApplied
 } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import {
-    createReconciled,
-    createRollback, deleteRollback,
-    updateRollback
+	createReconciled,
+	createRollback, deleteRollback,
+	updateRollback
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 
 const adapter = createEntityAdapter<CommentEntity>({
-    sortComparer: (a, b) => {
-        const ac = typeof a.createdAt === "string" ? a.createdAt : "";
-        const bc = typeof b.createdAt === "string" ? b.createdAt : "";
-        // plus récent d'abord (DESC)
-        return bc.localeCompare(ac);
-    },
+	sortComparer: (a, b) => {
+		const ac = typeof a.createdAt === "string" ? a.createdAt : "";
+		const bc = typeof b.createdAt === "string" ? b.createdAt : "";
+		// plus récent d'abord (DESC)
+		return bc.localeCompare(ac);
+	},
 });
 
 
 const initialState: AppStateWl["comments"] = {
-    entities: adapter.getInitialState(),
-    byTarget: {},
+	entities: adapter.getInitialState(),
+	byTarget: {},
 };
 
 const ensureView = (state: CommentsStateWl, targetId: CafeId): View => {
-    return (state.byTarget[targetId] ??= {
-        ids: [],
-        loading: loadingStates.IDLE,
-        filters: { sort: "new" },
-        staleAfterMs: 30_000,
-    });
+	return (state.byTarget[targetId] ??= {
+		ids: [],
+		loading: loadingStates.IDLE,
+		filters: { sort: "new" },
+		staleAfterMs: 30_000,
+	});
 };
 
 const mergeUniqueAppend = (dst: string[], src: string[]) => {
-    const seen = new Set(dst);
-    for (const id of src) {
-        if (!seen.has(id)) {
-            dst.push(id);
-            seen.add(id);
-        }
-    }
+	const seen = new Set(dst);
+	for (const id of src) {
+		if (!seen.has(id)) {
+			dst.push(id);
+			seen.add(id);
+		}
+	}
 };
 
 const mergeUniquePrepend = (dst: string[], src: string[]) => {
-    const seen = new Set(dst);
-    for (let i = src.length - 1; i >= 0; i--) {
-        const id = src[i];
-        if (!seen.has(id)) {
-            dst.unshift(id);
-            seen.add(id);
-        }
-    }
+	const seen = new Set(dst);
+	for (let i = src.length - 1; i >= 0; i--) {
+		const id = src[i];
+		if (!seen.has(id)) {
+			dst.unshift(id);
+			seen.add(id);
+		}
+	}
 };
 
 export const commentWlReducer = createReducer(initialState, (builder) => {
-    builder
-        // ----- optimistic write
+	builder
+		// ----- optimistic write
 
-        .addCase(addOptimisticCreated, (state, action) => {
-            const c = action.payload.entity;
+		.addCase(addOptimisticCreated, (state, action) => {
+			const c = action.payload.entity;
 
-            adapter.addOne(state.entities, c);
+			adapter.addOne(state.entities, c);
 
-            const v = ensureView(state, c.targetId);
-            mergeUniquePrepend(v.ids, [c.id]);
+			const v = ensureView(state, c.targetId);
+			mergeUniquePrepend(v.ids, [c.id]);
 
-            return;
-        })
+			return;
+		})
 
-        .addCase(updateOptimisticApplied, (state, action) => {
-            const { commentId, newBody, clientEditedAt } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(updateOptimisticApplied, (state, action) => {
+			const { commentId, newBody, clientEditedAt } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    body: newBody,
-                    editedAt: clientEditedAt,
-                    optimistic: true,
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					body: newBody,
+					editedAt: clientEditedAt,
+					optimistic: true,
+				},
+			});
+		})
 
-        .addCase(deleteOptimisticApplied, (state, action) => {
-            const { commentId, clientDeletedAt } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(deleteOptimisticApplied, (state, action) => {
+			const { commentId, clientDeletedAt } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    deletedAt: clientDeletedAt,
-                    moderation: "SOFT_DELETED",
-                    optimistic: true,
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					deletedAt: clientDeletedAt,
+					moderation: "SOFT_DELETED",
+					optimistic: true,
+				},
+			});
+		})
 
-        // ----- reconciled from server/outbox/ack
+		// ----- reconciled from server/outbox/ack
 
-        .addCase(createReconciled, (state, action) => {
-            const { commentId, server } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(createReconciled, (state, action) => {
+			const { commentId, server } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    optimistic: false,
-                    createdAt: server.createdAt,
-                    version: server.version,
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					optimistic: false,
+					createdAt: server.createdAt,
+					version: server.version,
+				},
+			});
+		})
 
-        .addCase(updateReconciled, (state, action) => {
-            const { commentId, server } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(updateReconciled, (state, action) => {
+			const { commentId, server } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    body: server.body ?? cur.body,
-                    editedAt: server.editedAt ?? cur.editedAt,
-                    version: server.version,
-                    optimistic: false,
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					body: server.body ?? cur.body,
+					editedAt: server.editedAt ?? cur.editedAt,
+					version: server.version,
+					optimistic: false,
+				},
+			});
+		})
 
-        .addCase(deleteReconciled, (state, action) => {
-            const { commentId, server } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(deleteReconciled, (state, action) => {
+			const { commentId, server } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    deletedAt: server.deletedAt,
-                    version: server.version,
-                    optimistic: false,
-                    moderation: "SOFT_DELETED",
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					deletedAt: server.deletedAt,
+					version: server.version,
+					optimistic: false,
+					moderation: "SOFT_DELETED",
+				},
+			});
+		})
 
-        // ----- rollbacks
+		// ----- rollbacks
 
-        .addCase(createRollback, (state, action) => {
-            const { tempId, targetId } = action.payload;
+		.addCase(createRollback, (state, action) => {
+			const { tempId, targetId } = action.payload;
 
-            adapter.removeOne(state.entities, tempId);
+			adapter.removeOne(state.entities, tempId);
 
-            const v = state.byTarget[targetId];
-            if (v) v.ids = v.ids.filter((id) => id !== tempId);
-        })
+			const v = state.byTarget[targetId];
+			if (v) v.ids = v.ids.filter((id) => id !== tempId);
+		})
 
-        .addCase(updateRollback, (state, action) => {
-            const { commentId, prevBody, prevVersion } = action.payload;
-            if (!commentId) return;               // ✅ important
+		.addCase(updateRollback, (state, action) => {
+			const { commentId, prevBody, prevVersion } = action.payload;
+			if (!commentId) return;               // ✅ important
 
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    body: prevBody,
-                    version: prevVersion ?? cur.version,
-                    optimistic: false,
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					body: prevBody,
+					version: prevVersion ?? cur.version,
+					optimistic: false,
+				},
+			});
+		})
 
-        .addCase(deleteRollback, (state, action) => {
-            const { commentId, prevBody, prevVersion, prevDeletedAt } = action.payload;
-            const cur = state.entities.entities[commentId];
-            if (!cur) return;
+		.addCase(deleteRollback, (state, action) => {
+			const { commentId, prevBody, prevVersion, prevDeletedAt } = action.payload;
+			const cur = state.entities.entities[commentId];
+			if (!cur) return;
 
-            adapter.updateOne(state.entities, {
-                id: commentId,
-                changes: {
-                    body: prevBody,
-                    version: prevVersion ?? cur.version,
-                    deletedAt: prevDeletedAt ?? undefined,
-                    optimistic: false,
-                    moderation: "PUBLISHED",
-                },
-            });
-        })
+			adapter.updateOne(state.entities, {
+				id: commentId,
+				changes: {
+					body: prevBody,
+					version: prevVersion ?? cur.version,
+					deletedAt: prevDeletedAt ?? undefined,
+					optimistic: false,
+					moderation: "PUBLISHED",
+				},
+			});
+		})
 
-        // ----- read pipeline
+		// ----- read pipeline
 
-        .addCase(commentsRetrievalPending, (state, action) => {
-            const { targetId } = action.payload;
-            const v = ensureView(state, targetId);
-            v.loading = loadingStates.PENDING;
-            v.error = undefined;
-        })
+		.addCase(commentsRetrievalPending, (state, action) => {
+			const { targetId } = action.payload;
+			const v = ensureView(state, targetId);
+			v.loading = loadingStates.PENDING;
+			v.error = undefined;
+		})
 
-        .addCase(commentsRetrievalCancelled, (state, action) => {
-            const { targetId } = action.payload;
-            const v = ensureView(state, targetId);
-            v.loading = loadingStates.IDLE;
-        })
+		.addCase(commentsRetrievalCancelled, (state, action) => {
+			const { targetId } = action.payload;
+			const v = ensureView(state, targetId);
+			v.loading = loadingStates.IDLE;
+		})
 
-        .addCase(commentsRetrieved, (state, action) => {
-            const { targetId, op, items, nextCursor, prevCursor, serverTime } = action.payload;
+		.addCase(commentsRetrieved, (state, action) => {
+			const { targetId, op, items, nextCursor, prevCursor, serverTime } = action.payload;
 
-            const normalizeIso = (v: any): string | undefined => {
-                if (typeof v === "string") return v;
-                return undefined;
-            };
+			const normalizeIso = (v: any): string | undefined => {
+				if (typeof v === "string") return v;
+				return undefined;
+			};
 
-            const normalized = items.map(i => ({
-                ...i,
-                createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
-                editedAt: normalizeIso(i.editedAt),
-                deletedAt: normalizeIso(i.deletedAt),
-            }));
+			const normalized = items.map(i => ({
+				...i,
+				createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
+				editedAt: normalizeIso(i.editedAt),
+				deletedAt: normalizeIso(i.deletedAt),
+			}));
 
-            adapter.upsertMany(state.entities, normalized);
+			adapter.upsertMany(state.entities, normalized);
 
-            // view
-            const v = ensureView(state, targetId);
+			// view
+			const v = ensureView(state, targetId);
 
-            const incomingIds = items
-                .filter((i) => i.targetId === targetId)
-                .map((i) => i.id);
+			const incomingIds = items
+				.filter((i) => i.targetId === targetId)
+				.map((i) => i.id);
 
-            if (op === opTypes.RETRIEVE) {
-                v.ids = [];
-                mergeUniqueAppend(v.ids, incomingIds);
-                if (serverTime) v.anchor = serverTime;
-            } else if (op === opTypes.OLDER) {
-                mergeUniqueAppend(v.ids, incomingIds);
-            } else if (op === opTypes.REFRESH) {
-                mergeUniquePrepend(v.ids, incomingIds);
-                if (serverTime) v.anchor = serverTime;
-            }
+			if (op === opTypes.RETRIEVE) {
+				v.ids = [];
+				mergeUniqueAppend(v.ids, incomingIds);
+				if (serverTime) v.anchor = serverTime;
+			} else if (op === opTypes.OLDER) {
+				mergeUniqueAppend(v.ids, incomingIds);
+			} else if (op === opTypes.REFRESH) {
+				mergeUniquePrepend(v.ids, incomingIds);
+				if (serverTime) v.anchor = serverTime;
+			}
 
-            v.nextCursor = nextCursor ?? v.nextCursor; // ✅
-            v.prevCursor = prevCursor ?? v.prevCursor; // ✅
+			v.nextCursor = nextCursor ?? v.nextCursor; // ✅
+			v.prevCursor = prevCursor ?? v.prevCursor; // ✅
 
-            v.loading = loadingStates.SUCCESS;
-            v.error = undefined;
-            v.lastFetchedAt = new Date().toISOString();
-        })
+			v.loading = loadingStates.SUCCESS;
+			v.error = undefined;
+			v.lastFetchedAt = new Date().toISOString();
+		})
 
-        .addCase(commentsRetrievalFailed, (state, action) => {
-            const { targetId, error } = action.payload;
-            const v = ensureView(state, targetId);
-            v.loading = loadingStates.ERROR;
-            v.error = error;
-        });
+		.addCase(commentsRetrievalFailed, (state, action) => {
+			const { targetId, error } = action.payload;
+			const v = ensureView(state, targetId);
+			v.loading = loadingStates.ERROR;
+			v.error = error;
+		});
 });

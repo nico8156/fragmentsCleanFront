@@ -1,56 +1,56 @@
-import {createAction, createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
-import {AppDispatchWl, RootStateWl} from "@/app/store/reduxStoreWl";
-import {TicketConfirmedAck, TicketRejectedAck, UserId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {ticketReconciledConfirmed, ticketReconciledRejected} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+
+import { ticketReconciledConfirmed, ticketReconciledRejected } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import type { TicketConfirmedAck, TicketRejectedAck, UserId } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 
 import { computeBadgeProgressFromState } from "@/app/core-logic/contextWL/userWl/badges/computeBadgeProgress";
 import { userBadgeProgressUpdated } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
-import {dropCommitted} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-export const onTicketConfirmedAck = createAction<TicketConfirmedAck>("SERVER/TICKET/ON_TICKET_CONFIRMED_ACK");
-export const onTicketRejectedAck = createAction<TicketRejectedAck>("SERVER/TICKET/ON_TICKET_REJECTED_ACK");
+import { dropCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { logger } from "@/app/core-logic/utils/logger";
+
+export const onTicketConfirmedAck = createAction<TicketConfirmedAck>("SERVER/TICKET/CONFIRMED_ACK");
+export const onTicketRejectedAck = createAction<TicketRejectedAck>("SERVER/TICKET/REJECTED_ACK");
 
 export const ackTicketsListenerFactory = () => {
-    const lm = createListenerMiddleware();
-    const listener = lm.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
+	const lm = createListenerMiddleware<RootStateWl, AppDispatchWl>();
+	const listen = lm.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
-    listener({
-        actionCreator: onTicketConfirmedAck,
-        effect: async (action, api) => {
-            console.log("[ACK_TICKETS] onTicketConfirmedAck", action.payload);
+	listen({
+		actionCreator: onTicketConfirmedAck,
+		effect: async ({ payload }, api) => {
+			logger.info("[ACK_TICKETS] confirmed", { commandId: payload.commandId, ticketId: payload.ticketId });
 
-            api.dispatch(
-                ticketReconciledConfirmed({
-                    ticketId: action.payload.ticketId,
-                    server: action.payload.server,
-                    userId: action.payload.userId as UserId,
-                })
-            );
-            api.dispatch(
-                userBadgeProgressUpdated({
-                    badgeProgress: computeBadgeProgressFromState(api.getState()),
-                }),
-            );
-            api.dispatch(dropCommitted({ commandId: action.payload.commandId }));
-        },
-    });
+			api.dispatch(ticketReconciledConfirmed({
+				ticketId: payload.ticketId,
+				server: payload.server,
+				userId: payload.userId as UserId,
+			}));
 
-    listener({
-        actionCreator: onTicketRejectedAck,
-        effect: async (action, api) => {
-            console.log("[ACK_TICKETS] onTicketRejectedAck", action.payload);
+			api.dispatch(userBadgeProgressUpdated({
+				badgeProgress: computeBadgeProgressFromState(api.getState()),
+			}));
 
-            api.dispatch(
-                ticketReconciledRejected({
-                    ticketId: action.payload.ticketId,
-                    server: action.payload.server,
-                    userId: action.payload.userId as UserId,
-                })
-            );
-            api.dispatch(dropCommitted({ commandId: action.payload.commandId }));
-        },
-    });
+			api.dispatch(dropCommitted({ commandId: payload.commandId }));
+		},
+	});
 
-    return lm.middleware;
+	listen({
+		actionCreator: onTicketRejectedAck,
+		effect: async ({ payload }, api) => {
+			logger.info("[ACK_TICKETS] rejected", { commandId: payload.commandId, ticketId: payload.ticketId });
+
+			api.dispatch(ticketReconciledRejected({
+				ticketId: payload.ticketId,
+				server: payload.server,
+				userId: payload.userId as UserId,
+			}));
+
+			api.dispatch(dropCommitted({ commandId: payload.commandId }));
+		},
+	});
+
+	return lm.middleware;
 };
 

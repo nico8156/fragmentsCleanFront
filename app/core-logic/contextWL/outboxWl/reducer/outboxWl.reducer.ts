@@ -1,137 +1,165 @@
+import type { AppStateWl } from "@/app/store/appStateWl";
 import { createReducer } from "@reduxjs/toolkit";
-import { AppStateWl } from "@/app/store/appStateWl";
 
-import { statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
-    dequeueCommitted,
-    dropCommitted, enqueueCommitted,
-    markAwaitingAck,
-    markFailed,
-    markProcessing,
-    outboxRehydrateCommitted,
-    scheduleRetry,
+	dequeueCommitted,
+	dropCommitted,
+	enqueueCommitted,
+	markAwaitingAck,
+	markFailed,
+	markProcessing,
+	outboxRehydrateCommitted,
+	outboxResumeRequested,
+	outboxSuspendRequested,
+	scheduleRetry,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const initialOutboxState: AppStateWl["oState"] = {
-    byId: {},
-    queue: [],
-    byCommandId: {},
+	byId: {},
+	queue: [],
+	byCommandId: {},
+	suspended: false,
 };
 
 const removeFromQueue = (state: AppStateWl["oState"], id: string) => {
-    if (!state.queue.length) return;
-    state.queue = state.queue.filter((x) => x !== id);
+	if (!state.queue.length) return;
+	state.queue = state.queue.filter((x) => x !== id);
 };
 
 export const outboxWlReducer = createReducer(initialOutboxState, (builder) => {
-    builder
-        .addCase(enqueueCommitted, (state, action) => {
-            const { id, item, enqueuedAt } = action.payload;
-            const cmdId = item.command.commandId;
+	builder
+		.addCase(outboxSuspendRequested, (state) => {
+			state.suspended = true;
+		})
+		.addCase(outboxResumeRequested, (state) => {
+			state.suspended = false;
+		})
 
-            // idempotence par commandId
-            if (state.byCommandId[cmdId]) return;
+		.addCase(enqueueCommitted, (state, action) => {
+			const { id, item, enqueuedAt } = action.payload;
+			const cmdId = item.command.commandId;
 
-            state.byId[id] = {
-                id,
-                item,
-                status: statusTypes.queued,
-                attempts: 0,
-                enqueuedAt,
-            };
+			// idempotence par commandId
+			if (state.byCommandId[cmdId]) return;
 
-            // queue = uniquement queued
-            state.queue.push(id);
-            state.byCommandId[cmdId] = id;
-        })
+			state.byId[id] = {
+				id,
+				item,
+				status: statusTypes.queued,
+				attempts: 0,
+				enqueuedAt,
+			};
 
-        .addCase(markProcessing, (state, action) => {
-            const r = state.byId[action.payload.id];
-            if (!r) return;
+			// queue contient uniquement les IDs "candidats" (queued)
+			state.queue.push(id);
+			state.byCommandId[cmdId] = id;
+		})
 
-            // processing = pas dans queue
-            removeFromQueue(state, r.id);
+		.addCase(markProcessing, (state, action) => {
+			const r = state.byId[action.payload.id];
+			if (!r) return;
 
-            if (r.status !== statusTypes.processing) {
-                r.status = statusTypes.processing;
-                r.attempts += 1;
-            }
+			// processing = pas dans queue
+			removeFromQueue(state, r.id);
 
-            if ("nextAttemptAt" in r) delete (r as any).nextAttemptAt;
-        })
+			if (r.status !== statusTypes.processing) {
+				r.status = statusTypes.processing;
+				r.attempts += 1;
+			}
 
-        .addCase(markFailed, (state, action) => {
-            const { id, error } = action.payload;
-            const r = state.byId[id];
-            if (!r) return;
+			// clear retry schedule
+			if ("nextAttemptAt" in r) delete (r as any).nextAttemptAt;
+		})
 
-            // failed = pas dans queue
-            removeFromQueue(state, id);
+		.addCase(markFailed, (state, action) => {
+			const { id, error } = action.payload;
+			const r = state.byId[id];
+			if (!r) return;
 
-            r.status = statusTypes.failed;
-            r.lastError = error;
-        })
+			// failed = pas dans queue
+			removeFromQueue(state, id);
 
-        .addCase(scheduleRetry, (state, action) => {
-            const { id, nextAttemptAt } = action.payload;
-            const r = state.byId[id];
-            if (!r) return;
+			r.status = statusTypes.failed;
+			r.lastError = error;
+		})
 
-            // queued = doit être dans queue
-            r.status = statusTypes.queued;
-            (r as any).nextAttemptAt = nextAttemptAt;
 
-            if (!state.queue.includes(id)) {
-                state.queue.push(id);
-            }
-        })
+		.addCase(dequeueCommitted, (state, action) => {
+			removeFromQueue(state, action.payload.id);
+		})
 
-        .addCase(dequeueCommitted, (state, action) => {
-            const { id } = action.payload;
-            // dequeue = “plus candidat à l’envoi immédiat”
-            removeFromQueue(state, id);
-        })
+		.addCase(scheduleRetry, (state, action) => {
+			const { id } = action.payload as any;
+			const r = state.byId[id];
+			if (!r) return;
 
-        .addCase(markAwaitingAck, (state, action) => {
-            const { id, ackBy } = action.payload;
-            const rec = state.byId[id];
-            if (!rec) return;
+			// ✅ compat: ancien nextAttemptAt / nouveau nextAttemptAtMs
+			const nextAttemptAt: number | undefined =
+				(action.payload as any).nextAttemptAt ??
+				(action.payload as any).nextAttemptAtMs;
 
-            // awaitingAck = jamais dans queue
-            removeFromQueue(state, id);
+			if (typeof nextAttemptAt !== "number") return;
 
-            rec.status = statusTypes.awaitingAck;
-            rec.nextCheckAt = ackBy;
-        })
+			r.status = statusTypes.queued;
+			r.nextAttemptAt = nextAttemptAt;
 
-        .addCase(dropCommitted, (state, action) => {
-            const { commandId } = action.payload;
-            const id = state.byCommandId[commandId];
-            if (!id) return;
+			// queue = doit être dans queue
+			if (!state.queue.includes(id)) {
+				state.queue.push(id);
+			}
+		})
 
-            // purge partout
-            removeFromQueue(state, id);
+		.addCase(markAwaitingAck, (state, action) => {
+			const { id } = action.payload as any;
+			const rec = state.byId[id];
+			if (!rec) return;
 
-            delete state.byId[id];
-            delete state.byCommandId[commandId];
-        })
+			// ✅ compat: ancien ackBy / nouveau ackByIso
+			const nextCheckAt: string | undefined =
+				(action.payload as any).ackBy ??
+				(action.payload as any).ackByIso;
 
-        .addCase(outboxRehydrateCommitted, (_state, action) => {
-            const snap = action.payload;
+			removeFromQueue(state, id);
 
-            const byId = snap?.byId ?? {};
-            const byCommandId = snap?.byCommandId ?? {};
+			rec.status = statusTypes.awaitingAck;
+			rec.nextCheckAt = nextCheckAt;
+		})
 
-            // queue filtrée:
-            const queueRaw = Array.isArray(snap?.queue) ? snap!.queue : [];
-            const queue = queueRaw.filter((id: string) => !!byId?.[id] && byId[id].status === statusTypes.queued);
+		.addCase(dropCommitted, (state, action) => {
+			const { commandId } = action.payload;
+			const id = state.byCommandId[commandId];
+			if (!id) return;
 
-            // optionnel: si byCommandId pointe vers un id manquant, on le drop
-            const cleanByCommandId: Record<string, string> = {};
-            for (const [cmdId, id] of Object.entries(byCommandId)) {
-                if (byId[id]) cleanByCommandId[cmdId] = id;
-            }
+			removeFromQueue(state, id);
 
-            return { byId, queue, byCommandId: cleanByCommandId };
-        });
+			delete state.byId[id];
+			delete state.byCommandId[commandId];
+		})
+
+		.addCase(outboxRehydrateCommitted, (_state, action) => {
+			const snap = action.payload;
+
+			const byId = snap?.byId ?? {};
+			const byCommandId = snap?.byCommandId ?? {};
+
+			// queue filtrée : queued uniquement + ids existants
+			const queueRaw = Array.isArray(snap?.queue) ? snap.queue : [];
+			const queue = queueRaw.filter(
+				(id: string) => !!byId?.[id] && byId[id].status === statusTypes.queued,
+			);
+
+			// nettoie byCommandId
+			const cleanByCommandId: Record<string, string> = {};
+			for (const [cmdId, id] of Object.entries(byCommandId)) {
+				if ((byId as any)[id]) cleanByCommandId[cmdId] = id;
+			}
+
+			return {
+				byId,
+				queue,
+				byCommandId: cleanByCommandId,
+				suspended: snap?.suspended ?? false,
+			};
+		});
 });

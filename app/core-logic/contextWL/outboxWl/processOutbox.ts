@@ -1,362 +1,359 @@
+import type { DependenciesWl } from "@/app/store/appStateWl";
+import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
-import { DependenciesWl } from "@/app/store/appStateWl";
-import { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 
 import {
-    markProcessing,
-    markFailed,
-    markAwaitingAck,
-    dequeueCommitted,
-    dropCommitted,
-    outboxProcessOnce,
-    outboxSuspendRequested,
-    scheduleRetry,
+	dequeueCommitted,
+	dropCommitted,
+	markAwaitingAck,
+	markFailed,
+	markProcessing,
+	outboxProcessOnce,
+	outboxSuspendRequested,
+	scheduleRetry,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 import { outboxAwaitingAckAdded } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
 import {
-    commandKinds,
-    OutboxItem,
-    OutboxStateWl,
-    statusTypes,
+	commandKinds,
+	OutboxItem,
+	OutboxStateWl,
+	statusTypes,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
-import { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
+import {
+	selectOutboxById,
+	selectOutboxQueue,
+} from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+
 import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
+import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 
 import {
-    selectOutboxById,
-    selectOutboxQueue,
-} from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-import {
-    createRollback,
-    deleteRollback,
-    updateRollback
+	createRollback,
+	deleteRollback,
+	updateRollback,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+
+import { computeNextAttemptAtMs } from "@/app/core-logic/contextWL/outboxWl/utils/computeNextAttemptAtMs";
+import { logger } from "@/app/core-logic/utils/logger";
 
 const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
 
-const getAuthedUserId = (s: RootStateWl): string | undefined => {
-    const fromSession = s.aState?.session?.userId;
-    if (fromSession) return fromSession;
-    const fromUser = (s.aState as any)?.currentUser?.id;
-    return fromUser ?? undefined;
+const getAuthedUserId = (s: RootStateWl): string | undefined =>
+	s.aState?.session?.userId ?? (s.aState as any)?.currentUser?.id ?? undefined;
+
+const isCommentCreateUndo = (
+	u: unknown,
+): u is { tempId: string; targetId: string; parentId?: string } => {
+	const x = u as any;
+	return !!x && typeof x.tempId === "string" && typeof x.targetId === "string";
 };
 
-const isCommentCreateUndo = (u: any): u is { tempId: string; targetId: string; parentId?: string } => {
-    return !!u && typeof u.tempId === "string" && typeof u.targetId === "string";
+const ackByIsoIn30s = () => new Date(Date.now() + 30_000).toISOString();
+
+const getNextAttemptAtMs = (rec: any): number | undefined => {
+	// compat: ancien champ nextAttemptAt / nouveau nextAttemptAtMs
+	const a = rec?.nextAttemptAt;
+	if (typeof a === "number" && Number.isFinite(a)) return a;
+	const b = rec?.nextAttemptAtMs;
+	if (typeof b === "number" && Number.isFinite(b)) return b;
+	return undefined;
 };
 
 export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void) => {
-    const processOutboxUseCase = createListenerMiddleware();
-    const listener = processOutboxUseCase.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
+	const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
+	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
-    // ✅ mutex anti-concurrence
-    let inFlight = false;
+	let inFlight = false;
 
-    listener({
-        actionCreator: outboxProcessOnce,
-        effect: async (_action, api) => {
-            if (inFlight) {
-                console.log("[OUTBOX] processOnce: skipped (already running)");
-                return;
-            }
+	listen({
+		actionCreator: outboxProcessOnce,
+		effect: async (_action, api) => {
+			if (inFlight) {
+				logger.debug("[OUTBOX] processOnce: skipped (already running)");
+				return;
+			}
 
-            inFlight = true;
-            try {
-                const state = api.getState() as RootStateWl;
+			inFlight = true;
+			try {
+				const state = api.getState();
 
-                // ✅ garde auth : pas d'outbox write si pas signedIn
-                if (!isSignedIn(state)) {
-                    console.log("[OUTBOX] processOnce: skipped (not signedIn)");
-                    return;
-                }
+				if (state.oState?.suspended) {
+					logger.debug("[OUTBOX] processOnce: skipped (suspended)");
+					return;
+				}
 
-                const authedUserId = getAuthedUserId(state);
-                if (!authedUserId) {
-                    console.log("[OUTBOX] processOnce: skipped (signedIn but no userId yet)");
-                    return;
-                }
-                const token = await deps.gateways.authToken?.getAccessToken?.();
-                if (!token) {
-                    console.log("[OUTBOX] processOnce: skipped (no token)");
-                    return;
-                }
+				if (!isSignedIn(state)) {
+					logger.debug("[OUTBOX] processOnce: skipped (not signedIn)");
+					return;
+				}
 
+				const authedUserId = getAuthedUserId(state);
+				if (!authedUserId) {
+					logger.debug("[OUTBOX] processOnce: skipped (signedIn but no userId yet)");
+					return;
+				}
 
-                const queue: OutboxStateWl["queue"] = selectOutboxQueue(state);
-                if (!queue.length) {
-                    console.log("[OUTBOX] processOnce: skipped (queue empty)");
-                    return;
-                }
+				const token = await deps.gateways?.authToken?.getAccessToken?.();
+				if (!token) {
+					logger.debug("[OUTBOX] processOnce: skipped (no token)");
+					return;
+				}
 
-                const byId: OutboxStateWl["byId"] = selectOutboxById(state);
-                const now = Date.now();
+				const queue: OutboxStateWl["queue"] = selectOutboxQueue(state);
+				if (!queue.length) {
+					logger.debug("[OUTBOX] processOnce: skipped (queue empty)");
+					return;
+				}
 
-                const eligibleId = queue.find((qid: string) => {
-                    const rec = byId[qid];
-                    if (!rec) return false;
-                    if (rec.status !== statusTypes.queued) return false;
-                    if (rec.nextAttemptAt && rec.nextAttemptAt > now) return false;
-                    return true;
-                });
+				const byId: OutboxStateWl["byId"] = selectOutboxById(state);
+				const nowMs = Date.now();
 
-                if (!eligibleId) {
-                    console.log("[OUTBOX] processOnce: no eligible record (waiting for retry / not queued)");
-                    return;
-                }
+				const eligibleId = queue.find((qid) => {
+					const rec = byId[qid];
+					if (!rec) return false;
+					if (rec.status !== statusTypes.queued) return false;
 
+					const nextAttemptAt = getNextAttemptAtMs(rec as any);
+					if (nextAttemptAt && nextAttemptAt > nowMs) return false;
 
-                const id = eligibleId;
-                const record = byId[id];
+					return true;
+				});
 
-                if (!record) {
-                    console.warn("[OUTBOX] processOnce: record missing, dequeuing", { id });
-                    api.dispatch(dequeueCommitted({ id }));
-                    return;
-                }
+				if (!eligibleId) {
+					logger.debug("[OUTBOX] processOnce: no eligible record");
+					return;
+				}
 
+				const id = eligibleId;
+				const record = byId[id];
 
+				if (!record) {
+					logger.warn("[OUTBOX] processOnce: record missing, dequeuing", { id });
+					api.dispatch(dequeueCommitted({ id }));
+					return;
+				}
 
-                const cmd = (record.item as OutboxItem).command;
+				const item = record.item as OutboxItem;
+				const cmd = item.command;
 
-                const need = (k: string) => {
-                    switch (k) {
-                        case commandKinds.LikeAdd:
-                        case commandKinds.LikeRemove:
-                            return deps.gateways?.likes;
-                        case commandKinds.CommentCreate:
-                        case commandKinds.CommentUpdate:
-                        case commandKinds.CommentDelete:
-                            return deps.gateways?.comments;
-                        case commandKinds.TicketVerify:
-                            return deps.gateways?.tickets;
-                        default:
-                            return null;
-                    }
-                };
+				// ---- resolve gateway once, and ALWAYS use it ----
+				const resolveGateway = (kind: string) => {
+					switch (kind) {
+						case commandKinds.LikeAdd:
+						case commandKinds.LikeRemove:
+							return deps.gateways?.likes;
+						case commandKinds.CommentCreate:
+						case commandKinds.CommentUpdate:
+						case commandKinds.CommentDelete:
+							return deps.gateways?.comments;
+						case commandKinds.TicketVerify:
+							return deps.gateways?.tickets;
+						default:
+							return null;
+					}
+				};
 
-                const gw = need(cmd.kind as any);
+				const gw: any = resolveGateway(cmd.kind as any);
 
-                if (!gw) {
-                    console.error("[OUTBOX] processOnce: no gateway for command kind, dropping", {
-                        id,
-                        kind: cmd.kind,
-                        commandId: (cmd as any).commandId,
-                    });
-                    api.dispatch(markFailed({ id, error: "no gateway" }));
-                    api.dispatch(dequeueCommitted({ id }));
-                    api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
-                    return;
-                }
+				// ✅ missing gateway => deterministic drop (matches your test)
+				if (!gw) {
+					logger.error("[OUTBOX] processOnce: no gateway for command kind, dropping", {
+						id,
+						kind: cmd.kind,
+						commandId: (cmd as any).commandId,
+					});
+					api.dispatch(markFailed({ id, error: "no gateway" }));
+					api.dispatch(dequeueCommitted({ id }));
+					api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
+					return;
+				}
 
-                api.dispatch(markProcessing({ id }));
+				const sentAndAwaitAck = () => {
+					const iso = ackByIsoIn30s();
 
-                console.log("[OUTBOX] processOnce: processing", {
-                    id,
-                    kind: cmd.kind,
-                    commandId: (cmd as any).commandId,
-                });
+					// compat: ancien payload ackBy / nouveau ackByIso
+					api.dispatch(markAwaitingAck({ id, ackByIso: iso } as any));
+					api.dispatch(dequeueCommitted({ id }));
+					api.dispatch(outboxAwaitingAckAdded({ id }));
+				};
 
-                try {
-                    switch (cmd.kind) {
-                        case commandKinds.LikeAdd: {
-                            console.log("we pass in process")
-                            await deps.gateways.likes!.add({
-                                commandId: cmd.commandId,
-                                targetId: cmd.targetId,
-                                at: cmd.at,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+				api.dispatch(markProcessing({ id }));
 
-                            break;
-                        }
+				logger.info("[OUTBOX] processOnce: processing", {
+					id,
+					kind: cmd.kind,
+					commandId: (cmd as any).commandId,
+				});
 
-                        case commandKinds.LikeRemove: {
-                            await deps.gateways.likes!.remove({
-                                commandId: cmd.commandId,
-                                targetId: cmd.targetId,
-                                at: cmd.at,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+				try {
+					switch (cmd.kind) {
+						case commandKinds.LikeAdd:
+							await gw.add({
+								commandId: cmd.commandId,
+								targetId: cmd.targetId,
+								at: cmd.at,
+							});
+							sentAndAwaitAck();
+							break;
 
-                            break;
-                        }
+						case commandKinds.LikeRemove:
+							await gw.remove({
+								commandId: cmd.commandId,
+								targetId: cmd.targetId,
+								at: cmd.at,
+							});
+							sentAndAwaitAck();
+							break;
 
-                        case commandKinds.CommentCreate: {
-                            await deps.gateways.comments!.create({
-                                commandId: cmd.commandId,
-                                targetId: cmd.targetId,
-                                parentId: cmd.parentId ?? null,
-                                body: cmd.body,
-                                tempId: cmd.tempId,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+						case commandKinds.CommentCreate:
+							await gw.create({
+								commandId: cmd.commandId,
+								targetId: cmd.targetId,
+								parentId: cmd.parentId ?? null,
+								body: cmd.body,
+								tempId: cmd.tempId,
+							});
+							sentAndAwaitAck();
+							break;
 
-                            break;
-                        }
+						case commandKinds.CommentUpdate:
+							await gw.update({
+								commandId: cmd.commandId,
+								commentId: cmd.commentId,
+								body: cmd.newBody,
+								editedAt: cmd.at,
+							});
+							sentAndAwaitAck();
+							break;
 
-                        case commandKinds.CommentUpdate: {
-                            await deps.gateways.comments!.update({
-                                commandId: cmd.commandId,
-                                commentId: cmd.commentId,
-                                body: cmd.newBody,
-                                editedAt: cmd.at,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+						case commandKinds.CommentDelete:
+							await gw.delete({
+								commandId: cmd.commandId,
+								commentId: cmd.commentId,
+								deletedAt: cmd.at,
+							});
+							sentAndAwaitAck();
+							break;
 
-                            break;
-                        }
+						case commandKinds.TicketVerify:
+							await gw.verify({
+								commandId: cmd.commandId,
+								ticketId: cmd.ticketId,
+								imageRef: cmd.imageRef,
+								ocrText: cmd.ocrText ?? null,
+								at: cmd.at,
+							});
+							sentAndAwaitAck();
+							break;
 
-                        case commandKinds.CommentDelete: {
-                            await deps.gateways.comments!.delete({
-                                commandId: cmd.commandId,
-                                commentId: cmd.commentId,
-                                deletedAt: cmd.at,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+						default:
+							logger.warn("[OUTBOX] processOnce: unknown command kind, dropping", {
+								id,
+								kind: (cmd as any).kind,
+								commandId: (cmd as any).commandId,
+							});
+							api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
+							api.dispatch(dequeueCommitted({ id }));
+							break;
+					}
+				} catch (e: any) {
+					logger.error("[OUTBOX] processOnce: error", {
+						id,
+						kind: item.command.kind,
+						commandId: item.command.commandId,
+						error: e?.message ?? String(e),
+					});
 
-                            break;
-                        }
+					// rollback
+					switch (item.command.kind) {
+						case commandKinds.LikeAdd:
+						case commandKinds.LikeRemove: {
+							const u = item.undo as LikeUndo;
+							api.dispatch(
+								likeRollback({
+									targetId: u.targetId,
+									prevCount: u.prevCount,
+									prevMe: u.prevMe,
+									prevVersion: u.prevVersion,
+								}),
+							);
+							break;
+						}
 
-                        case commandKinds.TicketVerify: {
-                            await deps.gateways.tickets!.verify({
-                                commandId: cmd.commandId,
-                                ticketId: cmd.ticketId,
-                                imageRef: cmd.imageRef,
-                                ocrText: cmd.ocrText ?? null,
-                                at: cmd.at,
-                            });
-                            api.dispatch(markAwaitingAck({ id, ackBy: new Date(Date.now() + 30_000).toISOString() }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            api.dispatch(outboxAwaitingAckAdded({ id })); // ✅ hint watchdog
+						case commandKinds.CommentCreate: {
+							const u = item.undo;
+							if (isCommentCreateUndo(u)) {
+								api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
+							} else {
+								logger.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
+							}
+							break;
+						}
 
-                            break;
-                        }
+						case commandKinds.CommentUpdate: {
+							const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number };
+							api.dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
+							break;
+						}
 
-                        default: {
-                            console.warn("[OUTBOX] processOnce: unknown command kind, dropping", {
-                                id,
-                                kind: (cmd as any).kind,
-                                commandId: (cmd as any).commandId,
-                            });
-                            api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
-                            api.dispatch(dequeueCommitted({ id }));
-                            break;
-                        }
-                    }
-                } catch (e: any) {
-                    console.error("[OUTBOX] processOnce: error", {
-                        id,
-                        kind: (record.item as OutboxItem).command.kind,
-                        commandId: (record.item as OutboxItem).command.commandId,
-                        error: e?.message ?? String(e),
-                    });
+						case commandKinds.CommentDelete: {
+							const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
+							api.dispatch(
+								deleteRollback({
+									commentId: u.commentId,
+									prevBody: u.prevBody,
+									prevVersion: u.prevVersion,
+									prevDeletedAt: u.prevDeletedAt,
+								}),
+							);
+							break;
+						}
 
-                    const item = record.item as OutboxItem;
+						case commandKinds.TicketVerify: {
+							const u = item.undo as { ticketId: string };
+							api.dispatch(ticketRollBack({ ticketId: u.ticketId }));
+							break;
+						}
 
-                    switch (item.command.kind) {
-                        case commandKinds.LikeAdd:
-                        case commandKinds.LikeRemove: {
-                            const u = item.undo as LikeUndo;
-                            api.dispatch(
-                                likeRollback({
-                                    targetId: u.targetId,
-                                    prevCount: u.prevCount,
-                                    prevMe: u.prevMe,
-                                    prevVersion: u.prevVersion,
-                                }),
-                            );
-                            break;
-                        }
+						default:
+							break;
+					}
 
-                        case commandKinds.CommentCreate: {
-                            const u = item.undo;
-                            if (isCommentCreateUndo(u)) {
-                                api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
-                            } else {
-                                console.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
-                            }
-                            break;
-                        }
+					api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 
-                        case commandKinds.CommentUpdate: {
-                            const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number };
-                            api.dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
-                            break;
-                        }
+					const stateAfterFail = api.getState();
+					const attemptsSoFar = selectOutboxById(stateAfterFail)[id]?.attempts ?? 0;
 
-                        case commandKinds.CommentDelete: {
-                            const u = item.undo as {
-                                commentId: string;
-                                prevBody: string;
-                                prevVersion?: number;
-                                prevDeletedAt?: string;
-                            };
-                            api.dispatch(
-                                deleteRollback({
-                                    commentId: u.commentId,
-                                    prevBody: u.prevBody,
-                                    prevVersion: u.prevVersion,
-                                    prevDeletedAt: u.prevDeletedAt,
-                                }),
-                            );
-                            break;
-                        }
+					const nextAttemptAtMs = computeNextAttemptAtMs({
+						attemptsSoFar,
+						nowMs: Date.now(),
+					});
 
-                        case commandKinds.TicketVerify: {
-                            const u = item.undo as { ticketId: string };
-                            api.dispatch(ticketRollBack({ ticketId: u.ticketId }));
-                            break;
-                        }
+					// compat: ton action semble être nextAttemptAtMs
+					api.dispatch(scheduleRetry({ id, nextAttemptAtMs } as any));
+				}
 
-                        default:
-                            break;
-                    }
-                    console.log("error from processoutbox",e)
-                    api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
+				callback?.();
+			} finally {
+				inFlight = false;
+			}
+		},
+	});
 
-                    const stateAfterFail = api.getState() as RootStateWl;
-                    const attemptsSoFar = selectOutboxById(stateAfterFail)[id]?.attempts ?? 0;
+	listen({
+		actionCreator: outboxSuspendRequested,
+		effect: async (_action, api) => {
+			const pendingCount = Object.keys(api.getState().oState?.byId ?? {}).length;
+			logger.info("[OUTBOX] suspend requested", {
+				pendingCount,
+				timestamp: new Date().toISOString(),
+			});
+		},
+	});
 
-                    const base = Math.min(60_000, 2 ** Math.min(attemptsSoFar, 6) * 1000);
-                    const jitter = Math.floor(Math.random() * 300);
-                    const next = Date.now() + base + jitter;
-
-                    api.dispatch(scheduleRetry({ id, nextAttemptAt: next }));
-                }
-
-                if (callback) callback();
-            } finally {
-                inFlight = false;
-            }
-        },
-    });
-
-    listener({
-        actionCreator: outboxSuspendRequested,
-        effect: async (_, api) => {
-            const state = api.getState();
-            const pendingCount = Object.keys((state as any).oState?.byId ?? {}).length;
-
-            console.log("[OUTBOX] suspend requested (app background)", {
-                pendingCount,
-                timestamp: new Date().toISOString(),
-            });
-        },
-    });
-
-    return processOutboxUseCase;
+	return mw;
 };

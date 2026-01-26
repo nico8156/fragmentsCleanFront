@@ -1,212 +1,260 @@
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
-import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import type { DependenciesWl } from "@/app/store/appStateWl";
+import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
 import {
-    wsConnected, wsDisconnected, wsDisconnectRequested, wsEnsureConnectedRequested
-
+	wsConnected,
+	wsDisconnected,
+	wsDisconnectRequested,
+	wsEnsureConnectedRequested,
 } from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
 import {
-    authSessionRefreshed, authSignedOut,
-    authSignInSucceeded
-
+	authSessionRefreshed,
+	authSignedOut,
+	authSignInSucceeded,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
-import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import type { WsInboundEvent } from "@/app/adapters/primary/socket/ws.type";
+import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 import {
-    onCommentCreatedAck, onCommentDeletedAck, onCommentUpdatedAck
-
+	onCommentCreatedAck,
+	onCommentDeletedAck,
+	onCommentUpdatedAck,
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 
-import { mapWsTicketCompletedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
 import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
+import { mapWsTicketCompletedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
+
+import { logger } from "@/app/core-logic/utils/logger";
 
 export type SessionRef = { current?: AuthSession };
 
 type WsListenerDeps = {
-    gateways: DependenciesWl["gateways"];
-    wsUrl: string; // SockJS: "http://.../ws"
-    sessionRef?: SessionRef;
+	gateways: DependenciesWl["gateways"];
+	wsUrl: string; // SockJS: "http://.../ws"
+	sessionRef?: SessionRef;
 };
 
 export const wsListenerFactory = (deps: WsListenerDeps) => {
-    const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
-    const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
+	const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
+	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
-    const getSecureStore = () => deps.gateways?.auth?.secureStore;
-    const getWsGateway = () => deps.gateways?.ws;
+	const getSecureStore = () => deps.gateways?.auth?.secureStore;
+	const getWsGateway = () => deps.gateways?.ws;
 
-    const readSession = async (): Promise<AuthSession | undefined> => {
-        if (deps.sessionRef?.current) return deps.sessionRef.current;
-        const secureStore = getSecureStore();
-        if (!secureStore) return undefined;
-        return await secureStore.loadSession();
-    };
+	// memorize last token used for STOMP handshake
+	let lastToken: string | undefined;
 
-    const routeInbound = (evt: WsInboundEvent, dispatch: AppDispatchWl) => {
-        switch (evt.type) {
-            case "social.like.added_ack": {
-                dispatch(
-                    onLikeAddedAck({
-                        commandId: (evt as any).commandId,
-                        targetId: (evt as any).targetId,
-                        server: {
-                            count: (evt as any).count,
-                            me: (evt as any).me,
-                            version: (evt as any).version,
-                            updatedAt: (evt as any).updatedAt as any,
-                        },
-                    }),
-                );
-                return;
-            }
+	const readSession = async (): Promise<AuthSession | undefined> => {
+		if (deps.sessionRef?.current) return deps.sessionRef.current;
 
-            case "social.like.removed_ack": {
-                dispatch(
-                    onLikeRemovedAck({
-                        commandId: (evt as any).commandId,
-                        targetId: (evt as any).targetId,
-                        server: {
-                            count: (evt as any).count,
-                            me: (evt as any).me,
-                            version: (evt as any).version,
-                            updatedAt: (evt as any).updatedAt as any,
-                        },
-                    }),
-                );
-                return;
-            }
+		const secureStore = getSecureStore();
+		if (!secureStore) return undefined;
 
-            case "social.comment.created_ack": {
-                dispatch(
-                    onCommentCreatedAck({
-                        commandId: (evt as any).commandId,
-                        commentId: (evt as any).commentId,
-                        targetId: (evt as any).targetId,
-                        server: {
-                            createdAt: (evt as any).updatedAt,
-                            version: (evt as any).version,
-                        },
-                    }),
-                );
-                return;
-            }
+		try {
+			return await secureStore.loadSession();
+		} catch (e) {
+			logger.warn("[WS] readSession: secureStore.loadSession failed", {
+				error: String((e as any)?.message ?? e),
+			});
+			return undefined;
+		}
+	};
 
-            case "social.comment.updated_ack": {
-                dispatch(
-                    onCommentUpdatedAck({
-                        commandId: (evt as any).commandId,
-                        commentId: (evt as any).commentId,
-                        targetId: (evt as any).targetId,
-                        server: {
-                            editedAt: (evt as any).updatedAt,
-                            version: (evt as any).version,
-                        },
-                    }),
-                );
-                return;
-            }
+	const routeInbound = (evt: WsInboundEvent, dispatch: AppDispatchWl) => {
+		switch (evt.type) {
+			case "social.like.added_ack": {
+				dispatch(
+					onLikeAddedAck({
+						commandId: (evt as any).commandId,
+						targetId: (evt as any).targetId,
+						server: {
+							count: (evt as any).count,
+							me: (evt as any).me,
+							version: (evt as any).version,
+							updatedAt: (evt as any).updatedAt as any,
+						},
+					}),
+				);
+				return;
+			}
 
-            case "social.comment.deleted_ack": {
-                dispatch(
-                    onCommentDeletedAck({
-                        commandId: (evt as any).commandId,
-                        commentId: (evt as any).commentId,
-                        targetId: (evt as any).targetId,
-                        server: {
-                            deletedAt: (evt as any).updatedAt,
-                            version: (evt as any).version,
-                        },
-                    }),
-                );
-                return;
-            }
+			case "social.like.removed_ack": {
+				dispatch(
+					onLikeRemovedAck({
+						commandId: (evt as any).commandId,
+						targetId: (evt as any).targetId,
+						server: {
+							count: (evt as any).count,
+							me: (evt as any).me,
+							version: (evt as any).version,
+							updatedAt: (evt as any).updatedAt as any,
+						},
+					}),
+				);
+				return;
+			}
 
-            case "ticket.verification.completed_ack": {
-                const ack = mapWsTicketCompletedAck(evt);
-                dispatch(ack.kind === "TicketConfirmedAck" ? onTicketConfirmedAck(ack) : onTicketRejectedAck(ack));
-                return;
-            }
+			case "social.comment.created_ack": {
+				dispatch(
+					onCommentCreatedAck({
+						commandId: (evt as any).commandId,
+						commentId: (evt as any).commentId,
+						targetId: (evt as any).targetId,
+						server: {
+							createdAt: (evt as any).updatedAt,
+							version: (evt as any).version,
+						},
+					}),
+				);
+				return;
+			}
 
-            default:
-                console.warn("[WS] unknown inbound event type", (evt as any)?.type, evt);
-                return;
-        }
-    };
+			case "social.comment.updated_ack": {
+				dispatch(
+					onCommentUpdatedAck({
+						commandId: (evt as any).commandId,
+						commentId: (evt as any).commentId,
+						targetId: (evt as any).targetId,
+						server: {
+							editedAt: (evt as any).updatedAt,
+							version: (evt as any).version,
+						},
+					}),
+				);
+				return;
+			}
 
-    const ensureConnected = async (api: { dispatch: AppDispatchWl }) => {
-        const ws = getWsGateway();
-        if (!ws) return;
+			case "social.comment.deleted_ack": {
+				dispatch(
+					onCommentDeletedAck({
+						commandId: (evt as any).commandId,
+						commentId: (evt as any).commentId,
+						targetId: (evt as any).targetId,
+						server: {
+							deletedAt: (evt as any).updatedAt,
+							version: (evt as any).version,
+						},
+					}),
+				);
+				return;
+			}
 
-        // ✅ évite reconnect si vraiment connecté
-        if (ws.isActive()) return;
+			case "ticket.verification.completed_ack": {
+				const ack = mapWsTicketCompletedAck(evt);
+				dispatch(ack.kind === "TicketConfirmedAck" ? onTicketConfirmedAck(ack) : onTicketRejectedAck(ack));
+				return;
+			}
 
-        const session = await readSession();
-        const token = session?.tokens?.accessToken;
-        if (!token) return;
+			default:
+				logger.warn("[WS] unknown inbound event type", { type: (evt as any)?.type, evt });
+				return;
+		}
+	};
 
-        ws.connect({
-            wsUrl: deps.wsUrl,
-            token,
-            onConnected: () => api.dispatch(wsConnected()),
-            onDisconnected: () => api.dispatch(wsDisconnected()),
-            onEvent: (evt) => routeInbound(evt, api.dispatch),
-        });
-    };
+	const disconnect = (reason: string) => {
+		const ws = getWsGateway();
+		try {
+			ws?.disconnect();
+		} catch (e) {
+			logger.warn("[WS] disconnect failed", { reason, error: String((e as any)?.message ?? e) });
+		}
+		logger.info("[WS] disconnect requested", { reason });
+	};
 
-    const disconnect = (api: { dispatch: AppDispatchWl }) => {
-        const ws = getWsGateway();
-        ws?.disconnect();
-        //api.dispatch(wsDisconnected()); ====> wsListenerFactory devient l’unique dispatcher via 1 dispatch (cf plus haut )
-    };
+	const ensureConnected = async (api: { dispatch: AppDispatchWl }) => {
+		const ws = getWsGateway();
+		if (!ws) return;
 
-    const forceReconnect = async (api: { dispatch: AppDispatchWl }) => {
-        // ✅ force un handshake STOMP avec le nouveau token
-        disconnect(api);
-        await ensureConnected(api);
-    };
+		// already connected -> nothing
+		if (ws.isActive()) {
+			logger.debug("[WS] ensureConnected: already connected");
+			return;
+		}
 
-    // intents runtime
-    listen({
-        actionCreator: wsEnsureConnectedRequested,
-        effect: async (_, api) => {
-            await ensureConnected(api);
-        },
-    });
+		const session = await readSession();
+		const token = session?.tokens?.accessToken;
 
-    listen({
-        actionCreator: wsDisconnectRequested,
-        effect: async (_, api) => {
-            disconnect(api);
-        },
-    });
+		if (!token) {
+			logger.debug("[WS] ensureConnected: skipped (no token)");
+			return;
+		}
 
-    // triggers auth
-    listen({
-        actionCreator: authSignInSucceeded,
-        effect: async (_, api) => {
-            await ensureConnected(api);
-        },
-    });
+		// if token changed, better to force reconnect (clears any "active but not connected" client)
+		if (lastToken && token !== lastToken) {
+			logger.info("[WS] ensureConnected: token changed => forceReconnect");
+			disconnect("token_changed_before_connect");
+		}
 
-    listen({
-        actionCreator: authSessionRefreshed,
-        effect: async (_, api) => {
-            // ✅ on force reconnect pour garantir que le token de connexion STOMP est à jour
-            await forceReconnect(api);
-        },
-    });
+		lastToken = token;
 
-    listen({
-        actionCreator: authSignedOut,
-        effect: async (_, api) => {
-            disconnect(api);
-        },
-    });
+		logger.info("[WS] connect", { wsUrl: deps.wsUrl });
 
-    return mw.middleware;
+		ws.connect({
+			wsUrl: deps.wsUrl,
+			token,
+			onConnected: () => {
+				logger.info("[WS] connected");
+				api.dispatch(wsConnected());
+			},
+			onDisconnected: () => {
+				logger.info("[WS] disconnected");
+				api.dispatch(wsDisconnected());
+			},
+			onEvent: (evt) => routeInbound(evt, api.dispatch),
+		});
+	};
+
+	const forceReconnect = async (api: { dispatch: AppDispatchWl }, reason: string) => {
+		disconnect(reason);
+		await ensureConnected(api);
+	};
+
+	// intents runtime
+	listen({
+		actionCreator: wsEnsureConnectedRequested,
+		effect: async (_, api) => {
+			await ensureConnected(api);
+		},
+	});
+
+	listen({
+		actionCreator: wsDisconnectRequested,
+		effect: async () => {
+			disconnect("runtime_request");
+		},
+	});
+
+	// triggers auth
+	listen({
+		actionCreator: authSignInSucceeded,
+		effect: async (_, api) => {
+			logger.info("[WS] authSignInSucceeded => ensureConnected");
+			await ensureConnected(api);
+		},
+	});
+
+	listen({
+		actionCreator: authSessionRefreshed,
+		effect: async (_, api) => {
+			logger.info("[WS] authSessionRefreshed => forceReconnect");
+			// ✅ necessary with SockJS+STOMP: headers are used at handshake time
+			await forceReconnect(api, "session_refreshed");
+		},
+	});
+
+	listen({
+		actionCreator: authSignedOut,
+		effect: async () => {
+			logger.info("[WS] authSignedOut => disconnect");
+			disconnect("signed_out");
+			lastToken = undefined;
+		},
+	});
+
+	return mw.middleware;
 };
+

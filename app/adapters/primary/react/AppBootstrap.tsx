@@ -26,6 +26,7 @@ import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursW
 
 import { outboxStorage } from "@/app/adapters/primary/react/wiring/setupGateways";
 import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import { logger } from "@/app/core-logic/utils/logger";
 
 // ---- dev guard (jamais en prod) ----
 const CLEAR_OUTBOX_ON_BOOT = true;
@@ -45,13 +46,13 @@ export const AppBootstrap = () => {
 	const store = useStore() as unknown as ReduxStoreWl;
 
 	useEffect(() => {
-		console.log("[BOOT] AppBootstrap mounted");
+		logger.info("[BOOT] AppBootstrap mounted");
 
 		// 0) Adapters (runtime signals)
 		const unmountNetInfo = mountNetInfoAdapter(store);
 		const unmountAppState = mountAppStateAdapter(store, { ignoreFirstActive: false });
 
-		console.log("[BOOT] NetInfo + AppState adapters mounted");
+		logger.info("[BOOT] NetInfo + AppState adapters mounted")
 
 		let cancelled = false;
 		const dispatch: any = store.dispatch;
@@ -66,14 +67,14 @@ export const AppBootstrap = () => {
 
 			// 3) Outbox storage (DEV only)
 			if (__DEV__ && CLEAR_OUTBOX_ON_BOOT) {
-				console.log("[BOOT] DEV: clearing outbox storage (flag enabled)");
+				logger.info("[BOOT] DEV: clearing outbox storage (flag enabled)")
 				await outboxStorage.clear();
 			}
 
 			// 4) Outbox rehydrate
-			console.log("[BOOT] Rehydrate outbox: start");
+			logger.info("[BOOT] Rehydrate outbox: start")
 			const snapshot = await runRehydrateOutbox(store);
-			console.log("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
+			logger.info("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
 			if (cancelled) return;
 
 			// 5) Optionnel: kick outbox once si on est déjà authed + online
@@ -113,19 +114,21 @@ export const AppBootstrap = () => {
 
 				store.dispatch(appWarmupDone({ message: "Warmup OK" }));
 				store.dispatch(appBootSucceeded());
-				console.log("[BOOT] App boot succeeded");
+				logger.info("[BOOT] App boot succeeded");
+
 			} catch (e: any) {
-				console.log("[BOOT] App boot failed", e);
+				logger.error("[BOOT] App boot failed", e);
 				store.dispatch(appBootFailed({ message: String(e?.message ?? e) }));
 			}
 		})();
 
 		return () => {
-			console.log("[BOOT] AppBootstrap unmount");
+			logger.info("[BOOT] AppBootstrap unmount");
 			cancelled = true;
 			unmountAppState();
 			unmountNetInfo();
-			console.log("[BOOT] NetInfo + AppState adapters unmounted");
+			logger.info("[BOOT] NetInfo + AppState adapters unmounted");
+
 		};
 	}, [store]);
 

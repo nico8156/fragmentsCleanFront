@@ -1,148 +1,106 @@
-import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 import type { AppStateWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
-import {createReconciled} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
-import {dropCommitted} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
-// ---- Types ----
+import {
+	deleteReconciled,
+	updateReconciled,
+} from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { dropCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
+import { createReconciled } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import { logger } from "@/app/core-logic/utils/logger";
+
 type ISODate = string;
 
 export type CommentCreatedAckActionPayload = {
-    commandId: string;
-    commentId: string; // ✅ c'est ton tempId côté front (UUID) et le même côté back
-    targetId: string;
-    server: { createdAt: ISODate; version: number };
+	commandId: string;
+	commentId: string;
+	targetId: string;
+	server: { createdAt: ISODate; version: number };
 };
 
 export type CommentUpdatedAckActionPayload = {
-    commandId: string;
-    commentId: string;
-    targetId:string;
-    server: { editedAt: ISODate; version: number };
+	commandId: string;
+	commentId: string;
+	targetId: string;
+	server: { editedAt: ISODate; version: number; body?: string };
 };
 
 export type CommentDeletedAckActionPayload = {
-    commandId: string;
-    commentId: string;
-    targetId:string;
-    server: { deletedAt: ISODate; version: number };
+	commandId: string;
+	commentId: string;
+	targetId: string;
+	server: { deletedAt: ISODate; version: number };
 };
 
-// ---- Actions ----
-export const onCommentCreatedAck = createAction<CommentCreatedAckActionPayload>(
-    "SERVER/COMMENT/CREATED_ACK",
-);
+// ✅ transport events (WS/server) — on garde
+export const onCommentCreatedAck = createAction<CommentCreatedAckActionPayload>("SERVER/COMMENT/CREATED_ACK");
+export const onCommentUpdatedAck = createAction<CommentUpdatedAckActionPayload>("SERVER/COMMENT/UPDATED_ACK");
+export const onCommentDeletedAck = createAction<CommentDeletedAckActionPayload>("SERVER/COMMENT/DELETED_ACK");
 
-export const onCommentUpdatedAck = createAction<CommentUpdatedAckActionPayload>(
-    "SERVER/COMMENT/UPDATED_ACK",
-);
+const outboxIdByCmd = (s: AppStateWl, cmdId: string) =>
+	(s as any)?.oState?.byCommandId?.[cmdId] as string | undefined;
 
-export const onCommentDeletedAck = createAction<CommentDeletedAckActionPayload>(
-    "SERVER/COMMENT/DELETED_ACK",
-);
-
-// Ces actions doivent être consommées par ton reducer comment.
-// Elles “confirment” l’état côté front (pas de remap id nécessaire).
-export const createConfirmed = createAction<{
-    commentId: string;
-    targetId: string;
-    server: { createdAt: ISODate; version: number };
-}>("COMMENT/CREATE_CONFIRMED");
-
-export const updateReconciled = createAction<{
-    commentId: string;
-    server: { editedAt: ISODate; version: number; body?: string };
-}>("COMMENT/UPDATE_RECONCILED");
-
-export const deleteReconciled = createAction<{
-    commentId: string;
-    server: { deletedAt: ISODate; version: number };
-}>("COMMENT/DELETE_RECONCILED");
-
-// ---- Selector optionnel (si tu as un index byCommandId) ----
-const selectOutboxIdByCommandId = (s: AppStateWl, commandId: string): string | undefined => {
-    const anyState = s as any;
-    return anyState?.oState?.byCommandId?.[commandId];
-};
-
-// ---- Listener factory ----
 export const ackListenerFactory = (callback?: () => void) => {
-    const mw = createListenerMiddleware<AppStateWl, AppDispatchWl>();
-    const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
+	const mw = createListenerMiddleware<AppStateWl, AppDispatchWl>();
+	const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
 
-    listen({
-        actionCreator: onCommentCreatedAck,
-        effect: async ({ payload }, api) => {
-            const { commandId, commentId, targetId, server } = payload;
-            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
-            //idempotent aussi cote ack
-            if (!outboxId) {
-                console.log("[ACK_COMMENTS] created: duplicate ack ignored", { commandId, commentId });
-                return;
-            }
-            console.log("[ACK_COMMENTS] created", { commandId, commentId, targetId, server, outboxId });
+	listen({
+		actionCreator: onCommentCreatedAck,
+		effect: async ({ payload }, api) => {
+			const { commandId, commentId, targetId, server } = payload;
 
-            // ✅ pas de reconcile tempId->serverId : l'id est déjà le bon
-            //api.dispatch(createConfirmed({ commentId, targetId, server }));
+			const outboxId = outboxIdByCmd(api.getState(), commandId);
+			if (!outboxId) {
+				logger.debug("[ACK_COMMENTS] created: duplicate ack ignored", { commandId, commentId });
+				return;
+			}
 
-            api.dispatch(createReconciled({ commentId, server }));
+			logger.info("[ACK_COMMENTS] created", { commandId, commentId, targetId, version: server.version });
 
-            api.dispatch(dropCommitted({ commandId }));
+			api.dispatch(createReconciled({ commentId, server }));
+			api.dispatch(dropCommitted({ commandId }));
+			callback?.();
+		},
+	});
 
-            callback?.();
-        },
-    });
+	listen({
+		actionCreator: onCommentUpdatedAck,
+		effect: async ({ payload }, api) => {
+			const { commandId, commentId, server } = payload;
 
-    listen({
-        actionCreator: onCommentUpdatedAck,
-        effect: async ({ payload }, api) => {
-            const { commandId, commentId,server } = payload;
-            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
-            //idempotent aussi cote ack
-            if (!outboxId) {
-                console.log("[ACK_COMMENTS] updated: duplicate ack ignored", { commandId, commentId });
-                return;
-            }
-            console.log("[ACK_COMMENTS] updated", { commandId, commentId, server, outboxId});
+			const outboxId = outboxIdByCmd(api.getState(), commandId);
+			if (!outboxId) {
+				logger.debug("[ACK_COMMENTS] updated: duplicate ack ignored", { commandId, commentId });
+				return;
+			}
 
+			logger.info("[ACK_COMMENTS] updated", { commandId, commentId, version: server.version });
 
-            api.dispatch(updateReconciled({ commentId, server }));
+			api.dispatch(updateReconciled({ commentId, server }));
+			api.dispatch(dropCommitted({ commandId }));
+			callback?.();
+		},
+	});
 
-            if (outboxId) {
-                api.dispatch(dropCommitted({ commandId }));
-            } else {
-                api.dispatch(dropCommitted({ commandId }));
-            }
+	listen({
+		actionCreator: onCommentDeletedAck,
+		effect: async ({ payload }, api) => {
+			const { commandId, commentId, server } = payload;
 
-            callback?.();
-        },
-    });
+			const outboxId = outboxIdByCmd(api.getState(), commandId);
+			if (!outboxId) {
+				logger.debug("[ACK_COMMENTS] deleted: duplicate ack ignored", { commandId, commentId });
+				return;
+			}
 
-    listen({
-        actionCreator: onCommentDeletedAck,
-        effect: async ({ payload }, api) => {
-            const { commandId, commentId, server } = payload;
+			logger.info("[ACK_COMMENTS] deleted", { commandId, commentId, version: server.version });
 
+			api.dispatch(deleteReconciled({ commentId, server }));
+			api.dispatch(dropCommitted({ commandId }));
+			callback?.();
+		},
+	});
 
-            const outboxId = selectOutboxIdByCommandId(api.getState(), commandId);
-            // ✅ si on n'a plus de trace du commandId → ACK déjà traité → ignore
-            if (!outboxId) {
-                console.log("[ACK_COMMENTS] deleted: duplicate ack ignored", { commandId, commentId });
-                return;
-            }
-            console.log("[ACK_COMMENTS] deleted", { commandId, commentId, server, outboxId });
-
-            api.dispatch(deleteReconciled({ commentId, server }));
-
-            if (outboxId) {
-                api.dispatch(dropCommitted({ commandId }));
-            } else {
-                api.dispatch(dropCommitted({ commandId }));
-            }
-
-            callback?.();
-        },
-    });
-
-    return mw;
+	return mw.middleware;
 };
