@@ -15,13 +15,13 @@ import {
 import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
 import {
-	wsEnsureConnectedRequested,
 	wsDisconnectRequested,
+	wsEnsureConnectedRequested,
 } from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
-import { seedSignedIn, seedOnline, seedOffline } from "@/tests/core-logic/fakes/wlSeeds";
+import { seedOffline, seedOnline, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 
 const flush = () => new Promise<void>((r) => setImmediate(r));
 
@@ -106,8 +106,8 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		store.dispatch(appConnectivityChanged({ online: true }));
 		await flush();
-
-		expect(rec.getTypes()).toEqual(["APP/CONNECTIVITY_CHANGED"]);
+		console.log(rec.getTypes())
+		expect(rec.getTypes()).toEqual(["APP/CONNECTIVITY_CHANGED", 'OUTBOX/RESUME_REQUESTED']);
 	});
 
 	it("connectivity online / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {

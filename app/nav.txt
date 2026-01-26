@@ -1,9 +1,0 @@
-AuthStack
-  └── LoginScreen
-
-AppStack
-  └── Tabs
-       ├── HomeTab
-       ├── MapTab
-       ├── WishlistTab
-       └── ProfileTab
