@@ -1,264 +1,228 @@
+# 📦 OutboxWL — Client Outbox Architecture
+
+## Purpose
+
+OutboxWL implémente un **Outbox Pattern côté frontend mobile** permettant :
+
+* offline-first
+* retry automatique
+* idempotence
+* ACK différés
+* résilience réseau
+* cohérence finale
+* UX optimiste
+
+> Ce n’est pas une queue UI.
+> 👉 C’est un **orchestrateur de commandes distribuées**.
+
 ---
 
-# 🧠 Outbox Frontend – Clean Architecture
+## Concept
 
-> Reliable command delivery, offline-first, idempotent, event-driven, testable.
-
-Cette outbox implémente un **pattern Outbox côté frontend** inspiré des architectures DDD / CQRS / Event-Driven, adapté au mobile (React Native / offline / lifecycle / réseau instable).
-
-Objectif :
-➡️ garantir que toute action utilisateur critique (like, comment, ticket, etc.) est :
-
-* persistée localement
-* envoyée **au moins une fois**
-* **idempotente**
-* résiliente aux crashes, background, offline, reboot app
-* **réconciliée** proprement avec le backend
-
----
-
-## 🧱 Architecture
+Chaque action utilisateur est transformée en :
 
 ```
-UI
- │
- │ (use-cases)
- ▼
-Command UseCase
- │
- ▼
-OutboxPort (enqueue)
- │
- ▼
-OutboxState (Redux)
- │
- ├── queue
- ├── byId
- ├── byCommandId
- │
- ▼
-processOutboxFactory (delivery engine)
- │
- ▼
-Gateways (HTTP / WS / SDK)
- │
- ▼
-Backend
+Command + Undo
 ```
+
+Puis persistée dans l’outbox locale.
 
 ---
 
-## 📦 Modèle de données
+## State Model
 
-### OutboxRecord
+```ts
+type OutboxState = {
+  byId: Record<string, OutboxRecord>
+  queue: string[]                 // uniquement status=queued
+  byCommandId: Record<string,string>
+  suspended: boolean
+}
+```
 
 ```ts
 type OutboxRecord = {
-  id: string;                 // outboxId
-  item: {
-    command: OutboxCommand;   // Commande métier
-    undo: OutboxUndo;         // Données de rollback
-  };
-  status: "queued" | "processing" | "awaitingAck" | "failed";
-  attempts: number;
-  lastError?: string;
-
-  enqueuedAt: string;         // ISO date
-  nextCheckAt?: string;       // ISO date (awaitingAck watchdog)
-  nextAttemptAt?: number;     // epoch ms (retry scheduler)
-};
+  id: string
+  item: { command, undo }
+  status: 'queued' | 'processing' | 'failed' | 'awaitingAck'
+  attempts: number
+  enqueuedAt: ISODate
+  nextAttemptAt?: number   // retry scheduler
+  nextCheckAt?: ISODate    // watchdog ACK
+  lastError?: string
+}
 ```
 
 ---
 
-## 🔁 Cycle de vie d’une commande
+## Pipeline
 
-### 1) Enqueue
+### 1. Enqueue
+
+```
+UI -> UseCase -> outbox.enqueue()
+```
+
+### 2. Delivery
+
+```
+runtime -> outboxProcessOnce
+```
+
+### 3. Gateway call
+
+```
+processOutbox -> gateway
+```
+
+### 4. Await ACK
+
+```
+markAwaitingAck
+```
+
+### 5. ACK via WS
+
+```
+WS -> ACK Listener -> reconcile -> dropCommitted
+```
+
+---
+
+## Retry model
 
 ```txt
-UI action → use-case → outbox.enqueue(command)
+failure ->
+  markFailed ->
+  computeNextAttemptAt ->
+  scheduleRetry ->
+  queued
 ```
 
-* persisté dans Redux
-* persisté dans storage (snapshot)
-* ajouté dans `queue`
-* indexé par `commandId` (idempotence)
+Backoff exponentiel + jitter.
 
 ---
 
-### 2) Delivery (`processOnce`)
+## Watchdog (ACK observer)
 
-```txt
-queued → processing → (gateway call)
+Quand `status = awaitingAck` :
+
+```
+watchdog ->
+  commandStatusGateway.getStatus()
 ```
 
-#### Cas succès :
+### Verdicts
 
-```txt
-→ awaitingAck
-→ dequeue
-→ nextCheckAt = now + 30s
+* **APPLIED** → `dropCommitted` + `outboxProcessOnce`
+* **REJECTED** → `markFailed` + `dropCommitted`
+* **PENDING** → replanification `nextCheckAt(now + 5s)`
+
+---
+
+## Persistence
+
+Snapshot persisté automatiquement sur actions :
+
+```
+enqueueCommitted
+markProcessing
+markFailed
+markAwaitingAck
+scheduleRetry
+dropCommitted
+dequeueCommitted
 ```
 
-#### Cas erreur :
-
-```txt
-→ rollback
-→ markFailed
-→ scheduleRetry (backoff exponentiel + jitter)
-→ status = queued
-→ retour en queue
-```
+* debounce: `75ms`
+* crash-safe
+* replay-safe
 
 ---
 
-### 3) ACK backend (WebSocket ou polling)
+## Runtime Integration
 
-```txt
-ACK reçu
-→ reconcile state
-→ dropCommitted(commandId)
-→ purge outbox
-```
+Piloté par :
 
-Idempotent :
-
-* ACK multiple = ignoré
-* si déjà drop → no-op
+* AppState
+* NetInfo
+* Auth
+* WS lifecycle
 
 ---
 
-### 4) Watchdog (`outboxWatchdog`)
+## Guarantees
 
-Pour les cas où :
-
-* websocket perdu
-* ACK jamais reçu
-* crash app
-* reconnexion réseau
-
-```txt
-awaitingAck → commandStatus.getStatus(commandId)
-```
-
-Résultats :
-
-* `APPLIED` → drop
-* `REJECTED` → fail + drop
-* `PENDING` → replanifie nextCheckAt
+* idempotence par `commandId`
+* retry sûr
+* duplicate ACK safe
+* crash safe
+* offline safe
+* reconnect safe
+* deterministic replay
 
 ---
 
-## 🔒 Garanties
+## Properties
 
-### ✅ Idempotence
-
-* index `byCommandId`
-* double enqueue = ignoré
-* double ACK = ignoré
-
-### ✅ Offline-first
-
-* persistence snapshot
-* rehydrate au démarrage
-* reprise automatique
-
-### ✅ Crash-safe
-
-* tout est persisté
-* aucun état volatile critique
-
-### ✅ Mutex
-
-* `inFlight` empêche double process concurrent
-
-### ✅ Retry policy
-
-* backoff exponentiel
-* jitter
-* cap max
-* planification via `nextAttemptAt`
+* CQRS client-side
+* Event-driven
+* Deterministic state machine
+* Observable
+* Testable
+* Portable
 
 ---
 
-## 🔌 Intégration Runtime
+## Mental Model
 
-### Lifecycle app
-
-| Événement              | Effet                                          |
-| ---------------------- | ---------------------------------------------- |
-| `appBecameActive`      | wsEnsureConnected + outboxResume + processOnce |
-| `appBecameBackground`  | outboxSuspend + wsDisconnect                   |
-| `connectivity offline` | suspend outbox                                 |
-| `connectivity online`  | resume + processOnce                           |
+> The outbox is not a queue.
+> It’s a **distributed command coordinator**.
 
 ---
 
-## 🧪 Tests
+## This enables
 
-Couverture actuelle :
-
-* idempotence
-* retry
-* rollback
-* awaitingAck
-* mutex
-* gateway missing
-* watchdog
-* rehydrate
-* snapshot persistence
-* scheduling
-* eligible selection (`nextAttemptAt`)
-* error paths
-
-> Tous les flows critiques sont testés.
+* mobile CQRS
+* frontend saga
+* offline workflows
+* distributed UX
+* resilient mobile systems
 
 ---
 
-## 🧭 Philosophie
+## Positioning
 
-Cette outbox implémente un vrai **delivery engine** :
+OutboxWL n’est pas une feature.
+C’est une **infrastructure applicative**.
 
-* séparation claire :
+Elle joue le rôle de :
 
-  * command
-  * transport
-  * delivery
-  * retry
-  * reconciliation
-  * observation
-* testable isolément
-* découplée des gateways
-* DDD compatible
-* CQRS compatible
-* Event-driven compatible
+* CommandBus client
+* Saga engine mobile
+* Retry coordinator
+* Offline orchestrator
+* Distributed state reconciler
 
 ---
 
-## 🧩 Positionnement architectural
+## Résumé
 
-Comparable à :
+OutboxWL =
 
-* transactional outbox backend
-* saga orchestrator
-* message dispatcher
-* mobile sync engine
-* offline-first command queue
+> Un système distribué embarqué dans une app mobile.
 
----
+Avec :
 
-## ✨ En résumé
+* orchestration
+* persistance
+* reprise
+* cohérence
+* tolérance aux pannes
 
-Cette outbox est :
+Ce n’est pas du Redux.
+Ce n’est pas une queue.
+Ce n’est pas un middleware.
 
-✅ déterministe
-✅ testée
-✅ résiliente
-✅ idempotente
-✅ offline-first
-✅ event-driven
-✅ clean architecture
-✅ vitrinable
-✅ production-grade
+C’est une **architecture distribuée client-side**.
 
----
