@@ -1,28 +1,28 @@
 import { AppThunkWl } from "@/app/store/reduxStoreWl";
 import {
-    authSessionLoadRequested, authSignInRequested, authSignOutRequested, authUserHydrationRequested
+	authSessionLoadRequested, authSignInRequested, authSignOutRequested, authUserHydrationRequested
 
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { ProviderId, UserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export const initializeAuth = (): AppThunkWl => (dispatch) => {
-    dispatch(authSessionLoadRequested());
+	dispatch(authSessionLoadRequested());
 };
 
 export const signInWithProvider = ({
-    provider,
-    scopes,
+	provider,
+	scopes,
 }: {
-    provider: ProviderId;
-    scopes?: string[];
+	provider: ProviderId;
+	scopes?: string[];
 }): AppThunkWl => (dispatch) => {
-    dispatch(authSignInRequested({ provider, scopes }));
+	dispatch(authSignInRequested({ provider, scopes }));
 };
 
 export const refreshUser = ({ userId }: { userId: UserId }): AppThunkWl => (dispatch) => {
-    dispatch(authUserHydrationRequested({ userId }));
+	dispatch(authUserHydrationRequested({ userId }));
 };
 
 export const signOut = (): AppThunkWl => (dispatch) => {
-    dispatch(authSignOutRequested());
+	dispatch(authSignOutRequested());
 };
