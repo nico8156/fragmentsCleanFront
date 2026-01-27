@@ -1,6 +1,7 @@
-import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { useEffect } from "react";
 import { useStore } from "react-redux";
+
+import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
 import {
 	appBootFailed,
@@ -17,21 +18,24 @@ import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
-import { getOnceRequested, requestPermission } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
+import {
+	getOnceRequested,
+	requestPermission,
+} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 
 import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
 
-import { outboxStorage } from "@/app/adapters/primary/react/wiring/setupGateways";
 import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import { logger } from "@/app/core-logic/utils/logger";
 
-// ---- dev guard (jamais en prod) ----
-const CLEAR_OUTBOX_ON_BOOT = true;
+// ✅ runtime deps (no store/gateways wiring import)
+import { outboxStorage } from "@/app/adapters/primary/wiring/runtimeDeps";
 
-const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
+// ---- dev guard (jamais en prod) ----
+const CLEAR_OUTBOX_ON_BOOT = __DEV__ && false;
 
 const selectUserIdForEntitlements = (state: any): string | undefined =>
 	state?.aState?.session?.userId ??
@@ -52,10 +56,13 @@ export const AppBootstrap = () => {
 		const unmountNetInfo = mountNetInfoAdapter(store);
 		const unmountAppState = mountAppStateAdapter(store, { ignoreFirstActive: false });
 
-		logger.info("[BOOT] NetInfo + AppState adapters mounted")
+		logger.info("[BOOT] NetInfo + AppState adapters mounted");
 
 		let cancelled = false;
 		const dispatch: any = store.dispatch;
+
+		// create here to avoid module-level surprises (tests / hot reload)
+		const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
 
 		const bootRuntime = async () => {
 			// 1) Hydration app
@@ -66,13 +73,13 @@ export const AppBootstrap = () => {
 			if (cancelled) return;
 
 			// 3) Outbox storage (DEV only)
-			if (__DEV__ && CLEAR_OUTBOX_ON_BOOT) {
-				logger.info("[BOOT] DEV: clearing outbox storage (flag enabled)")
+			if (CLEAR_OUTBOX_ON_BOOT) {
+				logger.info("[BOOT] DEV: clearing outbox storage (flag enabled)");
 				await outboxStorage.clear();
 			}
 
 			// 4) Outbox rehydrate
-			logger.info("[BOOT] Rehydrate outbox: start")
+			logger.info("[BOOT] Rehydrate outbox: start");
 			const snapshot = await runRehydrateOutbox(store);
 			logger.info("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
 			if (cancelled) return;
@@ -115,7 +122,6 @@ export const AppBootstrap = () => {
 				store.dispatch(appWarmupDone({ message: "Warmup OK" }));
 				store.dispatch(appBootSucceeded());
 				logger.info("[BOOT] App boot succeeded");
-
 			} catch (e: any) {
 				logger.error("[BOOT] App boot failed", e);
 				store.dispatch(appBootFailed({ message: String(e?.message ?? e) }));
@@ -125,10 +131,11 @@ export const AppBootstrap = () => {
 		return () => {
 			logger.info("[BOOT] AppBootstrap unmount");
 			cancelled = true;
-			unmountAppState();
-			unmountNetInfo();
-			logger.info("[BOOT] NetInfo + AppState adapters unmounted");
 
+			unmountAppState?.();
+			unmountNetInfo?.();
+
+			logger.info("[BOOT] NetInfo + AppState adapters unmounted");
 		};
 	}, [store]);
 

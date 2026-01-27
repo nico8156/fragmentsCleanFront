@@ -1,15 +1,17 @@
 import { Provider } from "react-redux";
-import { createWlStore } from "@/app/adapters/primary/react/wiring/setupGateways";
+import { useMemo } from "react";
+
+import { createWlStore } from "@/app/adapters/primary/wiring/createStore";
 import { AppBootstrap } from "@/app/adapters/primary/react/AppBootstrap";
 import { RootNavigator } from "@/app/adapters/primary/react/navigation/RootNavigator";
 
-const store = createWlStore();
-
 export default function RootLayout() {
-    return (
-        <Provider store={store}>
-            <AppBootstrap />
-            <RootNavigator />
-        </Provider>
-    );
+	const store = useMemo(() => createWlStore(), []);
+
+	return (
+		<Provider store={store}>
+			<AppBootstrap />
+			<RootNavigator />
+		</Provider>
+	);
 }
