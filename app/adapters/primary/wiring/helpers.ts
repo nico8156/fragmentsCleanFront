@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
 
-import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import type { Helpers } from "@/app/store/appStateWl";
+import { parseToCommandId } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
-export const createHelpers = (getStore: () => ReduxStoreWl): DependenciesWl["helpers"] => ({
-	nowIso: () => new Date().toISOString() as any, // ou parseToISODate si requis
+export const createHelpers = (getStore: () => ReduxStoreWl): Helpers => ({
+	nowIso: () => new Date().toISOString(),
 	currentUserId: () => {
 		const a = getStore().getState().aState;
 		return a?.session?.userId ?? a?.currentUser?.id ?? "anonymous";
@@ -14,9 +15,11 @@ export const createHelpers = (getStore: () => ReduxStoreWl): DependenciesWl["hel
 		if (!u) return null;
 
 		return {
-			displayName: u.displayName,                 // si parfois undefined, c’est OK
-			avatarUrl: u.avatarUrl ?? undefined,        // ✅ pas de null
+			// displayName est optionnel dans HelpersCore => OK même si undefined
+			displayName: u.displayName,
+			// avatarUrl doit être string|undefined => on normalise (pas de null)
+			avatarUrl: u.avatarUrl ?? undefined,
 		};
 	},
-	newCommandId: () => uuidv4() as any,            // ou parseToCommandId
+	newCommandId: () => parseToCommandId(uuidv4()),
 });
