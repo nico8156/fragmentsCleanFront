@@ -2,7 +2,6 @@ import "react-native-get-random-values";
 
 import { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import { FakeCfPhotoWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
-import { FakeCoffeeGateway } from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import { FakeOpeningHoursWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeOpeningHoursWlGateway";
 
@@ -23,6 +22,10 @@ import { HttpCommandStatusGateway } from "@/app/adapters/secondary/gateways/outb
 import { HttpTicketsGateway } from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
 
 import { WsStompEventsGateway } from "@/app/adapters/primary/socket/WsEventsGateway";
+import { HttpCfPhotoGateway } from "../../secondary/gateways/coffee/HttpCfPhotoGateway";
+import { HttpCoffeeGateway } from "../../secondary/gateways/coffee/HttpCoffeeGateway";
+import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpeningHoursGateway";
+import { API_BASE_URL } from "./config";
 import type { GatewaysWl } from "./types";
 
 export const createInfrastructure = (apiBaseUrl: string) => {
@@ -35,9 +38,9 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 	};
 
 	const gateways: GatewaysWl = {
-		coffees: new FakeCoffeeGateway(),
-		cfPhotos: new FakeCfPhotoWlGateway(),
-		openingHours: new FakeOpeningHoursWlGateway(),
+		coffees: new HttpCoffeeGateway({ baseUrl: API_BASE_URL }),
+		cfPhotos: new HttpCfPhotoGateway({ baseUrl: API_BASE_URL }),
+		openingHours: new HttpOpeningHoursGateway({ baseUrl: API_BASE_URL }),
 
 		comments: new HttpCommentsGateway({
 			baseUrl: apiBaseUrl,
