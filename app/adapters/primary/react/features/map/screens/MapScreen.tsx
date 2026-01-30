@@ -1,359 +1,231 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    StatusBar,
-    StyleSheet,
-    View,
-    Platform,
-    KeyboardAvoidingView
-} from "react-native";
-import MapView, { Marker, Region } from "react-native-maps";
-import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Clusterer, coordsToGeoJSONFeature, isClusterFeature } from "react-native-clusterer";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { useNavigation } from "@react-navigation/native";
+import { BlurView } from "expo-blur";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { StatusBar, StyleSheet, View } from "react-native";
+import { Clusterer, isClusterFeature } from "react-native-clusterer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import MapView, { Marker, Region } from "react-native-maps";
+import Animated from "react-native-reanimated";
 
-
-import LocalisationButton from "@/app/adapters/primary/react/features/map/components/coffeeSelection/localisationButton";
+import ActionButtonsWrapper from "@/app/adapters/primary/react/features/map/components/ActionButtonsWrapper";
+import { ClusterBubble } from "@/app/adapters/primary/react/features/map/components/ClusterBubble";
 import CoffeeMarker from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeMarker";
+import LocalisationButton from "@/app/adapters/primary/react/features/map/components/coffeeSelection/localisationButton";
+import MapCoffeePreviewSheet from "@/app/adapters/primary/react/features/map/components/MapCoffeePreviewSheet";
+import ListViewForCoffees from "@/app/adapters/primary/react/features/map/screens/ListViewForCoffees";
 
-import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
-import { useCafeForMarkers } from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
 import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
+import { useCafeForMarkers } from "@/app/adapters/secondary/viewModel/useCoffeesForMarkers";
 import { useDistanceToPoint } from "@/app/adapters/secondary/viewModel/useDistanceToPoint";
+import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
-import {CoffeeId, parseToCoffeeId} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 
-import ListViewForCoffees from "@/app/adapters/primary/react/features/map/screens/ListViewForCoffees";
-import ActionButtonsWrapper from "@/app/adapters/primary/react/features/map/components/ActionButtonsWrapper";
-import BottomSheetHeader from "@/app/adapters/primary/react/features/map/components/BottomSheetHeader";
-import BottomSheetCat from "@/app/adapters/primary/react/features/map/components/BottomSheetCat";
-import BottomSheetActions from "@/app/adapters/primary/react/features/map/components/BottomSheetActions";
-import BottomSheetPhotos from "@/app/adapters/primary/react/features/map/components/BottomSheetPhotos";
-import BottomSheetGeneral from "@/app/adapters/primary/react/features/map/components/BottomSheetGeneral";
-import CommentsArea from "@/app/adapters/primary/react/features/map/components/CommentsArea";
-import Separator from "@/app/adapters/primary/react/features/map/components/Separator";
-import GeneralComponent from "@/app/adapters/primary/react/features/map/components/GeneralComponent";
-import TagComponent from "@/app/adapters/primary/react/features/map/components/TagComponent";
-import { ClusterBubble } from "@/app/adapters/primary/react/features/map/components/ClusterBubble";
+import { useBlurOverlay } from "@/app/adapters/primary/react/features/map/hook/useBlurOverlay";
+import { useClusteredCoffeeMap } from "@/app/adapters/primary/react/features/map/hook/useClusteredCoffeeMap";
+import { useCoffeePreviewSheet } from "@/app/adapters/primary/react/features/map/hook/useCoffeePreviewSheet";
+import { useFollowUserOnMap } from "@/app/adapters/primary/react/features/map/hook/useFollowUserOnMap";
 
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-type LatLng = { lat: number; lng: number };
-
-const COMMENTS_AREA_HEIGHT = 50; // ajuste si besoin (140–180)
-
-
-const expandRegion = (region: Region, factor = 0.2): Region => ({
-    ...region,
-    latitudeDelta: region.latitudeDelta * (1 + factor),
-    longitudeDelta: region.longitudeDelta * (1 + factor),
-});
 
 export function MapScreen() {
-   //BOTTOMSHEET
-    const [bottomSheetIndex, setBottomSheetIndex] = useState(-1); // -1 = fermée
-    const bottomSheetRef = useRef<BottomSheet>(null);
+	const navigation = useNavigation<RootStackNavigationProp>();
 
-    const commentScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	// --- BottomSheet state
+	const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
+	const bottomSheetRef = useRef<BottomSheet | null>(null);
+	const snapPoints = useMemo(() => ["40%"], []);
 
+	// --- UI state
+	const [viewMode, setViewMode] = useState<"map" | "list">("map");
 
-    const snapPoints = useMemo(() => ["25%", "85%"], []);
-    const scrollRef = useRef<any>(null); // tu pourras typer plus finement plus tard
-    const handleCommentFocus = useCallback(() => {
-        bottomSheetRef.current?.expand();
+	// --- Data
+	const { coffees } = useCafeForMarkers();
+	const { coords, refresh } = useUserLocationFromStore();
 
-        // On évite d'empiler les timeouts
-        if (commentScrollTimeoutRef.current) {
-            clearTimeout(commentScrollTimeoutRef.current);
-        }
+	// --- Cluster/map extracted
+	const {
+		mapRef,
+		initialRegion,
+		effectiveClusterRegion,
+		zoomLevel,
+		mapDimensions,
+		onLayout,
+		handleRegionChangeComplete,
+		clusterData,
+	} = useClusteredCoffeeMap({
+		coffees,
+		userCoords: coords ? { lat: coords.lat, lng: coords.lng } : undefined,
+	});
 
-        commentScrollTimeoutRef.current = setTimeout(() => {
-            scrollRef.current?.scrollToEnd?.({ animated: true });
-            commentScrollTimeoutRef.current = null;
-        }, 120);
-    }, []);
-    const handleCommentBlur = useCallback(() => {
-        // Si le scrollToEnd n'a pas encore été exécuté,
-        // on annule pour éviter un "coup de fouet" après coup
-        if (commentScrollTimeoutRef.current) {
-            clearTimeout(commentScrollTimeoutRef.current);
-            commentScrollTimeoutRef.current = null;
-        }
-    }, []);
+	// --- Follow user extracted
+	const { isFollowingUser, updateFollowingState, handlePanDrag, localizeMe } = useFollowUserOnMap({
+		mapRef,
+		coords: coords ? { lat: coords.lat, lng: coords.lng } : undefined,
+		refresh,
+		initialRegion,
+	});
 
-    // useEffect(() => {
-    //     const hideSub = Keyboard.addListener("keyboardDidHide", () => {
-    //         scrollRef.current?.scrollTo({ y: 0, animated: true });
-    //     });
-    //     return () => hideSub.remove();
-    // }, []);
-//============================================================================================================
+	// --- Coffee preview extracted (selection + open/close + navigate details)
+	const { selectedCoffeeId, openCoffeePreview, closePreview, goToDetails } = useCoffeePreviewSheet({
+		navigation,
+		bottomSheetRef,
+		setBottomSheetIndex,
+	});
 
+	// --- Selected coffee details
+	const { coffee } = useCafeFull(selectedCoffeeId);
+	const isOpen = useCafeOpenNow(selectedCoffeeId);
 
+	const todayIndex = ((new Date().getDay() + 6) % 7) as DayIndex;
+	const todayHoursLabel = coffee?.hours?.[todayIndex]?.label ?? "Horaires non disponibles";
 
-    const [selectedCoffeeId, setSelectedCoffeeId] = useState<CoffeeId | null>(null);
-    const [viewMode, setViewMode] = useState<"map" | "list">("map");
-    const [isFollowingUser, setIsFollowingUser] = useState(false);
+	const { text: distanceText } = useDistanceToPoint(
+		coffee?.location ? { lat: coffee.location.lat, lng: coffee.location.lon } : undefined,
+	);
 
-    const [mapRegion, setMapRegion] = useState<Region | undefined>();
-    const [clusterRegion, setClusterRegion] = useState<Region | undefined>(undefined);
-    const clusterUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	// --- Blur extracted
+	const isSheetOpen = bottomSheetIndex >= 0 && viewMode === "map";
+	const {
+		shouldRender: shouldRenderBlur,
+		style: blurStyle,
+		hideFast: hideBlurFast,
+	} = useBlurOverlay(isSheetOpen);
 
-    const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
+	// --- Handlers
+	const toggleViewMode = useCallback(() => {
+		setBottomSheetIndex(-1);
+		setViewMode((mode) => (mode === "map" ? "list" : "map"));
+	}, []);
 
-    const mapRef = useRef<MapView>(null);
+	const onRegionChangeComplete = useCallback(
+		(region: Region) => {
+			handleRegionChangeComplete(region);
+			updateFollowingState(region);
+		},
+		[handleRegionChangeComplete, updateFollowingState],
+	);
 
-    const { coffees } = useCafeForMarkers();
-    const { coords, refresh } = useUserLocationFromStore();
-    const { coffee } = useCafeFull(selectedCoffeeId);
-    const isOpen = useCafeOpenNow(selectedCoffeeId);
+	const renderClusterItem = useCallback(
+		(item: any) => {
+			const [lng, lat] = item.geometry.coordinates;
 
-    const todayIndex = ((new Date().getDay() + 6) % 7) as DayIndex;
-    const todayHoursLabel = coffee?.hours?.[todayIndex]?.label ?? "Horaires non disponibles";
+			if (isClusterFeature(item)) {
+				const count = item.properties.point_count as number;
 
-    const { text: distanceText } = useDistanceToPoint(
-        { lat: coffee?.location.lat, lng: coffee?.location.lon } as LatLng,
-    );
+				const handleClusterPress = () => {
+					const toRegion = item.properties.getExpansionRegion();
+					mapRef.current?.animateToRegion(toRegion, 350);
+				};
 
-    const initialRegion = useMemo<Region>(
-        () => ({
-            latitude: coords?.lat ?? 48.8566,
-            longitude: coords?.lng ?? 2.3522,
-            latitudeDelta: 0.035,
-            longitudeDelta: 0.035,
-        }),
-        [coords?.lat, coords?.lng],
-    );
+				return (
+					<Marker
+						key={`cluster-${item.properties.cluster_id}`}
+						coordinate={{ latitude: lat, longitude: lng }}
+						onPress={handleClusterPress}
+					>
+						<ClusterBubble count={count} />
+					</Marker>
+				);
+			}
 
-    // si clusterRegion n'est pas encore défini, on part sur initialRegion
-    const effectiveClusterRegion = clusterRegion ?? initialRegion;
-    const zoomLevel = (mapRegion ?? initialRegion).latitudeDelta;
+			const coffeeId = item.properties.id as string;
+			const coffeeItem = coffees.find((c) => c.id === coffeeId);
+			if (!coffeeItem) return null;
 
-    const updateFollowingState = useCallback(
-        (region: Region) => {
-            if (!coords) return;
-            const latDiff = Math.abs(region.latitude - coords.lat);
-            const lngDiff = Math.abs(region.longitude - coords.lng);
-            const threshold = 0.0008;
-            setIsFollowingUser(latDiff < threshold && lngDiff < threshold);
-        },
-        [coords],
-    );
+			return (
+				<CoffeeMarker
+					key={coffeeId}
+					coffee={coffeeItem}
+					zoomLevel={zoomLevel}
+					onSelect={() => openCoffeePreview(coffeeId)}
+					coordinate={{ latitude: lat, longitude: lng }}
+				/>
+			);
+		},
+		[coffees, zoomLevel, openCoffeePreview, mapRef],
+	);
 
-    const handleRegionChangeComplete = useCallback(
-        (nextRegion: Region) => {
-            setMapRegion(nextRegion);
-            updateFollowingState(nextRegion);
+	return (
+		<GestureHandlerRootView style={styles.safeArea} onLayout={onLayout}>
+			<StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
-            if (clusterUpdateTimeout.current) {
-                clearTimeout(clusterUpdateTimeout.current);
-            }
+			<View style={styles.container}>
+				{viewMode === "map" ? (
+					<>
+						<MapView
+							ref={mapRef}
+							style={StyleSheet.absoluteFill}
+							showsMyLocationButton={false}
+							initialRegion={initialRegion}
+							showsUserLocation
+							onRegionChangeComplete={onRegionChangeComplete}
+							onPanDrag={handlePanDrag}
+							showsPointsOfInterest={false}
+							onPress={() => {
+								if (isSheetOpen) closePreview();
+							}}
+						>
+							{mapDimensions.width > 0 && mapDimensions.height > 0 && (
+								<Clusterer
+									data={clusterData}
+									region={effectiveClusterRegion}
+									mapDimensions={mapDimensions}
+									renderItem={renderClusterItem as any}
+								/>
+							)}
+						</MapView>
 
-            clusterUpdateTimeout.current = setTimeout(() => {
-                setClusterRegion(expandRegion(nextRegion, 0.2));
-            }, 120);
-        },
-        [updateFollowingState],
-    );
+						{shouldRenderBlur && (
+							<Animated.View style={[StyleSheet.absoluteFill, blurStyle]} pointerEvents="none">
+								<BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+							</Animated.View>
+						)}
 
-    const handlePanDrag = useCallback(() => {
-        setIsFollowingUser(false);
-    }, []);
+						<ActionButtonsWrapper toggleViewMode={toggleViewMode} />
 
-    const localizeMe = useCallback(() => {
-        refresh();
-        setIsFollowingUser(true);
-        mapRef.current?.animateToRegion({
-            latitude: coords?.lat ?? initialRegion.latitude,
-            longitude: coords?.lng ?? initialRegion.longitude,
-            latitudeDelta: 0.015,
-            longitudeDelta: 0.015,
-        });
-    }, [coords?.lat, coords?.lng, initialRegion.latitude, initialRegion.longitude, refresh]);
+						<LocalisationButton
+							localizeMe={localizeMe}
+							name={isFollowingUser ? "location.circle.fill" : "location"}
+							size={28}
+							color={isFollowingUser ? palette.accent : palette.textSecondary}
+							isFollowing={isFollowingUser}
+						/>
 
-    const toggleViewMode = useCallback(() => {
-        setViewMode((mode) => (mode === "map" ? "list" : "map"));
-    }, []);
-
-    const handleSelectCoffee = useCallback((id: string) => {
-        const coffeeId = parseToCoffeeId(id);
-        if (!coffeeId) return;
-        setSelectedCoffeeId(coffeeId);
-        setBottomSheetIndex(0); // ouvre sur le premier snap
-    }, []);
-
-    const clusterData = useMemo<any[]>(
-        () =>
-            coffees.map((c) =>
-                coordsToGeoJSONFeature(
-                    { lat: c.location.lat, lng: c.location.lon },
-                    {
-                        id: c.id,
-                        name: c.name,
-                    },
-                ),
-            ),
-        [coffees],
-    );
-
-    const renderClusterItem = useCallback(
-        (item: any) => {
-            const [lng, lat] = item.geometry.coordinates;
-
-            if (isClusterFeature(item)) {
-                const count = item.properties.point_count as number;
-
-                const handleClusterPress = () => {
-                    const toRegion = item.properties.getExpansionRegion();
-                    mapRef.current?.animateToRegion(toRegion, 350);
-                };
-
-                return (
-                    <Marker
-                        key={`cluster-${item.properties.cluster_id}`}
-                        coordinate={{ latitude: lat, longitude: lng }}
-                        onPress={handleClusterPress}
-                    >
-                        <ClusterBubble count={count} />
-                    </Marker>
-                );
-            }
-
-            const coffeeId = item.properties.id as string;
-            const coffeeItem = coffees.find((c) => c.id === coffeeId);
-            if (!coffeeItem) return null;
-
-            return (
-                <CoffeeMarker
-                    key={coffeeId}
-                    coffee={coffeeItem}
-                    zoomLevel={zoomLevel}
-                    onSelect={() => handleSelectCoffee(coffeeId)}
-                    coordinate={{ latitude: lat, longitude: lng }}
-                />
-            );
-        },
-        [coffees, zoomLevel, handleSelectCoffee],
-    );
-
-    // clean timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (clusterUpdateTimeout.current) {
-                clearTimeout(clusterUpdateTimeout.current);
-            }
-        };
-    }, []);
-
-    return (
-        <GestureHandlerRootView
-            style={styles.safeArea}
-            onLayout={(e) => {
-                const { width: w, height: h } = e.nativeEvent.layout;
-                setMapDimensions({ width: w, height: h });
-            }}
-        >
-            <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-            <View style={styles.container}>
-                {viewMode === "map" ? (
-                    <>
-                        <MapView
-                            ref={mapRef}
-                            style={StyleSheet.absoluteFill}
-                            showsMyLocationButton={false}
-                            initialRegion={initialRegion}
-                            showsUserLocation
-                            onRegionChangeComplete={handleRegionChangeComplete}
-                            onPanDrag={handlePanDrag}
-                            showsPointsOfInterest={false}
-                        >
-                            {mapDimensions.width > 0 && mapDimensions.height > 0 && (
-                                <Clusterer
-                                    data={clusterData}
-                                    region={effectiveClusterRegion}
-                                    mapDimensions={mapDimensions}
-                                    renderItem={renderClusterItem as any}
-                                />
-                            )}
-                        </MapView>
-                        <ActionButtonsWrapper toggleViewMode={toggleViewMode} />
-
-                        <LocalisationButton
-                            localizeMe={localizeMe}
-                            name={isFollowingUser ? "location.circle.fill" : "location"}
-                            size={28}
-                            color={isFollowingUser ? palette.accent : palette.textSecondary}
-                            isFollowing={isFollowingUser}
-                        />
-                        <BottomSheet
-                            ref={bottomSheetRef}
-                            index={bottomSheetIndex}
-                            onChange={setBottomSheetIndex}
-                            snapPoints={snapPoints}
-                            enablePanDownToClose
-                            keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
-                            keyboardBlurBehavior="none"
-                            backgroundStyle={{ backgroundColor: palette.textPrimary_1 }}
-                        >
-                            <KeyboardAvoidingView
-                                style={{ flex: 1 }}
-                                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                                keyboardVerticalOffset={16}
-                            >
-                                <BottomSheetScrollView
-                                    ref={scrollRef}
-                                    style={styles.sheetContent}
-                                    keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ paddingBottom: COMMENTS_AREA_HEIGHT  }}
-                                >
-                                    <BottomSheetHeader name={coffee?.name} coffeeId={selectedCoffeeId ?? undefined}/>
-                                    <BottomSheetCat
-                                        openingHoursToday={todayHoursLabel}
-                                        isOpen={isOpen}
-                                        distance={distanceText}
-                                    />
-                                    <BottomSheetActions latitude={coffee?.location.lat} longitude={coffee?.location.lon} name={coffee?.name}/>
-                                    <BottomSheetPhotos photos={coffee?.photos} />
-                                    <BottomSheetGeneral />
-                                    <Separator />
-                                    <GeneralComponent
-                                        isOpen={isOpen}
-                                        address={coffee?.address}
-                                        openingTodayHours={todayHoursLabel}
-                                    />
-                                    <Separator />
-                                    <TagComponent />
-                                    <Separator />
-                                    <CommentsArea
-                                        coffeeId={selectedCoffeeId ?? undefined}
-                                        onFocusComment={handleCommentFocus}
-                                        onBlurComment={handleCommentBlur}
-                                    />
-                                </BottomSheetScrollView>
-                            </KeyboardAvoidingView>
-                        </BottomSheet>
-
-                    </>
-                ) : (
-                    <ListViewForCoffees toggleViewMode={toggleViewMode}/>
-                )}
-            </View>
-        </GestureHandlerRootView>
-    );
+						<MapCoffeePreviewSheet
+							bottomSheetRef={bottomSheetRef}
+							index={bottomSheetIndex}
+							onChange={setBottomSheetIndex}
+							onAnimate={(fromIndex, toIndex) => {
+								if (toIndex === -1) hideBlurFast();
+							}}
+							snapPoints={snapPoints}
+							name={coffee?.name}
+							isOpen={isOpen}
+							distanceText={distanceText}
+							todayHoursLabel={todayHoursLabel}
+							onPressDetails={goToDetails}
+						/>
+					</>
+				) : (
+					<ListViewForCoffees toggleViewMode={toggleViewMode} />
+				)}
+			</View>
+		</GestureHandlerRootView>
+	);
 }
 
 const styles = StyleSheet.create({
-        safeArea: {
-            flex: 1,
-            backgroundColor: palette.background,
-        },
-        container: {
-            flex: 1,
-        },
-        sheetContent: {
-            backgroundColor: palette.textPrimary_1,
-            // surtout pas de flex: 1 ici
-        },
+	safeArea: {
+		flex: 1,
+		backgroundColor: palette.background,
+	},
+	container: {
+		flex: 1,
+	},
 });
 
 export default MapScreen;
