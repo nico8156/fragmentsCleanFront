@@ -45,8 +45,6 @@ export function MapScreen() {
 	// --- Data
 	const { coffees } = useCafeForMarkers();
 	const { coords, refresh } = useUserLocationFromStore();
-
-	// --- Cluster/map extracted
 	const {
 		mapRef,
 		initialRegion,

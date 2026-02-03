@@ -6,7 +6,7 @@ type Props = {
 	name?: string;
 	isOpen?: boolean;
 	distanceText?: string;
-	todayHoursLabel?: string;
+	todayHoursLabel?: string; // ex: "08:30–18:00" ou "ferme à 18:00"
 	onPressDetails: () => void;
 };
 
@@ -17,82 +17,230 @@ export default function BottomSheetPreviewSimple({
 	todayHoursLabel,
 	onPressDetails,
 }: Props) {
-	const statusLabel = useMemo(() => (isOpen ? "Ouvert" : "Fermé"), [isOpen]);
+	const hasSelection = Boolean(name);
+
+	const openLabel = useMemo(() => {
+		if (!hasSelection) return "—";
+		if (isOpen === undefined) return "Statut inconnu";
+		return isOpen ? "OUVERT" : "FERMÉ";
+	}, [hasSelection, isOpen]);
+
+	const openSubLabel = useMemo(() => {
+		if (!hasSelection) return "Tape un marker pour voir un spot";
+		if (!todayHoursLabel) return "Horaires dans la fiche";
+		// on garde simple et lisible
+		return todayHoursLabel;
+	}, [hasSelection, todayHoursLabel]);
+
+	const distanceLabel = useMemo(() => {
+		if (!hasSelection) return "—";
+		return distanceText ?? "Distance inconnue";
+	}, [hasSelection, distanceText]);
+
+	// CTA “signature” : fun léger, pas cringe
+	const ctaLabel = useMemo(() => {
+		if (!hasSelection) return "Choisis un café";
+		// si ouvert : incite à y aller maintenant
+		if (isOpen) return "Let’s go ☕️";
+		// si fermé : incite à découvrir quand même
+		return "Découvrir quand même";
+	}, [hasSelection, isOpen]);
 
 	return (
 		<View style={styles.container}>
-			<View style={styles.handle} />
+			{/* Handle (simple + lisible) */}
 
+			{/* NOM — très visible */}
 			<Text style={styles.title} numberOfLines={1}>
-				{name ?? "Sélectionnez un café"}
+				{name ?? "Sélectionnez un coffee shop"}
 			</Text>
 
-			<Text style={styles.meta} numberOfLines={1}>
-				{statusLabel}
-				{distanceText ? ` • ${distanceText}` : ""}
-			</Text>
+			{/* 2 colonnes : OUVERTURE / DISTANCE */}
+			<View style={styles.grid}>
+				<InfoBlock
+					label="Ouverture"
+					value={openLabel}
+					subValue={openSubLabel}
+					emphasis={isOpen ? "positive" : isOpen === false ? "negative" : "neutral"}
+					disabled={!hasSelection}
+				/>
+				<InfoBlock
+					label="Distance"
+					value={distanceLabel}
+					subValue={hasSelection ? "Depuis toi" : ""}
+					emphasis="neutral"
+					disabled={!hasSelection}
+				/>
+			</View>
 
-			{todayHoursLabel ? (
-				<Text style={styles.subMeta} numberOfLines={1}>
-					Aujourd’hui : {todayHoursLabel}
-				</Text>
-			) : null}
-
-			<Pressable style={styles.cta} onPress={onPressDetails}>
-				<Text style={styles.ctaText}>Voir la fiche</Text>
+			{/* CTA principal */}
+			<Pressable
+				onPress={onPressDetails}
+				disabled={!hasSelection}
+				style={({ pressed }) => [
+					styles.cta,
+					pressed && styles.ctaPressed,
+					!hasSelection && styles.ctaDisabled,
+				]}
+			>
+				<Text style={styles.ctaText}>{ctaLabel}</Text>
+				<Text style={styles.ctaIcon}>→</Text>
 			</Pressable>
 
-			<Text style={styles.hint}>Glissez vers le bas pour fermer</Text>
+			{/* Hint minimal */}
+			<Text style={styles.hint}>Glisse pour fermer</Text>
+		</View>
+	);
+}
+
+function InfoBlock({
+	label,
+	value,
+	subValue,
+	emphasis,
+	disabled,
+}: {
+	label: string;
+	value: string;
+	subValue?: string;
+	emphasis: "positive" | "negative" | "neutral";
+	disabled?: boolean;
+}) {
+	const toneStyle =
+		emphasis === "positive"
+			? styles.tonePositive
+			: emphasis === "negative"
+				? styles.toneNegative
+				: styles.toneNeutral;
+
+	return (
+		<View style={[styles.block, toneStyle, disabled && styles.blockDisabled]}>
+			<Text style={styles.blockLabel} numberOfLines={1}>
+				{label}
+			</Text>
+			<Text style={styles.blockValue} numberOfLines={1}>
+				{value}
+			</Text>
+			{subValue ? (
+				<Text style={styles.blockSub} numberOfLines={1}>
+					{subValue}
+				</Text>
+			) : null}
 		</View>
 	);
 }
 
 const styles = StyleSheet.create({
 	container: {
-		paddingHorizontal: 16,
+		paddingHorizontal: 18,
 		paddingTop: 10,
 		paddingBottom: 14,
 		backgroundColor: palette.textPrimary_1,
-		gap: 10,
+		borderTopLeftRadius: 28,
+		borderTopRightRadius: 28,
+		gap: 14,
 	},
+
 	handle: {
 		alignSelf: "center",
-		width: 44,
-		height: 5,
-		borderRadius: 3,
+		width: 78,
+		height: 6,
+		borderRadius: 99,
 		backgroundColor: palette.border,
-		opacity: 0.8,
+		opacity: 0.9,
 	},
+
 	title: {
-		fontSize: 22,
-		fontWeight: "800",
+		fontSize: 28, // plus grand = “confirmation”
+		fontWeight: "900",
 		color: palette.background_1,
+		letterSpacing: -0.5,
 	},
-	meta: {
-		fontSize: 13,
-		color: palette.background_30,
+
+	grid: {
+		flexDirection: "row",
+		gap: 12,
 	},
-	subMeta: {
+
+	block: {
+		flex: 1,
+		borderRadius: 18,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		borderWidth: 1,
+	},
+
+	// label petit, value gros : hiérarchie nette
+	blockLabel: {
 		fontSize: 12,
+		fontWeight: "800",
 		color: palette.textMuted,
+		opacity: 0.95,
 	},
+	blockValue: {
+		fontSize: 18,
+		fontWeight: "900",
+		color: palette.background_1,
+		letterSpacing: 0.3,
+		marginTop: 6,
+	},
+	blockSub: {
+		fontSize: 12,
+		fontWeight: "700",
+		color: palette.background_30,
+		marginTop: 4,
+	},
+
+	tonePositive: {
+		backgroundColor: "rgba(46, 204, 113, 0.08)",
+		borderColor: "rgba(46, 204, 113, 0.18)",
+	},
+	toneNegative: {
+		backgroundColor: "rgba(231, 76, 60, 0.07)",
+		borderColor: "rgba(231, 76, 60, 0.16)",
+	},
+	toneNeutral: {
+		backgroundColor: "rgba(255,255,255,0.05)",
+		borderColor: "rgba(255,255,255,0.10)",
+	},
+	blockDisabled: {
+		opacity: 0.5,
+	},
+
 	cta: {
-		height: 52,
-		borderRadius: 16,
+		height: 56,
+		borderRadius: 18,
+		backgroundColor: palette.accent,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: palette.accent, // tu ajusteras
-		marginTop: 2,
+		flexDirection: "row",
+		gap: 10,
 	},
 	ctaText: {
-		color: palette.textPrimary,
-		fontWeight: "900",
 		fontSize: 16,
+		fontWeight: "900",
+		color: palette.textPrimary,
+		letterSpacing: 0.2,
 	},
+	ctaIcon: {
+		fontSize: 18,
+		fontWeight: "900",
+		color: palette.textPrimary,
+		marginTop: -1,
+	},
+	ctaPressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.99 }],
+	},
+	ctaDisabled: {
+		opacity: 0.45,
+	},
+
 	hint: {
 		textAlign: "center",
-		color: palette.textMuted,
 		fontSize: 12,
+		color: palette.textMuted,
+		opacity: 0.9,
 	},
 });
 
