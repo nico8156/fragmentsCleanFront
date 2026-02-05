@@ -1,29 +1,39 @@
-import { NavigatorScreenParams } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { NavigatorScreenParams } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export type ProfileStackParamList = {
-    ProfileHome: undefined;
-    EditProfile: undefined;
-    Tickets: undefined;
-    Favorites: undefined;
-    AppSettings: undefined;
+	ProfileHome: undefined;
+	EditProfile: undefined;
+	Tickets: undefined;
+	Favorites: undefined;
+	AppSettings: undefined;
 };
 
 export type RootTabsParamList = {
-    Home: undefined;
-    Map: undefined;
-    Rewards: undefined;
-    Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
+	Home: undefined;
+	Map: undefined;
+
+	// Tab name can stay "Rewards" even if UI label is "Pass"
+	Rewards: undefined;
+
+	Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 
 export type RootStackParamList = {
-    Onboarding: undefined;
-    Tabs: NavigatorScreenParams<RootTabsParamList>;
-    CafeDetails: { id: string };
-    Article: { slug: string };
-    ScanTicketModal: undefined;
-    Search: undefined;
-    Login: undefined;
+	Onboarding: undefined;
+	Tabs: NavigatorScreenParams<RootTabsParamList>;
+
+	CafeDetails: { id: string };
+	Article: { slug: string };
+
+	// Existing
+	ScanTicketModal: undefined;
+	Search: undefined;
+	Login: undefined;
+
+	// ✅ NEW (Pass flow)
+	BadgeDetail: { badgeId: string };
+	AllBadges: undefined;
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
