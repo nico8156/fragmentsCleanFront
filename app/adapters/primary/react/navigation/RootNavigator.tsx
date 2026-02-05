@@ -20,9 +20,9 @@ import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/s
 import { ProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/ProfileScreen";
 import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
 
-import { PassScreen } from "@/app/adapters/primary/react/features/pass/screens/PassScreen";
-import { BadgeDetailScreen } from "@/app/adapters/primary/react/features/pass/screens/BadgeDetailScreen";
 import { AllBadgesScreen } from "@/app/adapters/primary/react/features/pass/screens/AllBadgesScreen";
+import { BadgeDetailScreen } from "@/app/adapters/primary/react/features/pass/screens/BadgeDetailScreen";
+import { PassScreen } from "@/app/adapters/primary/react/features/pass/screens/PassScreen";
 
 import { ScanTicketScreen } from "@/app/adapters/primary/react/features/scan/screens/ScanTicketScreen";
 import { SearchScreen } from "@/app/adapters/primary/react/features/search/screens/SearchScreen";
@@ -37,6 +37,7 @@ import { useOnBoarding } from "@/app/adapters/secondary/viewModel/useOnBoarding"
 import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 import { ActivityIndicator, View } from "react-native";
+import ScanTicketSuccessScreen from "../features/scan/screens/ScanTicketSuccessScreen";
 
 /* -------------------------------------------------------------------------- */
 /*                             NAVIGATORS SETUP                               */
@@ -104,14 +105,16 @@ const theme = {
 /* -------------------------------------------------------------------------- */
 /*                             PROFILE NAVIGATOR                              */
 /* -------------------------------------------------------------------------- */
-
 function ProfileNavigator() {
 	return (
 		<ProfileStack.Navigator
 			screenOptions={{
 				headerShown: true,
-				headerTitleStyle: { color: palette.accent_1, fontWeight: "bold" },
 				headerStyle: { backgroundColor: palette.primary_30 },
+				headerTitleStyle: { color: palette.accent_1, fontWeight: "700" },
+				headerTintColor: palette.accent_1,
+				headerBackVisible: false,
+				contentStyle: { backgroundColor: palette.bg_light_90 },
 			}}
 		>
 			<ProfileStack.Screen
@@ -231,6 +234,13 @@ function SignedInNavigator() {
 					presentation: "modal",
 					title: "Scanner un ticket",
 					headerTitleStyle: { color: palette.accent_1, fontWeight: "bold" },
+				}}
+			/>
+			<Stack.Screen
+				name="ScanTicketSuccess"
+				component={ScanTicketSuccessScreen}
+				options={{
+					headerShown: false
 				}}
 			/>
 

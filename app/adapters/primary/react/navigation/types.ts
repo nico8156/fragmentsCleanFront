@@ -31,9 +31,12 @@ export type RootStackParamList = {
 	Search: undefined;
 	Login: undefined;
 
-	// ✅ NEW (Pass flow)
+	// Pass flow
 	BadgeDetail: { badgeId: string };
 	AllBadges: undefined;
+
+	// 🎯 Nouvel écran de confirmation
+	ScanTicketSuccess: undefined;
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
