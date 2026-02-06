@@ -65,6 +65,7 @@ export default function CafeDetailsScreen() {
 	const scrollRef = useRef<any>(null);
 	const scrollY = useSharedValue(0);
 	const actionsThreshold = useSharedValue(180);
+	const dragStartY = useSharedValue(0);
 
 	const onScroll = useAnimatedScrollHandler({
 		onScroll: (e) => (scrollY.value = e.contentOffset.y),
@@ -130,19 +131,27 @@ export default function CafeDetailsScreen() {
 					ref={scrollRef}
 					onScroll={onScroll}
 					scrollEventThrottle={16}
-					showsVerticalScrollIndicator={false}
+					keyboardDismissMode="none"   // on gère nous-mêmes
 					keyboardShouldPersistTaps="handled"
-					contentContainerStyle={[styles.content, { paddingBottom: 120 + keyboardHeight }]}
+
+					onScrollBeginDrag={(e) => {
+						dragStartY.value = scrollY.value;
+					}}
+
+					onScrollEndDrag={() => {
+						const delta = Math.abs(scrollY.value - dragStartY.value);
+
+						// 👉 ne fermer que si l'utilisateur a vraiment scrollé
+						if (keyboardHeight > 0 && delta > 30) {
+							Keyboard.dismiss();
+						}
+					}}
+
+					contentContainerStyle={[
+						styles.content,
+						{ paddingBottom: 120 + keyboardHeight },
+					]}
 				>
-					<DetailsHeroCard
-						coffee={coffee}
-						addressLine={addressLine}
-						status={status}
-						likes={likes}
-						commentCount={comments.comments.length}
-						onPressLike={likes.toggleLike}
-						onPressComments={() => scrollRef.current?.scrollToEnd?.({ animated: true })}
-					/>
 
 					<DetailsActionsRow coffee={coffee} addressLine={addressLine} onLayout={onActionsLayout} />
 
@@ -157,7 +166,7 @@ export default function CafeDetailsScreen() {
 
 				{showSticky && (
 					<Animated.View style={[styles.bottomBar, bottomBarStyle]}>
-						<View style={styles.bottomBarInner}>
+						<View style={{ width: "100%" }}>
 							<DetailsActionsRow coffee={coffee} addressLine={addressLine} compact />
 						</View>
 					</Animated.View>

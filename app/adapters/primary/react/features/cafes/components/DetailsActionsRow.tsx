@@ -122,7 +122,7 @@ function ActionItem({
 }
 
 const H_SPACING = 10; // espace horizontal entre items (robuste sans gap)
-
+const V_SPACING = 10;
 const s = StyleSheet.create({
 	// ✅ container ligne: pas de wrap, distribution stable
 	row: {
@@ -134,6 +134,7 @@ const s = StyleSheet.create({
 		justifyContent: "space-between",
 		// remplace gap
 		marginHorizontal: -H_SPACING / 2,
+		marginVertical: V_SPACING,
 	},
 	rowCompact: {
 		paddingHorizontal: 0,

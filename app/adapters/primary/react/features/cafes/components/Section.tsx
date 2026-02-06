@@ -12,7 +12,7 @@ export function Section({ title, children }: { title: string; children: React.Re
 }
 
 const s = StyleSheet.create({
-	section: { paddingHorizontal: 16, paddingTop: 16, gap: 10 },
+	section: { paddingHorizontal: 4, paddingTop: 16, gap: 10 },
 	title: { fontSize: 20, fontWeight: "900", color: "#4CAF50" },
 	card: {
 		borderRadius: 18,

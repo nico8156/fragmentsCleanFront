@@ -1,8 +1,8 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import type { CommentItemVM } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { SymbolView } from "expo-symbols";
-import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Section } from "./Section";
 
 export function CommentsSection({
@@ -22,31 +22,45 @@ export function CommentsSection({
 }) {
 	const [draft, setDraft] = useState("");
 
+	const canSend = draft.trim().length > 0;
+	const charCount = draft.trim().length;
+	const inputRef = useRef<TextInput>(null);
+
 	const submit = useCallback(() => {
 		const txt = draft.trim();
 		if (!txt) return;
 		comments.uiViaHookCreateComment({ targetId: coffeeId, body: txt });
+		//handle keyboard dismiss when submit 
+		inputRef.current?.blur();
+		Keyboard.dismiss();
+		// =========================
 		setDraft("");
 	}, [draft, comments, coffeeId]);
 
+	const title = useMemo(() => `Commentaires (${comments.comments.length})`, [comments.comments.length]);
+
 	return (
-		<Section title={`Commentaires (${comments.comments.length})`}>
+		<Section title={title}>
+			{/* LIST */}
 			{comments.isLoading ? (
-				<Row>
+				<View style={s.row}>
 					<ActivityIndicator />
 					<Text style={s.muted}>Chargement…</Text>
-				</Row>
+				</View>
 			) : comments.error ? (
-				<Text style={s.error}>Erreur: {comments.error}</Text>
+				<View style={s.errorBox}>
+					<Text style={s.errorTitle}>Impossible de charger les commentaires</Text>
+					<Text style={s.errorText}>{comments.error}</Text>
+				</View>
 			) : comments.comments.length === 0 ? (
 				<View style={s.empty}>
 					<Text style={s.emptyTitle}>Aucun commentaire</Text>
 					<Text style={s.muted}>Sois le premier à laisser un retour.</Text>
 				</View>
 			) : (
-				<View style={{ gap: 10 }}>
+				<View style={s.list}>
 					{comments.comments.map((c) => (
-						<CommentRow
+						<CommentCard
 							key={c.id}
 							item={c}
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
@@ -56,50 +70,53 @@ export function CommentsSection({
 				</View>
 			)}
 
+			{/* COMPOSER */}
 			<View style={s.composer}>
-				<View style={s.composerTop}>
-					<View style={s.avatarFallback}>
-						<Text style={s.avatarFallbackText}>🙂</Text>
+				<View style={s.composerHeader}>
+					<Text style={s.composerTitle}>Ajouter un commentaire</Text>
+
+					<View style={s.composerMeta}>
+						<Text style={s.counter}>{charCount ? `${charCount}` : "0"}</Text>
+						<Text style={s.counterMuted}>car.</Text>
 					</View>
+				</View>
 
-					<View style={{ flex: 1, gap: 8 }}>
-						<TextInput
-							value={draft}
-							onChangeText={setDraft}
-							placeholder="Ajouter un commentaire…"
-							placeholderTextColor={palette.textMuted}
-							style={s.input}
-							multiline
-						/>
+				<TextInput
+					ref={inputRef}
+					value={draft}
+					onChangeText={setDraft}
+					placeholder="Écris un commentaire (court, utile, sympa)…"
+					placeholderTextColor={palette.textMuted}
+					style={s.input}
+					multiline
+					textAlignVertical="top"
+					selectionColor={palette.accent}
+				/>
 
-						<View style={s.composerActions}>
-							<Text style={s.hint}>{draft.trim().length ? `${draft.trim().length} caractères` : "Sois concis et utile"}</Text>
+				<View style={s.composerFooter}>
+					<Text style={s.hint} numberOfLines={2}>
+						{canSend ? "Prêt à envoyer" : "Astuce : parle de l’ambiance, du café, du service…"}
+					</Text>
 
-							<Pressable
-								onPress={submit}
-								disabled={!draft.trim()}
-								style={({ pressed }) => [
-									s.sendBtn,
-									!draft.trim() && s.sendBtnDisabled,
-									pressed && draft.trim() ? s.pressed : null,
-								]}
-							>
-								<SymbolView name="paperplane.fill" size={16} tintColor="white" fallback={<Text>➤</Text>} />
-								<Text style={s.sendText}>Envoyer</Text>
-							</Pressable>
-						</View>
-					</View>
+					<Pressable
+						onPress={submit}
+						disabled={!canSend}
+						style={({ pressed }) => [
+							s.sendBtn,
+							!canSend && s.sendBtnDisabled,
+							pressed && canSend && s.pressed,
+						]}
+					>
+						<SymbolView name="paperplane.fill" size={16} tintColor={palette.textPrimary} fallback={<Text>➤</Text>} />
+						<Text style={s.sendText}>Envoyer</Text>
+					</Pressable>
 				</View>
 			</View>
 		</Section>
 	);
 }
 
-function Row({ children }: { children: React.ReactNode }) {
-	return <View style={s.row}>{children}</View>;
-}
-
-function CommentRow({
+function CommentCard({
 	item,
 	onEdit,
 	onDelete,
@@ -126,25 +143,26 @@ function CommentRow({
 
 	const pill =
 		item.transportStatus === "pending"
-			? { text: "Envoi…", style: s.pillPending }
+			? { text: "Envoi…", bg: palette.bg_light_30, border: palette.border_muted_30 }
 			: item.transportStatus === "failed"
-				? { text: "Échec", style: s.pillFailed }
+				? { text: "Échec", bg: palette.danger_30, border: palette.danger_60 }
 				: item.isOptimistic
-					? { text: "Sync", style: s.pillPending }
+					? { text: "Sync", bg: palette.bg_light_30, border: palette.border_muted_30 }
 					: null;
 
 	return (
-		<View style={s.commentRow}>
+		<View style={s.commentCard}>
 			<Image source={{ uri: item.avatarUrl }} style={s.avatar} />
 
-			<View style={{ flex: 1, gap: 6 }}>
-				<View style={s.header}>
+			<View style={s.commentContent}>
+				<View style={s.commentHeader}>
 					<Text style={s.author} numberOfLines={1}>
 						{item.authorName}
 					</Text>
-					<Text style={s.time}>{item.relativeTime}</Text>
+					<Text style={s.time}>• {item.relativeTime}</Text>
+
 					{pill ? (
-						<View style={[s.pill, pill.style]}>
+						<View style={[s.pill, { backgroundColor: pill.bg, borderColor: pill.border }]}>
 							<Text style={s.pillText}>{pill.text}</Text>
 						</View>
 					) : null}
@@ -153,10 +171,23 @@ function CommentRow({
 				{!editing ? (
 					<Text style={s.body}>{item.body}</Text>
 				) : (
-					<View style={{ gap: 8 }}>
-						<TextInput value={draft} onChangeText={setDraft} style={s.editInput} multiline />
+					<View style={s.editWrap}>
+						<TextInput
+							value={draft}
+							onChangeText={setDraft}
+							style={s.editInput}
+							multiline
+							textAlignVertical="top"
+							selectionColor={palette.accent}
+						/>
 						<View style={s.editActions}>
-							<Pressable onPress={() => { setEditing(false); setDraft(item.body); }} style={s.miniBtn}>
+							<Pressable
+								onPress={() => {
+									setEditing(false);
+									setDraft(item.body);
+								}}
+								style={s.miniBtn}
+							>
 								<Text style={s.miniBtnText}>Annuler</Text>
 							</Pressable>
 							<Pressable onPress={save} style={[s.miniBtn, s.miniBtnPrimary]}>
@@ -182,91 +213,129 @@ function CommentRow({
 }
 
 const s = StyleSheet.create({
-	row: { flexDirection: "row", alignItems: "center", gap: 10 },
-
+	row: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
 	muted: { color: palette.textMuted, fontWeight: "800" },
-	error: { color: "#E74C3C", fontWeight: "900" },
 
-	empty: { paddingVertical: 6, gap: 4 },
-	emptyTitle: { fontWeight: "900", color: palette.textPrimary_1 },
+	// ✅ Liste plus “large”: pas de padding additionnel
+	list: { paddingTop: 2, paddingBottom: 8 },
 
-	composer: {
-		marginTop: 12,
-		borderRadius: 18,
+	empty: { paddingVertical: 6 },
+	emptyTitle: { fontWeight: "900", color: palette.textPrimary, marginBottom: 4 },
+
+	errorBox: {
+		borderRadius: 16,
+		backgroundColor: palette.danger_10,
 		borderWidth: 1,
-		borderColor: "rgba(0,0,0,0.08)",
-		backgroundColor: "white",
+		borderColor: palette.danger_30,
 		padding: 12,
 	},
-	composerTop: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
-	avatarFallback: {
-		width: 36,
-		height: 36,
+	errorTitle: { color: palette.textPrimary, fontWeight: "900" },
+	errorText: { marginTop: 4, color: palette.textSecondary, fontWeight: "500" },
+
+	// ✅ Cards: moins de padding horizontal, donc ça “prend la place”
+	commentCard: {
+		flexDirection: "row",
+		paddingVertical: 12,
+		paddingHorizontal: 12,
 		borderRadius: 18,
-		backgroundColor: "rgba(0,0,0,0.06)",
+		backgroundColor: palette.elevated,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		marginBottom: 10,
+	},
+	avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: palette.bg_dark_50 },
+
+	// ✅ remplace gap (robuste)
+	commentContent: { flex: 1, marginLeft: 10 },
+
+	commentHeader: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
+	author: { color: palette.textPrimary, fontWeight: "900", maxWidth: 180 },
+	time: { color: palette.textMuted, fontWeight: "800", marginLeft: 6 },
+
+	pill: {
+		marginLeft: 8,
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
+		borderWidth: 1,
+	},
+	pillText: { color: palette.textPrimary, fontWeight: "900", fontSize: 12 },
+
+	body: { marginTop: 6, color: palette.textPrimary, fontWeight: "500", lineHeight: 19 },
+
+	actions: { flexDirection: "row", marginTop: 10 },
+	actionBtn: { paddingVertical: 4, marginRight: 14 },
+	actionText: { color: palette.textSecondary, fontWeight: "900", fontSize: 13 },
+	danger: { color: palette.danger },
+
+	editWrap: { marginTop: 8 },
+	editInput: {
+		minHeight: 70,
+		borderRadius: 14,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		backgroundColor: palette.surface,
+		padding: 12,
+		color: palette.textPrimary,
+		fontWeight: "500",
+	},
+	editActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 10 },
+	miniBtn: {
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 12,
+		backgroundColor: palette.overlay,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		marginLeft: 10,
+	},
+	miniBtnPrimary: { backgroundColor: palette.accentSoft, borderColor: palette.accent_30 },
+	miniBtnText: { fontWeight: "900", color: palette.textPrimary },
+	miniBtnTextPrimary: { color: palette.textPrimary },
+
+	// ✅ Composer: moins de padding (la SectionCard pad déjà), mais input plus grand
+	composer: {
+		marginTop: 8,
+		borderRadius: 18,
+		backgroundColor: palette.surface,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		padding: 12, // ↓ (au lieu de 14)
+	},
+	composerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+	composerTitle: { color: palette.textPrimary, fontWeight: "900" },
+	composerMeta: { flexDirection: "row", alignItems: "baseline" },
+	counter: { color: palette.textSecondary, fontWeight: "900" },
+	counterMuted: { marginLeft: 4, color: palette.textMuted, fontWeight: "800", fontSize: 12 },
+
+	input: {
+		minHeight: 130, // ✅ plus confortable
+		borderRadius: 16,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		backgroundColor: palette.elevated,
+		padding: 12,
+		color: palette.textPrimary,
+		fontWeight: "500",
+		lineHeight: 20,
+	},
+
+	composerFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
+	hint: { flex: 1, color: palette.textMuted, fontWeight: "800", marginRight: 12 },
+
+	sendBtn: {
+		height: 42,
+		paddingHorizontal: 14,
+		borderRadius: 16,
+		backgroundColor: palette.accentSoft,
+		borderWidth: 1,
+		borderColor: palette.accent_30,
+		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
 	},
-	avatarFallbackText: { fontSize: 16 },
+	sendBtnDisabled: { opacity: 0.45 },
+	sendText: { marginLeft: 8, color: palette.textPrimary, fontWeight: "900" },
 
-	input: {
-		minHeight: 44,
-		maxHeight: 140,
-		paddingHorizontal: 12,
-		paddingVertical: 10,
-		borderRadius: 14,
-		backgroundColor: "rgba(0,0,0,0.03)",
-		color: palette.textPrimary_1,
-		fontWeight: "700",
-	},
-	composerActions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-	hint: { fontSize: 12, fontWeight: "800", color: palette.textMuted },
-
-	sendBtn: {
-		height: 40,
-		borderRadius: 14,
-		paddingHorizontal: 12,
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 8,
-		backgroundColor: "#4CAF50",
-	},
-	sendBtnDisabled: { backgroundColor: "rgba(0,0,0,0.18)" },
-	sendText: { fontSize: 14, fontWeight: "900", color: "white" },
 	pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-
-	commentRow: { flexDirection: "row", gap: 10, paddingVertical: 6 },
-	avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.06)" },
-
-	header: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
-	author: { fontSize: 14, fontWeight: "900", color: palette.textPrimary_1, maxWidth: 170 },
-	time: { fontSize: 12, fontWeight: "800", color: palette.textMuted },
-
-	pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
-	pillText: { fontSize: 12, fontWeight: "900", color: palette.textPrimary_1 },
-	pillPending: { backgroundColor: "rgba(0,0,0,0.06)" },
-	pillFailed: { backgroundColor: "rgba(231, 76, 60, 0.18)" },
-
-	body: { fontSize: 14, fontWeight: "700", color: palette.textPrimary_1, lineHeight: 19 },
-
-	actions: { flexDirection: "row", gap: 14, paddingTop: 2 },
-	actionBtn: { paddingVertical: 4 },
-	actionText: { fontSize: 13, fontWeight: "900", color: palette.textMuted },
-	danger: { color: "#E74C3C" },
-
-	editInput: {
-		minHeight: 60,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: "rgba(0,0,0,0.10)",
-		backgroundColor: "white",
-		padding: 12,
-		color: palette.textPrimary_1,
-		fontWeight: "700",
-	},
-	editActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
-	miniBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: "rgba(0,0,0,0.06)" },
-	miniBtnPrimary: { backgroundColor: "#4CAF50" },
-	miniBtnText: { fontWeight: "900", color: palette.textPrimary_1 },
-	miniBtnTextPrimary: { color: "white" },
 });

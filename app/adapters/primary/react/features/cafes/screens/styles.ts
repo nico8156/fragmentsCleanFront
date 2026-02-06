@@ -20,9 +20,10 @@ export const styles = StyleSheet.create({
 	},
 	bottomBarInner: {
 		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 10,
-		justifyContent: "center",
+		alignItems: "stretch",
+		justifyContent: "flex-start",
+		// IMPORTANT: pas de wrap, pas de gap
 	},
+
 });
 

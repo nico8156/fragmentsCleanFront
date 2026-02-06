@@ -21,10 +21,8 @@ export function DetailsNavBar({
 			<Text style={s.navTitle} numberOfLines={1}>
 				{title}
 			</Text>
+			<View style={s.navBtn} />
 
-			<Pressable onPress={onRefresh} style={s.navBtn} accessibilityLabel="Rafraîchir">
-				<SymbolView name="arrow.clockwise" size={18} tintColor={palette.textPrimary_1} fallback={<Text>↻</Text>} />
-			</Pressable>
 		</View>
 	);
 }
@@ -48,7 +46,7 @@ const s = StyleSheet.create({
 	navTitle: {
 		flex: 1,
 		textAlign: "center",
-		fontSize: 16,
+		fontSize: 24,
 		fontWeight: "800",
 		color: palette.textPrimary_1,
 		paddingHorizontal: 10,
