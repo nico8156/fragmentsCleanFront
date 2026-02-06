@@ -18,6 +18,7 @@ import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { useLikesForCafe } from "@/app/adapters/secondary/viewModel/useLikesForCafe";
 
+import { CafeDetailsHeader } from "../components/CafeDetailsHeader";
 import { CommentsSection } from "../components/CommentsSection";
 import { DetailsActionsRow } from "../components/DetailsActionsRow";
 import { DetailsHeroCard } from "../components/DetailsHeroCard";
@@ -42,7 +43,7 @@ export default function CafeDetailsScreen() {
 
 	const likes = useLikesForCafe(coffeeId ?? undefined);
 	const comments = useCommentsForCafe(coffeeId ?? undefined);
-
+	const isLikeBusy = likes.isLoading || likes.isRefreshing;
 	// --- Keyboard (stable, no KAV)
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	useEffect(() => {
@@ -125,7 +126,25 @@ export default function CafeDetailsScreen() {
 	return (
 		<SafeAreaView style={styles.safe} edges={["top"]}>
 			<View style={styles.screen}>
-				<DetailsNavBar title={coffee.name} onBack={onBack} onRefresh={onRefresh} />
+				<CafeDetailsHeader
+					title={coffee.name}
+					addressLine={addressLine}
+					status={status}
+					likeCount={likes.count}
+					likedByMe={likes.likedByMe}
+					isLikeBusy={likes.isLoading || likes.isRefreshing}
+					isOptimistic={likes.isOptimistic}
+					commentCount={comments.comments.length}
+					onBack={onBack}
+					onRefresh={onRefresh}
+					onPressLike={() => {
+						if (likes.isLoading || likes.isRefreshing) return;
+						likes.toggleLike();
+					}}
+					onPressComments={() => {
+						requestAnimationFrame(() => scrollRef.current?.scrollToEnd?.({ animated: true }));
+					}}
+				/>
 
 				<Animated.ScrollView
 					ref={scrollRef}

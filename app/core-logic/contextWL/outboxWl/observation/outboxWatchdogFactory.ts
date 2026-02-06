@@ -2,7 +2,7 @@ import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
-import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import { selectBootReady, selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import { selectOutboxById } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import { commandKinds, statusTypes, type OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
@@ -141,6 +141,12 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {
 		if (inFlight) return;
 		inFlight = true;
+		const state = api.getState();
+		if (!selectBootReady(state)) return;
+		if (!isSignedIn(state)) return;
+		if (!selectIsOnline(state)) return;
+
+		if (!state.appState?.boot?.doneWarmup) return;
 
 		try {
 			const state = api.getState();
