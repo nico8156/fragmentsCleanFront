@@ -1,135 +1,98 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { HeartIcon } from "@/app/adapters/primary/react/features/cafes/components/HeartIcon";
 import { SymbolView } from "expo-symbols";
 import React, { useMemo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export function CafeDetailsHeader({
 	title,
-	addressLine,
-	status,
+	statusLabel,
 	likeCount,
 	likedByMe,
-	isLikeBusy,
-	isOptimistic,
+	likeSync,
 	commentCount,
 	onBack,
-	onRefresh,
 	onPressLike,
 	onPressComments,
 }: {
 	title: string;
-	addressLine: string;
-	status: { label: string; value: string };
+	statusLabel: "OUVERT" | "FERMÉ" | "STATUT" | string;
 	likeCount: number;
 	likedByMe: boolean;
-	isLikeBusy: boolean;
-	isOptimistic?: boolean;
+	likeSync: { state: "pending" | "acked" | "failed"; untilMs: number } | null;
 	commentCount: number;
 	onBack: () => void;
-	onRefresh: () => void;
 	onPressLike: () => void;
 	onPressComments: () => void;
 }) {
-	const showSync = Boolean(isOptimistic || isLikeBusy);
-
 	const openFlag = useMemo(() => {
-		if (status.label === "OUVERT") return true;
-		if (status.label === "FERMÉ") return false;
+		if (statusLabel === "OUVERT") return true;
+		if (statusLabel === "FERMÉ") return false;
 		return undefined;
-	}, [status.label]);
+	}, [statusLabel]);
 
-	const likeDisabled = isLikeBusy;
+	const haloStyle =
+		likeSync?.state === "pending"
+			? s.haloPending
+			: likeSync?.state === "acked"
+				? s.haloAcked
+				: likeSync?.state === "failed"
+					? s.haloFailed
+					: null;
 
 	return (
 		<View style={s.wrap}>
-			{/* Single unified card */}
 			<View style={s.card}>
-				{/* Row 1: back + title + refresh */}
+				{/* Row 1: back + title */}
 				<View style={s.topRow}>
 					<Pressable onPress={onBack} style={s.iconBtn} hitSlop={10}>
 						<SymbolView
 							name="chevron.left"
 							size={18}
 							tintColor={palette.textPrimary_1}
-							fallback={<Text>{"<"}</Text>}
+							fallback={<Text style={{ color: palette.textPrimary_1 }}>{"<"}</Text>}
 						/>
 					</Pressable>
 
 					<Text style={s.topTitle} numberOfLines={1}>
 						{title}
 					</Text>
-
-					<Pressable onPress={onRefresh} style={s.iconBtn} hitSlop={10}>
-						<SymbolView
-							name="arrow.clockwise"
-							size={16}
-							tintColor={palette.textMuted}
-							fallback={<Text>↻</Text>}
-						/>
-					</Pressable>
 				</View>
 
-				{/* Row 2: address */}
-				{!!addressLine ? (
-					<Text style={s.address} numberOfLines={2}>
-						{addressLine}
-					</Text>
-				) : null}
-
-				{/* Row 3: status + social pills */}
+				{/* Row 2: status + actions */}
 				<View style={s.bottomRow}>
 					<View style={[s.statusBadge, openFlag === false ? s.statusClosed : s.statusOpen]}>
-						<Text style={s.statusBadgeText}>{status.label}</Text>
+						<Text style={s.statusBadgeText}>{statusLabel}</Text>
 					</View>
 
-					<Text style={s.statusText} numberOfLines={1}>
-						{status.value}
-					</Text>
+					<View style={{ flex: 1 }} />
 
-					<View style={s.pills}>
-						<Pressable
-							onPress={onPressLike}
-							disabled={likeDisabled}
-							style={[
-								s.pill,
-								likedByMe && s.pillActive,
-								likeDisabled && s.pillDisabled,
-							]}
-							hitSlop={10}
-						>
-							<SymbolView
-								name={likedByMe ? "heart.fill" : "heart"}
-								size={16}
-								tintColor={likedByMe ? palette.accent : palette.textMuted}
-								fallback={<Text>♥</Text>}
+					<View style={s.actions}>
+						{/* LIKE */}
+						<Pressable onPress={onPressLike} style={[s.actionPill, likedByMe && s.actionPillActive]} hitSlop={10}>
+							{/* halo doux (derrière la pilule) */}
+							{haloStyle ? <View pointerEvents="none" style={[s.pillHalo, haloStyle]} /> : null}
+
+							<HeartIcon
+								filled={likedByMe}
+								size={20}
+								color={likedByMe ? palette.accent : palette.textMuted}
 							/>
-							<Text style={[s.pillLabel, likedByMe && s.pillLabelActive]}>
-								J’aime
-							</Text>
-							<Text style={[s.pillCount, likedByMe && s.pillLabelActive]}>
-								{likeCount}
-							</Text>
+							<Text style={[s.actionCount, likedByMe && s.actionCountActive]}>{likeCount}</Text>
 						</Pressable>
 
-						<Pressable onPress={onPressComments} style={s.pill} hitSlop={10}>
+						{/* COMMENTS */}
+						<Pressable onPress={onPressComments} style={s.actionPill} hitSlop={10}>
 							<SymbolView
 								name="bubble.left.fill"
-								size={16}
+								size={18}
 								tintColor={palette.textMuted}
-								fallback={<Text>💬</Text>}
+								fallback={<Text style={{ color: palette.textMuted }}>💬</Text>}
 							/>
-							<Text style={s.pillLabel}>Avis</Text>
-							<Text style={s.pillCount}>{commentCount}</Text>
+							<Text style={s.actionCount}>{commentCount}</Text>
 						</Pressable>
 					</View>
 				</View>
-
-				{showSync ? (
-					<View style={s.syncRow}>
-						<ActivityIndicator size="small" />
-						<Text style={s.syncText}>Sync…</Text>
-					</View>
-				) : null}
 			</View>
 		</View>
 	);
@@ -147,11 +110,12 @@ const s = StyleSheet.create({
 		paddingHorizontal: 12,
 		paddingTop: 10,
 		paddingBottom: 12,
-		backgroundColor: "rgba(0,0,0,0.04)", // tu ajusteras (glass/overlay)
+		backgroundColor: "rgba(0,0,0,0.04)",
 		gap: 10,
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: "rgba(255,255,255,0.10)",
 	},
+
 	topRow: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -173,66 +137,60 @@ const s = StyleSheet.create({
 		textAlign: "center",
 		paddingHorizontal: 6,
 	},
-	address: {
-		fontSize: 13,
-		fontWeight: "700",
-		color: palette.textMuted,
-		paddingHorizontal: 4,
-	},
+
 	bottomRow: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 10,
 	},
+
 	statusBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
 	statusOpen: { backgroundColor: "rgba(76, 175, 80, 0.18)" },
 	statusClosed: { backgroundColor: "rgba(231, 76, 60, 0.16)" },
 	statusBadgeText: { fontSize: 12, fontWeight: "900", color: palette.textPrimary_1, letterSpacing: 0.8 },
-	statusText: { flex: 1, fontSize: 12, fontWeight: "800", color: palette.textPrimary_1, opacity: 0.85 },
 
-	pills: {
+	actions: {
 		flexDirection: "row",
-		gap: 8,
+		gap: 10,
 	},
-	pill: {
+
+	actionPill: {
+		height: 36,
+		paddingHorizontal: 12,
+		borderRadius: 999,
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
-		paddingHorizontal: 10,
-		height: 34,
-		borderRadius: 999,
+		gap: 8,
 		backgroundColor: "rgba(255,255,255,0.06)",
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: "rgba(255,255,255,0.10)",
+		overflow: "visible",
 	},
-	pillActive: {
+	actionPillActive: {
 		backgroundColor: "rgba(255,255,255,0.10)",
 		borderColor: "rgba(255,255,255,0.18)",
 	},
-	pillDisabled: { opacity: 0.6 },
-	pillLabel: {
-		fontSize: 12,
-		fontWeight: "900",
-		color: palette.textMuted,
-	},
-	pillLabelActive: {
-		color: palette.textPrimary_1,
-	},
-	pillCount: {
-		fontSize: 12,
+	actionCount: {
+		fontSize: 13,
 		fontWeight: "900",
 		color: palette.textPrimary_1,
+		opacity: 0.9,
 	},
-	syncRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 8,
-		paddingTop: 2,
-		paddingHorizontal: 4,
+	actionCountActive: {
+		opacity: 1,
 	},
-	syncText: {
-		fontSize: 12,
-		fontWeight: "800",
-		color: palette.textMuted,
+
+	// halo discret autour de la pilule like (pas de 3e forme)
+	pillHalo: {
+		position: "absolute",
+		left: -2,
+		right: -2,
+		top: -2,
+		bottom: -2,
+		borderRadius: 999,
+		opacity: 0.22,
 	},
+	haloPending: { backgroundColor: "rgba(255, 165, 0, 0.45)" }, // orange
+	haloAcked: { backgroundColor: "rgba(76, 175, 80, 0.35)" },   // vert
+	haloFailed: { backgroundColor: "rgba(231, 76, 60, 0.30)" },  // rouge
 });

@@ -1,6 +1,13 @@
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, KeyboardEvent, LayoutChangeEvent, Platform, View } from "react-native";
+import {
+	Keyboard,
+	KeyboardEvent,
+	LayoutChangeEvent,
+	Platform,
+	RefreshControl,
+	View,
+} from "react-native";
 import Animated, {
 	Extrapolation,
 	interpolate,
@@ -18,11 +25,10 @@ import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { useLikesForCafe } from "@/app/adapters/secondary/viewModel/useLikesForCafe";
 
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import { CafeDetailsHeader } from "../components/CafeDetailsHeader";
 import { CommentsSection } from "../components/CommentsSection";
 import { DetailsActionsRow } from "../components/DetailsActionsRow";
-import { DetailsHeroCard } from "../components/DetailsHeroCard";
-import { DetailsNavBar } from "../components/DetailsNavBar";
 import { DetailsError, DetailsSkeleton } from "../components/DetailsStates";
 import { InfoSection } from "../components/InfoSection";
 import { PhotosSection } from "../components/PhotosSection";
@@ -43,7 +49,7 @@ export default function CafeDetailsScreen() {
 
 	const likes = useLikesForCafe(coffeeId ?? undefined);
 	const comments = useCommentsForCafe(coffeeId ?? undefined);
-	const isLikeBusy = likes.isLoading || likes.isRefreshing;
+
 	// --- Keyboard (stable, no KAV)
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
 	useEffect(() => {
@@ -86,13 +92,10 @@ export default function CafeDetailsScreen() {
 	};
 
 	// --- Derived
-	const todayIndex = ((new Date().getDay() + 6) % 7) as DayIndex;
-	const todayHoursLabel = coffee?.hours?.[todayIndex]?.label ?? "Horaires non disponibles";
-
-	const status = useMemo(() => {
-		if (isOpenNow === undefined) return { label: "STATUT", value: "—" };
-		return isOpenNow ? { label: "OUVERT", value: todayHoursLabel } : { label: "FERMÉ", value: todayHoursLabel };
-	}, [isOpenNow, todayHoursLabel]);
+	const statusLabel = useMemo(() => {
+		if (isOpenNow === undefined) return "STATUT";
+		return isOpenNow ? "OUVERT" : "FERMÉ";
+	}, [isOpenNow]);
 
 	const addressLine = useMemo(() => {
 		const line1 = coffee?.address?.line1;
@@ -117,9 +120,10 @@ export default function CafeDetailsScreen() {
 
 	const onRefresh = () => {
 		likes.refresh();
-		// comments: ton hook auto-refresh sur stale. Si tu veux un refresh manuel,
-		// on ajoutera `refresh()` dans useCommentsForCafe ensuite.
+		// TODO (plus tard): comments.refresh() si tu ajoutes un refresh manuel sur comments
 	};
+
+	const refreshing = likes.isLoading || likes.isRefreshing;
 
 	const showSticky = keyboardHeight === 0;
 
@@ -128,15 +132,12 @@ export default function CafeDetailsScreen() {
 			<View style={styles.screen}>
 				<CafeDetailsHeader
 					title={coffee.name}
-					addressLine={addressLine}
-					status={status}
+					statusLabel={statusLabel}
 					likeCount={likes.count}
 					likedByMe={likes.likedByMe}
-					isLikeBusy={likes.isLoading || likes.isRefreshing}
-					isOptimistic={likes.isOptimistic}
+					likeSync={likes.sync}
 					commentCount={comments.comments.length}
 					onBack={onBack}
-					onRefresh={onRefresh}
 					onPressLike={() => {
 						if (likes.isLoading || likes.isRefreshing) return;
 						likes.toggleLike();
@@ -150,32 +151,31 @@ export default function CafeDetailsScreen() {
 					ref={scrollRef}
 					onScroll={onScroll}
 					scrollEventThrottle={16}
-					keyboardDismissMode="none"   // on gère nous-mêmes
+					keyboardDismissMode="none"
 					keyboardShouldPersistTaps="handled"
-
-					onScrollBeginDrag={(e) => {
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor={palette.textMuted}
+						/>
+					}
+					onScrollBeginDrag={() => {
 						dragStartY.value = scrollY.value;
 					}}
-
 					onScrollEndDrag={() => {
 						const delta = Math.abs(scrollY.value - dragStartY.value);
-
-						// 👉 ne fermer que si l'utilisateur a vraiment scrollé
 						if (keyboardHeight > 0 && delta > 30) {
 							Keyboard.dismiss();
 						}
 					}}
-
-					contentContainerStyle={[
-						styles.content,
-						{ paddingBottom: 120 + keyboardHeight },
-					]}
+					contentContainerStyle={[styles.content, { paddingBottom: 120 + keyboardHeight }]}
 				>
-
 					<DetailsActionsRow coffee={coffee} addressLine={addressLine} onLayout={onActionsLayout} />
 
 					<PhotosSection photos={coffee.photos ?? []} />
 
+					{/* ✅ Ici: address/tel/site + Horaires déroulables */}
 					<InfoSection coffee={coffee} addressLine={addressLine} />
 
 					<TagsSection tags={(coffee as any).tags ?? []} />
@@ -194,3 +194,4 @@ export default function CafeDetailsScreen() {
 		</SafeAreaView>
 	);
 }
+
