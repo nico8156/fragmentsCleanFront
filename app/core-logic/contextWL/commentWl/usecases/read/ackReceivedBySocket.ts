@@ -2,10 +2,7 @@ import type { AppStateWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
-import {
-	deleteReconciled,
-	updateReconciled,
-} from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
 import { dropCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { createReconciled } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 import { logger } from "@/app/core-logic/utils/logger";
@@ -33,13 +30,10 @@ export type CommentDeletedAckActionPayload = {
 	server: { deletedAt: ISODate; version: number };
 };
 
-// ✅ transport events (WS/server) — on garde
+// transport events (WS/server)
 export const onCommentCreatedAck = createAction<CommentCreatedAckActionPayload>("SERVER/COMMENT/CREATED_ACK");
 export const onCommentUpdatedAck = createAction<CommentUpdatedAckActionPayload>("SERVER/COMMENT/UPDATED_ACK");
 export const onCommentDeletedAck = createAction<CommentDeletedAckActionPayload>("SERVER/COMMENT/DELETED_ACK");
-
-const outboxIdByCmd = (s: AppStateWl, cmdId: string) =>
-	(s as any)?.oState?.byCommandId?.[cmdId] as string | undefined;
 
 export const ackListenerFactory = (callback?: () => void) => {
 	const mw = createListenerMiddleware<AppStateWl, AppDispatchWl>();
@@ -50,16 +44,14 @@ export const ackListenerFactory = (callback?: () => void) => {
 		effect: async ({ payload }, api) => {
 			const { commandId, commentId, targetId, server } = payload;
 
-			const outboxId = outboxIdByCmd(api.getState(), commandId);
-			if (!outboxId) {
-				logger.debug("[ACK_COMMENTS] created: duplicate ack ignored", { commandId, commentId });
-				return;
-			}
-
 			logger.info("[ACK_COMMENTS] created", { commandId, commentId, targetId, version: server.version });
 
+			// ✅ source of truth (guard version in reducer)
 			api.dispatch(createReconciled({ commentId, server }));
+
+			// ✅ always drop (idempotent)
 			api.dispatch(dropCommitted({ commandId }));
+
 			callback?.();
 		},
 	});
@@ -67,18 +59,13 @@ export const ackListenerFactory = (callback?: () => void) => {
 	listen({
 		actionCreator: onCommentUpdatedAck,
 		effect: async ({ payload }, api) => {
-			const { commandId, commentId, server } = payload;
+			const { commandId, commentId, targetId, server } = payload;
 
-			const outboxId = outboxIdByCmd(api.getState(), commandId);
-			if (!outboxId) {
-				logger.debug("[ACK_COMMENTS] updated: duplicate ack ignored", { commandId, commentId });
-				return;
-			}
-
-			logger.info("[ACK_COMMENTS] updated", { commandId, commentId, version: server.version });
+			logger.info("[ACK_COMMENTS] updated", { commandId, commentId, targetId, version: server.version });
 
 			api.dispatch(updateReconciled({ commentId, server }));
 			api.dispatch(dropCommitted({ commandId }));
+
 			callback?.();
 		},
 	});
@@ -86,18 +73,13 @@ export const ackListenerFactory = (callback?: () => void) => {
 	listen({
 		actionCreator: onCommentDeletedAck,
 		effect: async ({ payload }, api) => {
-			const { commandId, commentId, server } = payload;
+			const { commandId, commentId, targetId, server } = payload;
 
-			const outboxId = outboxIdByCmd(api.getState(), commandId);
-			if (!outboxId) {
-				logger.debug("[ACK_COMMENTS] deleted: duplicate ack ignored", { commandId, commentId });
-				return;
-			}
-
-			logger.info("[ACK_COMMENTS] deleted", { commandId, commentId, version: server.version });
+			logger.info("[ACK_COMMENTS] deleted", { commandId, commentId, targetId, version: server.version });
 
 			api.dispatch(deleteReconciled({ commentId, server }));
 			api.dispatch(dropCommitted({ commandId }));
+
 			callback?.();
 		},
 	});

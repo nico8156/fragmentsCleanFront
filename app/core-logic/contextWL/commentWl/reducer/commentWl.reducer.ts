@@ -1,12 +1,8 @@
-import type {
-	CafeId,
-	CommentEntity,
-	CommentsStateWl,
-	View,
-} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
-import { loadingStates, opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
-import type { AppStateWl } from "@/app/store/appStateWl";
 import { createEntityAdapter, createReducer } from "@reduxjs/toolkit";
+
+import type { CafeId, CommentEntity, CommentsStateWl, View } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import { loadingStates, moderationTypes, opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import type { AppStateWl } from "@/app/store/appStateWl";
 
 import {
 	commentsRetrievalCancelled,
@@ -16,15 +12,8 @@ import {
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
-import {
-	addOptimisticCreated, deleteOptimisticApplied,
-	updateOptimisticApplied
-} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
-import {
-	createReconciled,
-	createRollback, deleteRollback,
-	updateRollback
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
+import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 
 const adapter = createEntityAdapter<CommentEntity>({
 	sortComparer: (a, b) => {
@@ -35,20 +24,21 @@ const adapter = createEntityAdapter<CommentEntity>({
 	},
 });
 
-
 const initialState: AppStateWl["comments"] = {
 	entities: adapter.getInitialState(),
 	byTarget: {},
 };
 
-const ensureView = (state: CommentsStateWl, targetId: CafeId): View => {
-	return (state.byTarget[targetId] ??= {
-		ids: [],
-		loading: loadingStates.IDLE,
-		filters: { sort: "new" },
-		staleAfterMs: 30_000,
-	});
-};
+// -----------------------
+// helpers (view + merge)
+// -----------------------
+const ensureView = (state: CommentsStateWl, targetId: CafeId): View =>
+(state.byTarget[targetId] ??= {
+	ids: [],
+	loading: loadingStates.IDLE,
+	filters: { sort: "new" },
+	staleAfterMs: 30_000,
+});
 
 const mergeUniqueAppend = (dst: string[], src: string[]) => {
 	const seen = new Set(dst);
@@ -71,9 +61,56 @@ const mergeUniquePrepend = (dst: string[], src: string[]) => {
 	}
 };
 
+const keepOptimisticIdsForTarget = (state: CommentsStateWl, v: View, targetId: CafeId): string[] =>
+	(v.ids ?? []).filter((id) => {
+		const e = state.entities.entities[id];
+		return Boolean(e?.optimistic) && e?.targetId === targetId;
+	});
+
+const isOlderVersion = (curVersion: any, serverVersion: number) =>
+	typeof curVersion === "number" && serverVersion < curVersion;
+
+const normalizeIso = (v: any): string | undefined => (typeof v === "string" ? v : undefined);
+
+const normalizeIncoming = (items: CommentEntity[]): CommentEntity[] =>
+	items.map((i) => ({
+		...i,
+		createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
+		editedAt: normalizeIso(i.editedAt),
+		deletedAt: normalizeIso(i.deletedAt),
+	}));
+
+const computeIncomingIds = (targetId: CafeId, items: CommentEntity[]) =>
+	items.filter((i) => i.targetId === targetId).map((i) => i.id);
+
+const applyIdsByOp = (v: View, op: string, optimisticIds: string[], incomingIds: string[]) => {
+	if (op === opTypes.RETRIEVE) {
+		// ✅ IMPORTANT: ne pas perdre les optimistic pendant un RETRIEVE
+		v.ids = [];
+		mergeUniqueAppend(v.ids, optimisticIds);
+		mergeUniqueAppend(v.ids, incomingIds);
+		return;
+	}
+
+	if (op === opTypes.OLDER) {
+		mergeUniqueAppend(v.ids, incomingIds);
+		return;
+	}
+
+	if (op === opTypes.REFRESH) {
+		// prepend serveur + conserver optimistic
+		mergeUniquePrepend(v.ids, incomingIds);
+		mergeUniquePrepend(v.ids, optimisticIds);
+		return;
+	}
+};
+
 export const commentWlReducer = createReducer(initialState, (builder) => {
 	builder
-		// ----- optimistic write
+
+		// =========================
+		// OPTIMISTIC WRITE
+		// =========================
 
 		.addCase(addOptimisticCreated, (state, action) => {
 			const c = action.payload.entity;
@@ -81,9 +118,8 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 			adapter.addOne(state.entities, c);
 
 			const v = ensureView(state, c.targetId);
+			// nouveau commentaire en haut
 			mergeUniquePrepend(v.ids, [c.id]);
-
-			return;
 		})
 
 		.addCase(updateOptimisticApplied, (state, action) => {
@@ -110,18 +146,22 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 				id: commentId,
 				changes: {
 					deletedAt: clientDeletedAt,
-					moderation: "SOFT_DELETED",
+					moderation: moderationTypes.SOFT_DELETED,
 					optimistic: true,
 				},
 			});
 		})
 
-		// ----- reconciled from server/outbox/ack
+		// =========================
+		// RECONCILE (ACK / outbox)
+		// =========================
 
 		.addCase(createReconciled, (state, action) => {
 			const { commentId, server } = action.payload;
 			const cur = state.entities.entities[commentId];
 			if (!cur) return;
+
+			if (isOlderVersion(cur.version, server.version)) return;
 
 			adapter.updateOne(state.entities, {
 				id: commentId,
@@ -137,6 +177,8 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 			const { commentId, server } = action.payload;
 			const cur = state.entities.entities[commentId];
 			if (!cur) return;
+
+			if (isOlderVersion(cur.version, server.version)) return;
 
 			adapter.updateOne(state.entities, {
 				id: commentId,
@@ -154,31 +196,36 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 			const cur = state.entities.entities[commentId];
 			if (!cur) return;
 
+			if (isOlderVersion(cur.version, server.version)) return;
+
 			adapter.updateOne(state.entities, {
 				id: commentId,
 				changes: {
 					deletedAt: server.deletedAt,
 					version: server.version,
 					optimistic: false,
-					moderation: "SOFT_DELETED",
+					moderation: moderationTypes.SOFT_DELETED,
 				},
 			});
 		})
 
-		// ----- rollbacks
+		// =========================
+		// ROLLBACKS
+		// =========================
 
 		.addCase(createRollback, (state, action) => {
 			const { tempId, targetId } = action.payload;
 
+			// ici tempId == commentId (front source of truth)
 			adapter.removeOne(state.entities, tempId);
 
 			const v = state.byTarget[targetId];
-			if (v) v.ids = v.ids.filter((id) => id !== tempId);
+			if (v) v.ids = (v.ids ?? []).filter((id) => id !== tempId);
 		})
 
 		.addCase(updateRollback, (state, action) => {
 			const { commentId, prevBody, prevVersion } = action.payload;
-			if (!commentId) return;               // ✅ important
+			if (!commentId) return;
 
 			const cur = state.entities.entities[commentId];
 			if (!cur) return;
@@ -205,12 +252,14 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 					version: prevVersion ?? cur.version,
 					deletedAt: prevDeletedAt ?? undefined,
 					optimistic: false,
-					moderation: "PUBLISHED",
+					moderation: moderationTypes.PUBLISHED,
 				},
 			});
 		})
 
-		// ----- read pipeline
+		// =========================
+		// READ PIPELINE
+		// =========================
 
 		.addCase(commentsRetrievalPending, (state, action) => {
 			const { targetId } = action.payload;
@@ -228,41 +277,25 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 		.addCase(commentsRetrieved, (state, action) => {
 			const { targetId, op, items, nextCursor, prevCursor, serverTime } = action.payload;
 
-			const normalizeIso = (v: any): string | undefined => {
-				if (typeof v === "string") return v;
-				return undefined;
-			};
-
-			const normalized = items.map(i => ({
-				...i,
-				createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
-				editedAt: normalizeIso(i.editedAt),
-				deletedAt: normalizeIso(i.deletedAt),
-			}));
-
+			// normalize + upsert
+			const normalized = normalizeIncoming(items);
 			adapter.upsertMany(state.entities, normalized);
 
-			// view
 			const v = ensureView(state, targetId);
 
-			const incomingIds = items
-				.filter((i) => i.targetId === targetId)
-				.map((i) => i.id);
+			// ✅ preserve optimistic already in view (fix “first send” disappearing)
+			const optimisticIds = keepOptimisticIdsForTarget(state, v, targetId);
+			const incomingIds = computeIncomingIds(targetId, items);
 
-			if (op === opTypes.RETRIEVE) {
-				v.ids = [];
-				mergeUniqueAppend(v.ids, incomingIds);
-				if (serverTime) v.anchor = serverTime;
-			} else if (op === opTypes.OLDER) {
-				mergeUniqueAppend(v.ids, incomingIds);
-			} else if (op === opTypes.REFRESH) {
-				mergeUniquePrepend(v.ids, incomingIds);
-				if (serverTime) v.anchor = serverTime;
-			}
+			// merge ids by op
+			applyIdsByOp(v, op, optimisticIds, incomingIds);
 
-			v.nextCursor = nextCursor ?? v.nextCursor; // ✅
-			v.prevCursor = prevCursor ?? v.prevCursor; // ✅
+			// cursors + anchor
+			v.nextCursor = nextCursor ?? v.nextCursor;
+			v.prevCursor = prevCursor ?? v.prevCursor;
+			if (serverTime) v.anchor = serverTime;
 
+			// state
 			v.loading = loadingStates.SUCCESS;
 			v.error = undefined;
 			v.lastFetchedAt = new Date().toISOString();
@@ -275,3 +308,4 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 			v.error = error;
 		});
 });
+

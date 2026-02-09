@@ -1,4 +1,3 @@
-// ackLike.ts
 import type { AppStateWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { createAction, createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
