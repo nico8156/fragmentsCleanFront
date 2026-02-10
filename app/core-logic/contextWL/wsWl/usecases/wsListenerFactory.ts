@@ -1,3 +1,4 @@
+// app/core-logic/contextWL/wsWl/usecases/wsListenerFactory.ts
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
@@ -28,6 +29,7 @@ import {
 import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import { mapWsTicketCompletedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
 
+import type { WsEventsGatewayPort } from "@/app/core-logic/contextWL/wsWl/gateway/wsWl.gateway";
 import { logger } from "@/app/core-logic/utils/logger";
 
 export type SessionRef = { current?: AuthSession };
@@ -43,7 +45,7 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
 	const getSecureStore = () => deps.gateways?.auth?.secureStore;
-	const getWsGateway = () => deps.gateways?.ws;
+	const getWsGateway = (): WsEventsGatewayPort | undefined => deps.gateways?.ws as any;
 
 	// memorize last token used for STOMP handshake
 	let lastToken: string | undefined;
@@ -155,23 +157,30 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 		}
 	};
 
-	const disconnect = (reason: string) => {
+	const disconnect = async (reason: string) => {
 		const ws = getWsGateway();
 		try {
-			ws?.disconnect();
+			await ws?.disconnect();
 		} catch (e) {
 			logger.warn("[WS] disconnect failed", { reason, error: String((e as any)?.message ?? e) });
 		}
+
+		// on notifie le reducer que "we decided to disconnect"
+		// (le wsDisconnected "réel" viendra via onWebSocketClose; on tolère l'idempotence)
 		logger.info("[WS] disconnect requested", { reason });
 	};
 
-	const ensureConnected = async (api: { dispatch: AppDispatchWl }) => {
+	const ensureConnected = async (api: { dispatch: AppDispatchWl; getState: () => RootStateWl }) => {
 		const ws = getWsGateway();
 		if (!ws) return;
 
-		// already connected -> nothing
-		if (ws.isActive()) {
-			logger.debug("[WS] ensureConnected: already connected");
+		const stateSnapshot = ws.getState?.() ?? (ws.isConnected?.() ? "CONNECTED" : "DISCONNECTED");
+		if (stateSnapshot === "CONNECTED") {
+			logger.debug("[WS] ensureConnected: already CONNECTED");
+			return;
+		}
+		if (stateSnapshot === "CONNECTING") {
+			logger.debug("[WS] ensureConnected: already CONNECTING");
 			return;
 		}
 
@@ -183,15 +192,18 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 			return;
 		}
 
-		// if token changed, better to force reconnect (clears any "active but not connected" client)
+		// si token change, on force un clean disconnect avant de reconnect
 		if (lastToken && token !== lastToken) {
 			logger.info("[WS] ensureConnected: token changed => forceReconnect");
-			disconnect("token_changed_before_connect");
+			await disconnect("token_changed_before_connect");
 		}
 
 		lastToken = token;
 
-		logger.info("[WS] connect", { wsUrl: deps.wsUrl });
+		logger.info("[WS] connect", {
+			wsUrl: deps.wsUrl,
+			wsState: ws.getState?.(),
+		});
 
 		ws.connect({
 			wsUrl: deps.wsUrl,
@@ -200,40 +212,51 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 				logger.info("[WS] connected");
 				api.dispatch(wsConnected());
 			},
-			onDisconnected: () => {
-				logger.info("[WS] disconnected");
-				api.dispatch(wsDisconnected());
+			onDisconnected: (info) => {
+				logger.info("[WS] disconnected", info);
+				api.dispatch(wsDisconnected(info));
+			},
+			onError: (frame) => {
+				logger.error("[WS] onError", {
+					message: frame?.headers?.message,
+				});
 			},
 			onEvent: (evt) => routeInbound(evt, api.dispatch),
 		});
 	};
 
-	const forceReconnect = async (api: { dispatch: AppDispatchWl }, reason: string) => {
-		disconnect(reason);
+	const forceReconnect = async (api: { dispatch: AppDispatchWl; getState: () => RootStateWl }, reason: string) => {
+		await disconnect(reason);
 		await ensureConnected(api);
 	};
 
+	// -----------------------------
 	// intents runtime
+	// -----------------------------
 	listen({
 		actionCreator: wsEnsureConnectedRequested,
 		effect: async (_, api) => {
-			await ensureConnected(api);
+			await ensureConnected(api as any);
 		},
 	});
 
 	listen({
 		actionCreator: wsDisconnectRequested,
-		effect: async () => {
-			disconnect("runtime_request");
+		effect: async (_, api) => {
+			await disconnect("runtime_request");
+			// on peut aussi dispatch wsDisconnected(undefined) si tu veux un état immédiat côté UI,
+			// mais ce n'est pas obligatoire puisque onWebSocketClose va arriver.
 		},
 	});
 
+	// -----------------------------
 	// triggers auth
+	// -----------------------------
 	listen({
 		actionCreator: authSignInSucceeded,
 		effect: async (_, api) => {
 			logger.info("[WS] authSignInSucceeded => ensureConnected");
-			await ensureConnected(api);
+			await ensureConnected(api as any);
 		},
 	});
 
@@ -241,8 +264,8 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 		actionCreator: authSessionRefreshed,
 		effect: async (_, api) => {
 			logger.info("[WS] authSessionRefreshed => forceReconnect");
-			// ✅ necessary with SockJS+STOMP: headers are used at handshake time
-			await forceReconnect(api, "session_refreshed");
+			// nécessaire SockJS+STOMP: headers utilisés au handshake
+			await forceReconnect(api as any, "session_refreshed");
 		},
 	});
 
@@ -250,7 +273,7 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 		actionCreator: authSignedOut,
 		effect: async () => {
 			logger.info("[WS] authSignedOut => disconnect");
-			disconnect("signed_out");
+			await disconnect("signed_out");
 			lastToken = undefined;
 		},
 	});

@@ -30,19 +30,17 @@ export const runtimeListenerFactory = () => {
 	const runtimeListener = createListenerMiddleware<RootStateWl, AppDispatchWl>();
 	const listen =
 		runtimeListener.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
-	const bootReady = (s: RootStateWl) => s.appState?.boot?.doneWarmup === true; // adapte le chemin
 
 	const kickOnlineAuthed = (api: {
 		dispatch: AppDispatchWl;
 		getState: () => RootStateWl;
 	}) => {
-		// outbox enabled again
 		api.dispatch(outboxResumeRequested());
-		// WS + delivery + observation
 		api.dispatch(wsEnsureConnectedRequested());
 		api.dispatch(outboxProcessOnce());
 		api.dispatch(outboxWatchdogTick());
 	};
+
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
@@ -56,6 +54,7 @@ export const runtimeListenerFactory = () => {
 			if (!bootReady) return;
 			if (!signedIn) return;
 
+			// Toujours tenter de reconnect WS (même si offline, ça ne fera rien côté wsListener si pas de token ou gateway)
 			api.dispatch(wsEnsureConnectedRequested());
 
 			if (!online) return;
@@ -74,7 +73,7 @@ export const runtimeListenerFactory = () => {
 				logger.info("[APP RUNTIME] connectivity offline: disconnect ws + suspend outbox");
 				api.dispatch(wsDisconnectRequested());
 				api.dispatch(outboxSuspendRequested());
-				api.dispatch(wsEnsureConnectedRequested());
+				// ❌ IMPORTANT: ne PAS déclencher ensureConnected en offline
 				return;
 			}
 
@@ -93,7 +92,6 @@ export const runtimeListenerFactory = () => {
 		},
 	});
 
-
 	listen({
 		actionCreator: appBecameBackground,
 		effect: async (_, api) => {
@@ -105,3 +103,4 @@ export const runtimeListenerFactory = () => {
 
 	return runtimeListener.middleware;
 };
+

@@ -1,55 +1,91 @@
+// app/adapters/primary/gateways-config/socket/ws.gateway.ts
 import { logger } from "@/app/core-logic/utils/logger";
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import type { WsConnectParams, WsEventsGatewayPort } from "./ws.gateway";
+
+import type {
+	WsClientState,
+	WsConnectParams,
+	WsDisconnectInfo,
+	WsEventsGatewayPort,
+} from "@/app/core-logic/contextWL/wsWl/gateway/wsWl.gateway";
+
 import { isWsInboundEvent } from "./ws.type";
 
-
 const safeJsonParse = (s: string): unknown => {
-	try { return JSON.parse(s); } catch { return undefined; }
+	try {
+		return JSON.parse(s);
+	} catch {
+		return undefined;
+	}
 };
 
 export class WsStompEventsGateway implements WsEventsGatewayPort {
 	private client?: Client;
 	private sub?: StompSubscription;
 
-	connect(params: WsConnectParams): void {
-		// ✅ si déjà connecté, on ne refait rien
-		if (this.client?.connected) return;
+	// état interne (plus fiable que "active")
+	private state: WsClientState = "DISCONNECTED";
+	private connectSeq = 0;
 
-		// ⚠️ si "active mais pas connected" (reconnect en cours), on ne recrée pas un 2e client
-		if (this.client?.active && !this.client?.connected) return;
+	getState(): WsClientState {
+		return this.state;
+	}
+
+	isConnected(): boolean {
+		return this.state === "CONNECTED";
+	}
+
+	connect(params: WsConnectParams): void {
+		// idempotent : si déjà connecté, rien à faire
+		if (this.state === "CONNECTED") return;
+
+		// si déjà en cours de connexion, on évite de spammer
+		if (this.state === "CONNECTING") {
+			logger.debug("[WS] connect skipped (already CONNECTING)");
+			return;
+		}
+
+		const mySeq = ++this.connectSeq;
+		this.state = "CONNECTING";
 
 		const httpUrl = params.wsUrl
 			.replace(/^ws:\/\//, "http://")
 			.replace(/^wss:\/\//, "https://");
 
-		logger.info("[WS] connect sockjs", { httpUrl });
+		logger.info("[WS] connect sockjs", { httpUrl, seq: mySeq });
 
 		const socket = new SockJS(httpUrl);
 
-		this.client = new Client({
+		const client = new Client({
 			brokerURL: undefined,
 			webSocketFactory: () => socket as any,
 
 			connectHeaders: { Authorization: `Bearer ${params.token}` },
+
+			// ⚠️ on peut laisser reconnectDelay, mais la stratégie "app foreground" gère déjà
+			// si tu le laisses, pas grave, mais garde l'état côté app.
 			reconnectDelay: 3000,
 			heartbeatIncoming: 10000,
 			heartbeatOutgoing: 10000,
 
 			onConnect: () => {
-				logger.info("[WS] CONNECTED -> subscribe /user/queue/acks");
+				// si un connect plus récent a été lancé, ignore
+				if (mySeq !== this.connectSeq) return;
+
+				this.state = "CONNECTED";
+				logger.info("[WS] CONNECTED -> subscribe /user/queue/acks", { seq: mySeq });
 
 				this.sub?.unsubscribe();
-				this.sub = this.client!.subscribe("/user/queue/acks", (msg: IMessage) => {
+				this.sub = client.subscribe("/user/queue/acks", (msg: IMessage) => {
 					const raw = safeJsonParse(msg.body);
 
 					if (!isWsInboundEvent(raw)) {
-						console.warn("[WS] inbound invalid event", raw);
+						logger.warn("[WS] inbound invalid event", { raw });
 						return;
 					}
 
-					logger.info("[WS] inbound validated -> forwarding to onEvent", raw.type);
+					logger.debug("[WS] inbound validated", { type: raw.type });
 					params.onEvent(raw);
 				});
 
@@ -57,31 +93,59 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 			},
 
 			onStompError: (frame) => {
-				logger.error("[WS] stomp error", frame.headers?.message, frame.body);
+				if (mySeq !== this.connectSeq) return;
+
+				// le serveur peut renvoyer une frame d'erreur (auth, etc.)
+				logger.error("[WS] stomp error", {
+					message: frame.headers?.message,
+					body: frame.body,
+					seq: mySeq,
+				});
+
 				params.onError?.(frame);
 			},
 
 			onWebSocketClose: (evt) => {
-				logger.info("[WS] ws close", (evt as any)?.code, (evt as any)?.reason);
-				params.onDisconnected?.({ code: (evt as any)?.code, message: (evt as any)?.reason });
+				if (mySeq !== this.connectSeq) return;
+
+				const info: WsDisconnectInfo = {
+					code: (evt as any)?.code,
+					message: (evt as any)?.reason,
+				};
+
+				// close => on repasse DISCONNECTED
+				this.state = "DISCONNECTED";
+
+				logger.info("[WS] ws close", { ...info, seq: mySeq });
+				params.onDisconnected?.(info);
 			},
 		});
 
-		this.client.activate();
+		// remplace l'ancien client
+		this.client = client;
+
+		client.activate();
 	}
 
-	disconnect(): void {
+	async disconnect(): Promise<void> {
+		// incrémente la séquence : invalide callbacks d'un connect en cours
+		this.connectSeq++;
+
 		this.sub?.unsubscribe();
 		this.sub = undefined;
 
 		const c = this.client;
 		this.client = undefined;
 
-		c?.deactivate();
-	}
+		// si on était en CONNECTING ou CONNECTED, on repasse DISCONNECTED
+		this.state = "DISCONNECTED";
 
-	// ✅ isActive = "connected" (utile pour ensureConnected)
-	isActive(): boolean {
-		return !!this.client?.connected;
+		if (!c) return;
+
+		try {
+			await c.deactivate();
+		} catch (e) {
+			logger.warn("[WS] deactivate failed", { error: String((e as any)?.message ?? e) });
+		}
 	}
 }
