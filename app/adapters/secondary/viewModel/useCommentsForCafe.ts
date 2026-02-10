@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
@@ -18,7 +18,7 @@ import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/u
 import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
-import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { commandKinds, StatusType, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { selectCurrentUser, selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
@@ -30,6 +30,9 @@ const buildFallbackAvatarUrl = (id: string) =>
 
 const normalizeAuthorId = (authorId: string) => authorId;
 
+export type CommentSyncState = "pending" | "acked" | "failed";
+export type CommentSyncVM = { state: CommentSyncState; untilMs: number } | null;
+
 export type CommentItemVM = {
 	id: string;
 	authorName: string;
@@ -38,7 +41,6 @@ export type CommentItemVM = {
 	createdAt: string;
 	relativeTime: string;
 
-	isOptimistic: boolean;
 	transportStatus: "pending" | "success" | "failed";
 	isAuthor: boolean;
 };
@@ -85,6 +87,9 @@ const formatRelativeTime = (isoDate: string): string => {
 	return d.toLocaleDateString("fr-FR");
 };
 
+const isPendingStatus = (s?: StatusType) =>
+	s === statusTypes.queued || s === statusTypes.processing || s === statusTypes.awaitingAck;
+
 export function useCommentsForCafe(targetId?: CafeId) {
 	const dispatch = useDispatch<any>();
 
@@ -123,27 +128,59 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		return selectCommentsForTarget(targetId);
 	}, [targetId]);
 
-	const { comments, loading, error, lastFetchedAt, staleAfterMs } =
-		useSelector(selector);
+	const { comments, loading, error, lastFetchedAt, staleAfterMs } = useSelector(selector);
 
 	// -------------------------
-	// outbox -> status mapping (optimistic create only)
+	// outbox -> status mapping
+	// IMPORTANT: front is source of truth => key is commentId
 	// -------------------------
 	const outboxRecords = useSelector((state: RootStateWl) => state.oState.byId);
 
 	const outboxStatusByCommentId = useMemo(() => {
-		const result: Record<string, string> = {};
-
+		const result: Record<string, StatusType> = {};
 		const values = Object.values(outboxRecords ?? {}) as any[];
+
 		for (const rec of values) {
 			const cmd = rec?.item?.command;
 			if (!cmd) continue;
 
-			// only create has tempId (== final commentId)
+			// We want the ID of the comment being transported
+			// - Create: cmd.commentId (preferred) else cmd.tempId (legacy)
+			// - Update/Delete: cmd.commentId
+			let commentId: string | null = null;
+
 			if (cmd.kind === commandKinds.CommentCreate) {
-				const id = String(cmd.tempId);
-				result[id] = rec.status;
+				commentId = String(cmd.commentId ?? cmd.tempId ?? "");
+			} else if (cmd.kind === commandKinds.CommentUpdate || cmd.kind === commandKinds.CommentDelete) {
+				commentId = String(cmd.commentId ?? "");
 			}
+
+			if (!commentId) continue;
+
+			// If multiple records exist (rare), we keep the "most blocking" one:
+			// failed > pending > succeeded
+			const cur = result[commentId];
+			const next: StatusType = rec.status;
+
+			if (!cur) {
+				result[commentId] = next;
+				continue;
+			}
+
+			if (cur === statusTypes.failed) continue;
+			if (next === statusTypes.failed) {
+				result[commentId] = next;
+				continue;
+			}
+
+			if (isPendingStatus(cur)) continue;
+			if (isPendingStatus(next)) {
+				result[commentId] = next;
+				continue;
+			}
+
+			// else both succeeded -> keep succeeded
+			result[commentId] = statusTypes.succeeded;
 		}
 
 		return result;
@@ -155,26 +192,23 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	const viewModel: CommentItemVM[] = useMemo(() => {
 		const meId = effectiveUserId ? String(effectiveUserId) : undefined;
 
-		// (double safety) remove soft deleted here too
 		const visible = comments.filter(
 			(c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED,
 		);
 
 		return visible.map((c) => {
 			const normalizedAuthorId = normalizeAuthorId(c.authorId);
-
-			const isCurrentUser =
-				Boolean(meId) && String(meId) === String(c.authorId);
+			const isCurrentUser = Boolean(meId) && String(meId) === String(c.authorId);
 
 			const communityProfile = getCommunityProfile(normalizedAuthorId);
 
-			// transport status: only relevant for optimistic create
+			// ✅ transportStatus derived from outbox status (NOT optimistic flag)
+			const status = outboxStatusByCommentId[c.id];
+
 			let transportStatus: "pending" | "success" | "failed" = "success";
-			if (c.optimistic) {
-				const status = outboxStatusByCommentId[c.id];
-				transportStatus =
-					status === statusTypes.failed ? "failed" : "pending";
-			}
+			if (status === statusTypes.failed) transportStatus = "failed";
+			else if (isPendingStatus(status)) transportStatus = "pending";
+			else transportStatus = "success";
 
 			const fallbackName = isCurrentUser
 				? currentUser?.displayName ?? "Moi"
@@ -184,7 +218,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
 				? currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(meId ?? "me"))
 				: communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId);
 
-			// prefer server/enriched values (or optimistic enriched)
 			const authorName = c.authorName ?? fallbackName;
 			const avatarUrl = (c.avatarUrl ?? undefined) ?? fallbackAvatar;
 
@@ -195,7 +228,6 @@ export function useCommentsForCafe(targetId?: CafeId) {
 				body: c.body,
 				createdAt: c.createdAt,
 				relativeTime: formatRelativeTime(c.createdAt),
-				isOptimistic: Boolean(c.optimistic),
 				transportStatus,
 				isAuthor: isCurrentUser,
 			};
@@ -203,16 +235,63 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	}, [comments, outboxStatusByCommentId, currentUser, effectiveUserId]);
 
 	// -------------------------
+	// sync VM (like-like halo)
+	// -------------------------
+	const [sync, setSync] = useState<CommentSyncVM>(null);
+	const prevPendingCountRef = useRef(0);
+
+	const pendingCount = useMemo(
+		() => viewModel.filter((c) => c.transportStatus === "pending").length,
+		[viewModel],
+	);
+	const failedCount = useMemo(
+		() => viewModel.filter((c) => c.transportStatus === "failed").length,
+		[viewModel],
+	);
+
+	useEffect(() => {
+		const prevPending = prevPendingCountRef.current;
+
+		if (pendingCount > 0) {
+			setSync({ state: "pending", untilMs: Date.now() + 10_000 });
+			prevPendingCountRef.current = pendingCount;
+			return;
+		}
+
+		if (prevPending > 0 && pendingCount === 0 && failedCount === 0) {
+			setSync({ state: "acked", untilMs: Date.now() + 900 });
+			prevPendingCountRef.current = 0;
+			return;
+		}
+
+		if (failedCount > 0) {
+			setSync({ state: "failed", untilMs: Date.now() + 1500 });
+			prevPendingCountRef.current = 0;
+			return;
+		}
+
+		prevPendingCountRef.current = 0;
+		setSync(null);
+	}, [pendingCount, failedCount]);
+
+	useEffect(() => {
+		if (!sync) return;
+		if (sync.state === "pending") return;
+
+		const delay = Math.max(0, sync.untilMs - Date.now());
+		const t = setTimeout(() => setSync(null), delay);
+		return () => clearTimeout(t);
+	}, [sync?.state, sync?.untilMs]);
+
+	// -------------------------
 	// read lifecycle
 	// -------------------------
 	useEffect(() => {
 		if (!targetId) return;
-
 		if (loading === loadingStates.PENDING) return;
 
 		const hasFetchedOnce = Boolean(lastFetchedAt);
 		const lastFetchTime = lastFetchedAt ? Date.parse(lastFetchedAt) : 0;
-
 		const ttl = staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
 
 		const isStale =
@@ -238,9 +317,9 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		isLoading,
 		isRefreshing,
 		error,
+		sync,
 		uiViaHookCreateComment,
 		uiViaHookUpdateComment,
 		uiViaHookDeleteComment,
 	} as const;
 }
-

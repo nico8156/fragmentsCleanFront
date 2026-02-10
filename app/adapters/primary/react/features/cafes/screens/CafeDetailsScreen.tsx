@@ -17,7 +17,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { RootStackNavigationProp, RootStackParamList } from "@/app/adapters/primary/react/navigation/types";
+import {
+	RootStackNavigationProp,
+	RootStackParamList,
+} from "@/app/adapters/primary/react/navigation/types";
 import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
 import { useCafeOpenNow } from "@/app/adapters/secondary/viewModel/useCafeOpenNow";
 import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
@@ -34,8 +37,6 @@ import { InfoSection } from "../components/InfoSection";
 import { PhotosSection } from "../components/PhotosSection";
 import { TagsSection } from "../components/TagsSection";
 import { styles } from "./styles";
-
-type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function CafeDetailsScreen() {
 	const navigation = useNavigation<RootStackNavigationProp>();
@@ -91,7 +92,6 @@ export default function CafeDetailsScreen() {
 		actionsThreshold.value = e.nativeEvent.layout.y + 40;
 	};
 
-	// --- Derived
 	const statusLabel = useMemo(() => {
 		if (isOpenNow === undefined) return "STATUT";
 		return isOpenNow ? "OUVERT" : "FERMÉ";
@@ -111,21 +111,25 @@ export default function CafeDetailsScreen() {
 	if (!coffeeId) return <DetailsError onBack={() => navigation.goBack()} />;
 	if (!coffee) return <DetailsSkeleton />;
 
-	// When keyboard opens, ensure bottom reachable
-	useEffect(() => {
-		if (keyboardHeight > 0) requestAnimationFrame(() => scrollRef.current?.scrollToEnd?.({ animated: true }));
-	}, [keyboardHeight]);
-
 	const onBack = () => navigation.goBack();
 
 	const onRefresh = () => {
 		likes.refresh();
-		// TODO (plus tard): comments.refresh() si tu ajoutes un refresh manuel sur comments
+		// Optionnel si tu ajoutes un refresh manuel côté comments:
+		// comments.refresh?.();
 	};
 
 	const refreshing = likes.isLoading || likes.isRefreshing;
-
 	const showSticky = keyboardHeight === 0;
+
+	const scrollToCommentsEnd = () => {
+		// double RAF : laisse le layout se stabiliser (clavier / sections)
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				scrollRef.current?.scrollToEnd?.({ animated: true });
+			});
+		});
+	};
 
 	return (
 		<SafeAreaView style={styles.safe} edges={["top"]}>
@@ -137,14 +141,13 @@ export default function CafeDetailsScreen() {
 					likedByMe={likes.likedByMe}
 					likeSync={likes.sync}
 					commentCount={comments.comments.length}
+					commentSync={comments.sync}
 					onBack={onBack}
 					onPressLike={() => {
 						if (likes.isLoading || likes.isRefreshing) return;
 						likes.toggleLike();
 					}}
-					onPressComments={() => {
-						requestAnimationFrame(() => scrollRef.current?.scrollToEnd?.({ animated: true }));
-					}}
+					onPressComments={scrollToCommentsEnd}
 				/>
 
 				<Animated.ScrollView
@@ -154,11 +157,7 @@ export default function CafeDetailsScreen() {
 					keyboardDismissMode="none"
 					keyboardShouldPersistTaps="handled"
 					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-							tintColor={palette.textMuted}
-						/>
+						<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textMuted} />
 					}
 					onScrollBeginDrag={() => {
 						dragStartY.value = scrollY.value;
@@ -174,13 +173,17 @@ export default function CafeDetailsScreen() {
 					<DetailsActionsRow coffee={coffee} addressLine={addressLine} onLayout={onActionsLayout} />
 
 					<PhotosSection photos={coffee.photos ?? []} />
-
-					{/* ✅ Ici: address/tel/site + Horaires déroulables */}
 					<InfoSection coffee={coffee} addressLine={addressLine} />
-
 					<TagsSection tags={(coffee as any).tags ?? []} />
 
-					<CommentsSection coffeeId={String(coffeeId)} comments={comments} />
+					<CommentsSection
+						coffeeId={String(coffeeId)}
+						comments={comments}
+						onRequestScrollToComposer={scrollToCommentsEnd}
+						onRequestScrollToY={(y) => {
+							requestAnimationFrame(() => scrollRef.current?.scrollTo?.({ y, animated: true }));
+						}}
+					/>
 				</Animated.ScrollView>
 
 				{showSticky && (

@@ -10,16 +10,26 @@ export function Section({ title, children }: { title: string; children: React.Re
 		</View>
 	);
 }
-
 const s = StyleSheet.create({
-	section: { paddingHorizontal: 4, paddingTop: 16, gap: 10 },
-	title: { fontSize: 20, fontWeight: "900", color: "#4CAF50" },
-	card: {
-		borderRadius: 18,
-		backgroundColor: "rgba(0,0,0,0.03)",
-		padding: 14,
-		gap: 12,
+	section: {
+		paddingHorizontal: 0,
+		paddingTop: 10,
 	},
-	text: { color: palette.textPrimary_1 },
-});
 
+	title: {
+		fontSize: 17,
+		fontWeight: "800",
+		color: palette.textPrimary_1,
+		marginBottom: 6,
+		paddingHorizontal: 6,
+	},
+
+	card: {
+		borderRadius: 16,
+		backgroundColor: palette.surface,       // au lieu d’un rgba fixe
+		padding: 8,
+		gap: 8,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,   // cohérence avec CommentsSection
+	},
+});

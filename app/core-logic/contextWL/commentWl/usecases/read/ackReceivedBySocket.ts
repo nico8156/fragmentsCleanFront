@@ -9,33 +9,28 @@ import { logger } from "@/app/core-logic/utils/logger";
 
 type ISODate = string;
 
-export type CommentCreatedAckActionPayload = {
+export const onCommentCreatedAck = createAction<{
 	commandId: string;
 	commentId: string;
 	targetId: string;
 	server: { createdAt: ISODate; version: number };
-};
+}>("SERVER/COMMENT/CREATED_ACK");
 
-export type CommentUpdatedAckActionPayload = {
+export const onCommentUpdatedAck = createAction<{
 	commandId: string;
 	commentId: string;
 	targetId: string;
 	server: { editedAt: ISODate; version: number; body?: string };
-};
+}>("SERVER/COMMENT/UPDATED_ACK");
 
-export type CommentDeletedAckActionPayload = {
+export const onCommentDeletedAck = createAction<{
 	commandId: string;
 	commentId: string;
 	targetId: string;
 	server: { deletedAt: ISODate; version: number };
-};
+}>("SERVER/COMMENT/DELETED_ACK");
 
-// transport events (WS/server)
-export const onCommentCreatedAck = createAction<CommentCreatedAckActionPayload>("SERVER/COMMENT/CREATED_ACK");
-export const onCommentUpdatedAck = createAction<CommentUpdatedAckActionPayload>("SERVER/COMMENT/UPDATED_ACK");
-export const onCommentDeletedAck = createAction<CommentDeletedAckActionPayload>("SERVER/COMMENT/DELETED_ACK");
-
-export const ackListenerFactory = (callback?: () => void) => {
+export const ackListenerFactory = () => {
 	const mw = createListenerMiddleware<AppStateWl, AppDispatchWl>();
 	const listen = mw.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
 
@@ -43,16 +38,10 @@ export const ackListenerFactory = (callback?: () => void) => {
 		actionCreator: onCommentCreatedAck,
 		effect: async ({ payload }, api) => {
 			const { commandId, commentId, targetId, server } = payload;
-
 			logger.info("[ACK_COMMENTS] created", { commandId, commentId, targetId, version: server.version });
 
-			// ✅ source of truth (guard version in reducer)
 			api.dispatch(createReconciled({ commentId, server }));
-
-			// ✅ always drop (idempotent)
-			api.dispatch(dropCommitted({ commandId }));
-
-			callback?.();
+			api.dispatch(dropCommitted({ commandId })); // ✅ idempotent
 		},
 	});
 
@@ -60,13 +49,10 @@ export const ackListenerFactory = (callback?: () => void) => {
 		actionCreator: onCommentUpdatedAck,
 		effect: async ({ payload }, api) => {
 			const { commandId, commentId, targetId, server } = payload;
-
 			logger.info("[ACK_COMMENTS] updated", { commandId, commentId, targetId, version: server.version });
 
 			api.dispatch(updateReconciled({ commentId, server }));
 			api.dispatch(dropCommitted({ commandId }));
-
-			callback?.();
 		},
 	});
 
@@ -74,15 +60,13 @@ export const ackListenerFactory = (callback?: () => void) => {
 		actionCreator: onCommentDeletedAck,
 		effect: async ({ payload }, api) => {
 			const { commandId, commentId, targetId, server } = payload;
-
 			logger.info("[ACK_COMMENTS] deleted", { commandId, commentId, targetId, version: server.version });
 
 			api.dispatch(deleteReconciled({ commentId, server }));
 			api.dispatch(dropCommitted({ commandId }));
-
-			callback?.();
 		},
 	});
 
 	return mw.middleware;
 };
+

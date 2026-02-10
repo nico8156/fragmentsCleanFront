@@ -2,12 +2,25 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import type { CommentItemVM } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { SymbolView } from "expo-symbols";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+	ActivityIndicator,
+	findNodeHandle,
+	Image,
+	Keyboard,
+	Pressable,
+	StyleSheet,
+	Text,
+	TextInput,
+	UIManager,
+	View,
+} from "react-native";
 import { Section } from "./Section";
 
 export function CommentsSection({
 	coffeeId,
 	comments,
+	onRequestScrollToComposer,
+	onRequestScrollToY,
 }: {
 	coffeeId: string;
 	comments: {
@@ -19,25 +32,37 @@ export function CommentsSection({
 		uiViaHookUpdateComment: (p: { commentId: string; body: string }) => void;
 		uiViaHookDeleteComment: (p: { commentId: string }) => void;
 	};
+	onRequestScrollToComposer?: () => void;
+
+	/**
+	 * Optionnel : permet de scroller vers une coordonnée Y (ex: parent scrollView).
+	 * Le parent peut faire : scrollRef.current?.scrollTo({ y, animated: true })
+	 */
+	onRequestScrollToY?: (y: number) => void;
 }) {
 	const [draft, setDraft] = useState("");
 
-	const canSend = draft.trim().length > 0;
-	const charCount = draft.trim().length;
+	const trimmed = draft.trim();
+	const canSend = trimmed.length > 0;
+	const charCount = trimmed.length;
+
 	const inputRef = useRef<TextInput>(null);
 
 	const submit = useCallback(() => {
 		const txt = draft.trim();
 		if (!txt) return;
+
 		comments.uiViaHookCreateComment({ targetId: coffeeId, body: txt });
-		//handle keyboard dismiss when submit 
+
 		inputRef.current?.blur();
 		Keyboard.dismiss();
-		// =========================
 		setDraft("");
 	}, [draft, comments, coffeeId]);
 
-	const title = useMemo(() => `Commentaires (${comments.comments.length})`, [comments.comments.length]);
+	const title = useMemo(
+		() => `Commentaires (${comments.comments.length})`,
+		[comments.comments.length],
+	);
 
 	return (
 		<Section title={title}>
@@ -65,52 +90,48 @@ export function CommentsSection({
 							item={c}
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
 							onDelete={() => comments.uiViaHookDeleteComment({ commentId: c.id })}
+							onRequestScrollToY={onRequestScrollToY}
 						/>
 					))}
 				</View>
 			)}
 
-			{/* COMPOSER */}
+			{/* COMPOSER (lighter) */}
 			<View style={s.composer}>
-				<View style={s.composerHeader}>
-					<Text style={s.composerTitle}>Ajouter un commentaire</Text>
-
-					<View style={s.composerMeta}>
-						<Text style={s.counter}>{charCount ? `${charCount}` : "0"}</Text>
-						<Text style={s.counterMuted}>car.</Text>
-					</View>
-				</View>
-
-				<TextInput
-					ref={inputRef}
-					value={draft}
-					onChangeText={setDraft}
-					placeholder="Écris un commentaire (court, utile, sympa)…"
-					placeholderTextColor={palette.textMuted}
-					style={s.input}
-					multiline
-					textAlignVertical="top"
-					selectionColor={palette.accent}
-				/>
-
-				<View style={s.composerFooter}>
-					<Text style={s.hint} numberOfLines={2}>
-						{canSend ? "Prêt à envoyer" : "Astuce : parle de l’ambiance, du café, du service…"}
-					</Text>
+				<View style={s.composerRow}>
+					<TextInput
+						ref={inputRef}
+						value={draft}
+						onChangeText={setDraft}
+						onFocus={() => onRequestScrollToComposer?.()}
+						placeholder="Écris un commentaire…"
+						placeholderTextColor={palette.textMuted}
+						style={s.input}
+						multiline
+						textAlignVertical="top"
+						selectionColor={palette.accent}
+					/>
 
 					<Pressable
 						onPress={submit}
 						disabled={!canSend}
 						style={({ pressed }) => [
-							s.sendBtn,
+							s.sendIconBtn,
 							!canSend && s.sendBtnDisabled,
 							pressed && canSend && s.pressed,
 						]}
 					>
-						<SymbolView name="paperplane.fill" size={16} tintColor={palette.textPrimary} fallback={<Text>➤</Text>} />
-						<Text style={s.sendText}>Envoyer</Text>
+						<SymbolView
+							name="paperplane.fill"
+							size={16}
+							tintColor={palette.textPrimary}
+							fallback={<Text>➤</Text>}
+						/>
 					</Pressable>
 				</View>
+
+				{/* show counter only when it starts to matter */}
+				{charCount > 220 ? <Text style={s.counterHint}>{charCount} car.</Text> : null}
 			</View>
 		</Section>
 	);
@@ -120,15 +141,73 @@ function CommentCard({
 	item,
 	onEdit,
 	onDelete,
+	onRequestScrollToY,
 }: {
 	item: CommentItemVM;
 	onEdit: (body: string) => void;
 	onDelete: () => void;
+	onRequestScrollToY?: (y: number) => void;
 }) {
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(item.body);
 
+	const cardRef = useRef<View>(null);
+	const editInputRef = useRef<TextInput>(null);
+
+	// flash "Envoyé" when pending -> success
+	const [flashSent, setFlashSent] = useState(false);
+	const prevStatus = useRef(item.transportStatus);
+
+	// UX safety: if pending stays too long, don't block the UI forever (visual only)
+	const [pendingTooLong, setPendingTooLong] = useState(false);
+
 	useEffect(() => setDraft(item.body), [item.body]);
+
+	// pending -> success => flash "Envoyé"
+	useEffect(() => {
+		if (prevStatus.current === "pending" && item.transportStatus === "success") {
+			setFlashSent(true);
+			const t = setTimeout(() => setFlashSent(false), 900);
+			prevStatus.current = item.transportStatus;
+			return () => clearTimeout(t);
+		}
+		prevStatus.current = item.transportStatus;
+	}, [item.transportStatus]);
+
+	// pending "too long" fallback (pure UI)
+	useEffect(() => {
+		if (item.transportStatus !== "pending") {
+			setPendingTooLong(false);
+			return;
+		}
+		const t = setTimeout(() => setPendingTooLong(true), 12_000);
+		return () => clearTimeout(t);
+	}, [item.transportStatus]);
+
+	const requestScrollIntoView = useCallback(() => {
+		if (!onRequestScrollToY) return;
+		const node = cardRef.current ? findNodeHandle(cardRef.current) : null;
+		if (!node) return;
+
+		// measure position in window; parent decides how to scroll
+		UIManager.measureInWindow(node, (_x, y, _w, _h) => {
+			// small offset so it doesn't stick to top
+			const targetY = Math.max(0, y - 80);
+			onRequestScrollToY(targetY);
+		});
+	}, [onRequestScrollToY]);
+
+	const startEdit = useCallback(() => {
+		setEditing(true);
+
+		// next tick: scroll card into view, then focus
+		requestAnimationFrame(() => {
+			requestScrollIntoView();
+			requestAnimationFrame(() => {
+				editInputRef.current?.focus();
+			});
+		});
+	}, [requestScrollIntoView]);
 
 	const save = () => {
 		const txt = draft.trim();
@@ -142,16 +221,16 @@ function CommentCard({
 	};
 
 	const pill =
-		item.transportStatus === "pending"
-			? { text: "Envoi…", bg: palette.bg_light_30, border: palette.border_muted_30 }
-			: item.transportStatus === "failed"
-				? { text: "Échec", bg: palette.danger_30, border: palette.danger_60 }
-				: item.isOptimistic
-					? { text: "Sync", bg: palette.bg_light_30, border: palette.border_muted_30 }
+		item.transportStatus === "failed"
+			? { text: "Échec", bg: palette.danger_30, border: palette.danger_60 }
+			: item.transportStatus === "pending" && !pendingTooLong
+				? { text: "Envoi…", bg: palette.bg_light_30, border: palette.border_muted_30 }
+				: flashSent
+					? { text: "Envoyé", bg: palette.accentSoft, border: palette.accent_30 }
 					: null;
 
 	return (
-		<View style={s.commentCard}>
+		<View ref={cardRef} style={s.commentCard}>
 			<Image source={{ uri: item.avatarUrl }} style={s.avatar} />
 
 			<View style={s.commentContent}>
@@ -173,12 +252,14 @@ function CommentCard({
 				) : (
 					<View style={s.editWrap}>
 						<TextInput
+							ref={editInputRef}
 							value={draft}
 							onChangeText={setDraft}
 							style={s.editInput}
 							multiline
 							textAlignVertical="top"
 							selectionColor={palette.accent}
+							onFocus={requestScrollIntoView}
 						/>
 						<View style={s.editActions}>
 							<Pressable
@@ -199,7 +280,7 @@ function CommentCard({
 
 				{item.isAuthor && !editing ? (
 					<View style={s.actions}>
-						<Pressable onPress={() => setEditing(true)} style={s.actionBtn}>
+						<Pressable onPress={startEdit} style={s.actionBtn}>
 							<Text style={s.actionText}>Modifier</Text>
 						</Pressable>
 						<Pressable onPress={onDelete} style={s.actionBtn}>
@@ -214,13 +295,12 @@ function CommentCard({
 
 const s = StyleSheet.create({
 	row: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
-	muted: { color: palette.textMuted, fontWeight: "800" },
+	muted: { color: palette.textMuted, fontWeight: "700" },
 
-	// ✅ Liste plus “large”: pas de padding additionnel
-	list: { paddingTop: 2, paddingBottom: 8 },
+	list: { paddingTop: 2, paddingBottom: 6 },
 
 	empty: { paddingVertical: 6 },
-	emptyTitle: { fontWeight: "900", color: palette.textPrimary, marginBottom: 4 },
+	emptyTitle: { fontWeight: "800", color: palette.textPrimary, marginBottom: 4 },
 
 	errorBox: {
 		borderRadius: 16,
@@ -229,28 +309,27 @@ const s = StyleSheet.create({
 		borderColor: palette.danger_30,
 		padding: 12,
 	},
-	errorTitle: { color: palette.textPrimary, fontWeight: "900" },
+	errorTitle: { color: palette.textPrimary, fontWeight: "800" },
 	errorText: { marginTop: 4, color: palette.textSecondary, fontWeight: "500" },
 
-	// ✅ Cards: moins de padding horizontal, donc ça “prend la place”
+	// --- comment card (slightly lighter)
 	commentCard: {
 		flexDirection: "row",
-		paddingVertical: 12,
-		paddingHorizontal: 12,
+		paddingVertical: 9,
+		paddingHorizontal: 9,
 		borderRadius: 18,
 		backgroundColor: palette.elevated,
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
-		marginBottom: 10,
+		marginBottom: 9,
 	},
-	avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: palette.bg_dark_50 },
+	avatar: { width: 34, height: 34, borderRadius: 17, backgroundColor: palette.bg_dark_50 },
 
-	// ✅ remplace gap (robuste)
 	commentContent: { flex: 1, marginLeft: 10 },
 
 	commentHeader: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-	author: { color: palette.textPrimary, fontWeight: "900", maxWidth: 180 },
-	time: { color: palette.textMuted, fontWeight: "800", marginLeft: 6 },
+	author: { color: palette.textPrimary, fontWeight: "800", maxWidth: 180 },
+	time: { color: palette.textMuted, fontWeight: "700", marginLeft: 6, fontSize: 12 },
 
 	pill: {
 		marginLeft: 8,
@@ -259,25 +338,43 @@ const s = StyleSheet.create({
 		borderRadius: 999,
 		borderWidth: 1,
 	},
-	pillText: { color: palette.textPrimary, fontWeight: "900", fontSize: 12 },
+	pillText: { color: palette.textPrimary, fontWeight: "800", fontSize: 12 },
 
-	body: { marginTop: 6, color: palette.textPrimary, fontWeight: "500", lineHeight: 19 },
+	body: {
+		marginTop: 6,
+		color: palette.textPrimary,
+		fontWeight: "400",
+		lineHeight: 19,
+		fontSize: 14,
+	},
 
+	// actions as chips
 	actions: { flexDirection: "row", marginTop: 10 },
-	actionBtn: { paddingVertical: 4, marginRight: 14 },
-	actionText: { color: palette.textSecondary, fontWeight: "900", fontSize: 13 },
+	actionBtn: {
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderRadius: 999,
+		backgroundColor: palette.overlay,
+		borderWidth: 1,
+		borderColor: palette.border_muted_30,
+		marginRight: 10,
+	},
+	actionText: { color: palette.textSecondary, fontWeight: "800", fontSize: 13 },
 	danger: { color: palette.danger },
 
+	// edit
 	editWrap: { marginTop: 8 },
 	editInput: {
-		minHeight: 70,
+		minHeight: 76,
 		borderRadius: 14,
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
 		backgroundColor: palette.surface,
 		padding: 12,
 		color: palette.textPrimary,
-		fontWeight: "500",
+		fontWeight: "400",
+		fontSize: 14,
+		lineHeight: 20,
 	},
 	editActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 10 },
 	miniBtn: {
@@ -290,52 +387,57 @@ const s = StyleSheet.create({
 		marginLeft: 10,
 	},
 	miniBtnPrimary: { backgroundColor: palette.accentSoft, borderColor: palette.accent_30 },
-	miniBtnText: { fontWeight: "900", color: palette.textPrimary },
+	miniBtnText: { fontWeight: "800", color: palette.textPrimary },
 	miniBtnTextPrimary: { color: palette.textPrimary },
 
-	// ✅ Composer: moins de padding (la SectionCard pad déjà), mais input plus grand
+	// --- composer
 	composer: {
 		marginTop: 8,
 		borderRadius: 18,
 		backgroundColor: palette.surface,
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
-		padding: 12, // ↓ (au lieu de 14)
+		padding: 9,
 	},
-	composerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-	composerTitle: { color: palette.textPrimary, fontWeight: "900" },
-	composerMeta: { flexDirection: "row", alignItems: "baseline" },
-	counter: { color: palette.textSecondary, fontWeight: "900" },
-	counterMuted: { marginLeft: 4, color: palette.textMuted, fontWeight: "800", fontSize: 12 },
+	composerRow: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+	},
 
 	input: {
-		minHeight: 130, // ✅ plus confortable
+		flex: 1,
+		minHeight: 92,
 		borderRadius: 16,
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
 		backgroundColor: palette.elevated,
-		padding: 12,
+		padding: 10,
 		color: palette.textPrimary,
-		fontWeight: "500",
+		fontWeight: "400",
+		fontSize: 14,
 		lineHeight: 20,
 	},
 
-	composerFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
-	hint: { flex: 1, color: palette.textMuted, fontWeight: "800", marginRight: 12 },
-
-	sendBtn: {
-		height: 42,
-		paddingHorizontal: 14,
+	sendIconBtn: {
+		marginLeft: 10,
+		height: 44,
+		width: 44,
 		borderRadius: 16,
 		backgroundColor: palette.accentSoft,
 		borderWidth: 1,
 		borderColor: palette.accent_30,
-		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	sendBtnDisabled: { opacity: 0.45 },
-	sendText: { marginLeft: 8, color: palette.textPrimary, fontWeight: "900" },
+
+	counterHint: {
+		marginTop: 8,
+		color: palette.textMuted,
+		fontWeight: "700",
+		fontSize: 12,
+		textAlign: "right",
+	},
 
 	pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
 });

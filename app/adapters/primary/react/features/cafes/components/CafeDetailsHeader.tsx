@@ -11,6 +11,7 @@ export function CafeDetailsHeader({
 	likedByMe,
 	likeSync,
 	commentCount,
+	commentSync,
 	onBack,
 	onPressLike,
 	onPressComments,
@@ -20,7 +21,10 @@ export function CafeDetailsHeader({
 	likeCount: number;
 	likedByMe: boolean;
 	likeSync: { state: "pending" | "acked" | "failed"; untilMs: number } | null;
+
 	commentCount: number;
+	commentSync: { state: "pending" | "acked" | "failed"; untilMs: number } | null;
+
 	onBack: () => void;
 	onPressLike: () => void;
 	onPressComments: () => void;
@@ -31,19 +35,22 @@ export function CafeDetailsHeader({
 		return undefined;
 	}, [statusLabel]);
 
-	const haloStyle =
-		likeSync?.state === "pending"
+	const haloStyleFor = (sync: { state: "pending" | "acked" | "failed"; untilMs: number } | null) =>
+		sync?.state === "pending"
 			? s.haloPending
-			: likeSync?.state === "acked"
+			: sync?.state === "acked"
 				? s.haloAcked
-				: likeSync?.state === "failed"
+				: sync?.state === "failed"
 					? s.haloFailed
 					: null;
+
+	const likeHaloStyle = haloStyleFor(likeSync);
+	const commentHaloStyle = haloStyleFor(commentSync);
 
 	return (
 		<View style={s.wrap}>
 			<View style={s.card}>
-				{/* Row 1: back + title */}
+				{/* Row 1: balanced title (true centered) */}
 				<View style={s.topRow}>
 					<Pressable onPress={onBack} style={s.iconBtn} hitSlop={10}>
 						<SymbolView
@@ -54,24 +61,36 @@ export function CafeDetailsHeader({
 						/>
 					</Pressable>
 
-					<Text style={s.topTitle} numberOfLines={1}>
-						{title}
-					</Text>
+					<View style={s.titleWrap}>
+						<Text style={s.topTitle} numberOfLines={1}>
+							{title}
+						</Text>
+					</View>
+
+					{/* right spacer to keep title centered */}
+					<View style={s.iconBtnSpacer} />
 				</View>
 
-				{/* Row 2: status + actions */}
+				{/* Row 2: status aligned + actions */}
 				<View style={s.bottomRow}>
-					<View style={[s.statusBadge, openFlag === false ? s.statusClosed : s.statusOpen]}>
-						<Text style={s.statusBadgeText}>{statusLabel}</Text>
+					<View style={[s.statusPill, openFlag === false ? s.statusClosed : s.statusOpen]}>
+						<Text style={s.statusText}>{statusLabel}</Text>
 					</View>
 
 					<View style={{ flex: 1 }} />
 
 					<View style={s.actions}>
 						{/* LIKE */}
-						<Pressable onPress={onPressLike} style={[s.actionPill, likedByMe && s.actionPillActive]} hitSlop={10}>
-							{/* halo doux (derrière la pilule) */}
-							{haloStyle ? <View pointerEvents="none" style={[s.pillHalo, haloStyle]} /> : null}
+						<Pressable
+							onPress={onPressLike}
+							style={({ pressed }) => [
+								s.actionPill,
+								likedByMe && s.actionPillActive,
+								pressed && s.pressed,
+							]}
+							hitSlop={10}
+						>
+							{likeHaloStyle ? <View pointerEvents="none" style={[s.pillHalo, likeHaloStyle]} /> : null}
 
 							<HeartIcon
 								filled={likedByMe}
@@ -82,7 +101,13 @@ export function CafeDetailsHeader({
 						</Pressable>
 
 						{/* COMMENTS */}
-						<Pressable onPress={onPressComments} style={s.actionPill} hitSlop={10}>
+						<Pressable
+							onPress={onPressComments}
+							style={({ pressed }) => [s.actionPill, pressed && s.pressed]}
+							hitSlop={10}
+						>
+							{commentHaloStyle ? <View pointerEvents="none" style={[s.pillHalo, commentHaloStyle]} /> : null}
+
 							<SymbolView
 								name="bubble.left.fill"
 								size={18}
@@ -105,58 +130,87 @@ const s = StyleSheet.create({
 		paddingTop: 6,
 		paddingBottom: 10,
 	},
+
 	card: {
 		borderRadius: 18,
 		paddingHorizontal: 12,
 		paddingTop: 10,
 		paddingBottom: 12,
 		backgroundColor: "rgba(0,0,0,0.04)",
-		gap: 10,
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: "rgba(255,255,255,0.10)",
 	},
 
+	// --- Row 1
 	topRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
+		marginBottom: 20,
 	},
+
 	iconBtn: {
-		width: 38,
-		height: 38,
-		borderRadius: 12,
+		width: 40,
+		height: 40,
+		borderRadius: 14,
 		alignItems: "center",
 		justifyContent: "center",
 		backgroundColor: "rgba(255,255,255,0.06)",
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: "rgba(255,255,255,0.10)",
 	},
-	topTitle: {
+
+	iconBtnSpacer: {
+		width: 40,
+		height: 40,
+	},
+
+	titleWrap: {
 		flex: 1,
+		alignItems: "center",
+		paddingHorizontal: 10,
+	},
+
+	topTitle: {
 		fontSize: 18,
 		fontWeight: "900",
 		color: palette.textPrimary_1,
 		textAlign: "center",
-		paddingHorizontal: 6,
 	},
 
+	// --- Row 2
 	bottomRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
 	},
 
-	statusBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-	statusOpen: { backgroundColor: "rgba(76, 175, 80, 0.18)" },
-	statusClosed: { backgroundColor: "rgba(231, 76, 60, 0.16)" },
-	statusBadgeText: { fontSize: 12, fontWeight: "900", color: palette.textPrimary_1, letterSpacing: 0.8 },
+	// status aligned with pills height
+	statusPill: {
+		height: 40,
+		paddingHorizontal: 12,
+		borderRadius: 999,
+		alignItems: "center",
+		justifyContent: "center",
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: "rgba(255,255,255,0.10)",
+	},
+	statusOpen: { backgroundColor: "rgba(76, 175, 80, 0.16)" },
+	statusClosed: { backgroundColor: "rgba(231, 76, 60, 0.14)" },
+	statusText: {
+		fontSize: 12,
+		fontWeight: "900",
+		color: palette.textPrimary_1,
+		letterSpacing: 0.7,
+	},
 
 	actions: {
 		flexDirection: "row",
 		gap: 10,
 	},
 
+	// bigger pills
 	actionPill: {
-		height: 36,
-		paddingHorizontal: 12,
+		height: 40,
+		paddingHorizontal: 14,
 		borderRadius: 999,
 		flexDirection: "row",
 		alignItems: "center",
@@ -166,10 +220,12 @@ const s = StyleSheet.create({
 		borderColor: "rgba(255,255,255,0.10)",
 		overflow: "visible",
 	},
+
 	actionPillActive: {
 		backgroundColor: "rgba(255,255,255,0.10)",
 		borderColor: "rgba(255,255,255,0.18)",
 	},
+
 	actionCount: {
 		fontSize: 13,
 		fontWeight: "900",
@@ -180,7 +236,9 @@ const s = StyleSheet.create({
 		opacity: 1,
 	},
 
-	// halo discret autour de la pilule like (pas de 3e forme)
+	pressed: { opacity: 0.92, transform: [{ scale: 0.99 }] },
+
+	// halo
 	pillHalo: {
 		position: "absolute",
 		left: -2,
@@ -191,6 +249,7 @@ const s = StyleSheet.create({
 		opacity: 0.22,
 	},
 	haloPending: { backgroundColor: "rgba(255, 165, 0, 0.45)" }, // orange
-	haloAcked: { backgroundColor: "rgba(76, 175, 80, 0.35)" },   // vert
-	haloFailed: { backgroundColor: "rgba(231, 76, 60, 0.30)" },  // rouge
+	haloAcked: { backgroundColor: "rgba(76, 175, 80, 0.35)" }, // vert
+	haloFailed: { backgroundColor: "rgba(231, 76, 60, 0.30)" }, // rouge
 });
+
