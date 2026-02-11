@@ -17,16 +17,25 @@ import { HttpLikesGateway } from "@/app/adapters/secondary/gateways/like/HttpLik
 import { HttpCommandStatusGateway } from "@/app/adapters/secondary/gateways/outbox/HttpCommandStatusGateway";
 import { HttpTicketsGateway } from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
 import { HttpUserRepo } from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
+
 import { HttpArticleWlGateway } from "../../secondary/gateways/articles/HttpArticleWlGateway";
 import { HttpCfPhotoGateway } from "../../secondary/gateways/coffee/HttpCfPhotoGateway";
 import { HttpCoffeeGateway } from "../../secondary/gateways/coffee/HttpCoffeeGateway";
 import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpeningHoursGateway";
 
 import { WsStompEventsGateway } from "@/app/adapters/primary/socket/WsEventsGateway";
-import { API_BASE_URL } from "./config";
 import type { GatewaysWl } from "./types";
 
+// ✅ NOTE: on ne dépend plus de API_BASE_URL ici.
+// La source de vérité devient "apiBaseUrl" passé en argument.
+
 export const createInfrastructure = (apiBaseUrl: string) => {
+	// normalise une seule fois
+	const baseUrl = (apiBaseUrl ?? "").trim().replace(/\/+$/, "");
+	if (!baseUrl) {
+		throw new Error("[createInfrastructure] apiBaseUrl is empty/undefined");
+	}
+
 	const authToken = new AuthTokenBridge();
 	const sessionRef: { current?: AuthSession } = { current: undefined };
 
@@ -36,49 +45,57 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 	};
 
 	const gateways: GatewaysWl = {
-		coffees: new HttpCoffeeGateway({ baseUrl: API_BASE_URL }),
-		cfPhotos: new HttpCfPhotoGateway({ baseUrl: API_BASE_URL }),
-		openingHours: new HttpOpeningHoursGateway({ baseUrl: API_BASE_URL }),
+		// ✅ aligné sur baseUrl unique
+		coffees: new HttpCoffeeGateway({ baseUrl }),
+		cfPhotos: new HttpCfPhotoGateway({ baseUrl }),
+		openingHours: new HttpOpeningHoursGateway({ baseUrl }),
 
 		comments: new HttpCommentsGateway({
-			baseUrl: apiBaseUrl,
+			baseUrl,
 			getAccessToken: authToken.getAccessToken,
 		}),
 
 		likes: new HttpLikesGateway({
-			baseUrl: apiBaseUrl,
+			baseUrl,
 			authToken,
 		}),
 
 		tickets: new HttpTicketsGateway({
-			baseUrl: apiBaseUrl,
+			baseUrl,
 			auth: authToken,
 		}),
 
 		commandStatus: new HttpCommandStatusGateway({
-			baseUrl: apiBaseUrl,
+			baseUrl,
 			authToken,
 		}),
 
 		entitlements: new FakeEntitlementWlGateway(),
 		locations: new ExpoLocationGateway(),
-		articles: new HttpArticleWlGateway({ baseUrl: API_BASE_URL }),
+
+		articles: new HttpArticleWlGateway({ baseUrl }),
 
 		ws: new WsStompEventsGateway(),
 
-		authToken: authToken,
+		authToken,
 
 		auth: {
 			oauth: googleOAuthGateway,
 			secureStore: new ExpoSecureAuthSessionStore(),
+
+			// ✅ hydrate user via le même host/port que le reste
 			userRepo: new HttpUserRepo({
-				baseUrl: apiBaseUrl,
+				baseUrl,
 				getAccessToken: authToken.getAccessToken,
 			}),
+
+			// ⚠️ authServerGateway utilise peut-être encore Constants.expoConfig.extra.apiBaseUrl en interne.
+			// Ce n'est pas bloquant si ce Constants pointe sur la même valeur.
+			// Idéalement, on le refactorera en factory dépendante de baseUrl aussi.
 			server: authServerGateway,
 		},
 	};
 
-
 	return { gateways, outboxStorage, onSessionChanged, sessionRef };
 };
+

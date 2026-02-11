@@ -1,4 +1,3 @@
-// app/adapters/primary/gateways-config/socket/ws.gateway.ts
 import { logger } from "@/app/core-logic/utils/logger";
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -27,6 +26,15 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 	// état interne (plus fiable que "active")
 	private state: WsClientState = "DISCONNECTED";
 	private connectSeq = 0;
+
+	/**
+	 * ✅ Compat interface: certains ports demandent un flag "isActive"
+	 * On l’expose comme une propriété calculée (getter) => conforme à "Property 'isActive'".
+	 */
+	get isActive(): boolean {
+		// "active" au sens large: en train de connecter ou connecté
+		return this.state === "CONNECTING" || this.state === "CONNECTED";
+	}
 
 	getState(): WsClientState {
 		return this.state;
@@ -63,8 +71,6 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 
 			connectHeaders: { Authorization: `Bearer ${params.token}` },
 
-			// ⚠️ on peut laisser reconnectDelay, mais la stratégie "app foreground" gère déjà
-			// si tu le laisses, pas grave, mais garde l'état côté app.
 			reconnectDelay: 3000,
 			heartbeatIncoming: 10000,
 			heartbeatOutgoing: 10000,
@@ -95,7 +101,6 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 			onStompError: (frame) => {
 				if (mySeq !== this.connectSeq) return;
 
-				// le serveur peut renvoyer une frame d'erreur (auth, etc.)
 				logger.error("[WS] stomp error", {
 					message: frame.headers?.message,
 					body: frame.body,
@@ -113,7 +118,6 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 					message: (evt as any)?.reason,
 				};
 
-				// close => on repasse DISCONNECTED
 				this.state = "DISCONNECTED";
 
 				logger.info("[WS] ws close", { ...info, seq: mySeq });
@@ -149,3 +153,4 @@ export class WsStompEventsGateway implements WsEventsGatewayPort {
 		}
 	}
 }
+

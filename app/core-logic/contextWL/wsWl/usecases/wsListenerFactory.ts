@@ -1,4 +1,3 @@
-// app/core-logic/contextWL/wsWl/usecases/wsListenerFactory.ts
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";

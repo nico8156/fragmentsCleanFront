@@ -18,13 +18,22 @@ import {
 import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
 import {
+	wsConnected,
 	wsDisconnectRequested,
 	wsEnsureConnectedRequested,
 } from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
 
+import {
+	authMaybeRefreshRequested,
+	authUserHydrationRequested,
+} from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+
 import { logger } from "@/app/core-logic/utils/logger";
 
-const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
+// ✅ IMPORTANT: on ne base plus "signedIn" sur status (qui peut repasser "loading" pendant hydration)
+// => on se base sur la présence d'une session (userId)
+const getSessionUserId = (s: RootStateWl) => s.aState?.session?.userId;
+const hasSession = (s: RootStateWl) => Boolean(getSessionUserId(s));
 
 export const runtimeListenerFactory = () => {
 	const runtimeListener = createListenerMiddleware<RootStateWl, AppDispatchWl>();
@@ -41,22 +50,39 @@ export const runtimeListenerFactory = () => {
 		api.dispatch(outboxWatchdogTick());
 	};
 
+	const refreshAndHydrate = (api: {
+		dispatch: AppDispatchWl;
+		getState: () => RootStateWl;
+	}) => {
+		const state = api.getState();
+		const userId = getSessionUserId(state);
+		if (!userId) return;
+
+		// 1) Refresh token si nécessaire
+		api.dispatch(authMaybeRefreshRequested());
+
+		// 2) Recharger le user (résout: app background -> active, données absentes/stale)
+		api.dispatch(authUserHydrationRequested({ userId }));
+	};
+
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
 			const state = api.getState();
 			const online = selectIsOnline(state);
-			const signedIn = isSignedIn(state);
+			const authed = hasSession(state);
 			const bootReady = selectBootReady(state);
 
-			logger.info("[APP RUNTIME] appBecameActive", { online, signedIn, bootReady });
+			logger.info("[APP RUNTIME] appBecameActive", { online, authed, bootReady });
 
 			if (!bootReady) return;
-			if (!signedIn) return;
+			if (!authed) return;
 
-			// Toujours tenter de reconnect WS (même si offline, ça ne fera rien côté wsListener si pas de token ou gateway)
+			// ✅ Toujours : refresh + hydrate + tentative WS
+			refreshAndHydrate(api);
 			api.dispatch(wsEnsureConnectedRequested());
 
+			// ✅ Si online, on kick aussi outbox/watchdog
 			if (!online) return;
 			kickOnlineAuthed(api);
 		},
@@ -66,29 +92,29 @@ export const runtimeListenerFactory = () => {
 		actionCreator: appConnectivityChanged,
 		effect: async (action, api) => {
 			const state = api.getState();
-			const signedIn = isSignedIn(state);
+			const authed = hasSession(state);
 			const bootReady = selectBootReady(state);
 
 			if (!action.payload.online) {
 				logger.info("[APP RUNTIME] connectivity offline: disconnect ws + suspend outbox");
 				api.dispatch(wsDisconnectRequested());
 				api.dispatch(outboxSuspendRequested());
-				// ❌ IMPORTANT: ne PAS déclencher ensureConnected en offline
 				return;
 			}
 
-			logger.info("[APP RUNTIME] connectivity online", { signedIn, bootReady });
+			logger.info("[APP RUNTIME] connectivity online", { authed, bootReady });
 
 			api.dispatch(outboxResumeRequested());
 
 			if (!bootReady) return;
 
-			if (!signedIn) {
-				logger.info("[APP RUNTIME] online: skip ws/outbox/watchdog (not signedIn)");
-				return;
+			// ✅ Même si WS/outbox, on hydrate aussi (re-sync après offline)
+			if (authed) {
+				refreshAndHydrate(api);
+				kickOnlineAuthed(api);
+			} else {
+				logger.info("[APP RUNTIME] online: skip ws/outbox/watchdog (no session)");
 			}
-
-			kickOnlineAuthed(api);
 		},
 	});
 
@@ -98,6 +124,19 @@ export const runtimeListenerFactory = () => {
 			logger.info("[APP RUNTIME] appBecameBackground: suspend outbox + ws disconnect");
 			api.dispatch(outboxSuspendRequested());
 			api.dispatch(wsDisconnectRequested());
+		},
+	});
+
+	// ✅ BONUS: dès que le WS se connecte (reconnect), on resync le user
+	listen({
+		actionCreator: wsConnected,
+		effect: async (_, api) => {
+			const state = api.getState();
+			const authed = hasSession(state);
+			if (!authed) return;
+
+			logger.info("[APP RUNTIME] wsConnected => authUserHydrationRequested");
+			refreshAndHydrate(api);
 		},
 	});
 

@@ -1,8 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { DefaultTheme, LinkingOptions, NavigationContainer, NavigationIndependentTree } from "@react-navigation/native";
+import {
+	DefaultTheme,
+	LinkingOptions,
+	NavigationContainer,
+	NavigationIndependentTree,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useMemo } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { useSelector } from "react-redux";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -26,6 +32,7 @@ import { PassScreen } from "@/app/adapters/primary/react/features/pass/screens/P
 
 import { ScanTicketScreen } from "@/app/adapters/primary/react/features/scan/screens/ScanTicketScreen";
 import { SearchScreen } from "@/app/adapters/primary/react/features/search/screens/SearchScreen";
+import ScanTicketSuccessScreen from "../features/scan/screens/ScanTicketSuccessScreen";
 
 import {
 	ProfileStackParamList,
@@ -34,10 +41,7 @@ import {
 } from "@/app/adapters/primary/react/navigation/types";
 
 import { useOnBoarding } from "@/app/adapters/secondary/viewModel/useOnBoarding";
-import { selectAuthStatus } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
-
-import { ActivityIndicator, View } from "react-native";
-import ScanTicketSuccessScreen from "../features/scan/screens/ScanTicketSuccessScreen";
+import { selectAuthStatus, selectSessionSnapshot } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 /* -------------------------------------------------------------------------- */
 /*                             NAVIGATORS SETUP                               */
@@ -59,10 +63,8 @@ const linking: LinkingOptions<RootStackParamList> = {
 			CafeDetails: "coffee/:id",
 			Article: "article/:slug",
 			Login: "login",
-
 			BadgeDetail: "badge/:badgeId",
 			AllBadges: "badges",
-
 			Tabs: {
 				screens: {
 					Home: "home",
@@ -117,31 +119,11 @@ function ProfileNavigator() {
 				contentStyle: { backgroundColor: palette.bg_light_90 },
 			}}
 		>
-			<ProfileStack.Screen
-				name="ProfileHome"
-				component={ProfileScreen}
-				options={{ title: "Profil" }}
-			/>
-			<ProfileStack.Screen
-				name="EditProfile"
-				component={EditProfileScreen}
-				options={{ title: "Modifier mon profil" }}
-			/>
-			<ProfileStack.Screen
-				name="Tickets"
-				component={TicketsScreen}
-				options={{ title: "Mes tickets" }}
-			/>
-			<ProfileStack.Screen
-				name="Favorites"
-				component={FavoritesScreen}
-				options={{ title: "Mes favoris" }}
-			/>
-			<ProfileStack.Screen
-				name="AppSettings"
-				component={AppSettingsScreen}
-				options={{ title: "Paramètres" }}
-			/>
+			<ProfileStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: "Profil" }} />
+			<ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Modifier mon profil" }} />
+			<ProfileStack.Screen name="Tickets" component={TicketsScreen} options={{ title: "Mes tickets" }} />
+			<ProfileStack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "Mes favoris" }} />
+			<ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} options={{ title: "Paramètres" }} />
 		</ProfileStack.Navigator>
 	);
 }
@@ -157,10 +139,7 @@ function TabsNavigator() {
 				headerShown: false,
 				tabBarActiveTintColor: palette.primary_90,
 				tabBarInactiveTintColor: palette.primary_50,
-				tabBarLabelStyle: {
-					fontWeight: "600",
-					fontSize: 12,
-				},
+				tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
 				tabBarStyle: {
 					backgroundColor: palette.bg_light_90,
 					borderTopColor: palette.bg_light_90,
@@ -173,7 +152,6 @@ function TabsNavigator() {
 						Rewards: "gift",
 						Profile: "person",
 					};
-
 					const iconName = iconMap[route.name] ?? "ellipse";
 					return <Ionicons name={iconName} size={size} color={color} />;
 				},
@@ -181,10 +159,7 @@ function TabsNavigator() {
 		>
 			<Tabs.Screen name="Home" component={HomeScreen} options={{ title: "Home" }} />
 			<Tabs.Screen name="Map" component={MapScreen} options={{ title: "Carte" }} />
-
-			{/* 🎯 ICI : remplacement RewardsScreen par PassScreen */}
 			<Tabs.Screen name="Rewards" component={PassScreen} options={{ title: "Pass" }} />
-
 			<Tabs.Screen name="Profile" component={ProfileNavigator} options={{ title: "Profil" }} />
 		</Tabs.Navigator>
 	);
@@ -196,37 +171,12 @@ function TabsNavigator() {
 
 function SignedInNavigator() {
 	return (
-		<Stack.Navigator
-			screenOptions={{
-				contentStyle: { backgroundColor: palette.bg_light_90 },
-			}}
-		>
+		<Stack.Navigator screenOptions={{ contentStyle: { backgroundColor: palette.bg_light_90 } }}>
 			<Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
-
-			<Stack.Screen
-				name="CafeDetails"
-				component={CafeDetailsScreen}
-				options={{ headerShown: false }}
-			/>
-
-			<Stack.Screen
-				name="Article"
-				component={ArticleScreen}
-				options={{ headerShown: false }}
-			/>
-
-			<Stack.Screen
-				name="BadgeDetail"
-				component={BadgeDetailScreen}
-				options={{ title: "Badge" }}
-			/>
-
-			<Stack.Screen
-				name="AllBadges"
-				component={AllBadgesScreen}
-				options={{ title: "Tous les badges" }}
-			/>
-
+			<Stack.Screen name="CafeDetails" component={CafeDetailsScreen} options={{ headerShown: false }} />
+			<Stack.Screen name="Article" component={ArticleScreen} options={{ headerShown: false }} />
+			<Stack.Screen name="BadgeDetail" component={BadgeDetailScreen} options={{ title: "Badge" }} />
+			<Stack.Screen name="AllBadges" component={AllBadgesScreen} options={{ title: "Tous les badges" }} />
 			<Stack.Screen
 				name="ScanTicketModal"
 				component={ScanTicketScreen}
@@ -236,19 +186,8 @@ function SignedInNavigator() {
 					headerTitleStyle: { color: palette.accent_1, fontWeight: "bold" },
 				}}
 			/>
-			<Stack.Screen
-				name="ScanTicketSuccess"
-				component={ScanTicketSuccessScreen}
-				options={{
-					headerShown: false
-				}}
-			/>
-
-			<Stack.Screen
-				name="Search"
-				component={SearchScreen}
-				options={{ headerShown: false }}
-			/>
+			<Stack.Screen name="ScanTicketSuccess" component={ScanTicketSuccessScreen} options={{ headerShown: false }} />
+			<Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
 		</Stack.Navigator>
 	);
 }
@@ -283,6 +222,9 @@ function OnboardingNavigator() {
 
 export function RootNavigator() {
 	const status = useSelector(selectAuthStatus);
+	const session = useSelector(selectSessionSnapshot);
+	const hasSession = Boolean(session?.userId);
+
 	const { HasCompletedOnboarding } = useOnBoarding();
 
 	const LoadingScreen = () => (
@@ -294,9 +236,12 @@ export function RootNavigator() {
 	const content = useMemo(() => {
 		if (status === "loading") return <LoadingScreen />;
 		if (!HasCompletedOnboarding) return <OnboardingNavigator />;
-		if (status === "signedIn") return <SignedInNavigator />;
+
+		// ✅ source de vérité : session
+		if (hasSession) return <SignedInNavigator />;
+
 		return <SignedOutNavigator />;
-	}, [status, HasCompletedOnboarding]);
+	}, [status, HasCompletedOnboarding, hasSession]);
 
 	return (
 		<NavigationIndependentTree>
@@ -306,3 +251,4 @@ export function RootNavigator() {
 		</NavigationIndependentTree>
 	);
 }
+
