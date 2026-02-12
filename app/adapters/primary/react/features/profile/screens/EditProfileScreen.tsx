@@ -1,71 +1,77 @@
-import {Pressable, StyleSheet, Text, TextInput, View} from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
-import { palette } from "@/app/adapters/primary/react/css/colors";
-
 
 export function EditProfileScreen() {
+	const { displayName, avatarUrl, bio } = useAuthUser();
 
-    const { displayName, primaryEmail, avatarUrl, bio } = useAuthUser();
+	const safeDisplayName = displayName ?? "Profil";
+	const safeBio = bio ?? "";
 
-    return (
-        <ProfileLayout title="EDIT PROFILE">
-            <ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail ?? "Non renseigné"} />
-            <ProfileCard title="Informations personnelles" subtitle="Visualise et prépare tes prochaines modifications.">
-                <View style={styles.field}>
-                    <Text style={styles.label}>Nom affiché</Text>
-                    <TextInput value={displayName} editable={false} style={styles.input} />
-                </View>
-                <View style={styles.field}>
-                    <Text style={styles.label}>Email</Text>
-                    <TextInput value={primaryEmail ?? "Non renseigné"} editable={false} style={styles.input} />
-                </View>
-                {bio ? (
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Bio</Text>
-                        <TextInput value={bio} editable={false} style={[styles.input, styles.inputMultiline]} multiline />
-                    </View>
-                ) : null}
-                <Text style={styles.helper}>Ces informations proviennent de ton profil Fragments. Elles peuvent être modifiées depuis l’application principale.</Text>
-            </ProfileCard>
-        </ProfileLayout>
-    );
+	return (
+		<ProfileLayout>
+			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} />
+
+			<ProfileCard
+				title="Informations personnelles"
+				subtitle="Visualise et prépare tes prochaines modifications."
+			>
+				<View style={styles.field}>
+					<Text style={styles.label}>Nom affiché</Text>
+					<TextInput value={safeDisplayName} editable={false} style={styles.input} />
+				</View>
+
+				{bio ? (
+					<View style={styles.field}>
+						<Text style={styles.label}>Bio</Text>
+						<TextInput
+							value={safeBio}
+							editable={false}
+							style={[styles.input, styles.inputMultiline]}
+							multiline
+						/>
+					</View>
+				) : null}
+
+				<Text style={styles.helper}>
+					Ces informations proviennent de ton profil Fragments. Elles pourront être modifiées plus tard depuis
+					l’application.
+				</Text>
+			</ProfileCard>
+		</ProfileLayout>
+	);
 }
 
 const styles = StyleSheet.create({
-    field: {
-        gap: 8,
-    },
-    backButton:{
-        position:"absolute",
-        top:30,
-        left:30,
-        borderColor:palette.primary_90
-    },
-    label: {
-        color: palette.textSecondary,
-        fontSize: 14,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: palette.border,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        color: palette.textPrimary,
-        backgroundColor: palette.bg_dark_10,
-    },
-    inputMultiline: {
-        minHeight: 80,
-        textAlignVertical: "top",
-    },
-    helper: {
-        fontSize: 12,
-        color: palette.textSecondary,
-    },
+	field: {
+		gap: 8,
+	},
+	label: {
+		color: palette.textSecondary,
+		fontSize: 14,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: palette.border,
+		borderRadius: 12,
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		color: palette.textPrimary,
+		backgroundColor: palette.bg_dark_10,
+	},
+	inputMultiline: {
+		minHeight: 80,
+		textAlignVertical: "top",
+	},
+	helper: {
+		fontSize: 12,
+		color: palette.textSecondary,
+	},
 });
 
 export default EditProfileScreen;
+

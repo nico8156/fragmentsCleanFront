@@ -41,10 +41,7 @@ export function ProfileMenuList<TDestination extends string>({
 							<Text style={styles.label}>{item.title}</Text>
 						</View>
 
-						<SymbolView
-							name="chevron.forward"
-							tintColor={palette.textPrimary}
-						/>
+						<SymbolView name="chevron.forward" tintColor={palette.textPrimary} />
 
 						{!isLast && <View style={styles.divider} />}
 					</Pressable>

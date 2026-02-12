@@ -1,6 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { LoadingState, loadingStates } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
+import {
+	LoadingState,
+	loadingStates,
+} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { RootStateWl } from "@/app/store/reduxStoreWl";
 
 const DEFAULT_STALE_AFTER_MS = 60_000;
@@ -13,16 +16,17 @@ type LikeSelectorResult = {
 	isOptimistic: boolean;
 	loading: LoadingState;
 	error?: string;
-	lastFetchedAt?: string;
+
+	// ✅ Option A: timestamp ms only
+	lastFetchedAtMs?: number;
+
 	staleAfterMs: number;
 	hasFetched: boolean;
 	sync: { state: "pending" | "acked" | "failed"; untilMs: number } | null;
-
 };
 
 const selectLikesState = (state: RootStateWl): LikeSlice => state.lState;
 export const selectAllLikeAggs = (state: RootStateWl) => state.lState.byTarget;
-
 
 export const selectLikesForTarget = (targetId: string) =>
 	createSelector(
@@ -37,8 +41,7 @@ export const selectLikesForTarget = (targetId: string) =>
 					staleAfterMs: DEFAULT_STALE_AFTER_MS,
 					hasFetched: false,
 					sync: null,
-
-
+					lastFetchedAtMs: undefined,
 				};
 			}
 
@@ -48,10 +51,14 @@ export const selectLikesForTarget = (targetId: string) =>
 				isOptimistic: Boolean(aggregate.optimistic),
 				loading: aggregate.loading,
 				error: aggregate.error,
-				lastFetchedAt: aggregate.lastFetchedAt,
+
+				// ✅ no string parsing, no NaN risk
+				lastFetchedAtMs: aggregate.lastFetchedAtMs,
+
 				staleAfterMs: aggregate.staleAfterMs ?? DEFAULT_STALE_AFTER_MS,
-				hasFetched: Boolean(aggregate.lastFetchedAt),
+				hasFetched: typeof aggregate.lastFetchedAtMs === "number",
 				sync: aggregate.sync ?? null,
 			};
 		},
 	);
+

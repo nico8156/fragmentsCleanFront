@@ -1,5 +1,6 @@
+// app/adapters/secondary/gateways/user/HttpUserRepo.ts
 import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
-import type { AppUser, ISODate, UserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import type { AppUser, ISODate } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 type Deps = {
 	baseUrl: string;
@@ -7,8 +8,9 @@ type Deps = {
 };
 
 type MeResponseDto = {
-	userId: string; // UUID
+	userId: string; // UUID string
 	displayName?: string;
+	avatarUrl?: string | null; // ✅ NEW (from /auth/me)
 	issuedAt?: string;
 	expiresAt?: string;
 	serverTime?: string;
@@ -21,30 +23,11 @@ export class HttpUserRepo implements UserRepo {
 	private readonly getAccessToken: () => Promise<string | null>;
 
 	constructor(deps: Deps) {
-		const raw = deps.baseUrl?.trim();
-		if (!raw) throw new Error("[HttpUserRepo] baseUrl is empty/undefined");
-		this.baseUrl = raw.replace(/\/+$/, "");
+		this.baseUrl = deps.baseUrl.replace(/\/+$/, "");
 		this.getAccessToken = deps.getAccessToken;
 	}
 
-	private mapMeToAppUser(dto: MeResponseDto): AppUser {
-		const now = toISO(dto.serverTime);
-		return {
-			id: dto.userId as UserId,
-			createdAt: now,
-			updatedAt: now,
-			displayName: dto.displayName,
-			avatarUrl: undefined,
-			bio: undefined,
-			identities: [],
-			roles: ["user"],
-			flags: {},
-			preferences: { locale: "fr-FR", theme: "system" } as any,
-			likedCoffeeIds: [],
-			version: 1,
-		} as AppUser;
-	}
-
+	// NOTE: l’ID est ignoré, car l’API /auth/me dérive l’identité du JWT
 	async getById(_id: AppUser["id"]): Promise<AppUser | null> {
 		const token = await this.getAccessToken();
 		if (!token) throw new Error("Not authenticated");
@@ -59,23 +42,30 @@ export class HttpUserRepo implements UserRepo {
 			},
 		});
 
-		console.log("[USER REPO] GET", { url, status: res.status });
+		// petit log utile (tu l'avais déjà côté app)
+		console.log("[USER REPO] GET", { status: res.status, url });
 
-		// 401 => session invalide
 		if (res.status === 401) return null;
-
-		// 404 => profil pas encore provisionné côté backend
-		if (res.status === 404) {
-			throw new Error("GET /auth/me failed (404)");
-		}
-
-		if (!res.ok) {
-			const body = await res.text().catch(() => "");
-			throw new Error(`GET /auth/me failed (${res.status}) ${body}`.trim());
-		}
+		if (!res.ok) throw new Error(`GET /auth/me failed (${res.status})`);
 
 		const dto = (await res.json()) as MeResponseDto;
-		return this.mapMeToAppUser(dto);
+
+		const now = toISO(dto.serverTime);
+
+		return {
+			id: dto.userId as any,
+			createdAt: now,
+			updatedAt: now,
+			displayName: dto.displayName,
+			avatarUrl: dto.avatarUrl ?? undefined, // ✅ FIX ICI
+			bio: undefined,
+			identities: [],
+			roles: ["user"],
+			flags: {},
+			preferences: { locale: "fr-FR", theme: "system" } as any,
+			likedCoffeeIds: [],
+			version: 1,
+		} as AppUser;
 	}
 }
 

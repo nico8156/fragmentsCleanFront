@@ -1,43 +1,59 @@
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { palette } from "@/app/adapters/primary/react/css/colors";
-
 interface ProfileHeroProps {
-    avatarUrl: string;
-    displayName: string;
-    email: string;
+	avatarUrl?: string;
+	displayName: string;
 }
 
-export function ProfileHero({ avatarUrl, displayName, email }: ProfileHeroProps) {
-    return (
-        <View style={styles.wrapper}>
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            <Text style={styles.name}>{displayName}</Text>
-            <Text style={styles.email}>{email}</Text>
-        </View>
-    );
+export function ProfileHero({ avatarUrl, displayName }: ProfileHeroProps) {
+	const hasAvatar = typeof avatarUrl === "string" && avatarUrl.length > 0;
+
+	return (
+		<View style={styles.wrapper}>
+			{hasAvatar ? (
+				<Image source={{ uri: avatarUrl }} style={styles.avatar} />
+			) : (
+				<View style={[styles.avatar, styles.avatarPlaceholder]}>
+					<Text style={styles.avatarInitial}>
+						{(displayName?.trim()?.[0] ?? "?").toUpperCase()}
+					</Text>
+				</View>
+			)}
+
+			<Text style={styles.name}>{displayName}</Text>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
-    wrapper: {
-        alignItems: "center",
-        gap: 8,
-        paddingTop: 8,
-        paddingBottom: 12,
-    },
-    avatar: {
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-    },
-    name: {
-        fontSize: 28,
-        fontWeight: "600",
-        color: palette.text_90,
-    },
-    email: {
-        fontSize: 18,
-        fontWeight: "400",
-        color: palette.text_90,
-    },
+	wrapper: {
+		alignItems: "center",
+		gap: 8,
+		paddingTop: 8,
+		paddingBottom: 12,
+	},
+	avatar: {
+		width: 140,
+		height: 140,
+		borderRadius: 70,
+	},
+	avatarPlaceholder: {
+		backgroundColor: palette.bg_dark_30,
+		borderWidth: 1,
+		borderColor: palette.border,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	avatarInitial: {
+		fontSize: 44,
+		fontWeight: "700",
+		color: palette.textPrimary,
+	},
+	name: {
+		fontSize: 28,
+		fontWeight: "600",
+		color: palette.text_90,
+	},
 });
+

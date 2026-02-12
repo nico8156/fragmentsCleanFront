@@ -19,31 +19,17 @@ import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 type ProfileMenuDestination = Exclude<keyof ProfileStackParamList, "ProfileHome">;
 
 const MENU_ITEMS: ProfileMenuItem<ProfileMenuDestination>[] = [
-	{
-		symbolName: "pencil",
-		title: "Modifier mon profil",
-		destination: "EditProfile",
-	},
-	{
-		symbolName: "list.bullet.rectangle.portrait",
-		title: "Mes tickets",
-		destination: "Tickets",
-	},
-	{
-		symbolName: "heart.fill",
-		title: "Mes favoris",
-		destination: "Favorites",
-	},
-	{
-		symbolName: "dial.low",
-		title: "Paramètres",
-		destination: "AppSettings",
-	},
+	{ symbolName: "pencil", title: "Modifier mon profil", destination: "EditProfile" },
+	{ symbolName: "list.bullet.rectangle.portrait", title: "Mes tickets", destination: "Tickets" },
+	{ symbolName: "heart.fill", title: "Mes favoris", destination: "Favorites" },
+	{ symbolName: "dial.low", title: "Paramètres", destination: "AppSettings" },
 ];
 
 export function ProfileScreen() {
 	const navigation = useNavigation<ProfileStackNavigationProp>();
-	const { displayName, primaryEmail, avatarUrl } = useAuthUser();
+	const { displayName, avatarUrl } = useAuthUser();
+
+	const safeDisplayName = displayName ?? "Profil";
 
 	const handleNavigate = useCallback(
 		(destination: ProfileMenuDestination) => {
@@ -54,17 +40,12 @@ export function ProfileScreen() {
 
 	return (
 		<ProfileLayout>
-			<ProfileHero
-				avatarUrl={avatarUrl}
-				displayName={displayName}
-				email={primaryEmail ?? "Non renseigné"}
-			/>
-
+			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} />
 			<ProfileCoffeeBadge label="Coffee Lover" />
-
 			<ProfileMenuList items={MENU_ITEMS} onNavigate={handleNavigate} />
 		</ProfileLayout>
 	);
 }
 
 export default ProfileScreen;
+

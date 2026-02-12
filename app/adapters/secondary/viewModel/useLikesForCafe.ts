@@ -21,11 +21,15 @@ const EMPTY_LIKES_RESULT: LikeSelectorResult = {
 	staleAfterMs: DEFAULT_STALE_AFTER_MS,
 	hasFetched: false,
 	error: undefined,
-	lastFetchedAt: undefined,
+
+	// ✅ Option A: ms
+	lastFetchedAtMs: undefined,
+
 	sync: null,
 };
 
-const selectEmptyLikes: (state: RootStateWl) => LikeSelectorResult = () => EMPTY_LIKES_RESULT;
+const selectEmptyLikes: (state: RootStateWl) => LikeSelectorResult = () =>
+	EMPTY_LIKES_RESULT;
 
 export function useLikesForCafe(targetId?: CoffeeId) {
 	const dispatch = useDispatch<any>();
@@ -41,10 +45,10 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		isOptimistic,
 		loading,
 		error,
-		lastFetchedAt,
+		lastFetchedAtMs,
 		staleAfterMs,
 		hasFetched,
-		sync, // ✅ FIX: on récupère sync
+		sync,
 	} = useSelector(selector);
 
 	// ✅ Auto-clear du ring après TTL
@@ -69,16 +73,20 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 			return;
 		}
 
-		const lastFetchTime = lastFetchedAt ? Date.parse(lastFetchedAt) : 0;
 		const effectiveStaleAfterMs = staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
-		const isStale = Number.isFinite(lastFetchTime)
-			? Date.now() - lastFetchTime > effectiveStaleAfterMs
-			: true;
+
+		// ✅ no parsing; lastFetchedAtMs must be a number
+		const lastFetchTimeMs = typeof lastFetchedAtMs === "number" ? lastFetchedAtMs : 0;
+
+		const isStale =
+			lastFetchTimeMs > 0
+				? Date.now() - lastFetchTimeMs > effectiveStaleAfterMs
+				: true;
 
 		if (isStale) {
 			dispatch(likesRetrieval({ targetId }));
 		}
-	}, [dispatch, targetId, loading, hasFetched, lastFetchedAt, staleAfterMs]);
+	}, [dispatch, targetId, loading, hasFetched, lastFetchedAtMs, staleAfterMs]);
 
 	const toggleLike = useCallback(() => {
 		if (!targetId) return;
@@ -97,7 +105,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		count,
 		likedByMe,
 		isOptimistic,
-		sync, // ✅ renvoyé pour l’UI ring
+		sync,
 		isLoading,
 		isRefreshing,
 		error,
@@ -105,3 +113,4 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		refresh,
 	} as const;
 }
+
