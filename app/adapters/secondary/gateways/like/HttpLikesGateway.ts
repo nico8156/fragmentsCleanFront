@@ -1,9 +1,6 @@
 import {computeLikeId} from "@/app/adapters/secondary/gateways/like/helpers/likeId";
 import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
-import Constants from "expo-constants";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
-
-const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl as string;
 
 type HttpLikesGatewayDeps = {
     baseUrl: string;                    // ex: "https://api.fragments.app"
@@ -20,9 +17,9 @@ export class HttpLikesGateway implements LikeWlGateway {
         if (!token) {
             throw new Error("Not authenticated");
         }
-        console.log(`[HTTP_LIKES] get with ${API_BASE_URL} : `, { targetId });
+        console.log(`[HTTP_LIKES] get with ${this.deps.baseUrl} : `, { targetId });
         const res = await fetch(
-            `${API_BASE_URL}/api/social/targets/${encodeURIComponent(targetId)}/likes`,
+            `${this.deps.baseUrl}/api/social/targets/${encodeURIComponent(targetId)}/likes`,
             {
                 method: "GET",
                 headers: {
@@ -64,7 +61,7 @@ export class HttpLikesGateway implements LikeWlGateway {
 
         const body = { commandId, likeId, targetId, value: true, at };
 
-        const res = await fetch(`${API_BASE_URL}/api/social/likes`, {
+        const res = await fetch(`${this.deps.baseUrl}/api/social/likes`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify(body),
@@ -86,7 +83,7 @@ export class HttpLikesGateway implements LikeWlGateway {
 
         const body = { commandId, likeId, targetId, value: false, at };
 
-        const res = await fetch(`${API_BASE_URL}/api/social/likes`, {
+        const res = await fetch(`${this.deps.baseUrl}/api/social/likes`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify(body),

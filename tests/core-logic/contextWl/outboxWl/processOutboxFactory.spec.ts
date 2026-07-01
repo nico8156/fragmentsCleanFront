@@ -13,6 +13,7 @@ import { FakeAuthTokenBridge } from "@/tests/core-logic/fakes/FakeAuthTokenBridg
 import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
+import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 import { seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 import { flush, makeFixedHelpers, makeStoreWl } from "@/tests/core-logic/fakes/wlTestHarness";
 
@@ -123,7 +124,7 @@ describe("processOutboxFactory", () => {
 		expect(o.byCommandId["cmd_like_001"]).toBe("obx_like_001");
 	});
 
-	it("LikeAdd — error => rollback + markFailed + scheduleRetry", async () => {
+	it("LikeAdd — transport error => keep optimistic UI + scheduleRetry", async () => {
 		const authToken = new FakeAuthTokenBridge("token", "user_test");
 
 		class FailingLikesGateway extends FakeLikesGateway {
@@ -133,6 +134,9 @@ describe("processOutboxFactory", () => {
 			}
 		}
 		const likes = new FailingLikesGateway();
+		const recorder = createActionsRecorder({
+			filter: (a) => a.type === "LIKE/ROLLBACK" || a.type.startsWith("OUTBOX/"),
+		});
 
 		const deps = makeDeps({
 			likes,
@@ -143,7 +147,7 @@ describe("processOutboxFactory", () => {
 		});
 		const store = initReduxStoreWl({
 			dependencies: deps,
-			listeners: [processOutboxFactory(deps).middleware]
+			listeners: [recorder.middleware, processOutboxFactory(deps).middleware]
 		})
 
 		seedSignedIn(store, { userId: "user_test" });
@@ -178,6 +182,7 @@ describe("processOutboxFactory", () => {
 		const rec: any = store.getState().oState.byId["obx_like_002"];
 		expect(rec.status).toBe(statusTypes.queued);
 		expect(rec.lastError).toContain("likes add failed");
+		expect(recorder.count("LIKE/ROLLBACK")).toBe(0);
 	});
 
 

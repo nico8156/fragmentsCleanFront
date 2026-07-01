@@ -8,7 +8,7 @@ import { outboxStorage } from "./runtimeDeps";
 
 import { ExpoLocationGateway } from "@/app/adapters/secondary/gateways/locationGateway/expoLocationGateway";
 
-import { authServerGateway } from "@/app/adapters/secondary/gateways/auth/authServerGateway";
+import { createAuthServerGateway } from "@/app/adapters/secondary/gateways/auth/authServerGateway";
 import { ExpoSecureAuthSessionStore } from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
 import { googleOAuthGateway } from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
 
@@ -89,13 +89,9 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 				getAccessToken: authToken.getAccessToken,
 			}),
 
-			// ⚠️ authServerGateway utilise peut-être encore Constants.expoConfig.extra.apiBaseUrl en interne.
-			// Ce n'est pas bloquant si ce Constants pointe sur la même valeur.
-			// Idéalement, on le refactorera en factory dépendante de baseUrl aussi.
-			server: authServerGateway,
+			server: createAuthServerGateway({ baseUrl }),
 		},
 	};
 
 	return { gateways, outboxStorage, onSessionChanged, sessionRef };
 };
-

@@ -21,7 +21,7 @@ import {
 
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 
-import { seedOffline, seedOnline, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
+import { seedBootReady, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 
 const flush = () => new Promise<void>((r) => setImmediate(r));
 
@@ -64,6 +64,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 	it("appBecameActive / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
 		seedSignedIn(store, { userId: "u1" });
+		seedBootReady(store);
 
 		rec.clear();
 		store.dispatch(appBecameActive());
@@ -112,6 +113,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 	it("connectivity online / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
 		seedSignedIn(store, { userId: "u1" });
+		seedBootReady(store);
 
 		rec.clear();
 		store.dispatch(appConnectivityChanged({ online: true }));
@@ -149,4 +151,3 @@ describe("runtimeListenerFactory (appWl)", () => {
 		);
 	});
 });
-

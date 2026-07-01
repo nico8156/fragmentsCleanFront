@@ -3,6 +3,7 @@ import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {
     appBecameActive,
     appConnectivityChanged,
+    appWarmupDone,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import {
     authSessionLoaded,
@@ -36,6 +37,10 @@ export const seedOnline = (store: ReduxStoreWl) => {
 
 export const seedOffline = (store: ReduxStoreWl) => {
     store.dispatch(appConnectivityChanged({ online: false } as any));
+};
+
+export const seedBootReady = (store: ReduxStoreWl) => {
+    store.dispatch(appWarmupDone({ message: "test boot ready" }) as any);
 };
 
 export const seedAppActive = (store: ReduxStoreWl) => {

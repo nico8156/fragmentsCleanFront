@@ -5,7 +5,7 @@ import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/out
 
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import { makeFixedHelpers, makeStoreWl } from "@/tests/core-logic/fakes/wlTestHarness";
-import { seedOffline, seedOnline, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
+import { seedBootReady, seedOffline, seedOnline, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 
@@ -31,6 +31,7 @@ describe("outboxWatchdogFactory", () => {
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
 
 		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
 		seedOffline(store);
 
 		store.dispatch(outboxWatchdogTick());
@@ -73,6 +74,7 @@ describe("outboxWatchdogFactory", () => {
 		});
 
 		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
 		seedOnline(store);
 
 		// Seed record + le rendre éligible watchdog : awaitingAck + nextCheckAt <= now
@@ -95,7 +97,7 @@ describe("outboxWatchdogFactory", () => {
 		store.dispatch(
 			markAwaitingAck({
 				id: "obx_1",
-				ackBy: new Date(now - 1).toISOString(), // ✅ expiré
+				ackByIso: new Date(now - 1).toISOString(),
 			}) as any,
 		);
 
@@ -130,6 +132,7 @@ describe("outboxWatchdogFactory", () => {
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
 
 		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
 		seedOnline(store);
 
 		store.dispatch(
@@ -139,7 +142,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackBy: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -161,6 +164,7 @@ describe("outboxWatchdogFactory", () => {
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
 
 		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
 		seedOnline(store);
 
 		store.dispatch(
@@ -170,7 +174,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackBy: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -196,6 +200,7 @@ describe("outboxWatchdogFactory", () => {
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
 
 		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
 		seedOnline(store);
 
 		store.dispatch(
@@ -205,7 +210,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackBy: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		store.dispatch(outboxWatchdogTick());

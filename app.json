@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "fragmentsCleanFront",
-    "slug": "fragmentsCleanFront",
+    "name": "Fragments",
+    "slug": "fragments",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nico8156.fragmentsCleanFront",
+      "bundleIdentifier": "com.nico8156.fragments",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "L'application utilise votre localisation pour afficher les cafés près de vous."
@@ -23,12 +23,9 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.nico8156.fragmentsCleanFront"
+      "package": "com.nico8156.fragments"
     },
     "web": {
       "bundler": "metro",
@@ -56,8 +53,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Autorisez l’app à accéder à votre position même en arrière-plan.",
-          "isIosBackgroundLocationEnabled": true
+          "locationWhenInUsePermission": "L'application utilise votre localisation pour afficher les cafés près de vous.",
+          "isIosBackgroundLocationEnabled": false
         }
       ],
       [
@@ -72,7 +69,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://192.168.1.16:8080",
+      "apiBaseUrl": "http://localhost:8080",
       "router": {},
       "eas": {
         "projectId": "138089c2-0d66-415d-baa4-46495ea3a90b"

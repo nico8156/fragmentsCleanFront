@@ -63,6 +63,31 @@ const getNextAttemptAtMs = (rec: any): number | undefined => {
 	return undefined;
 };
 
+const isExplicitBusinessRejection = (e: unknown): boolean => {
+	const status = (e as any)?.status;
+	if (typeof status === "number") return status >= 400 && status < 500 && status !== 408 && status !== 429;
+
+	const message = String((e as any)?.message ?? e ?? "").toLowerCase();
+	if (message.includes("rejected") || message.includes("business rejection")) return true;
+	if (message.includes("http 408") || message.includes("status 408")) return false;
+	if (message.includes("http 429") || message.includes("status 429")) return false;
+	if (message.includes("http 5") || message.includes("status 5")) return false;
+	if (message.includes("network") || message.includes("timeout") || message.includes("abort")) return false;
+
+	return (
+		message.includes("http 400") ||
+		message.includes("http 401") ||
+		message.includes("http 403") ||
+		message.includes("http 404") ||
+		message.includes("http 409") ||
+		message.includes("status 400") ||
+		message.includes("status 401") ||
+		message.includes("status 403") ||
+		message.includes("status 404") ||
+		message.includes("status 409")
+	);
+};
+
 export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void) => {
 	const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
 	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
@@ -268,59 +293,60 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 						error: e?.message ?? String(e),
 					});
 
-					// rollback
-					switch (item.command.kind) {
-						case commandKinds.LikeAdd:
-						case commandKinds.LikeRemove: {
-							const u = item.undo as LikeUndo;
-							api.dispatch(
-								likeRollback({
-									targetId: u.targetId,
-									prevCount: u.prevCount,
-									prevMe: u.prevMe,
-									prevVersion: u.prevVersion,
-								}),
-							);
-							break;
-						}
-
-						case commandKinds.CommentCreate: {
-							const u = item.undo;
-							if (isCommentCreateUndo(u)) {
-								api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
-							} else {
-								logger.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
+					if (isExplicitBusinessRejection(e)) {
+						switch (item.command.kind) {
+							case commandKinds.LikeAdd:
+							case commandKinds.LikeRemove: {
+								const u = item.undo as LikeUndo;
+								api.dispatch(
+									likeRollback({
+										targetId: u.targetId,
+										prevCount: u.prevCount,
+										prevMe: u.prevMe,
+										prevVersion: u.prevVersion,
+									}),
+								);
+								break;
 							}
-							break;
-						}
 
-						case commandKinds.CommentUpdate: {
-							const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number };
-							api.dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
-							break;
-						}
+							case commandKinds.CommentCreate: {
+								const u = item.undo;
+								if (isCommentCreateUndo(u)) {
+									api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
+								} else {
+									logger.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
+								}
+								break;
+							}
 
-						case commandKinds.CommentDelete: {
-							const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
-							api.dispatch(
-								deleteRollback({
-									commentId: u.commentId,
-									prevBody: u.prevBody,
-									prevVersion: u.prevVersion,
-									prevDeletedAt: u.prevDeletedAt,
-								}),
-							);
-							break;
-						}
+							case commandKinds.CommentUpdate: {
+								const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number };
+								api.dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
+								break;
+							}
 
-						case commandKinds.TicketVerify: {
-							const u = item.undo as { ticketId: string };
-							api.dispatch(ticketRollBack({ ticketId: u.ticketId }));
-							break;
-						}
+							case commandKinds.CommentDelete: {
+								const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
+								api.dispatch(
+									deleteRollback({
+										commentId: u.commentId,
+										prevBody: u.prevBody,
+										prevVersion: u.prevVersion,
+										prevDeletedAt: u.prevDeletedAt,
+									}),
+								);
+								break;
+							}
 
-						default:
-							break;
+							case commandKinds.TicketVerify: {
+								const u = item.undo as { ticketId: string };
+								api.dispatch(ticketRollBack({ ticketId: u.ticketId }));
+								break;
+							}
+
+							default:
+								break;
+						}
 					}
 
 					api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
