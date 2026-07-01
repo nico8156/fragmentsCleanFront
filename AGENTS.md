@@ -1,305 +1,223 @@
-# AGENTS.md — Frontend (React Native / Expo / Offline-first)
+# AGENTS.md - Fragments Mobile
 
-## 🎯 Mission
-Le frontend Fragments est une application **offline-first pilotée par événements**.
+## Authority
 
-Toute évolution doit préserver la hiérarchie fonctionnelle suivante :
+This document governs the React Native / Expo mobile app in `/Users/nicolasmaldiney/fragmentsCleanFront`.
 
-UI Component
-→ View Model Hook
-→ Selector
-→ Redux Store
-→ Use Case / Listener Middleware
-→ Outbox
-→ Secondary Gateways
-→ Server ACK / Reconciliation
+It must be read together with the backend doctrine in `/Users/nicolasmaldiney/fragmentsClean/AGENTS.md`.
 
-Le système privilégie :
-- granularité
-- testabilité
-- robustesse réseau
-- précision des transitions d’état
-- séparation stricte des responsabilités
+## Mission
 
----
+Fragments Mobile owns the user experience.
 
-## 🧱 Invariants non négociables
+The backend remains the source of truth. The mobile app makes that truth usable under real mobile constraints: offline mode, foreground/background transitions, app restarts, slow networks, missed socket messages, and eventual consistency.
 
-### 1) Offline-first obligatoire
-Toute écriture sensible doit rester compatible avec :
-- mode hors ligne
-- retry
-- backoff
-- reprise
-- persistence
-- ACK différé
-- correction d’état optimiste
+## Architecture
 
-Ne jamais introduire un flux qui suppose une disponibilité réseau immédiate.
+Required dependency direction:
 
----
+```text
+Screen
+-> ViewModel hook
+-> Redux selector / listener / thunk
+-> Gateway port
+-> Secondary adapter
+-> Backend / native API
+```
 
-### 2) Le use case orchestre le métier
-Le use case représente la réaction métier à une intention ou un événement.
+Reverse dependencies are forbidden.
 
-Exemple de flux attendu :
+## Active Client Contexts
 
-UI intent
-→ listener middleware
-→ analyse du state courant
-→ optimistic update
-→ enqueue outbox
-→ déclenchement du process
-→ attente ACK
-→ reconciliation / rollback
+- `appWl`: runtime, boot, connectivity, foreground/background.
+- `userWl`: auth session, profile, badges.
+- `coffeeWl`: coffee catalog and detail state.
+- `articleWl`: editorial read state.
+- `likeWl`: like state and ACK reconciliation.
+- `commentWl`: comment state and ACK reconciliation.
+- `ticketWl`: ticket submission and verification state.
+- `outboxWl`: local durable command queue.
+- `wsWl`: opportunistic WebSocket lifecycle.
+- `locationWl`: device location.
+- `entitlementWl`: product capabilities/rewards.
 
-Le use case :
-- orchestre
-- choisit les actions
-- prépare l’undo
-- produit la commande outbox
-- ne contient pas de rendu UI
+## Screen Rules
 
----
+Screens:
+- render UI
+- call view model callbacks
+- handle visual loading/error/empty/success states
 
-### 3) L’outbox possède la responsabilité infra
-L’outbox est la frontière de synchronisation.
+Screens must not:
+- call `fetch`
+- instantiate gateways
+- dispatch deep business actions directly when a view model exists
+- contain offline/retry/ACK logic
+- contain backend DTO mapping
 
-Elle gère :
-- persistence
-- retry
-- backoff
-- watchdog
-- process once
-- polling statut
-- rollback
-- drop on ACK
-- reprise après reconnect / foreground
+## ViewModel Rules
 
-Aucune logique de robustesse réseau ne doit être dupliquée ailleurs.
+View models:
+- select state through selectors
+- derive UI-ready values
+- expose user actions
+- trigger reads/writes through Redux actions
+- hide incomplete store shapes from screens
 
----
+View models must not:
+- instantiate concrete gateways
+- call HTTP directly
+- own business invariants
+- duplicate reducer transitions
 
-### 4) L’ACK fait partie du flux nominal
-Les ACK websocket ou polling servent à :
-- confirmer l’écriture
-- réconcilier avec la vérité serveur
-- rollback si nécessaire
-- nettoyer l’outbox
-- mettre à jour le feedback UI de sync
+## Redux / Use Case Rules
 
-Ne jamais traiter l’ACK comme une logique “bonus”.
+Redux is the application event bus.
 
----
+Listeners and thunks:
+- react to UI intentions and runtime events
+- validate inputs
+- create command IDs
+- dispatch optimistic reducers
+- enqueue outbox commands
+- trigger processing
+- route ACKs into reconcile/rollback actions
 
-### 5) Runtime lifecycle + connectivité
-Le runtime client doit rester responsable des comportements liés à :
-- foreground / background
-- reconnexion
-- état réseau
-- bootstrap
-- rehydration
-- websocket lifecycle
-- watchdog périodique
+Action names should express intent or facts, not implementation details.
 
-Ces comportements doivent vivre dans les listeners runtime dédiés.
+## Gateway Rules
 
----
+Gateway ports define what the app needs.
 
-## 🧩 Répartition stricte des responsabilités
-
-### UI Components
-Responsables uniquement de :
-- rendu
-- composition visuelle
-- callbacks UI
-- props de présentation
-
-Interdits :
-- fetch réseau
-- logique métier
-- accès direct au store profond
-- orchestration d’ACK
-- accès gateway
-
----
-
-### View Models / Hooks
-Les hooks VM :
-- consomment les selectors
-- exposent les données prêtes à afficher
-- exposent les callbacks UI
-- gèrent les flags de présentation (`isLoading`, `isRefreshing`, etc.)
-- peuvent gérer une logique purement UI (ex: TTL visuel)
-
-Ils ne doivent pas :
-- parler HTTP
-- faire du métier write complexe
-- dupliquer la logique reducer
-- bypass les use cases
-
----
-
-### Selectors
-Les selectors doivent :
-- dériver des données lisibles
-- protéger le VM contre les états incomplets
-- toujours fournir un contrat stable
-- éviter les `undefined` inutiles côté UI
-- centraliser les fallback values
-
-Un selector n’est pas un simple getter.
-
----
-
-### Reducers
-Les reducers :
-- restent purs
-- décrivent les transitions d’état
-- gèrent optimistic update / rollback / reconcile
-- restent source de vérité locale du state
-
-Aucune logique d’accès externe.
-
----
-
-### Use Cases / Listener Middleware
-C’est la couche d’orchestration principale.
-
-Responsabilités :
-- réagir aux intentions UI
-- lire le state courant
-- décider optimistic update
-- produire undo + commande outbox
-- déclencher process / retrieval
-- router les ACK métier
-
-Toute nouvelle feature doit commencer ici.
-
----
-
-### Gateways (ports)
-Les interfaces gateway décrivent :
-- les contrats réseau
-- storage
-- location
-- websocket
-- secure store
-- adapters natifs
-
-Les ports doivent rester :
-- petits
-- métier-oriented
-- testables
-- sans détails UI
-
----
-
-### Secondary Adapters
-Les implémentations concrètes :
+Secondary adapters implement:
 - HTTP
-- Expo APIs
-- secure store
-- websocket STOMP
-- storage natif
+- WebSocket/STOMP
+- SecureStore
+- MMKV/outbox storage
+- NetInfo
+- AppState
+- Location
+- Image picker/OCR-related native APIs
 
-Responsabilités :
-- parler au monde externe
-- mapper les payloads
-- gérer les erreurs techniques
-- respecter strictement le port
+Concrete gateways are wired in `app/adapters/primary/wiring`.
 
-Interdits :
-- logique métier
-- optimistic update
-- orchestration Redux
+Do not create concrete gateways in screens, view models, or core logic.
 
----
+## Offline-First Write Flow
 
-## 🔁 Read flows
-Une lecture réseau suit la structure :
+Every critical write follows:
 
-VM / runtime
-→ thunk retrieval
-→ gateway.get(...)
-→ reducer pending/success/error
-→ selector
-→ VM
-
-Règles :
-- gérer `pending/error/success`
-- annuler les requêtes concurrentes quand nécessaire
-- protéger contre race conditions
-- ne jamais fetch depuis le composant
-
----
-
-## ✍️ Write flows
-Une écriture compatible offline-first suit :
-
+```text
 UI intent
-→ listener middleware
-→ optimistic reducer action
-→ enqueueCommitted
-→ processOutbox
-→ adapter externe
-→ ACK websocket/poll
-→ reconcile / rollback
-→ dropCommitted
+-> Redux listener/use case
+-> validation
+-> optimistic reducer
+-> local outbox
+-> HTTP command
+-> awaiting ACK
+-> WebSocket ACK if available
+-> /commands/{commandId} polling fallback
+-> reconcile or rollback
+-> drop outbox record
+```
 
----
+## Rollback Policy
 
-## 🔌 Wiring obligatoire
-Le wiring des dépendances doit rester centralisé dans :
-- `createInfrastructure`
-- `createWlListeners`
-- `createWlStore`
+Do not rollback on:
+- offline
+- network error
+- timeout
+- 5xx
+- missed socket ACK
+- app backgrounding
 
-Ne jamais créer de wiring caché dans :
-- composants
-- hooks UI
-- selectors
-- reducers
+On those cases:
+- keep optimistic UI
+- keep command in outbox
+- retry with backoff
+- let command status polling decide later
 
----
+Rollback only on:
+- explicit business rejection from backend
+- `GET /commands/{commandId}` returning `REJECTED`
 
-## 🚫 Anti-patterns interdits
-- appel HTTP direct dans un composant
-- appel HTTP direct dans un VM
-- logique métier dans gateway HTTP
-- bypass du listener middleware
-- bypass de l’outbox pour un write sync
-- websocket qui mutate directement le store sans action métier
-- selector passif sans fallback utile
-- hook qui re-code la logique métier du reducer
-- singleton caché hors infrastructure
-- side effects dans reducer
+`PENDING` means wait and check again.
 
----
+## WebSocket Policy
 
-## ✅ Definition of Done
-Avant de conclure une tâche frontend :
+WebSocket is opportunistic.
 
-### Architecture
-- la hiérarchie Component → VM → Selector → Store → UseCase → Outbox est respectée
-- aucun bypass architectural
+It may:
+- speed up ACK delivery
+- improve perceived responsiveness
+- trigger reconcile/drop sooner
 
-### Offline-first
-- retry/backoff/ACK/rollback restent cohérents
-- pas de régression sur reconnect / lifecycle
+It must not:
+- be the only source of command truth
+- mutate Redux state directly from the gateway
+- carry business invariants
+- replace command status polling
 
-### State
-- optimistic + reconcile + rollback couverts si write
-- selectors stables pour le VM
+The WebSocket gateway parses and validates transport payloads, then dispatches Redux ACK actions through listeners.
 
-### Wiring
-- listeners et gateways correctement branchés
+## Command Status Policy
 
-### Tests
-Ajouter ou adapter les tests les plus proches de la couche impactée :
-- reducer
-- selector
-- use case
-- outbox
-- listener
-- runtime
+`/commands/{commandId}` is mandatory fallback.
+
+The outbox watchdog checks this endpoint when an item is `awaitingAck` and no socket ACK has arrived.
+
+Mobile behavior:
+- `APPLIED`: reconcile/drop
+- `REJECTED`: rollback/drop
+- `PENDING`: keep awaiting and re-check later
+
+## App Bootstrap Rules
+
+App bootstrap must:
+1. mount runtime adapters
+2. mark hydration
+3. initialize auth
+4. rehydrate outbox
+5. process outbox if signed in and online
+6. run non-critical warmup reads
+7. mark warmup/boot success
+8. clean up runtime adapters on unmount
+
+Warmup data must not corrupt the outbox lifecycle.
+
+## Configuration and Secrets
+
+No hardcoded production API URL.
+No secrets in Expo config.
+No tokens in logs.
+
+Production values must come from:
+- EAS env/secrets
+- Expo public env for non-secret API base URL
+- SecureStore for runtime auth/session material
+
+## Test Policy
+
+Expected tests:
+- reducers are pure
+- selectors are pure
+- listeners/use cases use fake gateways
+- outbox tests cover retry/awaiting ACK/drop/rollback
+- socket ACK tests cover route/reconcile/drop
+- bootstrap tests cover rehydration and runtime lifecycle
+- critical flows are tested without real network
+
+Mocks are allowed for native technical boundaries. Business ports should use named fakes.
+
+## Explicit Prohibitions
+
+- no `fetch` in screens
+- no concrete gateway in view models
+- no rollback on network failure
+- no socket as source of truth
+- no API config hardcoded for prod
+- no secret in Expo config
+- no direct mutation outside reducers
+- no command without `commandId`
+- no write path that bypasses local outbox for critical user actions
+

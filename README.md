@@ -68,6 +68,13 @@ Exemples :
 
 ## 📚 Où lire ensuite ?
 
+- 🧭 **Doctrine mobile**
+  → `AGENTS.md`
+- 🤖 **Orchestration des agents mobile**
+  → `.agents/mobile/AGENTS.md`
+- 🧱 **Architecture mobile**
+  → `docs/architecture/README.md`
+
 - 🧠 **Runtime + Sync + Outbox (vue globale)**  
   → `app/core-logic/contextWl/appWl/README.md`
 - 📦 **Détails de l’outbox**  
