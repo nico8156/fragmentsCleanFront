@@ -57,8 +57,6 @@ export const googleOAuthGateway: OAuthGateway = {
             tokenType: "Bearer",
             scope: scopes.join(" "),
         };
-        console.log("tokens", tokens);
-        console.log("profile", profile);
         return { profile, tokens };
     },
 

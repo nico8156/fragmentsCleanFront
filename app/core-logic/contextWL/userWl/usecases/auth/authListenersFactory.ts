@@ -120,7 +120,6 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 				console.log("[AUTH] backend signInWithProvider returned session", {
 					userId: (session as any)?.userId,
-					accessTokenPrefix: (session as any)?.tokens?.accessToken?.slice?.(0, 20),
 					hasRefresh: !!(session as any)?.tokens?.refreshToken,
 				});
 
@@ -198,13 +197,10 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			}
 
 			try {
-				console.log(
-					"[REFRESH] calling backend /auth/refresh with refreshToken=",
-					activeSession.tokens.refreshToken,
-				);
+				console.log("[REFRESH] calling backend /auth/refresh");
 
 				const refreshed = await authServer.refreshSession(activeSession);
-				console.log("[REFRESH] success, new accessToken=", refreshed.session.tokens.accessToken);
+				console.log("[REFRESH] success");
 
 				activeSession = refreshed.session;
 				deps.onSessionChanged?.(activeSession);
@@ -298,4 +294,3 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 	return middleware.middleware;
 };
-

@@ -13,7 +13,6 @@ export class HttpLikesGateway implements LikeWlGateway {
     async get({ targetId, signal }: { targetId: string; signal: AbortSignal }) {
         console.log("[HTTP_LIKES] get called", { targetId });
         const token = await this.deps.authToken.getAccessToken();
-        console.log("[HTTP_LIKES] accessToken =", token ? token.slice(0, 12) + "..." : "<null>");
         if (!token) {
             throw new Error("Not authenticated");
         }

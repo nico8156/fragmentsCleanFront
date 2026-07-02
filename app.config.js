@@ -5,6 +5,12 @@ const envApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? process.env.API_BA
 const apiBaseUrl =
   envApiBaseUrl ??
   base.expo.extra?.apiBaseUrl;
+const plugins = env === "production"
+  ? base.expo.plugins?.filter((plugin) => {
+      const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
+      return pluginName !== "expo-dev-client";
+    })
+  : base.expo.plugins;
 
 if (env === "production" && !envApiBaseUrl) {
   throw new Error("Missing EXPO_PUBLIC_API_BASE_URL for production build");
@@ -12,6 +18,7 @@ if (env === "production" && !envApiBaseUrl) {
 
 module.exports = {
   ...base.expo,
+  plugins,
   extra: {
     ...base.expo.extra,
     apiBaseUrl,
