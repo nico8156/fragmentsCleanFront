@@ -28,6 +28,11 @@ import {
 	authUserHydrationRequested,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
+import {
+	projectionSyncDisconnectRequested,
+	projectionSyncEnsureConnectedRequested,
+} from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
+
 import { logger } from "@/app/core-logic/utils/logger";
 
 // ✅ IMPORTANT: on ne base plus "signedIn" sur status (qui peut repasser "loading" pendant hydration)
@@ -46,6 +51,7 @@ export const runtimeListenerFactory = () => {
 	}) => {
 		api.dispatch(outboxResumeRequested());
 		api.dispatch(wsEnsureConnectedRequested());
+		api.dispatch(projectionSyncEnsureConnectedRequested());
 		api.dispatch(outboxProcessOnce());
 		api.dispatch(outboxWatchdogTick());
 	};
@@ -81,6 +87,7 @@ export const runtimeListenerFactory = () => {
 			// ✅ Toujours : refresh + hydrate + tentative WS
 			refreshAndHydrate(api);
 			api.dispatch(wsEnsureConnectedRequested());
+			api.dispatch(projectionSyncEnsureConnectedRequested());
 
 			// ✅ Si online, on kick aussi outbox/watchdog
 			if (!online) return;
@@ -98,6 +105,7 @@ export const runtimeListenerFactory = () => {
 			if (!action.payload.online) {
 				logger.info("[APP RUNTIME] connectivity offline: disconnect ws + suspend outbox");
 				api.dispatch(wsDisconnectRequested());
+				api.dispatch(projectionSyncDisconnectRequested());
 				api.dispatch(outboxSuspendRequested());
 				return;
 			}
@@ -124,6 +132,7 @@ export const runtimeListenerFactory = () => {
 			logger.info("[APP RUNTIME] appBecameBackground: suspend outbox + ws disconnect");
 			api.dispatch(outboxSuspendRequested());
 			api.dispatch(wsDisconnectRequested());
+			api.dispatch(projectionSyncDisconnectRequested());
 		},
 	});
 
@@ -142,4 +151,3 @@ export const runtimeListenerFactory = () => {
 
 	return runtimeListener.middleware;
 };
-

@@ -13,6 +13,7 @@ import { LocationStateWl } from "@/app/core-logic/contextWL/locationWl/typeActio
 import { ohStateWl } from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 import { AuthState } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { ISODate } from "@/assets/data/comment";
+import type { ProjectionSyncStateWl } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.type";
 
 
 
@@ -29,6 +30,7 @@ export interface AppStateWl {
 	location: LocationStateWl
 	articles: ArticleStateWl
 	authState: AuthState
+	projectionSync: ProjectionSyncStateWl
 }
 
 export type HelpersCore = {

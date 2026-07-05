@@ -109,6 +109,60 @@ describe("Comments retrieval", () => {
         expect(s.byTarget["post_42"].error).toBe("comments list failed"); // <= failMessageList
     });
 
+    it("refresh replaces server snapshot for target while keeping optimistic local comments", async () => {
+        comments.nextListResponse = {
+            targetId: "post_42",
+            op: opTypes.RETRIEVE,
+            items: [
+                {
+                    id: "server_old",
+                    targetId: "post_42",
+                    body: "old server comment",
+                    authorId: "user_alice",
+                    createdAt: "2025-10-14T08:15:12.000Z",
+                    likeCount: 0,
+                    replyCount: 0,
+                    moderation: moderationTypes.PUBLISHED,
+                    version: 1,
+                },
+            ],
+            serverTime: "2025-10-10T07:00:01.000Z",
+        } as any;
+
+        await store.dispatch(commentRetrieval({ targetId: "post_42", op: opTypes.RETRIEVE }) as any);
+
+        store.dispatch({
+            type: "COMMENT/OPTIMISTIC_CREATED",
+            payload: {
+                entity: {
+                    id: "local_optimistic",
+                    targetId: "post_42",
+                    body: "pending",
+                    authorId: "me",
+                    createdAt: "2025-10-14T08:16:12.000Z",
+                    likeCount: 0,
+                    replyCount: 0,
+                    moderation: moderationTypes.PUBLISHED,
+                    version: 0,
+                    optimistic: true,
+                },
+            },
+        });
+
+        comments.nextListResponse = {
+            targetId: "post_42",
+            op: opTypes.REFRESH,
+            items: [],
+            serverTime: "2025-10-10T07:00:02.000Z",
+        } as any;
+
+        await store.dispatch(commentRetrieval({ targetId: "post_42", op: opTypes.REFRESH }) as any);
+
+        const view: any = store.getState().cState.byTarget["post_42"];
+        expect(view.ids).toEqual(["local_optimistic"]);
+        expect(store.getState().cState.entities.entities["server_old"]).toBeDefined();
+    });
+
     // ---------------- fixtures ----------------
 
     const commentListEntity: CommentEntity[] = [

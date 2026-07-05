@@ -25,6 +25,8 @@ import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpe
 
 import { WsStompEventsGateway } from "@/app/adapters/primary/socket/WsEventsGateway";
 import type { GatewaysWl } from "./types";
+import { HttpProjectionSyncGateway } from "@/app/adapters/secondary/gateways/projectionSync/HttpProjectionSyncGateway";
+import { PROJECTION_SYNC_EVENTS_PATH } from "./config";
 
 // ✅ NOTE: on ne dépend plus de API_BASE_URL ici.
 // La source de vérité devient "apiBaseUrl" passé en argument.
@@ -76,6 +78,11 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		articles: new HttpArticleWlGateway({ baseUrl }),
 
 		ws: new WsStompEventsGateway(),
+
+		projectionSync: new HttpProjectionSyncGateway({
+			baseUrl,
+			eventsPath: PROJECTION_SYNC_EVENTS_PATH,
+		}),
 
 		authToken,
 
