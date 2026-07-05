@@ -98,9 +98,10 @@ const applyIdsByOp = (v: View, op: string, optimisticIds: string[], incomingIds:
 	}
 
 	if (op === opTypes.REFRESH) {
-		// prepend serveur + conserver optimistic
-		mergeUniquePrepend(v.ids, incomingIds);
-		mergeUniquePrepend(v.ids, optimisticIds);
+		// Snapshot serveur de la cible, sans perdre les écritures locales en attente.
+		v.ids = [];
+		mergeUniqueAppend(v.ids, optimisticIds);
+		mergeUniqueAppend(v.ids, incomingIds);
 		return;
 	}
 };
@@ -308,4 +309,3 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 			v.error = error;
 		});
 });
-

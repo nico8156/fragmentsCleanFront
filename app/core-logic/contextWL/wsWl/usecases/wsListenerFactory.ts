@@ -19,12 +19,6 @@ import type { WsInboundEvent } from "@/app/adapters/primary/socket/ws.type";
 import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
-import {
-	onCommentCreatedAck,
-	onCommentDeletedAck,
-	onCommentUpdatedAck,
-} from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
-
 import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
 import { mapWsTicketCompletedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/helper/ticketAckFromWs";
 
@@ -93,51 +87,6 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 							me: (evt as any).me,
 							version: (evt as any).version,
 							updatedAt: (evt as any).updatedAt as any,
-						},
-					}),
-				);
-				return;
-			}
-
-			case "social.comment.created_ack": {
-				dispatch(
-					onCommentCreatedAck({
-						commandId: (evt as any).commandId,
-						commentId: (evt as any).commentId,
-						targetId: (evt as any).targetId,
-						server: {
-							createdAt: (evt as any).updatedAt,
-							version: (evt as any).version,
-						},
-					}),
-				);
-				return;
-			}
-
-			case "social.comment.updated_ack": {
-				dispatch(
-					onCommentUpdatedAck({
-						commandId: (evt as any).commandId,
-						commentId: (evt as any).commentId,
-						targetId: (evt as any).targetId,
-						server: {
-							editedAt: (evt as any).updatedAt,
-							version: (evt as any).version,
-						},
-					}),
-				);
-				return;
-			}
-
-			case "social.comment.deleted_ack": {
-				dispatch(
-					onCommentDeletedAck({
-						commandId: (evt as any).commandId,
-						commentId: (evt as any).commentId,
-						targetId: (evt as any).targetId,
-						server: {
-							deletedAt: (evt as any).updatedAt,
-							version: (evt as any).version,
 						},
 					}),
 				);
@@ -279,4 +228,3 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 
 	return mw.middleware;
 };
-

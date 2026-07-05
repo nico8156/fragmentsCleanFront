@@ -21,6 +21,7 @@ import type { CommandStatusGateway } from "@/app/core-logic/contextWL/outboxWl/g
 
 import type { WsEventsGatewayPort } from "@/app/adapters/primary/socket/ws.gateway";
 import type { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
+import type { ProjectionSyncGateway } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
 
 export type GatewaysWl = {
 	coffees: CoffeeWlGateway;
@@ -43,6 +44,7 @@ export type GatewaysWl = {
 	};
 
 	ws: WsEventsGatewayPort;
+	projectionSync: ProjectionSyncGateway;
 	authToken: AuthTokenBridge;
 	commandStatus: CommandStatusGateway;
 };

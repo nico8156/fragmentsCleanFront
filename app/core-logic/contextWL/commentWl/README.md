@@ -14,7 +14,7 @@ Les entités et l'état sont définis dans `type/commentWl.type.ts` :
 
 - `CommentEntity` regroupe les métadonnées (auteur, dates, modération, compteurs, indicateur `optimistic`).
 - `CommentsStateWl` combine un catalogue `EntityState` et des vues par café (`View`) contenant pagination (`nextCursor`, `prevCursor`), filtres, et informations de rafraîchissement (`anchor`, `lastFetchedAt`, `staleAfterMs`).
-- Les opérations (`opTypes`) distinguent `retrieve` (snapshot initial), `older` (pagination descendante) et `refresh` (nouveaux éléments).
+- Les opérations (`opTypes`) distinguent `retrieve` (snapshot initial), `older` (pagination descendante) et `refresh` (snapshot cible déclenché par freshness, en conservant les commentaires optimistes locaux).
 
 ## Use cases d'écriture
 
@@ -53,10 +53,15 @@ Cette logique évite les réponses obsolètes et simplifie la pagination incrém
 
 ### ACK temps réel (`usecases/read/ackReceivedBySocket.ts`)
 
-- Écoute les ACK `create/update/delete` (ex: WebSocket) pour **reconcilier** l'état local (`createReconciled`, `updateReconciled`, `deleteReconciled`).
+- Historiquement, écoutait les ACK `create/update/delete` (ex: WebSocket) pour **reconcilier** l'état local (`createReconciled`, `updateReconciled`, `deleteReconciled`).
 - Déclenche `dropCommitted` dans l'outbox si la commande correspondante a été traitée.
 
-On garantit ainsi que les commandes quittent la file uniquement après confirmation serveur.【F:app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket.ts†L1-L53】
+Le flux produit cible ne route plus les ACK comments depuis STOMP. La fraîcheur comments passe par `projection.updated` puis `commentRetrieval({ targetId, op: refresh })`; le polling `/commands/{commandId}` reste la source de reconciliation des commandes en attente.【F:app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket.ts†L1-L53】
+
+### Projection Sync
+
+Un `projection.updated` avec `projection="comments"` et `scope="target"` déclenche uniquement `commentRetrieval({ targetId, op: refresh })`.
+Le listener SSE ne mute jamais directement `cState`; le reducer remplace le snapshot serveur de la cible tout en gardant les entrées optimistes locales.
 
 ## Réducteur
 
@@ -116,4 +121,3 @@ Cette passerelle permet de tester l'ensemble du flux (optimistic → outbox → 
 - Ajouter un traitement pour les commandes `update/delete` dans la fake gateway si besoin.
 - Connecter les ACK websocket réels dans `ackListenerFactory`.
 - Étendre les vues (`filters.mineOnly`, tri `top`) en enrichissant `View` et les reducers associés.
-

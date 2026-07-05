@@ -34,12 +34,10 @@ Exemples :
 
 - `social.like.added_ack`
 - `social.like.removed_ack`
-- `social.comment.created_ack`
-- `social.comment.updated_ack`
-- `social.comment.deleted_ack`
 - `ticket.verification.completed_ack`
 
 Chaque événement correspond à **un ACK serveur d’une commande existante**.
+Les ACK comments ne sont plus routés par STOMP : la fraîcheur comments passe par `projectionSyncWl` et `commentRetrieval(refresh)`.
 
 ---
 

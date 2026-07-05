@@ -1,4 +1,3 @@
-import { ackListenerFactory } from "@/app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket";
 import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commentDeleteUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { commentUpdateWlUseCase } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
@@ -17,6 +16,7 @@ import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/proces
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
+import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory";
 import { wsListenerFactory } from "@/app/core-logic/contextWL/wsWl/usecases/wsListenerFactory";
 
 import type { Helpers } from "@/app/store/appStateWl";
@@ -39,7 +39,6 @@ export const createWlListeners = (p: {
 		mwOf(createCommentUseCaseFactory({ gateways, helpers })),
 		mwOf(commentDeleteUseCaseFactory({ gateways, helpers })),
 		mwOf(commentUpdateWlUseCase({ gateways, helpers })),
-		mwOf(ackListenerFactory()),
 
 		// Likes
 		mwOf(likeToggleUseCaseFactory({ gateways, helpers })),
@@ -59,6 +58,7 @@ export const createWlListeners = (p: {
 		// Auth + WS
 		mwOf(authListenerFactory({ gateways, helpers: {}, onSessionChanged })),
 		mwOf(wsListenerFactory({ gateways, wsUrl, sessionRef })),
+		mwOf(projectionSyncListenerFactory({ gateways, sessionRef })),
 
 		// Watchdog
 		mwOf(outboxWatchdogFactory({ gateways, enableTimer: true, tickMs: 20_000 })),
