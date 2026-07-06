@@ -16,7 +16,6 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import type { WsInboundEvent } from "@/app/adapters/primary/socket/ws.type";
-import { onLikeAddedAck, onLikeRemovedAck } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 import { onTicketConfirmedAck, onTicketRejectedAck } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
@@ -61,35 +60,9 @@ export const wsListenerFactory = (deps: WsListenerDeps) => {
 
 	const routeInbound = (evt: WsInboundEvent, dispatch: AppDispatchWl) => {
 		switch (evt.type) {
-			case "social.like.added_ack": {
-				dispatch(
-					onLikeAddedAck({
-						commandId: (evt as any).commandId,
-						targetId: (evt as any).targetId,
-						server: {
-							count: (evt as any).count,
-							me: (evt as any).me,
-							version: (evt as any).version,
-							updatedAt: (evt as any).updatedAt as any,
-						},
-					}),
-				);
-				return;
-			}
-
+			case "social.like.added_ack":
 			case "social.like.removed_ack": {
-				dispatch(
-					onLikeRemovedAck({
-						commandId: (evt as any).commandId,
-						targetId: (evt as any).targetId,
-						server: {
-							count: (evt as any).count,
-							me: (evt as any).me,
-							version: (evt as any).version,
-							updatedAt: (evt as any).updatedAt as any,
-						},
-					}),
-				);
+				logger.debug("[WS] ignored like ack; projectionSync owns likes freshness", { type: evt.type });
 				return;
 			}
 

@@ -9,6 +9,7 @@ import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projec
 import { projectionSyncEnsureConnectedRequested } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
+import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -111,5 +112,64 @@ describe("projectionSyncListenerFactory", () => {
 			op: opTypes.REFRESH,
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("2");
+	});
+
+	it("routes projection.updated/likes to likes refresh GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const likes = new FakeLikesGateway();
+		likes.nextGetResponse = {
+			count: 7,
+			me: true,
+			version: 3,
+			serverTime: "2026-07-06T10:00:00.000Z",
+		};
+
+		const store = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					projectionSync,
+					likes,
+				} as any,
+			},
+			listeners: [
+				projectionSyncListenerFactory({
+					gateways: {
+						projectionSync,
+						likes,
+					} as any,
+					sessionRef: {
+						current: {
+							tokens: {
+								accessToken: "mobile-token",
+							},
+						} as any,
+					},
+				}),
+			],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		projectionSync.emit({
+			id: "3",
+			eventName: "projection.updated",
+			schemaVersion: 1,
+			projection: "likes",
+			scope: "target",
+			entityId: "target-99",
+			hints: ["set"],
+		});
+		await flush();
+		await flush();
+
+		expect(likes.getCalls).toEqual([{ targetId: "target-99" }]);
+		expect((store.getState() as any).lState.byTarget["target-99"]).toMatchObject({
+			count: 7,
+			me: true,
+			version: 3,
+			optimistic: false,
+		});
+		expect((store.getState() as any).psState.lastEventId).toBe("3");
 	});
 });

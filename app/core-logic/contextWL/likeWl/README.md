@@ -19,9 +19,10 @@ The slice stores aggregates under `state.likes.byTarget[targetId]` with the foll
    - Dispatches `likeOptimisticApplied` or `unlikeOptimisticApplied` so the reducer updates the aggregate immediately.
    - Enqueues a committed outbox item with the corresponding `LikeAdd`/`LikeRemove` command plus rollback metadata.
    - Triggers `outboxProcessOnce` to let the background worker flush commands through the configured `LikeWlGateway`.
-2. When the gateway succeeds, the server emits an ACK handled by [`ackLikesListener`](./usecases/read/ackLike.ts).
-   - Dispatches `likeReconciled` to overwrite the local aggregate with authoritative counts/versions.
-   - Drops the committed outbox entry via `dropCommitted`.
-3. If the user navigates to a target without cached data, [`likesRetrieval`](./usecases/read/likeRetrieval.ts) fetches the aggregate using `LikeWlGateway.get` and hydrates the reducer.
+2. The outbox watchdog reconciles command completion through `/commands/{commandId}`.
+   - `APPLIED` drops the committed outbox entry.
+   - `REJECTED` rolls back using the command undo payload, then drops the entry.
+3. After the backend updates `social_likes_projection`, projection sync emits `projection.updated` with `projection="likes"`, `scope="target"` and `entityId=targetId`.
+4. `projectionSyncWl` dispatches [`likesRetrieval`](./usecases/read/likeRetrieval.ts), which fetches the authoritative aggregate using `LikeWlGateway.get` and hydrates the reducer.
 
-See the sequence diagram in [`like.toggle.org.schema.mmd`](./like.toggle.org.schema.mmd) for a visual walkthrough of the toggle/ACK cycle.
+STOMP ACKs are no longer part of the active likes flow. Projection freshness and command completion remain separate paths.
