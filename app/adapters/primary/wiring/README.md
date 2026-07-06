@@ -20,7 +20,7 @@ Assembler les briques suivantes :
 - Helpers (context runtime)
 - Listeners (use-cases Redux)
 - Store Redux
-- WebSocket
+- Projection Sync
 - Outbox
 - Auth
 - Runtime listeners
@@ -33,7 +33,7 @@ Assembler les briques suivantes :
 Construit les dépendances techniques :
 
 - HTTP gateways
-- WS gateway
+- Projection Sync gateway
 - Auth bridges
 - Secure storage
 - Outbox storage
@@ -47,4 +47,3 @@ createInfrastructure() →
   sessionRef,
   onSessionChanged
 }
-

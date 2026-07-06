@@ -1,6 +1,6 @@
 # Mobile Runtime
 
-The runtime coordinates app lifecycle, connectivity, authentication, outbox recovery, and WebSocket connection.
+The runtime coordinates app lifecycle, connectivity, authentication, outbox recovery, and projection sync.
 
 ## Boot Order
 
@@ -22,4 +22,4 @@ AppBootstrap
 - Warmup reads must not block command recovery.
 - Runtime adapters must be cleaned up on unmount.
 - Connectivity events resume/suspend outbox.
-
+- Projection sync reconnects only when the app is active, online, and authenticated.

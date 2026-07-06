@@ -16,7 +16,6 @@ import {locationReducer as lcState} from "@/app/core-logic/contextWL/locationWl/
 import {articleWlReducer as arState} from "@/app/core-logic/contextWL/articleWl/reducer/articleWl.reducer";
 import {authReducer as aState} from "@/app/core-logic/contextWL/userWl/reducer/user.reducer";
 import {appReducer as appState} from "@/app/core-logic/contextWL/appWl/reducer/app.reducer";
-import { wsReducer as wsState } from "@/app/core-logic/contextWL/wsWl/reducer/ws.reducer";
 import { projectionSyncReducer as psState } from "@/app/core-logic/contextWL/projectionSyncWl/reducer/projectionSync.reducer";
 
 
@@ -40,7 +39,6 @@ export const initReduxStoreWl = (config: {
             arState,
             aState,
             appState,
-            wsState,
             psState,
             ...(config.extraReducers ?? {})
         },

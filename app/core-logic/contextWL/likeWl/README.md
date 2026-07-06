@@ -25,4 +25,4 @@ The slice stores aggregates under `state.likes.byTarget[targetId]` with the foll
 3. After the backend updates `social_likes_projection`, projection sync emits `projection.updated` with `projection="likes"`, `scope="target"` and `entityId=targetId`.
 4. `projectionSyncWl` dispatches [`likesRetrieval`](./usecases/read/likeRetrieval.ts), which fetches the authoritative aggregate using `LikeWlGateway.get` and hydrates the reducer.
 
-STOMP ACKs are no longer part of the active likes flow. Projection freshness and command completion remain separate paths.
+Projection freshness and command completion remain separate paths.

@@ -4,7 +4,7 @@
 
 `AppWL` gère **le cycle de vie runtime de l’application mobile**.
 Il orchestre l’activation et la suspension des sous-systèmes techniques
-(WebSocket, Outbox, Watchdog) en fonction de l’état réel de l’app.
+(Projection Sync, Outbox, Watchdog) en fonction de l’état réel de l’app.
 
 ➡️ Aucun métier ici.  
 ➡️ Aucun appel réseau direct.
@@ -50,17 +50,17 @@ Il orchestre l’activation et la suspension des sous-systèmes techniques
 
 ### App active
 - Si **connecté + authentifié** :
-  - WS connect
+  - Projection Sync connect
   - Outbox process
   - Watchdog tick
 
 ### App inactive / background
 - Suspend outbox
-- Déconnecte WS
+- Déconnecte Projection Sync
 
 ### Offline
 - Suspend outbox
-- Déconnecte WS
+- Déconnecte Projection Sync
 
 ---
 

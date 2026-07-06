@@ -7,7 +7,7 @@ Gère la capture et la vérification de tickets (scan OCR → commande `TicketVe
 - `ticketSubmitUseCaseFactory` écoute `uiTicketSubmitRequested`, crée un ID temporaire, dispatch `ticketOptimisticCreated` puis enfile une commande `TicketVerify` dans l'outbox avant d'appeler `outboxProcessOnce`.【F:app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase.ts†L1-L49】【F:app/core-logic/contextWL/ticketWl/usecases/write/ticketSubmitWlUseCase.ts†L49-L70】
 - `ticketRetrieval` lit le read model serveur via `TicketsWlGateway.getStatus`, hydrate `ticketRetrieved` et conserve la séparation entre fraîcheur projection et cycle de vie commande.
 - `projectionSyncWl` déclenche `ticketRetrieval` quand il reçoit `projection.updated` avec `projection="tickets"`, `scope="entity"` et `entityId=ticketId`.
-- `ackTicketsListenerFactory` reste câblé temporairement pour compatibilité STOMP, car `ackEntitlementsListener` dépend encore des ACK `CONFIRMED/REJECTED`. Il ne doit pas devenir le chemin principal de fraîcheur du ticket.
+- `/commands/{commandId}` reste le seul mécanisme de cycle de vie commande.
 
 Règle importante :
 

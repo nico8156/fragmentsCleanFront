@@ -2,7 +2,7 @@
 
 Ce dossier orchestre la gestion des commentaires dans l'application "Fragments" côté worklog (WL). Il propose une architecture en couches :
 
-- **Use cases** (middleware Redux Toolkit) pour les intentions UI (création, édition, suppression, récupération) et la réaction aux ACK temps réel.
+- **Use cases** (middleware Redux Toolkit) pour les intentions UI (création, édition, suppression, récupération) et la fraîcheur des projections.
 - **Réducteur** pour maintenir l'état `cState` normalisé (catalogue d'entités + vues par cible).
 - **Sélecteurs** pour exposer un modèle de vue aux adaptateurs React/React Native.
 - **Outbox WL** pour fiabiliser les écritures réseau avec reprises automatiques et rollbacks.
@@ -51,17 +51,11 @@ On conserve l'ID dans les threads pour éviter les trous et faciliter un rollbac
 
 Cette logique évite les réponses obsolètes et simplifie la pagination incrémentale.【F:app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval.ts†L1-L61】
 
-### ACK temps réel (`usecases/read/ackReceivedBySocket.ts`)
-
-- Historiquement, écoutait les ACK `create/update/delete` (ex: WebSocket) pour **reconcilier** l'état local (`createReconciled`, `updateReconciled`, `deleteReconciled`).
-- Déclenche `dropCommitted` dans l'outbox si la commande correspondante a été traitée.
-
-Le flux produit cible ne route plus les ACK comments depuis STOMP. La fraîcheur comments passe par `projection.updated` puis `commentRetrieval({ targetId, op: refresh })`; le polling `/commands/{commandId}` reste la source de reconciliation des commandes en attente.【F:app/core-logic/contextWL/commentWl/usecases/read/ackReceivedBySocket.ts†L1-L53】
-
 ### Projection Sync
 
 Un `projection.updated` avec `projection="comments"` et `scope="target"` déclenche uniquement `commentRetrieval({ targetId, op: refresh })`.
 Le listener SSE ne mute jamais directement `cState`; le reducer remplace le snapshot serveur de la cible tout en gardant les entrées optimistes locales.
+Le polling `/commands/{commandId}` reste la source de reconciliation des commandes en attente.
 
 ## Réducteur
 
@@ -80,7 +74,7 @@ Fonctionnalités clés :
 
 1. Sélectionne la première commande en file (`status=queued`).
 2. Résout le gateway requis (`deps.gateways?.comments`).
-3. Marque la commande `processing`, exécute l'appel réseau et bascule en `awaitingAck` en attendant une confirmation serveur.
+3. Marque la commande `processing`, exécute l'appel réseau et laisse le watchdog `/commands/{commandId}` confirmer `APPLIED` ou `REJECTED`.
 4. Sur échec, déclenche les undo (`createRollback`, `updateRollback`, `deleteRollback`).
 
 Cette mécanique garantit l'ordre des écritures, supporte la reprise après échec et évite les doublons serveur.【F:app/core-logic/contextWL/outboxWl/processOutbox.ts†L1-L157】
@@ -103,14 +97,14 @@ Cette mécanique garantit l'ordre des écritures, supporte la reprise après éc
 `FakeCommentsWlGateway` simule un backend :
 
 - Renvoie des jeux de données seeds lors d'un `list` standard.【F:app/adapters/secondary/gateways/fake/fakeCommentsWlGateway.ts†L1-L85】【F:app/adapters/secondary/gateways/fake/fakeCommentsWlGateway.ts†L119-L138】
-- Lors de `create`, stocke la commande, planifie un ACK aléatoire (2 à 4s) qui pousse le nouveau commentaire et déclenche `onCommentCreatedAck`.【F:app/adapters/secondary/gateways/fake/fakeCommentsWlGateway.ts†L87-L118】【F:app/adapters/secondary/gateways/fake/fakeCommentsWlGateway.ts†L139-L178】
+- Peut simuler les réponses HTTP de lecture et d'écriture sans canal temps réel séparé.
 
-Cette passerelle permet de tester l'ensemble du flux (optimistic → outbox → ack → reconciliation) sans backend réel.
+Cette passerelle permet de tester l'ensemble du flux (optimistic → outbox → command status / projection refresh) sans backend réel.
 
 ## Optimisations clés
 
 - **Normalisation via EntityAdapter** : lookup O(1) et diff minimal lors des updates.
-- **Outbox + ACK** : tolérance réseau et cohérence forte (pas de double envoi, rollback géré).
+- **Outbox + command status** : tolérance réseau et cohérence forte (pas de double envoi, rollback géré).
 - **AbortController par requête** : évite les race conditions lors des rafraîchissements rapides.
 - **Selectors mémoïsés** : évite de recréer des tableaux inutilement côté UI.
 - **Données de fraîcheur (`staleAfterMs`)** : limite les appels réseau en se basant sur un TTL configurable.
@@ -119,5 +113,4 @@ Cette passerelle permet de tester l'ensemble du flux (optimistic → outbox → 
 
 - Brancher un vrai gateway (REST/GraphQL) en implémentant `CommentsWlGateway`.
 - Ajouter un traitement pour les commandes `update/delete` dans la fake gateway si besoin.
-- Connecter les ACK websocket réels dans `ackListenerFactory`.
 - Étendre les vues (`filters.mineOnly`, tri `top`) en enrichissant `View` et les reducers associés.

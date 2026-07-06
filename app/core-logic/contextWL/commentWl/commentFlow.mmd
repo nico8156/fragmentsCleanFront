@@ -6,23 +6,24 @@ sequenceDiagram
     participant Reducer as Reducer cState
     participant Outbox as Outbox WL
     participant Gateway as Comments Gateway
-    participant Socket as ACK temps réel
+    participant CommandStatus as /commands/{commandId}
+    participant ProjectionSync as projection.updated
 
     UI->>Hook: Input utilisateur / rendu liste
     Hook->>UseCases: uiCommentCreateRequested(targetId, body)
     UseCases->>Reducer: addOptimisticCreated(tempComment)
     UseCases->>Outbox: enqueueCommitted(CommentCreate)
     UseCases->>Outbox: outboxProcessOnce()
-    Outbox->>Reducer: markProcessing / markAwaitingAck
+    Outbox->>Reducer: markProcessing
     Outbox->>Gateway: create(command)
     Gateway-->>Outbox: Promise résolue
-    Outbox->>Reducer: dequeueCommitted (status awaitingAck)
+    Outbox->>CommandStatus: poll command status
+    CommandStatus-->>Outbox: APPLIED / REJECTED / PENDING
+    Outbox->>Reducer: drop or rollback on terminal status
 
-    Note over Socket,Gateway: L'ACK serveur arrive plus tard (socket)
-
-    Socket-->>UseCases: onCommentCreatedAck(commandId, tempId, server)
-    UseCases->>Reducer: createReconciled(tempId → serverId)
-    UseCases->>Outbox: dropCommitted(commandId)
+    ProjectionSync-->>UseCases: projection.updated comments
+    UseCases->>Gateway: commentRetrieval(refresh)
+    Gateway-->>Reducer: snapshot comments
 
     Hook->>Reducer: commentRetrieval(op=retrieve/refresh)
     Reducer-->>Hook: Comments + métadonnées (via selector)
