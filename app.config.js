@@ -22,19 +22,19 @@ const googleIosUrlScheme = googleIosClientId
   ? `com.googleusercontent.apps.${googleIosClientId.replace(/\.apps\.googleusercontent\.com$/, "")}`
   : undefined;
 
-const pluginsWithRuntimeConfig = base.expo.plugins?.map((plugin) => {
+const pluginsWithRuntimeConfig = base.expo.plugins?.flatMap((plugin) => {
   const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
   if (pluginName !== "@react-native-google-signin/google-signin") {
-    return plugin;
+    return [plugin];
   }
 
   const options = Array.isArray(plugin) ? { ...(plugin[1] ?? {}) } : {};
   if (googleIosUrlScheme) {
     options.iosUrlScheme = googleIosUrlScheme;
-  } else {
-    delete options.iosUrlScheme;
+    return [[pluginName, options]];
   }
-  return [pluginName, options];
+
+  return [];
 });
 
 const plugins = env === "production"

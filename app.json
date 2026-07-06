@@ -72,7 +72,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:8080",
+      "apiBaseUrl": "https://fragments-staging.anchor-event.fr",
       "router": {},
       "eas": {
         "projectId": "138089c2-0d66-415d-baa4-46495ea3a90b"
