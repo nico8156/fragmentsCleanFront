@@ -31,7 +31,7 @@ export class DemoOAuthGateway implements OAuthGateway {
         const authorization: ProviderAuthorizationResult = {
             authorizationCode: randomToken(),
             codeVerifier: randomToken(),
-            redirectUri: "fragmentscleanfront://auth/google",
+            redirectUri: "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect",
         };
         return { profile, authorization };
     }

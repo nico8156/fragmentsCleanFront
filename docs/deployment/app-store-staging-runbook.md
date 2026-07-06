@@ -36,7 +36,7 @@ npx eas env:create production \
 npx eas env:create production \
   --scope project \
   --name EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI \
-  --value fragmentscleanfront://auth/google \
+  --value com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect \
   --visibility plaintext
 ```
 
@@ -53,7 +53,7 @@ native `iosUrlScheme` for the Google Sign-In plugin from that client id.
 npm test
 EXPO_PUBLIC_API_BASE_URL=https://fragments-staging.anchor-event.fr \
 EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID=<google-ios-client-id>.apps.googleusercontent.com \
-EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI=fragmentscleanfront://auth/google \
+EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI=com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect \
   EAS_BUILD_PROFILE=production \
   npx expo config --type public
 ```
@@ -62,7 +62,7 @@ Confirm in the generated config:
 
 - `extra.apiBaseUrl` is the HTTPS AWS URL;
 - `ios.bundleIdentifier` is `com.nico8156.fragments`;
-- `extra.googleMobileIosRedirectUri` is `fragmentscleanfront://auth/google`;
+- `extra.googleMobileIosRedirectUri` is `com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect`;
 - Android only requests foreground location;
 - no API secret is present in `extra`.
 

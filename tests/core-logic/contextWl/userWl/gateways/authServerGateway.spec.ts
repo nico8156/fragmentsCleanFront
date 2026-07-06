@@ -33,7 +33,7 @@ describe("createAuthServerGateway", () => {
 			provider: "google",
 			authorizationCode: "auth-code-123",
 			codeVerifier: "verifier-123",
-			redirectUri: "fragmentscleanfront://auth/google",
+			redirectUri: "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect",
 			scopes: ["openid", "email", "profile"],
 		});
 
@@ -45,7 +45,7 @@ describe("createAuthServerGateway", () => {
 				body: JSON.stringify({
 					authorizationCode: "auth-code-123",
 					codeVerifier: "verifier-123",
-					redirectUri: "fragmentscleanfront://auth/google",
+					redirectUri: "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect",
 				}),
 			}),
 		);

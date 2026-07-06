@@ -17,7 +17,7 @@ export class FakeOAuthGateway implements OAuthGateway {
     public authorization: ProviderAuthorizationResult = {
         authorizationCode: "fake-authorization-code",
         codeVerifier: "fake-code-verifier",
-        redirectUri: "fragmentscleanfront://auth/google",
+        redirectUri: "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect",
     };
 
     public shouldFail = false;

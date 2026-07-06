@@ -16,7 +16,7 @@ export const GOOGLE_MOBILE_IOS_CLIENT_ID: string | undefined =
 export const GOOGLE_MOBILE_IOS_REDIRECT_URI: string =
 	(Constants.expoConfig?.extra?.googleMobileIosRedirectUri as string | undefined)
 		?.trim()
-		|| "fragmentscleanfront://auth/google";
+		|| "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect";
 export const GOOGLE_WEB_CLIENT_ID: string | undefined =
 	(Constants.expoConfig?.extra?.googleWebClientId as string | undefined)
 		?.trim()

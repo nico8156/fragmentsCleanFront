@@ -17,7 +17,7 @@ const googleWebClientId =
 const googleMobileIosRedirectUri =
   process.env.EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI ??
   base.expo.extra?.googleMobileIosRedirectUri ??
-  "fragmentscleanfront://auth/google";
+  "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect";
 const googleIosUrlScheme = googleIosClientId
   ? `com.googleusercontent.apps.${googleIosClientId.replace(/\.apps\.googleusercontent\.com$/, "")}`
   : undefined;
