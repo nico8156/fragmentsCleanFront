@@ -9,28 +9,51 @@ Before building the App Store binary:
 - backend staging/prod is reachable over HTTPS;
 - `GET /actuator/health` returns `200`;
 - public read APIs used by the app respond over the same host;
-- WebSocket may be available, but command reconciliation must work through `/commands/{commandId}`;
+- command reconciliation works through `/commands/{commandId}`;
+- projection freshness works through SSE projection sync and GET snapshots;
 - backend CORS/security policy accepts the mobile app flows;
 - Google OAuth redirect/client configuration matches the production bundle.
 
 ## EAS Configuration
 
-Production builds must receive the API URL from EAS environment/secrets:
+Production builds must receive public runtime configuration from EAS environment
+variables. These values are not backend secrets, but they must still be owned by
+the build environment instead of being hardcoded in gateways:
 
 ```bash
-eas secret:create \
+npx eas env:create production \
   --scope project \
   --name EXPO_PUBLIC_API_BASE_URL \
-  --value https://api-staging.fragments.example
+  --value https://fragments-staging.anchor-event.fr \
+  --visibility plaintext
+
+npx eas env:create production \
+  --scope project \
+  --name EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID \
+  --value <google-ios-client-id>.apps.googleusercontent.com \
+  --visibility plaintext
+
+npx eas env:create production \
+  --scope project \
+  --name EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI \
+  --value fragmentscleanfront://auth/google \
+  --visibility plaintext
 ```
 
-`app.config.js` intentionally fails production builds when `EXPO_PUBLIC_API_BASE_URL` is missing.
+Repeat the same variables in the `development` EAS environment for development
+client builds.
+
+`app.config.js` intentionally fails production builds when `EXPO_PUBLIC_API_BASE_URL`
+is missing. When the Google iOS client id is present, the config derives the
+native `iosUrlScheme` for the Google Sign-In plugin from that client id.
 
 ## Local Verification
 
 ```bash
 npm test
-EXPO_PUBLIC_API_BASE_URL=https://api-staging.fragments.example \
+EXPO_PUBLIC_API_BASE_URL=https://fragments-staging.anchor-event.fr \
+EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID=<google-ios-client-id>.apps.googleusercontent.com \
+EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI=fragmentscleanfront://auth/google \
   EAS_BUILD_PROFILE=production \
   npx expo config --type public
 ```
@@ -39,6 +62,7 @@ Confirm in the generated config:
 
 - `extra.apiBaseUrl` is the HTTPS AWS URL;
 - `ios.bundleIdentifier` is `com.nico8156.fragments`;
+- `extra.googleMobileIosRedirectUri` is `fragmentscleanfront://auth/google`;
 - Android only requests foreground location;
 - no API secret is present in `extra`.
 
@@ -76,7 +100,7 @@ Use the production build against AWS and verify:
 2. like or unlike a target;
 3. reconnect;
 4. backend returns `202`;
-5. no WebSocket ACK is required;
+5. no socket ACK is required;
 6. polling `/commands/{commandId}` resolves the command;
 7. local outbox drops the command only after `APPLIED`;
 8. rollback only occurs on explicit business rejection.
@@ -85,5 +109,5 @@ Use the production build against AWS and verify:
 
 - Do not hardcode production API URLs in gateways.
 - Do not put backend secrets in Expo config.
-- Do not treat WebSocket ACK as source of truth.
+- Do not treat SSE as command ACK; it only signals projection freshness.
 - Do not submit an App Store build pointing to localhost, LAN, ngrok, or HTTP.

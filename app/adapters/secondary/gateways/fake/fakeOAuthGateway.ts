@@ -1,7 +1,7 @@
 import { OAuthGateway } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import {
-    AuthTokens,
     OAuthProfile,
+    ProviderAuthorizationResult,
     ProviderId,
     toProviderUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
@@ -14,21 +14,18 @@ export class FakeOAuthGateway implements OAuthGateway {
         email: "fake@example.com",
     };
 
-    public tokens: AuthTokens = {
-        accessToken: "fake-access-token",
-        refreshToken: "fake-refresh-token",
-        expiresAt: Date.now() + 60 * 60 * 1000,
-        issuedAt: Date.now(),
-        tokenType: "Bearer",
-        scope: "openid email profile",
+    public authorization: ProviderAuthorizationResult = {
+        authorizationCode: "fake-authorization-code",
+        codeVerifier: "fake-code-verifier",
+        redirectUri: "fragmentscleanfront://auth/google",
     };
 
     public shouldFail = false;
     public signOutProvider?: ProviderId;
 
-    async startSignIn(_provider: ProviderId): Promise<{ profile: OAuthProfile; tokens: AuthTokens }> {
+    async startSignIn(_provider: ProviderId): Promise<{ profile: OAuthProfile; authorization: ProviderAuthorizationResult }> {
         if (this.shouldFail) throw new Error("oauth failed");
-        return { profile: { ...this.profile }, tokens: { ...this.tokens } };
+        return { profile: { ...this.profile }, authorization: { ...this.authorization } };
     }
 
     async signOut(provider: ProviderId): Promise<void> {

@@ -50,6 +50,14 @@ describe("auth flow", () => {
 		expect((state.session as any)?.tokens?.accessToken).toBeUndefined();
 		expect(secureStore.snapshot()).toBeDefined();
 		expect(state.currentUser?.displayName).toBe("Fake User");
+		expect(authServer.lastSignInInput).toEqual(
+			expect.objectContaining({
+				provider: "google",
+				authorizationCode: oauth.authorization.authorizationCode,
+				codeVerifier: oauth.authorization.codeVerifier,
+				redirectUri: oauth.authorization.redirectUri,
+			}),
+		);
 	});
 
 	it("loads session from secure store on boot", async () => {

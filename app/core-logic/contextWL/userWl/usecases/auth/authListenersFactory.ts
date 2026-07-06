@@ -22,6 +22,7 @@ import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
 const MINIMUM_TOKEN_TTL_MS = 60 * 1000; // 1 minute
+const SIGN_IN_ERROR_MESSAGE = "Connexion Google impossible. Réessaie dans un instant.";
 
 type AuthListenerDeps = {
 	gateways: DependenciesWl["gateways"];
@@ -98,22 +99,23 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				if (!authServerGateway) throw new Error("auth server gateway unavailable");
 
 				// 1️⃣ Google Sign-In
-				const { profile, tokens: providerTokens } =
+				const { profile, authorization } =
 					await oAuthGateway.startSignIn(action.payload.provider, {
 						scopes: action.payload.scopes,
 					});
 
-				const authorizationCode = providerTokens.accessToken; // serverAuthCode
-				const idToken = providerTokens.idToken;
+				const { authorizationCode, codeVerifier, redirectUri, idToken } = authorization;
 
-				if (!authorizationCode) {
-					throw new Error("No authorization code from provider");
+				if (!authorizationCode || !codeVerifier || !redirectUri) {
+					throw new Error("Incomplete authorization result from provider");
 				}
 
 				// 2️⃣ Exchange backend
 				const { session, user } = await authServerGateway.signInWithProvider({
 					provider: profile.provider,
 					authorizationCode,
+					codeVerifier,
+					redirectUri,
 					idToken,
 					scopes: action.payload.scopes ?? [],
 				});
@@ -150,7 +152,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				activeSession = undefined;
 				api.dispatch(
 					authSignInFailed({
-						error: error?.message ?? "Sign-in failed",
+						error: SIGN_IN_ERROR_MESSAGE,
 					}),
 				);
 			}
