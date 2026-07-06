@@ -32,12 +32,12 @@ principalement les **ACK de commandes envoyées via l’Outbox**.
 
 Exemples :
 
-- `social.like.added_ack`
-- `social.like.removed_ack`
 - `ticket.verification.completed_ack`
 
 Chaque événement correspond à **un ACK serveur d’une commande existante**.
-Les ACK comments ne sont plus routés par STOMP : la fraîcheur comments passe par `projectionSyncWl` et `commentRetrieval(refresh)`.
+Les ACK comments et likes ne sont plus routés par STOMP :
+- la fraîcheur comments passe par `projectionSyncWl` et `commentRetrieval(refresh)`;
+- la fraîcheur likes passe par `projectionSyncWl` et `likesRetrieval`.
 
 ---
 

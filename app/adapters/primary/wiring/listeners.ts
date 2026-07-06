@@ -2,7 +2,6 @@ import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentW
 import { commentDeleteUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { commentUpdateWlUseCase } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
-import { ackLikesListenerFactory } from "@/app/core-logic/contextWL/likeWl/usecases/read/ackLike";
 import { likeToggleUseCaseFactory } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 
 import { ackTicketsListenerFactory } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ackTicket";
@@ -42,7 +41,6 @@ export const createWlListeners = (p: {
 
 		// Likes
 		mwOf(likeToggleUseCaseFactory({ gateways, helpers })),
-		mwOf(ackLikesListenerFactory()),
 
 		// Outbox
 		mwOf(processOutboxFactory({ gateways, helpers })),

@@ -26,4 +26,7 @@ Le SSE ne mute jamais directement un store metier.
 - La reconnexion utilise un backoff progressif.
 - Les logs ne contiennent jamais le token bearer.
 
-Premier domaine migre : `comments`, avec `scope="target"` et `entityId=targetId`.
+Domaines migres :
+
+- `comments`, avec `scope="target"` et `entityId=targetId`, declenche `commentRetrieval(refresh)`.
+- `likes`, avec `scope="target"` et `entityId=targetId`, declenche `likesRetrieval`.

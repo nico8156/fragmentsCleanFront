@@ -9,6 +9,7 @@ import {
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import type { ProjectionSyncEvent } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
 import {
 	projectionSyncDisconnected,
@@ -68,6 +69,10 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 					op: opTypes.REFRESH,
 				}) as any,
 			);
+		}
+
+		if (event.projection === "likes" && event.scope === "target" && event.entityId) {
+			dispatch(likesRetrieval({ targetId: event.entityId as any }) as any);
 		}
 	};
 
