@@ -6,7 +6,9 @@ flowchart LR
     UseCase --> Enqueue[enqueueCommitted TicketVerify]
     Enqueue --> Outbox[outboxProcessOnce]
     Outbox --> Gateway[gateway.tickets.verify]
-    Gateway --> Ack[onTicketConfirmedAck / onTicketRejectedAck]
-    Ack --> Reducer[ticketWl.reducer]
-    Ack --> Entitlements[ackEntitlementsListener]
+    Gateway --> Status[/commands commandId]
+    Status --> OutboxDrop[drop / rollback]
+    Projection[projection.updated tickets] --> Retrieval[ticketRetrieval]
+    Retrieval --> Snapshot[GET ticket status]
+    Snapshot --> Reducer[ticketWl.reducer]
     Reducer --> UI

@@ -18,12 +18,6 @@ import {
 import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
 import {
-	wsConnected,
-	wsDisconnectRequested,
-	wsEnsureConnectedRequested,
-} from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
-
-import {
 	authMaybeRefreshRequested,
 	authUserHydrationRequested,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
@@ -50,7 +44,6 @@ export const runtimeListenerFactory = () => {
 		getState: () => RootStateWl;
 	}) => {
 		api.dispatch(outboxResumeRequested());
-		api.dispatch(wsEnsureConnectedRequested());
 		api.dispatch(projectionSyncEnsureConnectedRequested());
 		api.dispatch(outboxProcessOnce());
 		api.dispatch(outboxWatchdogTick());
@@ -84,9 +77,8 @@ export const runtimeListenerFactory = () => {
 			if (!bootReady) return;
 			if (!authed) return;
 
-			// ✅ Toujours : refresh + hydrate + tentative WS
+			// ✅ Toujours : refresh + hydrate + tentative projection sync
 			refreshAndHydrate(api);
-			api.dispatch(wsEnsureConnectedRequested());
 			api.dispatch(projectionSyncEnsureConnectedRequested());
 
 			// ✅ Si online, on kick aussi outbox/watchdog
@@ -103,8 +95,7 @@ export const runtimeListenerFactory = () => {
 			const bootReady = selectBootReady(state);
 
 			if (!action.payload.online) {
-				logger.info("[APP RUNTIME] connectivity offline: disconnect ws + suspend outbox");
-				api.dispatch(wsDisconnectRequested());
+				logger.info("[APP RUNTIME] connectivity offline: disconnect projection sync + suspend outbox");
 				api.dispatch(projectionSyncDisconnectRequested());
 				api.dispatch(outboxSuspendRequested());
 				return;
@@ -129,23 +120,9 @@ export const runtimeListenerFactory = () => {
 	listen({
 		actionCreator: appBecameBackground,
 		effect: async (_, api) => {
-			logger.info("[APP RUNTIME] appBecameBackground: suspend outbox + ws disconnect");
+			logger.info("[APP RUNTIME] appBecameBackground: suspend outbox + projection sync disconnect");
 			api.dispatch(outboxSuspendRequested());
-			api.dispatch(wsDisconnectRequested());
 			api.dispatch(projectionSyncDisconnectRequested());
-		},
-	});
-
-	// ✅ BONUS: dès que le WS se connecte (reconnect), on resync le user
-	listen({
-		actionCreator: wsConnected,
-		effect: async (_, api) => {
-			const state = api.getState();
-			const authed = hasSession(state);
-			if (!authed) return;
-
-			logger.info("[APP RUNTIME] wsConnected => authUserHydrationRequested");
-			refreshAndHydrate(api);
 		},
 	});
 

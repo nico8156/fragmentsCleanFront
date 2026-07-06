@@ -14,12 +14,11 @@ import {
 
 import { outboxWatchdogTick } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
-import {
-	wsDisconnectRequested,
-	wsEnsureConnectedRequested,
-} from "@/app/core-logic/contextWL/wsWl/typeAction/ws.action";
-
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
+import {
+	projectionSyncDisconnectRequested,
+	projectionSyncEnsureConnectedRequested,
+} from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
 
 import { seedBootReady, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 
@@ -34,7 +33,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 			filter: (a) =>
 				a.type.startsWith("APP/") ||
 				a.type.startsWith("OUTBOX/") ||
-				a.type.startsWith("WS/"),
+				a.type.startsWith("projectionSync/"),
 		});
 
 		store = initReduxStoreWl({
@@ -62,7 +61,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		expect(rec.getTypes()).toEqual(["APP/BECAME_ACTIVE"]);
 	});
 
-	it("appBecameActive / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
+	it("appBecameActive / signedIn => projectionSyncEnsure + outboxProcessOnce + watchdogTick", async () => {
 		seedSignedIn(store, { userId: "u1" });
 		seedBootReady(store);
 
@@ -74,7 +73,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
-				wsEnsureConnectedRequested.type,
+				projectionSyncEnsureConnectedRequested.type,
 				outboxProcessOnce.type,
 				outboxWatchdogTick.type,
 			]),
@@ -85,7 +84,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 	// appConnectivityChanged
 	// ─────────────────────────────────────────────────────────────
 
-	it("connectivity offline => wsDisconnect + outboxSuspend", async () => {
+	it("connectivity offline => projectionSyncDisconnect + outboxSuspend", async () => {
 		seedSignedIn(store, { userId: "u1" });
 
 		rec.clear();
@@ -96,7 +95,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
-				wsDisconnectRequested.type,
+				projectionSyncDisconnectRequested.type,
 				outboxSuspendRequested.type,
 			]),
 		);
@@ -111,7 +110,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		expect(rec.getTypes()).toEqual(["APP/CONNECTIVITY_CHANGED", 'OUTBOX/RESUME_REQUESTED']);
 	});
 
-	it("connectivity online / signedIn => wsEnsure + outboxProcessOnce + watchdogTick", async () => {
+	it("connectivity online / signedIn => projectionSyncEnsure + outboxProcessOnce + watchdogTick", async () => {
 		seedSignedIn(store, { userId: "u1" });
 		seedBootReady(store);
 
@@ -123,7 +122,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
-				wsEnsureConnectedRequested.type,
+				projectionSyncEnsureConnectedRequested.type,
 				outboxProcessOnce.type,
 				outboxWatchdogTick.type,
 			]),
@@ -134,7 +133,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 	// appBecameBackground
 	// ─────────────────────────────────────────────────────────────
 
-	it("appBecameBackground => outboxSuspend + wsDisconnect", async () => {
+	it("appBecameBackground => outboxSuspend + projectionSyncDisconnect", async () => {
 		seedSignedIn(store, { userId: "u1" });
 
 		rec.clear();
@@ -146,7 +145,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		expect(types).toEqual(
 			expect.arrayContaining([
 				outboxSuspendRequested.type,
-				wsDisconnectRequested.type,
+				projectionSyncDisconnectRequested.type,
 			]),
 		);
 	});

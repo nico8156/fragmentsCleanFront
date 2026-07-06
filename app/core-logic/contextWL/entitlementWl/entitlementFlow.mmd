@@ -5,7 +5,6 @@ flowchart LR
     Retrieval --> Gateway[gateway.entitlements]
     Gateway --> Reducer[entitlementWl.reducer]
     Reducer --> State[byUser + thresholds]
-    TicketAck[onTicketConfirmedAck] --> Listener[ackEntitlementsListener]
-    Listener --> Reducer
+    SSE[projection.updated entitlements] --> Retrieval
     State --> Selector[selectUserEntitlements]
     Selector --> UI

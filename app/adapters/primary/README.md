@@ -2,16 +2,15 @@
 
 ---
 
-# Primary Adapters (React / Runtime / Wiring / Socket)
+# Primary Adapters (React / Runtime / Wiring)
 
 La couche **primary** regroupe tout ce qui “pilote” le domain depuis l’extérieur :
 
 * **UI React** (écrans Expo, navigation)
 * **Runtime** (cycle de vie mobile, connectivité)
 * **Wiring** (composition root / DI)
-* **Socket** (temps réel WS)
 
-👉 Elle traduit des signaux externes (UI + système + WS) en **intentions** et **actions** consommées par les bounded contexts (`core-logic/contextWL/*`).
+👉 Elle traduit des signaux externes (UI + système + SSE projection sync) en **intentions** et **actions** consommées par les bounded contexts (`core-logic/contextWL/*`).
 
 ---
 
@@ -25,8 +24,7 @@ Redux store (store/)
 Domain (core-logic/)
   ↓ gateways (ports)
 Infra (adapters/secondary/)
-  ↑ acks/events (WS)
-Socket (adapters/primary/socket/)
+  ↑ projection.updated (SSE) + HTTP snapshots
 ```
 
 ---
@@ -79,20 +77,6 @@ Socket (adapters/primary/socket/)
 
 ---
 
-### `socket/`
-
-**Transport temps réel**.
-
-**Responsabilités :**
-
-* connexion WS
-* auth handshake
-* souscriptions
-* validation des messages
-* forwarding des événements
-
----
-
 ## Bootstrap applicatif
 
 ```txt
@@ -104,16 +88,14 @@ _layout.tsx
 
 ---
 
-## Flux ACK temps réel
+## Flux Projection Sync
 
 ```txt
 Backend
- → WebSocket
-   → WsStompEventsGateway
-     → wsListenerFactory
-       → dispatch(AckAction)
-         → ack listeners
-           → reducers
+ → SSE projection.updated
+   → projectionSyncListenerFactory
+     → dispatch(retrieval GET)
+       → reducer snapshot
 ```
 
 ---

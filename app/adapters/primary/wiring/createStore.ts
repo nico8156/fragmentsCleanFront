@@ -1,7 +1,7 @@
 import { outboxPersistenceMiddlewareFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxPersistenceFactory";
 import { initReduxStoreWl, type ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
-import { API_BASE_URL, WS_URL } from "./config";
+import { API_BASE_URL } from "./config";
 import { createHelpers } from "./helpers";
 import { createInfrastructure } from "./infrastructure";
 import { createWlListeners } from "./listeners";
@@ -21,7 +21,6 @@ export const createWlStore = (): ReduxStoreWl => {
 	const listeners = createWlListeners({
 		gateways,
 		helpers,
-		wsUrl: WS_URL,
 		sessionRef,
 		onSessionChanged,
 	});

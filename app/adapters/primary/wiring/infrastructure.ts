@@ -23,7 +23,6 @@ import { HttpCfPhotoGateway } from "../../secondary/gateways/coffee/HttpCfPhotoG
 import { HttpCoffeeGateway } from "../../secondary/gateways/coffee/HttpCoffeeGateway";
 import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpeningHoursGateway";
 
-import { WsStompEventsGateway } from "@/app/adapters/primary/socket/WsEventsGateway";
 import type { GatewaysWl } from "./types";
 import { HttpProjectionSyncGateway } from "@/app/adapters/secondary/gateways/projectionSync/HttpProjectionSyncGateway";
 import { PROJECTION_SYNC_EVENTS_PATH } from "./config";
@@ -79,8 +78,6 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		locations: new ExpoLocationGateway(),
 
 		articles: new HttpArticleWlGateway({ baseUrl }),
-
-		ws: new WsStompEventsGateway(),
 
 		projectionSync: new HttpProjectionSyncGateway({
 			baseUrl,

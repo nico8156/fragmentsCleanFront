@@ -1,14 +1,8 @@
-# ACK and Command Status
+# Command Status
 
-Fragments uses two reconciliation paths.
+Fragments mobile uses one canonical command lifecycle path.
 
-Fast path:
-
-```text
-WebSocket ACK -> Redux ACK action -> reconcile/drop
-```
-
-Canonical fallback:
+Command reconciliation:
 
 ```text
 outbox watchdog -> GET /commands/{commandId} -> APPLIED/REJECTED/PENDING
@@ -20,9 +14,12 @@ outbox watchdog -> GET /commands/{commandId} -> APPLIED/REJECTED/PENDING
 - `REJECTED`: rollback/drop
 - `PENDING`: keep waiting and re-check
 
-## Socket Rule
+## Projection Freshness
 
-Socket ACK is useful but optional.
+Read model freshness is separate from command lifecycle:
 
-The mobile app must remain correct without receiving it.
+```text
+projection.updated SSE -> Redux listener -> GET snapshot -> reducer
+```
 
+SSE never drops outbox records and never acts as a command ACK.
