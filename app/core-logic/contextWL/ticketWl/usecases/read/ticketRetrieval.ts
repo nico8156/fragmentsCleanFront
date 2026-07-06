@@ -2,6 +2,23 @@ import {ISODate, TicketId, TicketStatus} from "@/app/core-logic/contextWL/ticket
 import {ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
 
+const inflight = new Map<string, AbortController>();
+
+const toTicketStatus = (status: string, outcome?: string | null): TicketStatus => {
+    const normalizedStatus = status.toUpperCase();
+    const normalizedOutcome = outcome?.toUpperCase();
+
+    if (normalizedOutcome === "APPROVED" || normalizedOutcome === "CONFIRMED") return "CONFIRMED";
+    if (
+        normalizedOutcome === "REJECTED" ||
+        normalizedOutcome === "FAILED_FINAL" ||
+        normalizedStatus === "REJECTED"
+    ) return "REJECTED";
+    if (normalizedStatus === "CONFIRMED") return "CONFIRMED";
+    if (normalizedStatus === "CAPTURED") return "CAPTURED";
+    return "ANALYZING";
+};
+
 
 export const ticketRetrieval =
     (input: {
@@ -37,20 +54,46 @@ export const ticketRetrieval =
                     return;
                 }
 
-                // Exemple si tu ajoutes un gateway read:
-                // const res = await dependencies.gateways.tickets.get({ ticketId });
-                // dispatch(ticketRetrieved({...map res...}));
+                const ticketGateway = gateways?.tickets;
+                if (!ticketGateway) {
+                    throw new Error("tickets gateway not configured");
+                }
 
-                // Sans gateway → success no-op
+                inflight.get(ticketId)?.abort();
+                const controller = new AbortController();
+                inflight.set(ticketId, controller);
+
+                const res = await ticketGateway.getStatus({
+                    ticketId,
+                    signal: controller.signal,
+                });
+
+                if (inflight.get(ticketId) !== controller) return;
+
                 dispatch(
                     ticketRetrieved({
-                        ticketId,
-                        status: "ANALYZING",
-                        version: 1,
-                        updatedAt: (new Date().toISOString() as ISODate),
+                        ticketId: res.ticketId as TicketId,
+                        status: toTicketStatus(res.status, res.outcome),
+                        version: res.version,
+                        updatedAt: ((res.updatedAt ?? res.occurredAt ?? new Date().toISOString()) as ISODate),
+                        ocrText: res.ocrText ?? undefined,
+                        amountCents: res.amountCents ?? undefined,
+                        currency: res.currency ?? undefined,
+                        ticketDate: (res.ticketDate as ISODate | null | undefined) ?? undefined,
+                        merchantName: res.merchantName ?? undefined,
+                        merchantAddress: res.merchantAddress ?? undefined,
+                        paymentMethod: res.paymentMethod ?? undefined,
+                        imageRef: res.imageRef ?? undefined,
+                        rejectionReason: res.rejectionReason ?? undefined,
                     })
                 );
             } catch (e: any) {
+                if (e?.name === "AbortError") return;
                 dispatch(ticketSetError({ ticketId, message: e?.message ?? "ticket retrieval failed" }));
+            } finally {
+                const current = inflight.get(ticketId);
+                if (current && !current.signal.aborted) {
+                    inflight.delete(ticketId);
+                }
             }
         };
