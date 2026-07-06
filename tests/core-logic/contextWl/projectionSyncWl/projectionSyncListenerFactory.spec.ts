@@ -10,6 +10,7 @@ import { projectionSyncEnsureConnectedRequested } from "@/app/core-logic/context
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
+import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -171,5 +172,70 @@ describe("projectionSyncListenerFactory", () => {
 			optimistic: false,
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("3");
+	});
+
+	it("routes projection.updated/tickets to ticket status refresh GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const tickets = new FakeTicketsGateway();
+		tickets.nextStatusResponse = {
+			...tickets.nextStatusResponse,
+			status: "COMPLETED",
+			outcome: "APPROVED",
+			version: 4,
+			amountCents: 1230,
+			currency: "EUR",
+			merchantName: "Cafe Test",
+			occurredAt: "2026-07-06T11:00:00.000Z",
+		};
+
+		const store = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					projectionSync,
+					tickets,
+				} as any,
+			},
+			listeners: [
+				projectionSyncListenerFactory({
+					gateways: {
+						projectionSync,
+						tickets,
+					} as any,
+					sessionRef: {
+						current: {
+							tokens: {
+								accessToken: "mobile-token",
+							},
+						} as any,
+					},
+				}),
+			],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		projectionSync.emit({
+			id: "4",
+			eventName: "projection.updated",
+			schemaVersion: 1,
+			projection: "tickets",
+			scope: "entity",
+			entityId: "ticket-42",
+			hints: ["status", "approved"],
+		});
+		await flush();
+		await flush();
+
+		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket-42"]);
+		expect((store.getState() as any).tState.byId["ticket-42"]).toMatchObject({
+			status: "CONFIRMED",
+			version: 4,
+			amountCents: 1230,
+			currency: "EUR",
+			merchantName: "Cafe Test",
+			optimistic: false,
+		});
+		expect((store.getState() as any).psState.lastEventId).toBe("4");
 	});
 });

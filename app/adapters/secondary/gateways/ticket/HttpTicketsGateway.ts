@@ -10,6 +10,52 @@ export class HttpTicketsGateway implements TicketsWlGateway {
         }
     ) {}
 
+    async getStatus(input: {
+        ticketId: string;
+        signal?: AbortSignal;
+    }): Promise<{
+        ticketId: string;
+        status: string;
+        outcome?: string | null;
+        imageRef?: string | null;
+        ocrText?: string | null;
+        amountCents?: number | null;
+        currency?: string | null;
+        ticketDate?: string | null;
+        merchantName?: string | null;
+        merchantAddress?: string | null;
+        paymentMethod?: string | null;
+        rejectionReason?: string | null;
+        version: number;
+        occurredAt?: string | null;
+        updatedAt?: string | null;
+    }> {
+        const token = await this.deps.auth.getAccessToken();
+
+        if (!token) {
+            throw new Error("Not authenticated: missing access token");
+        }
+
+        const res = await fetch(
+            `${this.deps.baseUrl}/api/tickets/${encodeURIComponent(input.ticketId)}/status`,
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                },
+                signal: input.signal,
+            },
+        );
+
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(`Ticket status failed: HTTP ${res.status} ${text}`);
+        }
+
+        return await res.json();
+    }
+
     async verify(input: {
         commandId: string & { readonly __brand: "CommandId" };
         ticketId: string | undefined;

@@ -11,6 +11,7 @@ import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/comment
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import type { ProjectionSyncEvent } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
+import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import {
 	projectionSyncDisconnected,
 	projectionSyncDisconnectRequested,
@@ -73,6 +74,10 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 		if (event.projection === "likes" && event.scope === "target" && event.entityId) {
 			dispatch(likesRetrieval({ targetId: event.entityId as any }) as any);
+		}
+
+		if (event.projection === "tickets" && event.scope === "entity" && event.entityId) {
+			dispatch(ticketRetrieval({ ticketId: event.entityId as any }) as any);
 		}
 	};
 
