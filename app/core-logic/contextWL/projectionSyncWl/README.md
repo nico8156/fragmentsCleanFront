@@ -31,3 +31,4 @@ Domaines migres :
 - `comments`, avec `scope="target"` et `entityId=targetId`, declenche `commentRetrieval(refresh)`.
 - `likes`, avec `scope="target"` et `entityId=targetId`, declenche `likesRetrieval`.
 - `tickets`, avec `scope="entity"` et `entityId=ticketId`, declenche `ticketRetrieval`.
+- `entitlements`, avec `scope="user"` et `entityId=userId`, declenche `entitlementsRetrieval`.

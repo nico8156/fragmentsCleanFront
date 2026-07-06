@@ -1,7 +1,6 @@
 import "react-native-get-random-values";
 
 import { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
-import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { outboxStorage } from "./runtimeDeps";
@@ -13,6 +12,7 @@ import { ExpoSecureAuthSessionStore } from "@/app/adapters/secondary/gateways/au
 import { googleOAuthGateway } from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
 
 import { HttpCommentsGateway } from "@/app/adapters/secondary/gateways/comments/HttpCommentsGateway";
+import { HttpEntitlementWlGateway } from "@/app/adapters/secondary/gateways/entitlement/HttpEntitlementWlGateway";
 import { HttpLikesGateway } from "@/app/adapters/secondary/gateways/like/HttpLikesGateway";
 import { HttpCommandStatusGateway } from "@/app/adapters/secondary/gateways/outbox/HttpCommandStatusGateway";
 import { HttpTicketsGateway } from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
@@ -72,7 +72,10 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 			authToken,
 		}),
 
-		entitlements: new FakeEntitlementWlGateway(),
+		entitlements: new HttpEntitlementWlGateway({
+			baseUrl,
+			authToken,
+		}),
 		locations: new ExpoLocationGateway(),
 
 		articles: new HttpArticleWlGateway({ baseUrl }),

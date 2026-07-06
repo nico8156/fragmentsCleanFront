@@ -9,6 +9,7 @@ import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projec
 import { projectionSyncEnsureConnectedRequested } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
+import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 
@@ -237,5 +238,63 @@ describe("projectionSyncListenerFactory", () => {
 			optimistic: false,
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("4");
+	});
+
+	it("routes projection.updated/entitlements to entitlements snapshot GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const entitlements = new FakeEntitlementWlGateway();
+		entitlements.store.set("user-42", {
+			userId: "user-42",
+			confirmedTickets: 5,
+			rights: [],
+			updatedAt: "2026-07-06T12:00:00.000Z",
+		});
+
+		const store = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					projectionSync,
+					entitlements,
+				} as any,
+			},
+			listeners: [
+				projectionSyncListenerFactory({
+					gateways: {
+						projectionSync,
+						entitlements,
+					} as any,
+					sessionRef: {
+						current: {
+							tokens: {
+								accessToken: "mobile-token",
+							},
+						} as any,
+					},
+				}),
+			],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		projectionSync.emit({
+			id: "5",
+			eventName: "projection.updated",
+			schemaVersion: 1,
+			projection: "entitlements",
+			scope: "user",
+			entityId: "user-42",
+			hints: ["confirmedTickets"],
+		});
+		await flush();
+		await flush();
+
+		expect((store.getState() as any).enState.byUser["user-42"]).toMatchObject({
+			userId: "user-42",
+			confirmedTickets: 5,
+			rights: ["LIKE", "COMMENT", "SUBMIT_CAFE"],
+			updatedAt: "2026-07-06T12:00:00.000Z",
+		});
+		expect((store.getState() as any).psState.lastEventId).toBe("5");
 	});
 });

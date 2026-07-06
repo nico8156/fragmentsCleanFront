@@ -9,6 +9,7 @@ import {
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import type { ProjectionSyncEvent } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
 import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
@@ -78,6 +79,10 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 		if (event.projection === "tickets" && event.scope === "entity" && event.entityId) {
 			dispatch(ticketRetrieval({ ticketId: event.entityId as any }) as any);
+		}
+
+		if (event.projection === "entitlements" && event.scope === "user" && event.entityId) {
+			dispatch(entitlementsRetrieval({ userId: event.entityId }) as any);
 		}
 	};
 
