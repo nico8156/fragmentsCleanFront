@@ -1,67 +1,100 @@
-import {
-    GoogleSignin,
-    isSuccessResponse,
-} from '@react-native-google-signin/google-signin';
+import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 
 import {
-    AuthTokens,
-    OAuthProfile,
-    ProviderId,
-    toProviderUserId,
+	OAuthProfile,
+	ProviderId,
+	toProviderUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import {OAuthGateway} from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { OAuthGateway } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import {
+	GOOGLE_MOBILE_IOS_CLIENT_ID,
+	GOOGLE_MOBILE_IOS_REDIRECT_URI,
+} from "@/app/adapters/primary/wiring/config";
 
-GoogleSignin.configure({
-    iosClientId: "255942605258-kjbb93iq5tlhpc74d75h8jntajvqpilt.apps.googleusercontent.com",
-    offlineAccess: true,
-    webClientId: "255942605258-5errelo3uh5perq07b4cnj87l6rgsplp.apps.googleusercontent.com",
-})
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_DISCOVERY = {
+	authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+};
+
+const DEFAULT_GOOGLE_SCOPES = ["openid", "email", "profile"];
+
+const getGoogleOAuthConfig = () => {
+	if (!GOOGLE_MOBILE_IOS_CLIENT_ID) {
+		throw new Error("[AUTH] Missing Google mobile iOS client id. Set EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID before building/running the app.");
+	}
+	if (!GOOGLE_MOBILE_IOS_REDIRECT_URI) {
+		throw new Error("[AUTH] Missing Google mobile iOS redirect URI. Set EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI before building/running the app.");
+	}
+	return {
+		clientId: GOOGLE_MOBILE_IOS_CLIENT_ID,
+		redirectUri: GOOGLE_MOBILE_IOS_REDIRECT_URI,
+	};
+};
+
+type SuccessfulAuthSessionResult = AuthSession.AuthSessionResult & {
+	type: "success";
+	params: Record<string, string>;
+};
+
+const assertAuthorizationSucceeded = (
+	result: AuthSession.AuthSessionResult,
+): SuccessfulAuthSessionResult => {
+	if (result.type === "cancel" || result.type === "dismiss") {
+		throw new Error("Google sign-in cancelled");
+	}
+	if (result.type !== "success") {
+		throw new Error("Google sign-in failed");
+	}
+	return result as SuccessfulAuthSessionResult;
+};
 
 export const googleOAuthGateway: OAuthGateway = {
-    async startSignIn(provider: ProviderId, opts?: { scopes?: string[] }) {
-        if (provider !== "google") {
-            throw new Error(`Unsupported provider: ${provider}`);
-        }
+	async startSignIn(provider: ProviderId, opts?: { scopes?: string[] }) {
+		if (provider !== "google") {
+			throw new Error(`Unsupported provider: ${provider}`);
+		}
+		const { clientId, redirectUri } = getGoogleOAuthConfig();
 
-        await GoogleSignin.hasPlayServices();
-        const response = await GoogleSignin.signIn();
+		const request = new AuthSession.AuthRequest({
+			clientId,
+			redirectUri,
+			responseType: AuthSession.ResponseType.Code,
+			scopes: opts?.scopes?.length ? opts.scopes : DEFAULT_GOOGLE_SCOPES,
+			usePKCE: true,
+			extraParams: {
+				access_type: "offline",
+			},
+		});
 
-        if (!isSuccessResponse(response)) {
-            throw new Error("Google sign-in cancelled");
-        }
+		const result = assertAuthorizationSucceeded(
+			await request.promptAsync(GOOGLE_DISCOVERY),
+		);
 
-        const { idToken, serverAuthCode, scopes, user } = response.data;
+		const authorizationCode = result.params.code;
+		const codeVerifier = request.codeVerifier;
 
-        if (!serverAuthCode) {
-            throw new Error("No serverAuthCode returned by Google");
-        }
+		if (!authorizationCode || !codeVerifier) {
+			throw new Error("Google authorization response is incomplete");
+		}
 
-        const profile: OAuthProfile = {
-            provider: "google",
-            providerUserId: toProviderUserId(user.id),
-            email: user.email,
-            emailVerified: true, // on pourra raffiner, mais c'est souvent vrai
-            displayName: user.name ?? undefined,
-            avatarUrl: user.photo ?? undefined,
-            locale: undefined,
-        };
+		const profile: OAuthProfile = {
+			provider: "google",
+			providerUserId: toProviderUserId("google-auth-session"),
+		};
 
-        // ICI : ce ne sont pas les tokens de TON app,
-        // juste ce qu'on veut passer au backend
-        const tokens: AuthTokens = {
-            accessToken: serverAuthCode, // temporairement "détourné" pour porter l'authCode
-            idToken: idToken ?? undefined,
-            refreshToken: undefined,
-            expiresAt: Date.now() + 5 * 60 * 1000, // code très court terme
-            issuedAt: Date.now(),
-            tokenType: "Bearer",
-            scope: scopes.join(" "),
-        };
-        return { profile, tokens };
-    },
+		return {
+			profile,
+			authorization: {
+				authorizationCode,
+				codeVerifier,
+				redirectUri,
+			},
+		};
+	},
 
-    async signOut(provider: ProviderId): Promise<void> {
-        if (provider !== "google") return;
-        // TODO: GoogleSignin.signOut() si tu veux
-    },
+	async signOut(provider: ProviderId): Promise<void> {
+		if (provider !== "google") return;
+	},
 };

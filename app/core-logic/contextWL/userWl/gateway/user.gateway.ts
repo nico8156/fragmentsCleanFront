@@ -1,17 +1,17 @@
 import {
     AppUser,
     AuthSession,
-    AuthTokens,
     OAuthProfile,
+    ProviderAuthorizationResult,
     ProviderId,
     UserId
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export interface OAuthGateway {
-    // Lance le flow OAuth (web/native) et retourne un profil + tokens bruts
+    // Lance le flow OAuth (web/native) et retourne le code d'autorisation provider.
     startSignIn(provider: ProviderId, opts?: { scopes?: string[] }): Promise<{
         profile: OAuthProfile;
-        tokens: AuthTokens;
+        authorization: ProviderAuthorizationResult;
     }>;
 
     // Déconnexion au niveau provider (facultatif selon besoin)
@@ -35,7 +35,9 @@ export interface UserRepo {
 export interface AuthServerGateway {
     signInWithProvider(input: {
         provider: ProviderId;
-        authorizationCode: string; // serverAuthCode
+        authorizationCode: string;
+        codeVerifier: string;
+        redirectUri: string;
         idToken?: string | null;
         scopes: string[];
     }): Promise<{

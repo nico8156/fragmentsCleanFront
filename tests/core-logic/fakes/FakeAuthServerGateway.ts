@@ -2,6 +2,7 @@ export class FakeAuthServerGateway {
 	constructor(private readonly ttlMs: number = 2 * 60 * 60 * 1000) { }
 
 	refreshedUser?: any;
+	lastSignInInput?: any;
 
 	async refreshSession(session: any) {
 		const user = this.refreshedUser; // optionnel: peut rester undefined
@@ -17,7 +18,8 @@ export class FakeAuthServerGateway {
 			user, // peut être undefined
 		};
 	}
-	async signInWithProvider(_input: any) {
+	async signInWithProvider(input: any) {
+		this.lastSignInInput = input;
 		const user = this.refreshedUser ?? { id: "user_test", displayName: "Fake User" };
 		return {
 			session: {
@@ -36,4 +38,3 @@ export class FakeAuthServerGateway {
 		};
 	}
 }
-

@@ -85,6 +85,13 @@ export interface AuthTokens {
     scope?: string;              // echo provider
 }
 
+export interface ProviderAuthorizationResult {
+    authorizationCode: string;
+    codeVerifier: string;
+    redirectUri: string;
+    idToken?: string;
+}
+
 // Session actuelle en mémoire
 export interface AuthSession {
     userId: UserId;
