@@ -6,9 +6,29 @@ import {
 	READ_MODEL_CACHE_SCHEMA_VERSION,
 	readModelCacheRehydrated,
 } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
+import { articleListReceived, articleReceived } from "@/app/core-logic/contextWL/articleWl/typeAction/article.action";
 import { coffeesHydrated, coffeeRetrieved } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 import { photosHydrated } from "@/app/core-logic/contextWL/cfPhotosWl/typeAction/cfPhoto.action";
+import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
+import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { entitlementsHydrated, entitlementsSetThresholds } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
+import {
+	likeOptimisticApplied,
+	likeReconciled,
+	likeRollback,
+	likesRetrieved,
+	unlikeOptimisticApplied,
+} from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { hoursHydrated } from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.action";
+import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import {
+	ticketOptimisticCreated,
+	ticketReconciledConfirmed,
+	ticketReconciledRejected,
+	ticketRetrieved,
+	ticketRollBack,
+} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import type { AppDispatchWl, ReduxStoreWl, RootStateWl } from "@/app/store/reduxStoreWl";
 
 type Deps = {
@@ -22,6 +42,11 @@ const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
 	coffees: state.cfState,
 	cfPhotos: state.pState,
 	openingHours: state.ohState,
+	comments: state.cState,
+	likes: state.lState,
+	tickets: state.tState,
+	entitlement: state.enState,
+	articles: state.arState,
 });
 
 export const readModelCachePersistenceFactory = (deps: Deps) => {
@@ -41,7 +66,36 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 	};
 
 	listen({
-		matcher: isAnyOf(coffeesHydrated, coffeeRetrieved, photosHydrated, hoursHydrated),
+		matcher: isAnyOf(
+			coffeesHydrated,
+			coffeeRetrieved,
+			photosHydrated,
+			hoursHydrated,
+			articleReceived,
+			articleListReceived,
+			commentsRetrieved,
+			addOptimisticCreated,
+			updateOptimisticApplied,
+			deleteOptimisticApplied,
+			createReconciled,
+			updateReconciled,
+			deleteReconciled,
+			createRollback,
+			updateRollback,
+			deleteRollback,
+			likesRetrieved,
+			likeOptimisticApplied,
+			unlikeOptimisticApplied,
+			likeReconciled,
+			likeRollback,
+			ticketRetrieved,
+			ticketOptimisticCreated,
+			ticketReconciledConfirmed,
+			ticketReconciledRejected,
+			ticketRollBack,
+			entitlementsHydrated,
+			entitlementsSetThresholds,
+		),
 		effect: async (_, api) => {
 			persistSoon(api.getState());
 		},

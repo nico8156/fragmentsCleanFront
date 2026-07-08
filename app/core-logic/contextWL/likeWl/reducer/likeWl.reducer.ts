@@ -24,6 +24,7 @@ import {
 } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { AppStateWl } from "@/app/store/appStateWl";
+import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 const DEFAULT_STALE_AFTER_MS = 60_000;
 
@@ -58,6 +59,8 @@ const ensureAgg = (
 });
 
 export const likeWlReducer = createReducer(initialState, (builder) => {
+	builder.addCase(readModelCacheRehydrated, (state, { payload }) => payload.likes ?? state);
+
 	builder.addCase(likesRetrievalPending, (state, { payload: { targetId } }) => {
 		const v = ensureAgg(state, targetId);
 		v.loading = loadingStates.PENDING;
@@ -180,4 +183,3 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 		delete (v as any).sync;
 	});
 });
-

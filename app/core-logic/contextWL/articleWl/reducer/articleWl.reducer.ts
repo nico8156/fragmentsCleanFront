@@ -14,6 +14,7 @@ import {
     articleLoadingStates,
     Locale,
 } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import {readModelCacheRehydrated} from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 const initialState: ArticleStateWl = {
     byId: {},
@@ -84,6 +85,7 @@ export const articleWlReducer = createReducer(
     initialState,
     (builder) => {
     builder
+        .addCase(readModelCacheRehydrated, (state, { payload }) => payload.articles ?? state)
         .addCase(articleRequested, (state, { payload }) => {
             updateReferenceState(state, payload.target, articleLoadingStates.PENDING);
         })

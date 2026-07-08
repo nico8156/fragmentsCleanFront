@@ -10,6 +10,11 @@ export type DurableReadModelCacheSnapshot = {
 	coffees?: AppStateWl["coffees"];
 	cfPhotos?: AppStateWl["cfPhotos"];
 	openingHours?: AppStateWl["openingHours"];
+	comments?: AppStateWl["comments"];
+	likes?: AppStateWl["likes"];
+	tickets?: AppStateWl["tickets"];
+	entitlement?: AppStateWl["entitlement"];
+	articles?: AppStateWl["articles"];
 };
 
 export const readModelCacheRehydrated = createAction<DurableReadModelCacheSnapshot>(
