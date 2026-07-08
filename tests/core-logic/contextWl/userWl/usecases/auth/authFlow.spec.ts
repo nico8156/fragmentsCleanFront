@@ -130,6 +130,46 @@ describe("auth flow", () => {
 		expect(secureStore.snapshot()?.tokens.expiresAt).toBeGreaterThan(session.tokens.expiresAt);
 	});
 
+	it("keeps the stored session when refresh fails because the app is offline", async () => {
+		const oauth = new FakeOAuthGateway();
+		const secureStore = new FakeAuthSecureStore();
+		const userRepo = new FakeUserRepo([makeDemoUser()]);
+		const authServer = {
+			async refreshSession() {
+				throw new Error("Network request failed");
+			},
+		};
+		const session: AuthSession = {
+			userId: makeDemoUser().id,
+			provider: "google",
+			scopes: ["openid"],
+			establishedAt: Date.now(),
+			tokens: {
+				accessToken: "expired-offline",
+				refreshToken: "refresh-token",
+				expiresAt: Date.now() - 30 * 1000,
+				tokenType: "Bearer",
+			},
+		};
+		await secureStore.saveSession(session);
+		const deps = {
+			gateways: {
+				auth: { oauth, secureStore, userRepo, server: authServer },
+			},
+			helpers: {},
+		};
+		const store = createTestStore(deps);
+
+		store.dispatch<any>(initializeAuth());
+		await flush();
+		await flush();
+
+		const state = store.getState().aState;
+		expect(state.status).toBe("signedIn");
+		expect(state.session?.userId).toBe(session.userId);
+		expect(secureStore.snapshot()?.tokens.accessToken).toBe("expired-offline");
+	});
+
 	it("clears session on sign out", async () => {
 		const oauth = new FakeOAuthGateway();
 		const secureStore = new FakeAuthSecureStore();

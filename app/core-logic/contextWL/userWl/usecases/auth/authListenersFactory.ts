@@ -41,6 +41,27 @@ const isHttp404 = (e: any): boolean => {
 	);
 };
 
+const extractHttpStatus = (e: any): number | undefined => {
+	if (typeof e?.status === "number") return e.status;
+	const msg = String(e?.message ?? e ?? "");
+	const match = msg.match(/\b(4\d\d|5\d\d)\b/);
+	return match ? Number(match[1]) : undefined;
+};
+
+const isTransientRefreshFailure = (e: any): boolean => {
+	const status = extractHttpStatus(e);
+	if (status && (status === 408 || status === 429 || status >= 500)) return true;
+	const msg = String(e?.message ?? e ?? "").toLowerCase();
+	return (
+		msg.includes("network") ||
+		msg.includes("offline") ||
+		msg.includes("timeout") ||
+		msg.includes("timed out") ||
+		msg.includes("abort") ||
+		msg.includes("failed to fetch")
+	);
+};
+
 export const authListenerFactory = (deps: AuthListenerDeps) => {
 	const middleware = createListenerMiddleware();
 	const listen =
@@ -215,12 +236,22 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				}
 			} catch (error: any) {
 				console.log("[REFRESH] FAILED", error);
+				const errorMessage = error?.message ?? "Session refresh failed";
+				if (isTransientRefreshFailure(error)) {
+					api.dispatch(
+						authSessionRefreshFailed({
+							error: errorMessage,
+						}),
+					);
+					return;
+				}
+
 				activeSession = undefined;
 				deps.onSessionChanged?.(activeSession);
 				await secureStore.clearSession().catch(() => undefined);
 				api.dispatch(
 					authSessionRefreshFailed({
-						error: error?.message ?? "Session refresh failed",
+						error: errorMessage,
 					}),
 				);
 				api.dispatch(authSignedOut());

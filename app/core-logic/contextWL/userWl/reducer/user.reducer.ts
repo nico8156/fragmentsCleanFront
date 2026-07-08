@@ -5,6 +5,7 @@ import {
 	authSessionLoadRequested,
 	authSessionLoaded,
 	authSessionRefreshed,
+	authSessionRefreshFailed,
 	authSignInFailed,
 	authSignInRequested,
 	authSignInSucceeded,
@@ -65,6 +66,10 @@ export const authReducer = createReducer(initialState, (builder) => {
 			if (state.session) {
 				state.session = payload.session;
 			}
+			state.error = undefined;
+		})
+		.addCase(authSessionRefreshFailed, (state, { payload }) => {
+			state.error = payload.error;
 		})
 		.addCase(authSessionExpired, (state, { payload }) => {
 			state.status = "error";
@@ -77,8 +82,7 @@ export const authReducer = createReducer(initialState, (builder) => {
 		// on ne casse plus le statut "signedIn" pendant l'hydration user
 		// (sinon flicker + runtime "pas signedIn" + pas de resync)
 		.addCase(authUserHydrationRequested, (state) => {
-			// optionnel: on peut nettoyer une erreur, mais on ne touche pas status
-			state.error = undefined;
+			// Ne touche pas au status ni aux erreurs de refresh transitoires.
 		})
 
 		.addCase(authUserHydrationSucceeded, (state, { payload }) => {
@@ -114,4 +118,3 @@ export const authReducer = createReducer(initialState, (builder) => {
 			};
 		});
 });
-

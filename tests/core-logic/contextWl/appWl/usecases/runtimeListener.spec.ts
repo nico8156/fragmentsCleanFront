@@ -9,6 +9,7 @@ import {
 
 import {
 	outboxProcessOnce,
+	outboxResumeRequested,
 	outboxSuspendRequested,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
@@ -19,6 +20,10 @@ import {
 	projectionSyncDisconnectRequested,
 	projectionSyncEnsureConnectedRequested,
 } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
+import {
+	authMaybeRefreshRequested,
+	authUserHydrationRequested,
+} from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import { seedBootReady, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 
@@ -33,7 +38,8 @@ describe("runtimeListenerFactory (appWl)", () => {
 			filter: (a) =>
 				a.type.startsWith("APP/") ||
 				a.type.startsWith("OUTBOX/") ||
-				a.type.startsWith("projectionSync/"),
+				a.type.startsWith("projectionSync/") ||
+				a.type.startsWith("auth/"),
 		});
 
 		store = initReduxStoreWl({
@@ -122,6 +128,9 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
+				outboxResumeRequested.type,
+				authMaybeRefreshRequested.type,
+				authUserHydrationRequested.type,
 				projectionSyncEnsureConnectedRequested.type,
 				outboxProcessOnce.type,
 				outboxWatchdogTick.type,
