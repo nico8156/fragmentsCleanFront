@@ -93,7 +93,7 @@ Secondary adapters implement:
 - HTTP
 - WebSocket/STOMP
 - SecureStore
-- MMKV/outbox storage
+- MMKV/outbox/read-model/sync metadata storage
 - NetInfo
 - AppState
 - Location
@@ -128,6 +128,7 @@ Do not rollback on:
 - network error
 - timeout
 - 5xx
+- 401/403 transport/auth errors from a write gateway
 - missed socket ACK
 - app backgrounding
 
@@ -142,6 +143,8 @@ Rollback only on:
 - `GET /commands/{commandId}` returning `REJECTED`
 
 `PENDING` means wait and check again.
+
+Write gateways must throw typed gateway errors where possible. The outbox processor treats `business` errors as rollback candidates and treats `network`, `auth`, `server`, and unknown transport failures as retryable.
 
 ## WebSocket Policy
 
@@ -159,6 +162,8 @@ It must not:
 - replace command status polling
 
 The WebSocket gateway parses and validates transport payloads, then dispatches Redux ACK actions through listeners.
+
+Projection sync must persist its cursor through `SyncMetaStorage`. Reconnects must resume from the stored cursor when the gateway has no fresher in-memory `lastEventId`.
 
 ## Command Status Policy
 
@@ -178,12 +183,21 @@ App bootstrap must:
 2. mark hydration
 3. initialize auth
 4. rehydrate outbox
-5. process outbox if signed in and online
-6. run non-critical warmup reads
-7. mark warmup/boot success
-8. clean up runtime adapters on unmount
+5. rehydrate durable read-model cache
+6. process outbox if signed in and online
+7. run non-critical warmup reads
+8. mark warmup/boot success
+9. clean up runtime adapters on unmount
 
 Warmup data must not corrupt the outbox lifecycle.
+
+## Offline Readiness
+
+Durable read-model cache is part of the runtime contract. Coffee catalog, coffee photos metadata, opening hours, articles, comments, likes, tickets, and entitlements are persisted through the read cache and rehydrated before warmup reads.
+
+Remote cafe images must use the image cache gateway or native disk cache. Screens may render cached image URIs, but must not own cache fetch or retry logic.
+
+Auth refresh failures caused by offline mode, timeout, 408/429, or 5xx must keep the stored session. Only explicit auth rejection should clear SecureStore and sign the user out.
 
 ## Configuration and Secrets
 
@@ -205,6 +219,7 @@ Expected tests:
 - outbox tests cover retry/awaiting ACK/drop/rollback
 - socket ACK tests cover route/reconcile/drop
 - bootstrap tests cover rehydration and runtime lifecycle
+- offline readiness tests cover cold-start cache, expired-token offline refresh, reconnect refresh, and projection cursor resume
 - critical flows are tested without real network
 
 Mocks are allowed for native technical boundaries. Business ports should use named fakes.
@@ -214,10 +229,10 @@ Mocks are allowed for native technical boundaries. Business ports should use nam
 - no `fetch` in screens
 - no concrete gateway in view models
 - no rollback on network failure
+- no sign-out on transient refresh failure
 - no socket as source of truth
 - no API config hardcoded for prod
 - no secret in Expo config
 - no direct mutation outside reducers
 - no command without `commandId`
 - no write path that bypasses local outbox for critical user actions
-

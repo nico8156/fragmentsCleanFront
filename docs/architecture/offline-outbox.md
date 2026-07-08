@@ -16,9 +16,13 @@ On transport failure:
 - schedule retry
 - keep optimistic UI
 
+Transport failure includes offline mode, network errors, timeouts, missed socket ACKs, 5xx, and auth/transport errors emitted by write gateways.
+
 On business rejection:
 - rollback
 - drop command
+
+Write gateways should throw typed gateway errors. Only explicit `business` rejection can trigger rollback from immediate command processing; command status `REJECTED` is the canonical terminal rejection.
 
 ## Required Data
 
@@ -34,4 +38,3 @@ Each command stores:
 ## Critical Rule
 
 Network failure is not business failure.
-
