@@ -144,7 +144,6 @@ export default function CafeDetailsScreen() {
 					commentSync={comments.sync}
 					onBack={onBack}
 					onPressLike={() => {
-						if (likes.isLoading || likes.isRefreshing) return;
 						likes.toggleLike();
 					}}
 					onPressComments={scrollToCommentsEnd}
@@ -197,4 +196,3 @@ export default function CafeDetailsScreen() {
 		</SafeAreaView>
 	);
 }
-

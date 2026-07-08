@@ -58,6 +58,35 @@ const makeSequencedDeps = (p: {
 };
 
 describe("Like toggle listener (optimistic + enqueue)", () => {
+    it("ADD: works before the initial likes read has completed", async () => {
+        const likes = new FakeLikesGateway();
+        const authToken = new FakeAuthTokenBridge("token_test", "user_test");
+
+        const deps = makeDeps({
+            likes,
+            authToken,
+            nowIso: "2025-10-10T07:02:00.000Z" as ISODate,
+            outboxId: "obx_like_empty",
+            commandId: "cmd_like_empty" as CommandId,
+        });
+
+        const store = initReduxStoreWl({
+            dependencies: deps,
+            listeners: [likeToggleUseCaseFactory(deps).middleware],
+        });
+
+        store.dispatch(uiLikeToggleRequested({ targetId: "cafe_A" }));
+        await flushPromises();
+
+        const s = store.getState() as any;
+        expect(s.lState.byTarget.cafe_A).toMatchObject({
+            count: 1,
+            me: true,
+            optimistic: true,
+        });
+        expect(s.oState.byId.obx_like_empty.item.command.kind).toBe(commandKinds.LikeAdd);
+    });
+
     it("ADD: optimistic + outbox enqueued (fully deterministic)", async () => {
         const likes = new FakeLikesGateway();
         const authToken = new FakeAuthTokenBridge("token_test", "user_test");

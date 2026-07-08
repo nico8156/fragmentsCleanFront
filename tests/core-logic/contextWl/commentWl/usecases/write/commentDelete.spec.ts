@@ -103,4 +103,30 @@ describe("Comments WRITE - DELETE (optimistic + enqueue)", () => {
         const s: any = store.getState();
         expect(s.oState.queue.length).toBe(0);
     });
+
+    it("should delete an optimistic-looking comment when no command is pending for it", async () => {
+        store.dispatch(
+            addOptimisticCreated({
+                entity: {
+                    id: "stale_optimistic",
+                    targetId,
+                    body: "texte stale",
+                    authorId: "user_test",
+                    createdAt: "2025-10-10T07:00:00.000Z",
+                    likeCount: 0,
+                    replyCount: 0,
+                    moderation: "PUBLISHED",
+                    version: 8,
+                    optimistic: true,
+                } as any,
+            }),
+        );
+
+        store.dispatch(uiCommentDeleteRequested({ commentId: "stale_optimistic" }));
+        await flushPromises();
+
+        const s: any = store.getState();
+        expect(s.cState.entities.entities.stale_optimistic.moderation).toBe("SOFT_DELETED");
+        expect(s.oState.byId.obx_delete_001.item.command.commentId).toBe("stale_optimistic");
+    });
 });
