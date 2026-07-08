@@ -1,6 +1,7 @@
 import {computeLikeId} from "@/app/adapters/secondary/gateways/like/helpers/likeId";
 import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
+import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type HttpLikesGatewayDeps = {
     baseUrl: string;                    // ex: "https://api.fragments.app"
@@ -51,10 +52,10 @@ export class HttpLikesGateway implements LikeWlGateway {
 
     async add({ commandId, targetId, at }: { commandId: string; targetId: string; at: string }) {
         const token = await this.deps.authToken.getAccessToken();
-        if (!token) throw new Error("Not authenticated");
+        if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const userId = this.deps.authToken.getCurrentUserId();
-        if (!userId) throw new Error("No userId yet");
+        if (!userId) throw new GatewayError("auth", "No userId yet");
 
         const likeId = computeLikeId(userId, targetId);
 
@@ -67,16 +68,16 @@ export class HttpLikesGateway implements LikeWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw new Error(`Likes add failed with status ${res.status}`);
+            throw toGatewayErrorFromHttpStatus(res.status, `Likes add failed with status ${res.status}`);
         }
     }
 
     async remove({ commandId, targetId, at }: { commandId: string; targetId: string; at: string }) {
         const token = await this.deps.authToken.getAccessToken();
-        if (!token) throw new Error("Not authenticated");
+        if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const userId = this.deps.authToken.getCurrentUserId();
-        if (!userId) throw new Error("No userId yet");
+        if (!userId) throw new GatewayError("auth", "No userId yet");
 
         const likeId = computeLikeId(userId, targetId);
 
@@ -89,7 +90,7 @@ export class HttpLikesGateway implements LikeWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw new Error(`Likes remove failed with status ${res.status}`);
+            throw toGatewayErrorFromHttpStatus(res.status, `Likes remove failed with status ${res.status}`);
         }
     }
 }

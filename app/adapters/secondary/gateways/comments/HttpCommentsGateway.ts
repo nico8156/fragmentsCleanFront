@@ -1,6 +1,7 @@
 // HttpCommentsGateway.ts
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type HttpCommentsGatewayDeps = {
     baseUrl: string;
@@ -56,7 +57,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         tempId: string; // commentId côté back (stable) = tempId RN
     }): Promise<void> {
         const token = await this.getAccessToken();
-        if (!token) throw new Error("Not authenticated");
+        if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const payload = {
             commandId: input.commandId,
@@ -77,7 +78,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw new Error(`Comments create failed with status ${res.status}`);
+            throw toGatewayErrorFromHttpStatus(res.status, `Comments create failed with status ${res.status}`);
         }
     }
 
@@ -88,7 +89,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         editedAt?: string;
     }): Promise<void> {
         const token = await this.getAccessToken();
-        if (!token) throw new Error("Not authenticated");
+        if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const payload = {
             commandId: input.commandId,
@@ -107,13 +108,13 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw new Error(`Comments update failed with status ${res.status}`);
+            throw toGatewayErrorFromHttpStatus(res.status, `Comments update failed with status ${res.status}`);
         }
     }
 
     async delete(input: { commandId: string; commentId: string; deletedAt?: string }): Promise<void> {
         const token = await this.getAccessToken();
-        if (!token) throw new Error("Not authenticated");
+        if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const payload = {
             commandId: input.commandId,
@@ -131,7 +132,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw new Error(`Comments delete failed with status ${res.status}`);
+            throw toGatewayErrorFromHttpStatus(res.status, `Comments delete failed with status ${res.status}`);
         }
     }
 }
