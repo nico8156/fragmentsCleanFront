@@ -12,6 +12,7 @@ import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGa
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
+import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -296,5 +297,53 @@ describe("projectionSyncListenerFactory", () => {
 			updatedAt: "2026-07-06T12:00:00.000Z",
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("5");
+	});
+
+	it("connects from the persisted projection cursor and stores the latest event id", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const syncMetaStorage = createMemorySyncMetaStorage();
+		await syncMetaStorage.setCursor("event-42");
+
+		const store = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					projectionSync,
+				} as any,
+			},
+			listeners: [
+				projectionSyncListenerFactory({
+					gateways: {
+						projectionSync,
+					} as any,
+					sessionRef: {
+						current: {
+							tokens: {
+								accessToken: "mobile-token",
+							},
+						} as any,
+					},
+					syncMetaStorage,
+				}),
+			],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		expect(projectionSync.params?.lastEventId).toBe("event-42");
+
+		projectionSync.emit({
+			id: "event-43",
+			eventName: "projection.updated",
+			schemaVersion: 1,
+			projection: "likes",
+			scope: "target",
+			entityId: "target-99",
+			hints: ["set"],
+		});
+		await flush();
+
+		expect((await syncMetaStorage.loadOrDefault()).cursor).toBe("event-43");
+		expect((store.getState() as any).psState.lastEventId).toBe("event-43");
 	});
 });

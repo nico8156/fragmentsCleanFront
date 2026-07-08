@@ -26,6 +26,7 @@ import {
 	authSignInSucceeded,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 import { logger } from "@/app/core-logic/utils/logger";
 
 export type ProjectionSyncSessionRef = { current?: AuthSession };
@@ -33,6 +34,7 @@ export type ProjectionSyncSessionRef = { current?: AuthSession };
 type ProjectionSyncListenerDeps = {
 	gateways: DependenciesWl["gateways"];
 	sessionRef?: ProjectionSyncSessionRef;
+	syncMetaStorage?: SyncMetaStorage;
 };
 
 const isIgnorableSyncEvent = (event: ProjectionSyncEvent) =>
@@ -47,6 +49,30 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 	let lastToken: string | undefined;
 	let lastEventId: string | undefined;
+	let syncMetaLoaded = false;
+
+	const ensureSyncMetaLoaded = async () => {
+		if (syncMetaLoaded) return;
+		syncMetaLoaded = true;
+		try {
+			const meta = await deps.syncMetaStorage?.loadOrDefault();
+			if (!lastEventId && meta?.cursor) lastEventId = meta.cursor;
+		} catch (e) {
+			logger.warn("[ProjectionSync] sync meta load failed", {
+				error: String((e as any)?.message ?? e),
+			});
+		}
+	};
+
+	const persistCursor = (cursor?: string) => {
+		if (!cursor) return;
+		lastEventId = cursor;
+		void deps.syncMetaStorage?.setCursor(cursor).catch((e) => {
+			logger.warn("[ProjectionSync] sync cursor persist failed", {
+				error: String((e as any)?.message ?? e),
+			});
+		});
+	};
 
 	const readSession = async (): Promise<AuthSession | undefined> => {
 		if (deps.sessionRef?.current) return deps.sessionRef.current;
@@ -109,6 +135,8 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			return;
 		}
 
+		await ensureSyncMetaLoaded();
+
 		if (lastToken && token !== lastToken) {
 			gateway.disconnect();
 		}
@@ -118,11 +146,11 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			token,
 			lastEventId: gateway.getLastEventId?.() ?? lastEventId,
 			onStatus: (status) => {
-				lastEventId = status.lastEventId ?? lastEventId;
+				persistCursor(status.lastEventId);
 				api.dispatch(projectionSyncStateChanged(status));
 			},
 			onEvent: (event) => {
-				if (event.id) lastEventId = event.id;
+				persistCursor(event.id);
 				api.dispatch(projectionSyncEventReceived({ event }));
 				routeProjectionUpdated(event, api.dispatch);
 			},
@@ -167,7 +195,14 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 	listen({
 		actionCreator: appBecameBackground,
-		effect: async (_, api) => disconnect(api as any, "background"),
+		effect: async (_, api) => {
+			void deps.syncMetaStorage?.updateLastActiveAt(Date.now()).catch((e) => {
+				logger.warn("[ProjectionSync] sync activity persist failed", {
+					error: String((e as any)?.message ?? e),
+				});
+			});
+			disconnect(api as any, "background");
+		},
 	});
 
 	listen({
