@@ -23,3 +23,5 @@ projection.updated SSE -> Redux listener -> GET snapshot -> reducer
 ```
 
 SSE never drops outbox records and never acts as a command ACK.
+
+Projection sync persists the latest event cursor locally. After restart or reconnect, the gateway should resume with the persisted cursor if it has no fresher in-memory event id.
