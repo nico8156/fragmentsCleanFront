@@ -6,7 +6,7 @@ import { API_BASE_URL } from "./config";
 import { createHelpers } from "./helpers";
 import { createInfrastructure } from "./infrastructure";
 import { createWlListeners } from "./listeners";
-import { readModelCacheStorage } from "./runtimeDeps";
+import { readModelCacheStorage, syncMetaStorage } from "./runtimeDeps";
 
 export const createWlStore = (): ReduxStoreWl => {
 	const { gateways, outboxStorage, onSessionChanged, sessionRef } =
@@ -24,6 +24,7 @@ export const createWlStore = (): ReduxStoreWl => {
 		gateways,
 		helpers,
 		sessionRef,
+		syncMetaStorage,
 		onSessionChanged,
 	});
 

@@ -16,6 +16,7 @@ import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/
 import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory";
 
 import type { Helpers } from "@/app/store/appStateWl";
+import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 import type { GatewaysWl } from "./types";
 
 // normalise: accepte soit une function, soit un objet { middleware: fn }
@@ -25,9 +26,10 @@ export const createWlListeners = (p: {
 	gateways: GatewaysWl;
 	helpers: Helpers;
 	sessionRef: { current?: any };
+	syncMetaStorage?: SyncMetaStorage;
 	onSessionChanged: (s: any) => void;
 }) => {
-	const { gateways, helpers, sessionRef, onSessionChanged } = p;
+	const { gateways, helpers, sessionRef, syncMetaStorage, onSessionChanged } = p;
 
 	return [
 		// Comments
@@ -52,7 +54,7 @@ export const createWlListeners = (p: {
 
 		// Auth + projection sync
 		mwOf(authListenerFactory({ gateways, helpers: {}, onSessionChanged })),
-		mwOf(projectionSyncListenerFactory({ gateways, sessionRef })),
+		mwOf(projectionSyncListenerFactory({ gateways, sessionRef, syncMetaStorage })),
 
 		// Watchdog
 		mwOf(outboxWatchdogFactory({ gateways, enableTimer: true, tickMs: 20_000 })),
