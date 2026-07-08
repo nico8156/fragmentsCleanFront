@@ -22,6 +22,10 @@ import { commandKinds, StatusType, statusTypes } from "@/app/core-logic/contextW
 import { selectCurrentUser, selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
+import {
+	computeCommentSyncDecision,
+	computeLocalPendingFeedbackIds,
+} from "@/app/adapters/secondary/viewModel/commentSyncVm";
 
 const DEFAULT_STALE_AFTER_MS = 30_000;
 
@@ -42,6 +46,7 @@ export type CommentItemVM = {
 	relativeTime: string;
 
 	transportStatus: "pending" | "success" | "failed";
+	showPendingFeedback: boolean;
 	isOptimistic: boolean;
 	isAuthor: boolean;
 };
@@ -187,6 +192,28 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		return result;
 	}, [outboxRecords]);
 
+	const pendingIdsAtEntryRef = useRef<Set<string>>(new Set());
+	const localPendingIdsRef = useRef<Set<string>>(new Set());
+	const pendingIdsTargetRef = useRef<CafeId | undefined>(undefined);
+
+	if (pendingIdsTargetRef.current !== targetId) {
+		pendingIdsTargetRef.current = targetId;
+		pendingIdsAtEntryRef.current = new Set(
+			Object.entries(outboxStatusByCommentId)
+				.filter(([, status]) => isPendingStatus(status))
+				.map(([id]) => id),
+		);
+		localPendingIdsRef.current = new Set();
+	} else {
+		localPendingIdsRef.current = computeLocalPendingFeedbackIds({
+			pendingIds: Object.entries(outboxStatusByCommentId)
+				.filter(([, status]) => isPendingStatus(status))
+				.map(([id]) => id),
+			pendingIdsAtEntry: pendingIdsAtEntryRef.current,
+			currentLocalIds: localPendingIdsRef.current,
+		});
+	}
+
 	// -------------------------
 	// VM
 	// -------------------------
@@ -230,6 +257,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 				createdAt: c.createdAt,
 				relativeTime: formatRelativeTime(c.createdAt),
 				transportStatus,
+				showPendingFeedback: transportStatus === "pending" && localPendingIdsRef.current.has(c.id),
 				isOptimistic: Boolean(c.optimistic),
 				isAuthor: isCurrentUser,
 			};
@@ -241,6 +269,8 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	// -------------------------
 	const [sync, setSync] = useState<CommentSyncVM>(null);
 	const prevPendingCountRef = useRef(0);
+	const hasSeenInitialPendingRef = useRef(false);
+	const hasLocalPendingCycleRef = useRef(false);
 
 	const pendingCount = useMemo(
 		() => viewModel.filter((c) => c.transportStatus === "pending").length,
@@ -252,28 +282,25 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	);
 
 	useEffect(() => {
-		const prevPending = prevPendingCountRef.current;
-
-		if (pendingCount > 0) {
-			setSync({ state: "pending", untilMs: Date.now() + 10_000 });
-			prevPendingCountRef.current = pendingCount;
-			return;
-		}
-
-		if (prevPending > 0 && pendingCount === 0 && failedCount === 0) {
-			setSync({ state: "acked", untilMs: Date.now() + 900 });
-			prevPendingCountRef.current = 0;
-			return;
-		}
-
-		if (failedCount > 0) {
-			setSync({ state: "failed", untilMs: Date.now() + 1500 });
-			prevPendingCountRef.current = 0;
-			return;
-		}
-
 		prevPendingCountRef.current = 0;
+		hasSeenInitialPendingRef.current = false;
+		hasLocalPendingCycleRef.current = false;
 		setSync(null);
+	}, [targetId]);
+
+	useEffect(() => {
+		const decision = computeCommentSyncDecision({
+			pendingCount,
+			failedCount,
+			prevPendingCount: prevPendingCountRef.current,
+			hasSeenInitialPending: hasSeenInitialPendingRef.current,
+			hasLocalPendingCycle: hasLocalPendingCycleRef.current,
+			nowMs: Date.now(),
+		});
+		prevPendingCountRef.current = decision.nextPrevPendingCount;
+		hasSeenInitialPendingRef.current = decision.nextHasSeenInitialPending;
+		hasLocalPendingCycleRef.current = decision.nextHasLocalPendingCycle;
+		setSync(decision.sync);
 	}, [pendingCount, failedCount]);
 
 	useEffect(() => {

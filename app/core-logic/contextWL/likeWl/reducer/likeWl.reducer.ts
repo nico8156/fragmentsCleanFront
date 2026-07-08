@@ -71,6 +71,10 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 		likesRetrieved,
 		(state, { payload: { targetId, count, me, version, serverTime } }) => {
 			const v = ensureAgg(state, targetId);
+			if (v.optimistic && version <= v.version) {
+				v.loading = loadingStates.SUCCESS;
+				return;
+			}
 
 			v.count = count;
 			v.me = me;

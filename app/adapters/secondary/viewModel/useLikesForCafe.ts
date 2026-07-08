@@ -7,6 +7,7 @@ import { likeSyncCleared } from "@/app/core-logic/contextWL/likeWl/typeAction/li
 import { loadingStates } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { uiLikeToggleRequested } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
+import { getPendingLikeCommandKindForTarget } from "@/app/core-logic/contextWL/likeWl/usecases/write/pendingLikeCommand";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 
 const DEFAULT_STALE_AFTER_MS = 60_000;
@@ -50,6 +51,9 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		hasFetched,
 		sync,
 	} = useSelector(selector);
+	const pendingCommandKind = useSelector((state: RootStateWl) =>
+		targetId ? getPendingLikeCommandKindForTarget(state.oState, targetId) : null,
+	);
 
 	// ✅ Auto-clear du ring après TTL
 	useEffect(() => {
@@ -67,6 +71,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 	useEffect(() => {
 		if (!targetId) return;
 		if (loading === loadingStates.PENDING) return;
+		if (isOptimistic || pendingCommandKind) return;
 
 		if (!hasFetched) {
 			dispatch(likesRetrieval({ targetId }));
@@ -86,7 +91,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		if (isStale) {
 			dispatch(likesRetrieval({ targetId }));
 		}
-	}, [dispatch, targetId, loading, hasFetched, lastFetchedAtMs, staleAfterMs]);
+	}, [dispatch, targetId, loading, isOptimistic, pendingCommandKind, hasFetched, lastFetchedAtMs, staleAfterMs]);
 
 	const toggleLike = useCallback(() => {
 		if (!targetId) return;
@@ -105,6 +110,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		count,
 		likedByMe,
 		isOptimistic,
+		pendingCommandKind,
 		sync,
 		isLoading,
 		isRefreshing,
@@ -113,4 +119,3 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		refresh,
 	} as const;
 }
-

@@ -7,6 +7,7 @@ import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { likeOptimisticApplied, unlikeOptimisticApplied } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { getPendingLikeCommandKindForTarget } from "@/app/core-logic/contextWL/likeWl/usecases/write/pendingLikeCommand";
 
 
 export const uiLikeToggleRequested = createAction<{ targetId: string }>("UI/LIKE/TOGGLE_REQUESTED");
@@ -30,8 +31,14 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
 			}
 
 			const state: any = api.getState();
-
 			const me = state.lState.byTarget?.[targetId]?.me ?? false;
+			const desiredKind = !me ? commandKinds.LikeAdd : commandKinds.LikeRemove;
+			const pendingKind = getPendingLikeCommandKindForTarget(state.oState, targetId);
+			if (pendingKind === desiredKind) {
+				console.log("[LIKE] same pending command already exists for target → ignoring like toggle", { targetId, desiredKind });
+				return;
+			}
+
 			// ✅ outboxId: interne front, peut rester nanoid
 			const outboxId = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;
 

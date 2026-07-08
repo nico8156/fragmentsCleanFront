@@ -223,7 +223,7 @@ function CommentCard({
 	const pill =
 		item.transportStatus === "failed"
 			? { text: "Échec", bg: palette.danger_30, border: palette.danger_60 }
-			: item.transportStatus === "pending" && !pendingTooLong
+			: item.transportStatus === "pending" && item.showPendingFeedback && !pendingTooLong
 				? { text: "Envoi…", bg: palette.bg_light_30, border: palette.border_muted_30 }
 				: flashSent
 					? { text: "Envoyé", bg: palette.accentSoft, border: palette.accent_30 }

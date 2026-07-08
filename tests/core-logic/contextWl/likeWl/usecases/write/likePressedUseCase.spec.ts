@@ -33,6 +33,30 @@ const makeDeps = (p: {
     },
 });
 
+const makeSequencedDeps = (p: {
+    likes: FakeLikesGateway;
+    authToken: FakeAuthTokenBridge;
+    nowIso: ISODate;
+    outboxIds: string[];
+    commandIds: CommandId[];
+}): DependenciesWl => {
+    let outboxIndex = 0;
+    let commandIndex = 0;
+    return {
+        gateways: {
+            likes: p.likes,
+            authToken: p.authToken as any,
+        },
+        helpers: {
+            nowIso: () => p.nowIso,
+            currentUserId: () => "user_test",
+            currentUserProfile: () => null,
+            newCommandId: () => p.commandIds[commandIndex++],
+            getCommandIdForTests: () => p.outboxIds[outboxIndex++],
+        },
+    };
+};
+
 describe("Like toggle listener (optimistic + enqueue)", () => {
     it("ADD: optimistic + outbox enqueued (fully deterministic)", async () => {
         const likes = new FakeLikesGateway();
@@ -155,5 +179,70 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
 
         expect(likes.addCalls).toHaveLength(0);
         expect(likes.removeCalls).toHaveLength(0);
+    });
+
+    it("keeps optimistic like over stale refresh and allows opposite unlike while add is pending", async () => {
+        const likes = new FakeLikesGateway();
+        const authToken = new FakeAuthTokenBridge("token_test", "user_test");
+
+        const deps = makeSequencedDeps({
+            likes,
+            authToken,
+            nowIso: "2025-10-10T07:02:00.000Z" as ISODate,
+            outboxIds: ["obx_like_001", "obx_unlike_001"],
+            commandIds: ["cmd_like_001" as CommandId, "cmd_unlike_001" as CommandId],
+        });
+
+        const store = initReduxStoreWl({
+            dependencies: deps,
+            listeners: [likeToggleUseCaseFactory(deps).middleware],
+        });
+
+        store.dispatch(
+            likesRetrieved({
+                targetId: "cafe_A",
+                count: 10,
+                me: false,
+                version: 1,
+                serverTime: "2025-10-10T07:01:00.000Z" as ISODate,
+            }),
+        );
+
+        store.dispatch(uiLikeToggleRequested({ targetId: "cafe_A" }));
+        await flushPromises();
+
+        store.dispatch(
+            likesRetrieved({
+                targetId: "cafe_A",
+                count: 10,
+                me: false,
+                version: 1,
+                serverTime: "2025-10-10T07:01:10.000Z" as ISODate,
+            }),
+        );
+
+        let s = store.getState() as any;
+        expect(s.lState.byTarget["cafe_A"]).toMatchObject({
+            count: 11,
+            me: true,
+            optimistic: true,
+            version: 1,
+        });
+
+        store.dispatch(uiLikeToggleRequested({ targetId: "cafe_A" }));
+        await flushPromises();
+
+        s = store.getState() as any;
+        const agg = s.lState.byTarget["cafe_A"];
+        expect(agg).toMatchObject({
+            count: 10,
+            me: false,
+            optimistic: true,
+            version: 1,
+        });
+        expect(Object.keys(s.oState.byId)).toEqual(["obx_like_001", "obx_unlike_001"]);
+        expect(s.oState.queue).toEqual(["obx_like_001", "obx_unlike_001"]);
+        expect(s.oState.byId.obx_like_001.item.command.kind).toBe(commandKinds.LikeAdd);
+        expect(s.oState.byId.obx_unlike_001.item.command.kind).toBe(commandKinds.LikeRemove);
     });
 });
