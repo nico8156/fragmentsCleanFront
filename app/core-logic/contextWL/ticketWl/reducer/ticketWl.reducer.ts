@@ -6,6 +6,7 @@ import {
     TicketsStateWl,
     ISODate, TicketReconciledConfirmedPayload, TicketReconciledRejectedPayload
 } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
+import {readModelCacheRehydrated} from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 export const ticketRetrieved = createAction<TicketRetrievedPayload>("SERVER/TICKET/RETRIEVED");
 export const ticketOptimisticCreated = createAction<{ ticketId: TicketId; at: ISODate; status?: TicketStatus; ocrText?: string | null; imageRef?: string }>('UI/TICKET/CREATE_OPTIMISTIC_TICKET');
@@ -21,6 +22,7 @@ export const ticketWlReducer = createReducer(
     initialState,
     (builder) => {
         builder
+            .addCase(readModelCacheRehydrated, (state, { payload }) => payload.tickets ?? state)
             .addCase(ticketRetrieved, (state, { payload }: PayloadAction<TicketRetrievedPayload>) => {
                 const prev = state.byId[payload.ticketId];
                 state.byId[payload.ticketId] = {

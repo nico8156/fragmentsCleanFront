@@ -14,6 +14,7 @@ import {
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
 import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 const adapter = createEntityAdapter<CommentEntity>({
 	sortComparer: (a, b) => {
@@ -108,6 +109,7 @@ const applyIdsByOp = (v: View, op: string, optimisticIds: string[], incomingIds:
 
 export const commentWlReducer = createReducer(initialState, (builder) => {
 	builder
+		.addCase(readModelCacheRehydrated, (state, { payload }) => payload.comments ?? state)
 
 		// =========================
 		// OPTIMISTIC WRITE

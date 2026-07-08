@@ -8,6 +8,7 @@ import {
     entitlementsHydrated,
     entitlementsSetThresholds
 } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
+import {readModelCacheRehydrated} from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 const defaultThresholds: EntitlementsThresholds = { likeAt: 1, commentAt: 3, submitCafeAt: 5 };
 
@@ -27,6 +28,7 @@ function computeRights(count: number, th: EntitlementsThresholds): Entitlement[]
 export const entitlementWlReducer = createReducer(
     initialState,
     (builder) => {
+        builder.addCase(readModelCacheRehydrated, (state, { payload }) => payload.entitlement ?? state)
         builder.addCase(entitlementsSetThresholds, (state, { payload }) => {
             state.thresholds = { ...state.thresholds, ...payload };
             // Optionnel : recalcul global si tu as déjà des users chargés
