@@ -3,6 +3,7 @@ import {hoursHydrated, openingHoursHydrated} from "@/app/core-logic/contextWL/op
 import {AppStateWl} from "@/app/store/appStateWl";
 import {DayWindow} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 import {parseWeekdayDescription} from "@/app/core-logic/utils/time/openingHoursParser";
+import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 const initialState: AppStateWl["openingHours"] = {
     byCoffeeIdDayWindow:{},
@@ -25,7 +26,7 @@ export const openingHoursReducer = createReducer(
                     }
                 })
             })
-            .addCase(hoursHydrated, (state, action) => {
+	            .addCase(hoursHydrated, (state, action) => {
                 const recs = action.payload.data as { coffee_id: string; weekday_description: string }[];
                 // On regroupe par coffee_id et on remplace (source=vérité : serveur)
                 const grouped: Record<string, DayWindow[]> = {};
@@ -40,8 +41,12 @@ export const openingHoursReducer = createReducer(
                 for (const cid of Object.keys(grouped)) {
                     // Optionnel : trier par day/start pour cohérence
                     state.byCoffeeIdDayWindow[cid] = grouped[cid].sort((a,b) => a.day - b.day || a.start - b.start);
-                    state.statusByCoffeeId[cid] = 'ok';
-                }
-            })
-    }
-)
+	                    state.statusByCoffeeId[cid] = 'ok';
+	                }
+	            })
+	            .addCase(readModelCacheRehydrated, (_state, { payload }) => {
+	                if (!payload.openingHours) return;
+	                return payload.openingHours;
+	            })
+	    }
+	)

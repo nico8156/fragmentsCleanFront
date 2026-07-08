@@ -1,6 +1,7 @@
 import {createAction, createReducer} from "@reduxjs/toolkit";
 import {AppStateWl} from "@/app/store/appStateWl";
 import {Coffee, CoffeeId, CoffeeStateWl} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 export const coffeeRetrieved = createAction<Coffee>("COFFEE/RETRIEVED");
 export const coffeesHydrated = createAction<Coffee[]>("COFFEE/HYDRATED_BATCH");
@@ -45,11 +46,15 @@ export const coffeeWlReducer = createReducer(
                 const c = state.byId[String(payload.id)];
                 if (c) (c as any).loading = "loading";
             })
-            .addCase(coffeeSetError, (state, { payload }) => {
-                const c = state.byId[String(payload.id)] ?? ({} as any);
-                (c as any).loading = "error";
-                (c as any).error = payload.message;
-                state.byId[String(payload.id)] = c as Coffee;
-            })
-    }
-)
+	            .addCase(coffeeSetError, (state, { payload }) => {
+	                const c = state.byId[String(payload.id)] ?? ({} as any);
+	                (c as any).loading = "error";
+	                (c as any).error = payload.message;
+	                state.byId[String(payload.id)] = c as Coffee;
+	            })
+	            .addCase(readModelCacheRehydrated, (_state, { payload }) => {
+	                if (!payload.coffees) return;
+	                return payload.coffees;
+	            })
+	    }
+	)
