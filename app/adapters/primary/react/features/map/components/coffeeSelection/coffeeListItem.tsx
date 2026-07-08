@@ -58,6 +58,7 @@ const CoffeeListItem = ({id, onPress}: Props) => {
                 source={coffee.photos[0]}
                 style={styles.cover}
                 contentFit={'cover'}
+                cachePolicy="memory-disk"
             />
         </Pressable>
     )

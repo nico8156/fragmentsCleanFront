@@ -1,4 +1,5 @@
 import type { CfPhotoGateway } from "@/app/core-logic/contextWL/cfPhotosWl/gateway/cfPhoto.gateway";
+import type { ImageCacheGateway } from "@/app/core-logic/contextWL/cfPhotosWl/gateway/imageCache.gateway";
 import type { CoffeeWlGateway } from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 import type { OpeningHoursGateway } from "@/app/core-logic/contextWL/openingHoursWl/gateway/openingHours.gateway";
 
@@ -25,6 +26,7 @@ import type { ProjectionSyncGateway } from "@/app/core-logic/contextWL/projectio
 export type GatewaysWl = {
 	coffees: CoffeeWlGateway;
 	cfPhotos: CfPhotoGateway;
+	imageCache: ImageCacheGateway;
 	openingHours: OpeningHoursGateway;
 
 	comments: CommentsWlGateway;

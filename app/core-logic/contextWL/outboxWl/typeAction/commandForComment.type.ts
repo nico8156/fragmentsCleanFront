@@ -15,7 +15,7 @@ export type CommentCreateCommand = {
 
 export type CommentCreateUndo = {
     kind: typeof commandKinds.CommentCreate;
-    commentId: string;
+    tempId: string;
     targetId: string;
     parentId?: string | null;
 };

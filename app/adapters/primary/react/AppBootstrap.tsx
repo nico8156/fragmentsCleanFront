@@ -93,6 +93,14 @@ export const AppBootstrap = () => {
 		};
 
 		const warmupData = async () => {
+			const runWarmupStep = async (label: string, step: () => Promise<unknown>) => {
+				try {
+					await step();
+				} catch (e: any) {
+					logger.warn(`[BOOT] Warmup skipped: ${label}`, String(e?.message ?? e));
+				}
+			};
+
 			// Location permissions + once (ne bloque pas le boot si ça échoue)
 			try {
 				store.dispatch(requestPermission());
@@ -100,14 +108,14 @@ export const AppBootstrap = () => {
 			} catch { }
 
 			// Global data
-			await dispatch(coffeeGlobalRetrieval());
-			await dispatch(onCfPhotoRetrieval());
-			await dispatch(onOpeningHourRetrieval());
+			await runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval()));
+			await runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval()));
+			await runWarmupStep("opening hours", () => dispatch(onOpeningHourRetrieval()));
 
 			// Entitlements (si userId connu)
 			const uid = selectUserIdForEntitlements(store.getState());
 			if (uid) {
-				await dispatch(entitlementsRetrieval({ userId: uid }));
+				await runWarmupStep("entitlements", () => dispatch(entitlementsRetrieval({ userId: uid })));
 			}
 		};
 

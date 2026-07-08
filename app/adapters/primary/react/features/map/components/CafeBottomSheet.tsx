@@ -150,7 +150,7 @@ function CafeSheetContent({ coffeeId, onRequestClose }: ContentProps) {
                 </Pressable>
             </View>
 
-            <Image source={coffee.photos[0]} style={styles.hero} contentFit="cover" />
+            <Image source={coffee.photos[0]} style={styles.hero} contentFit="cover" cachePolicy="memory-disk" />
 
             <View style={styles.badgeRow}>
                 <View
