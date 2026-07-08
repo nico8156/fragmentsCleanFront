@@ -100,7 +100,7 @@ describe("readModelCachePersistenceFactory", () => {
 			userId: "user_1",
 			confirmedTickets: 5,
 			updatedAt: "2026-07-08T12:00:00.000Z",
-		}));
+		} as any));
 
 		await flushPersist();
 
@@ -113,7 +113,7 @@ describe("readModelCachePersistenceFactory", () => {
 		expect(latest.articles?.byId.article_1.title).toBe("Offline");
 		expect(latest.comments?.entities.entities.comment_1?.body).toBe("Bon cafe");
 		expect(latest.likes?.byTarget.coffee_1).toMatchObject({ count: 4, me: true });
-		expect(latest.tickets?.byId.ticket_1.status).toBe("CONFIRMED");
+		expect((latest.tickets?.byId as any).ticket_1.status).toBe("CONFIRMED");
 		expect(latest.entitlement?.byUser.user_1.confirmedTickets).toBe(5);
 	});
 
