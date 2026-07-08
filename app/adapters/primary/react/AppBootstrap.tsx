@@ -16,6 +16,7 @@ import { mountNetInfoAdapter } from "@/app/adapters/primary/runtime/netInfo.adap
 import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
+import { rehydrateReadModelCacheFactory } from "@/app/core-logic/contextWL/appWl/runtime/readModelCachePersistenceFactory";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 
 import {
@@ -32,7 +33,7 @@ import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.
 import { logger } from "@/app/core-logic/utils/logger";
 
 // ✅ runtime deps (no store/gateways wiring import)
-import { outboxStorage } from "@/app/adapters/primary/wiring/runtimeDeps";
+import { outboxStorage, readModelCacheStorage } from "@/app/adapters/primary/wiring/runtimeDeps";
 
 // ---- dev guard (jamais en prod) ----
 const CLEAR_OUTBOX_ON_BOOT = __DEV__ && false;
@@ -63,6 +64,10 @@ export const AppBootstrap = () => {
 
 		// create here to avoid module-level surprises (tests / hot reload)
 		const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
+		const runRehydrateReadModelCache = rehydrateReadModelCacheFactory({
+			storage: readModelCacheStorage,
+			logger: logger.info,
+		});
 
 		const bootRuntime = async () => {
 			// 1) Hydration app
@@ -82,6 +87,14 @@ export const AppBootstrap = () => {
 			logger.info("[BOOT] Rehydrate outbox: start");
 			const snapshot = await runRehydrateOutbox(store);
 			logger.info("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
+			if (cancelled) return;
+
+			logger.info("[BOOT] Rehydrate read model cache: start");
+			const readCacheSnapshot = await runRehydrateReadModelCache(store);
+			logger.info("[BOOT] Rehydrate read model cache: done", {
+				hit: Boolean(readCacheSnapshot),
+				updatedAt: readCacheSnapshot?.updatedAt,
+			});
 			if (cancelled) return;
 
 			// 5) Optionnel: kick outbox once si on est déjà authed + online
