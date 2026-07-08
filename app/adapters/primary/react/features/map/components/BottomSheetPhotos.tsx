@@ -15,7 +15,7 @@ const BottomSheetPhotos = (props:Props) => {
                 data={photos}
                 keyExtractor={(_, index) => `${index}`}
                 renderItem={({ item: photo }) => (
-                    <Image source={photo} style={styles.photoItem} contentFit={'cover'} />
+                    <Image source={photo} style={styles.photoItem} contentFit={'cover'} cachePolicy="memory-disk" />
                 )}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.photoList}

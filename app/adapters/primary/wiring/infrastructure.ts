@@ -19,6 +19,7 @@ import { HttpTicketsGateway } from "@/app/adapters/secondary/gateways/ticket/Htt
 import { HttpUserRepo } from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
 
 import { HttpArticleWlGateway } from "../../secondary/gateways/articles/HttpArticleWlGateway";
+import { ExpoImageCacheGateway } from "../../secondary/gateways/coffee/ExpoImageCacheGateway";
 import { HttpCfPhotoGateway } from "../../secondary/gateways/coffee/HttpCfPhotoGateway";
 import { HttpCoffeeGateway } from "../../secondary/gateways/coffee/HttpCoffeeGateway";
 import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpeningHoursGateway";
@@ -49,6 +50,7 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		// ✅ aligné sur baseUrl unique
 		coffees: new HttpCoffeeGateway({ baseUrl }),
 		cfPhotos: new HttpCfPhotoGateway({ baseUrl }),
+		imageCache: new ExpoImageCacheGateway(),
 		openingHours: new HttpOpeningHoursGateway({ baseUrl }),
 
 		comments: new HttpCommentsGateway({

@@ -71,7 +71,7 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                 id: outboxId,
                 item: {
                     command: { kind: commandKinds.CommentCreate, commandId, tempId, targetId, parentId, body: trimmed, at:createdAt },
-                    undo: { kind: commandKinds.CommentCreate, commentId: tempId, targetId, parentId },
+                    undo: { kind: commandKinds.CommentCreate, tempId, targetId, parentId },
                 },
                 enqueuedAt,
             }))

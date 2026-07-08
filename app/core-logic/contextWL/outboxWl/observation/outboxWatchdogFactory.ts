@@ -22,7 +22,8 @@ import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contex
 
 import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import { createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 
 import { logger } from "@/app/core-logic/utils/logger";
@@ -138,18 +139,63 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		}
 	};
 
+	const reconcileForApplied = (rec: OutboxRecord, dispatch: AppDispatchWl) => {
+		const item = rec.item as any;
+		const cmd = item?.command;
+		const undo = item?.undo;
+
+		if (!cmd?.kind) return;
+
+		switch (cmd.kind) {
+			case commandKinds.CommentCreate:
+				if (cmd.tempId) {
+					dispatch(createReconciled({
+						commentId: cmd.tempId,
+						server: { createdAt: cmd.at, version: cmd.version ?? 0 },
+					}));
+				}
+				return;
+
+			case commandKinds.CommentUpdate: {
+				const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
+				dispatch(updateReconciled({
+					commentId: cmd.commentId,
+					server: {
+						body: cmd.newBody,
+						editedAt: cmd.at,
+						version: previousVersion + 1,
+					},
+				}));
+				return;
+			}
+
+			case commandKinds.CommentDelete: {
+				const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
+				dispatch(deleteReconciled({
+					commentId: cmd.commentId,
+					server: {
+						deletedAt: cmd.at,
+						version: previousVersion + 1,
+					},
+				}));
+				return;
+			}
+
+			default:
+				return;
+		}
+	};
+
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {
 		if (inFlight) return;
 		inFlight = true;
-		const state = api.getState();
-		if (!selectBootReady(state)) return;
-		if (!isSignedIn(state)) return;
-		if (!selectIsOnline(state)) return;
-
-		if (!state.appState?.boot?.doneWarmup) return;
-
 		try {
 			const state = api.getState();
+			if (!selectBootReady(state)) return;
+			if (!isSignedIn(state)) return;
+			if (!selectIsOnline(state)) return;
+			if (!state.appState?.boot?.doneWarmup) return;
+
 			if (!isSignedIn(state)) return;
 			if (!selectIsOnline(state)) return;
 
@@ -182,6 +228,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 			if (verdict.status === "APPLIED") {
 				logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
+				reconcileForApplied(rec, api.dispatch);
 				api.dispatch(dropCommitted({ commandId }));
 				api.dispatch(outboxProcessOnce());
 				return;

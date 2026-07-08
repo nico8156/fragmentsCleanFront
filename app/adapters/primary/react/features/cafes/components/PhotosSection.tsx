@@ -1,6 +1,7 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { Image } from "expo-image";
 import React, { useMemo, useState } from "react";
-import { FlatList, Image, LayoutChangeEvent, StyleSheet, Text, View } from "react-native";
+import { FlatList, LayoutChangeEvent, StyleSheet, Text, View } from "react-native";
 import { Section } from "./Section";
 
 export function PhotosSection({ photos }: { photos: string[] }) {
@@ -44,7 +45,7 @@ export function PhotosSection({ photos }: { photos: string[] }) {
 						ItemSeparatorComponent={() => <View style={{ width: spacing }} />}
 						renderItem={({ item }) => (
 							<View style={[s.photoFrame, { width: itemWidth }]}>
-								<Image source={{ uri: item }} style={s.photo} />
+								<Image source={item} style={s.photo} contentFit="cover" cachePolicy="memory-disk" />
 							</View>
 						)}
 						ListEmptyComponent={
@@ -77,4 +78,3 @@ const s = StyleSheet.create({
 	photoEmpty: { alignItems: "center", justifyContent: "center" },
 	photoEmptyText: { color: palette.textMuted, fontWeight: "800" },
 });
-

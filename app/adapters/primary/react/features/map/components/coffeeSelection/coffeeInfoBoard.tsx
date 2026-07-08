@@ -47,6 +47,7 @@ const CoffeeInfoBoard = (props:Props) => {
                         source={coffee.photos[0]}
                         style={styles.image}
                         contentFit={'cover'}
+                        cachePolicy="memory-disk"
                     />
                     <View style={styles.content}>
                         <Text style={styles.name} numberOfLines={1}>{coffee.name}</Text>

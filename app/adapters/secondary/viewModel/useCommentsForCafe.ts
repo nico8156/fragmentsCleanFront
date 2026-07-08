@@ -42,6 +42,7 @@ export type CommentItemVM = {
 	relativeTime: string;
 
 	transportStatus: "pending" | "success" | "failed";
+	isOptimistic: boolean;
 	isAuthor: boolean;
 };
 
@@ -229,6 +230,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 				createdAt: c.createdAt,
 				relativeTime: formatRelativeTime(c.createdAt),
 				transportStatus,
+				isOptimistic: Boolean(c.optimistic),
 				isAuthor: isCurrentUser,
 			};
 		});

@@ -8,6 +8,7 @@ import { makeFixedHelpers, makeStoreWl } from "@/tests/core-logic/fakes/wlTestHa
 import { seedBootReady, seedOffline, seedOnline, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
+import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 
 class FakeCommandStatusGateway {
 	calls: string[] = [];
@@ -151,6 +152,115 @@ describe("outboxWatchdogFactory", () => {
 		expect(o.byId["obx_1"]).toBeUndefined();
 		expect(o.byCommandId["cmd_1"]).toBeUndefined();
 		expect(commandStatus.calls).toEqual(["cmd_1"]);
+	});
+
+	it("APPLIED CommentUpdate => reconciles optimistic entity and drops record", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "APPLIED" };
+
+		const deps = makeDeps({ commandStatus });
+		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(addOptimisticCreated({
+			entity: {
+				id: "c1",
+				targetId: "cafe_A",
+				body: "new body",
+				authorId: "user_test",
+				createdAt: "2025-10-10T07:00:00.000Z",
+				editedAt: "2025-10-10T07:05:00.000Z",
+				likeCount: 0,
+				replyCount: 0,
+				moderation: "PUBLISHED",
+				version: 7,
+				optimistic: true,
+			} as any,
+		}));
+		store.dispatch(enqueueCommitted({
+			id: "obx_1",
+			item: {
+				command: {
+					kind: commandKinds.CommentUpdate,
+					commandId: "cmd_1",
+					commentId: "c1",
+					newBody: "new body",
+					at: "2025-10-10T07:05:00.000Z",
+				} as any,
+				undo: { kind: commandKinds.CommentUpdate, commentId: "c1", prevBody: "old body", prevVersion: 7 } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+
+		const s: any = store.getState();
+		expect(s.cState.entities.entities.c1.optimistic).toBe(false);
+		expect(s.cState.entities.entities.c1.body).toBe("new body");
+		expect(s.cState.entities.entities.c1.version).toBe(8);
+		expect(s.oState.byId.obx_1).toBeUndefined();
+	});
+
+	it("APPLIED CommentDelete => reconciles optimistic soft-delete and drops record", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "APPLIED" };
+
+		const deps = makeDeps({ commandStatus });
+		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(addOptimisticCreated({
+			entity: {
+				id: "c1",
+				targetId: "cafe_A",
+				body: "old body",
+				authorId: "user_test",
+				createdAt: "2025-10-10T07:00:00.000Z",
+				deletedAt: "2025-10-10T07:06:00.000Z",
+				likeCount: 0,
+				replyCount: 0,
+				moderation: "SOFT_DELETED",
+				version: 7,
+				optimistic: true,
+			} as any,
+		}));
+		store.dispatch(enqueueCommitted({
+			id: "obx_1",
+			item: {
+				command: {
+					kind: commandKinds.CommentDelete,
+					commandId: "cmd_1",
+					commentId: "c1",
+					at: "2025-10-10T07:06:00.000Z",
+				} as any,
+				undo: { kind: commandKinds.CommentDelete, commentId: "c1", prevBody: "old body", prevVersion: 7 } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+
+		const s: any = store.getState();
+		expect(s.cState.entities.entities.c1.optimistic).toBe(false);
+		expect(s.cState.entities.entities.c1.moderation).toBe("SOFT_DELETED");
+		expect(s.cState.entities.entities.c1.version).toBe(8);
+		expect(s.oState.byId.obx_1).toBeUndefined();
 	});
 
 	it("PENDING => replanifies nextCheckAt = now+5s", async () => {
