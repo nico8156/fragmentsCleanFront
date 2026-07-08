@@ -1,5 +1,6 @@
 import {TicketsWlGateway} from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
+import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 
 export class HttpTicketsGateway implements TicketsWlGateway {
@@ -33,7 +34,7 @@ export class HttpTicketsGateway implements TicketsWlGateway {
         const token = await this.deps.auth.getAccessToken();
 
         if (!token) {
-            throw new Error("Not authenticated: missing access token");
+            throw new GatewayError("auth", "Not authenticated: missing access token");
         }
 
         const res = await fetch(
@@ -66,12 +67,12 @@ export class HttpTicketsGateway implements TicketsWlGateway {
         const token = await this.deps.auth.getAccessToken();
 
         if (!token) {
-            throw new Error("Not authenticated: missing access token");
+            throw new GatewayError("auth", "Not authenticated: missing access token");
         }
 
         // Backend exige un UUID non-null: UUID.fromString(body.ticketId())
         if (!input.ticketId) {
-            throw new Error("ticketId is required (backend expects a UUID string)");
+            throw new GatewayError("business", "ticketId is required (backend expects a UUID string)");
         }
 
         const res = await fetch(`${this.deps.baseUrl}/api/tickets/verify`, {
@@ -92,6 +93,6 @@ export class HttpTicketsGateway implements TicketsWlGateway {
         if (res.status === 202) return;
 
         const text = await res.text().catch(() => "");
-        throw new Error(`Ticket verify failed: HTTP ${res.status} ${text}`);
+        throw toGatewayErrorFromHttpStatus(res.status, `Ticket verify failed: HTTP ${res.status} ${text}`);
     }
 }

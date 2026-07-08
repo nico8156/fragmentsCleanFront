@@ -38,6 +38,7 @@ import {
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 
 import { computeNextAttemptAtMs } from "@/app/core-logic/contextWL/outboxWl/utils/computeNextAttemptAtMs";
+import { isGatewayError } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 import { logger } from "@/app/core-logic/utils/logger";
 
 const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
@@ -64,28 +65,11 @@ const getNextAttemptAtMs = (rec: any): number | undefined => {
 };
 
 const isExplicitBusinessRejection = (e: unknown): boolean => {
-	const status = (e as any)?.status;
-	if (typeof status === "number") return status >= 400 && status < 500 && status !== 408 && status !== 429;
+	if (isGatewayError(e)) return e.kind === "business";
 
 	const message = String((e as any)?.message ?? e ?? "").toLowerCase();
 	if (message.includes("rejected") || message.includes("business rejection")) return true;
-	if (message.includes("http 408") || message.includes("status 408")) return false;
-	if (message.includes("http 429") || message.includes("status 429")) return false;
-	if (message.includes("http 5") || message.includes("status 5")) return false;
-	if (message.includes("network") || message.includes("timeout") || message.includes("abort")) return false;
-
-	return (
-		message.includes("http 400") ||
-		message.includes("http 401") ||
-		message.includes("http 403") ||
-		message.includes("http 404") ||
-		message.includes("http 409") ||
-		message.includes("status 400") ||
-		message.includes("status 401") ||
-		message.includes("status 403") ||
-		message.includes("status 404") ||
-		message.includes("status 409")
-	);
+	return false;
 };
 
 export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void) => {

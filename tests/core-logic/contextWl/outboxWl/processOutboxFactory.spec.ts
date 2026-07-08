@@ -1,4 +1,5 @@
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import { GatewayError } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {
 	CommandId,
@@ -183,6 +184,81 @@ describe("processOutboxFactory", () => {
 		expect(rec.status).toBe(statusTypes.queued);
 		expect(rec.lastError).toContain("likes add failed");
 		expect(recorder.count("LIKE/ROLLBACK")).toBe(0);
+	});
+
+	it("LikeAdd — auth error => keep optimistic UI + scheduleRetry", async () => {
+		const authToken = new FakeAuthTokenBridge("token", "user_test");
+
+		class AuthFailingLikesGateway extends FakeLikesGateway {
+			override async add({ commandId, targetId, at }: any) {
+				this.addCalls.push({ commandId, targetId, at });
+				throw new GatewayError("auth", "token expired", 401);
+			}
+		}
+
+		const likes = new AuthFailingLikesGateway();
+		const recorder = createActionsRecorder({
+			filter: (a) => a.type === "LIKE/ROLLBACK" || a.type.startsWith("OUTBOX/"),
+		});
+		const deps = makeDeps({ likes, authToken });
+		const store = initReduxStoreWl({
+			dependencies: deps,
+			listeners: [recorder.middleware, processOutboxFactory(deps).middleware],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		store.dispatch(enqueueCommitted({
+			id: "obx_like_auth",
+			item: {
+				command: { kind: commandKinds.LikeAdd, commandId: "cmd_like_auth", targetId: "cafe_A", at: "x" } as any,
+				undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 10, prevMe: false, prevVersion: 1 } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+
+		store.dispatch(outboxProcessOnce());
+		await flushPromises();
+
+		const rec: any = store.getState().oState.byId["obx_like_auth"];
+		expect(rec.status).toBe(statusTypes.queued);
+		expect(rec.lastError).toContain("token expired");
+		expect(recorder.count("LIKE/ROLLBACK")).toBe(0);
+	});
+
+	it("LikeAdd — business rejection => rollbacks optimistic UI", async () => {
+		const authToken = new FakeAuthTokenBridge("token", "user_test");
+
+		class BusinessFailingLikesGateway extends FakeLikesGateway {
+			override async add({ commandId, targetId, at }: any) {
+				this.addCalls.push({ commandId, targetId, at });
+				throw new GatewayError("business", "not allowed", 409);
+			}
+		}
+
+		const likes = new BusinessFailingLikesGateway();
+		const recorder = createActionsRecorder({
+			filter: (a) => a.type === "LIKE/ROLLBACK" || a.type.startsWith("OUTBOX/"),
+		});
+		const deps = makeDeps({ likes, authToken });
+		const store = initReduxStoreWl({
+			dependencies: deps,
+			listeners: [recorder.middleware, processOutboxFactory(deps).middleware],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		store.dispatch(enqueueCommitted({
+			id: "obx_like_business",
+			item: {
+				command: { kind: commandKinds.LikeAdd, commandId: "cmd_like_business", targetId: "cafe_A", at: "x" } as any,
+				undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 10, prevMe: false, prevVersion: 1 } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+
+		store.dispatch(outboxProcessOnce());
+		await flushPromises();
+
+		expect(recorder.count("LIKE/ROLLBACK")).toBe(1);
 	});
 
 
