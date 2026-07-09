@@ -22,6 +22,8 @@ import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contex
 
 import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
+import { likeSyncAcked, likeSyncFailed } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
+import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
@@ -92,6 +94,11 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			case commandKinds.LikeRemove: {
 				const u = undo as LikeUndo;
 				if (!u) return;
+				dispatch(likeSyncFailed({
+					targetId: u.targetId,
+					commandId: cmd.commandId,
+					error: "rejected",
+				}));
 				dispatch(likeRollback({
 					targetId: u.targetId,
 					prevCount: u.prevCount,
@@ -147,6 +154,17 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		if (!cmd?.kind) return;
 
 		switch (cmd.kind) {
+			case commandKinds.LikeAdd:
+			case commandKinds.LikeRemove:
+				dispatch(likeSyncAcked({
+					targetId: cmd.targetId,
+					commandId: cmd.commandId,
+				}));
+				if (deps.gateways?.likes && cmd.targetId) {
+					dispatch(likesRetrieval({ targetId: cmd.targetId }) as any);
+				}
+				return;
+
 			case commandKinds.CommentCreate:
 				if (cmd.tempId) {
 					dispatch(createReconciled({

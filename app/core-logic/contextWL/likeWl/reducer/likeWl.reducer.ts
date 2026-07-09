@@ -58,6 +58,15 @@ const ensureAgg = (
 	lastFetchedAtMs: undefined,
 });
 
+const countWithPendingIntent = (
+	serverCount: number,
+	serverMe: boolean,
+	desiredMe: boolean,
+) => {
+	if (desiredMe === serverMe) return serverCount;
+	return Math.max(0, serverCount + (desiredMe ? 1 : -1));
+};
+
 export const likeWlReducer = createReducer(initialState, (builder) => {
 	builder.addCase(readModelCacheRehydrated, (state, { payload }) => payload.likes ?? state);
 
@@ -71,6 +80,16 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 		likesRetrieved,
 		(state, { payload: { targetId, count, me, version, serverTime } }) => {
 			const v = ensureAgg(state, targetId);
+			if (v.optimistic && v.pendingIntent) {
+				v.count = countWithPendingIntent(count, me, v.pendingIntent.desiredMe);
+				v.me = v.pendingIntent.desiredMe;
+				v.version = Math.max(v.version, version);
+				v.updatedAt = (serverTime as ISODate) ?? (v.updatedAt as ISODate);
+				v.lastFetchedAtMs = Date.now();
+				v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
+				v.loading = loadingStates.SUCCESS;
+				return;
+			}
 			if (v.optimistic && version <= v.version) {
 				v.loading = loadingStates.SUCCESS;
 				return;
@@ -89,6 +108,7 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 			v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
 			v.loading = loadingStates.SUCCESS;
 			v.optimistic = false;
+			delete v.pendingIntent;
 		},
 	);
 
@@ -99,18 +119,32 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 	});
 
 	// WRITE optimistic
-	builder.addCase(likeOptimisticApplied, (state, { payload: { targetId } }) => {
+	builder.addCase(likeOptimisticApplied, (state, { payload: { targetId, commandId } }) => {
 		const v = ensureAgg(state, targetId);
 		if (!v.me) {
+			v.pendingIntent = {
+				desiredMe: true,
+				baseCount: v.count,
+				baseMe: v.me,
+				baseVersion: v.version,
+				commandId,
+			};
 			v.count = Math.max(0, v.count + 1);
 			v.me = true;
 			v.optimistic = true;
 		}
 	});
 
-	builder.addCase(unlikeOptimisticApplied, (state, { payload: { targetId } }) => {
+	builder.addCase(unlikeOptimisticApplied, (state, { payload: { targetId, commandId } }) => {
 		const v = ensureAgg(state, targetId);
 		if (v.me) {
+			v.pendingIntent = {
+				desiredMe: false,
+				baseCount: v.count,
+				baseMe: v.me,
+				baseVersion: v.version,
+				commandId,
+			};
 			v.count = Math.max(0, v.count - 1);
 			v.me = false;
 			v.optimistic = true;
@@ -135,6 +169,7 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 
 		v.staleAfterMs = v.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
 		v.optimistic = false;
+		delete v.pendingIntent;
 
 		// garde loading si pas en pending
 		v.loading = v.loading === loadingStates.PENDING ? loadingStates.SUCCESS : v.loading;
@@ -149,6 +184,7 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 			v.me = prevMe;
 			v.version = prevVersion ?? v.version;
 			v.optimistic = false;
+			delete v.pendingIntent;
 			// ne change pas loading ici
 		},
 	);
@@ -170,6 +206,7 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 		v.sync = { state: "acked", commandId: payload.commandId, untilMs: Date.now() + ttl };
 
 		v.optimistic = false;
+		delete v.pendingIntent;
 	});
 
 	builder.addCase(likeSyncFailed, (state, { payload }) => {
@@ -179,6 +216,7 @@ export const likeWlReducer = createReducer(initialState, (builder) => {
 		const ttl = payload.ttlMs ?? 1500;
 		v.sync = { state: "failed", commandId: payload.commandId, untilMs: Date.now() + ttl };
 		v.optimistic = false;
+		delete v.pendingIntent;
 	});
 
 	builder.addCase(likeSyncCleared, (state, { payload }) => {

@@ -79,10 +79,32 @@ const normalizeIncoming = (items: CommentEntity[]): CommentEntity[] =>
 		createdAt: normalizeIso(i.createdAt) ?? new Date().toISOString(),
 		editedAt: normalizeIso(i.editedAt),
 		deletedAt: normalizeIso(i.deletedAt),
+		optimistic: false,
 	}));
 
 const computeIncomingIds = (targetId: CafeId, items: CommentEntity[]) =>
 	items.filter((i) => i.targetId === targetId).map((i) => i.id);
+
+const shouldKeepLocalOptimisticEntity = (
+	current: CommentEntity | undefined,
+	incoming: CommentEntity,
+): boolean => {
+	if (!current?.optimistic) return false;
+	const currentVersion = typeof current.version === "number" ? current.version : 0;
+	const incomingVersion = typeof incoming.version === "number" ? incoming.version : 0;
+	return incomingVersion <= currentVersion;
+};
+
+const mergeIncomingWithoutClobberingOptimisticWrites = (
+	state: CommentsStateWl,
+	items: CommentEntity[],
+) => {
+	for (const incoming of items) {
+		const current = state.entities.entities[incoming.id];
+		if (shouldKeepLocalOptimisticEntity(current, incoming)) continue;
+		adapter.upsertOne(state.entities, incoming);
+	}
+};
 
 const applyIdsByOp = (v: View, op: string, optimisticIds: string[], incomingIds: string[]) => {
 	if (op === opTypes.RETRIEVE) {
@@ -280,9 +302,9 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 		.addCase(commentsRetrieved, (state, action) => {
 			const { targetId, op, items, nextCursor, prevCursor, serverTime } = action.payload;
 
-			// normalize + upsert
-			const normalized = normalizeIncoming(items);
-			adapter.upsertMany(state.entities, normalized);
+				// normalize + upsert, without letting stale reads cancel a local write.
+				const normalized = normalizeIncoming(items);
+				mergeIncomingWithoutClobberingOptimisticWrites(state, normalized);
 
 			const v = ensureView(state, targetId);
 

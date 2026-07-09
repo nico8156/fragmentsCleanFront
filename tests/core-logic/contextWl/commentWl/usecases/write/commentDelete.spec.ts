@@ -4,7 +4,8 @@ import type { DependenciesWl } from "@/app/store/appStateWl";
 import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { uiCommentDeleteRequested, commentDeleteUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 
-import { commandKinds, type CommandId, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { commandKinds, statusTypes, type CommandId, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import type { CommentDeleteCommand } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 import {FakeCommentsWlGateway} from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
 
@@ -128,5 +129,39 @@ describe("Comments WRITE - DELETE (optimistic + enqueue)", () => {
         const s: any = store.getState();
         expect(s.cState.entities.entities.stale_optimistic.moderation).toBe("SOFT_DELETED");
         expect(s.oState.byId.obx_delete_001.item.command.commentId).toBe("stale_optimistic");
+    });
+
+    it("should not depend on hydrated auth state once the UI has requested delete", async () => {
+        store.dispatch(uiCommentDeleteRequested({ commentId }));
+        await flushPromises();
+
+        const s: any = store.getState();
+        expect(s.cState.entities.entities[commentId].moderation).toBe("SOFT_DELETED");
+        expect(s.oState.byId.obx_delete_001.item.command.kind).toBe(commandKinds.CommentDelete);
+    });
+
+    it("should allow delete even when an update command is already pending for the comment", async () => {
+        store.dispatch(enqueueCommitted({
+            id: "obx_update_pending",
+            item: {
+                command: {
+                    kind: commandKinds.CommentUpdate,
+                    commandId: "cmd_update_pending",
+                    commentId,
+                    newBody: "pending body",
+                    at: "2025-10-10T07:03:00.000Z",
+                } as any,
+                undo: { kind: commandKinds.CommentUpdate, commentId, prevBody: "ancien texte", prevVersion: 7 } as any,
+            },
+            enqueuedAt: "2025-10-10T07:03:00.000Z",
+        }) as any);
+        (store.getState() as any).oState.byId.obx_update_pending.status = statusTypes.awaitingAck;
+
+        store.dispatch(uiCommentDeleteRequested({ commentId }));
+        await flushPromises();
+
+        const s: any = store.getState();
+        expect(s.cState.entities.entities[commentId].moderation).toBe("SOFT_DELETED");
+        expect(s.oState.byId.obx_delete_001.item.command.kind).toBe(commandKinds.CommentDelete);
     });
 });

@@ -7,8 +7,8 @@ export const likesRetrieved         = createAction<{ targetId: TargetId; count: 
 export const likesRetrievalFailed   = createAction<{ targetId: TargetId; error: string }>("LIKES/RETRIEVAL_FAILED");
 
 // actions optimistes
-export const likeOptimisticApplied   = createAction<{ targetId: TargetId; clientAt: ISODate }>("LIKE/OPTIMISTIC_APPLIED");
-export const unlikeOptimisticApplied = createAction<{ targetId: TargetId; clientAt: ISODate }>("UNLIKE/OPTIMISTIC_APPLIED");
+export const likeOptimisticApplied   = createAction<{ targetId: TargetId; clientAt: ISODate; commandId?: string }>("LIKE/OPTIMISTIC_APPLIED");
+export const unlikeOptimisticApplied = createAction<{ targetId: TargetId; clientAt: ISODate; commandId?: string }>("UNLIKE/OPTIMISTIC_APPLIED");
 
 // reconcile / rollback
 export const likeReconciled   = createAction<{ targetId: TargetId; server: { count: number; me: boolean; version: number; updatedAt?: ISODate } }>("LIKE/RECONCILED");

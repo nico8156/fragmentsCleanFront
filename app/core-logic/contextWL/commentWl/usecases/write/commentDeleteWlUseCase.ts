@@ -10,7 +10,7 @@ import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {deleteOptimisticApplied} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
-import { hasPendingCommentCommandForComment } from "@/app/core-logic/contextWL/commentWl/usecases/write/pendingCommentCommand";
+import { hasPendingCommentDeleteCommandForComment } from "@/app/core-logic/contextWL/commentWl/usecases/write/pendingCommentCommand";
 
 export const uiCommentDeleteRequested = createAction<{ commentId: string }>(
     "UI/COMMENT/DELETE_REQUESTED",
@@ -27,7 +27,7 @@ export const commentDeleteUseCaseFactory = (deps: DependenciesWl, callback?: () 
             const state: any = api.getState();
             const cur = state.cState.entities.entities[commentId];
             if (!cur) return;
-            if (hasPendingCommentCommandForComment(state.oState, commentId)) return;
+            if (hasPendingCommentDeleteCommandForComment(state.oState, commentId)) return;
 
             const commandId = deps.helpers?.newCommandId?.() ?? (`cmd_${nanoid()}` as any);
             const outboxId = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;

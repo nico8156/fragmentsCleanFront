@@ -50,7 +50,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
 			if (!deps.gateways.likes) return;
 
 			if (!me) {
-				api.dispatch(likeOptimisticApplied({ targetId, clientAt: at }));
+				api.dispatch(likeOptimisticApplied({ targetId, clientAt: at, commandId }));
 				api.dispatch(likeSyncPending({ targetId, commandId, ttlMs: 2_000 }));
 
 				api.dispatch(
@@ -70,7 +70,7 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
 					}),
 				);
 			} else {
-				api.dispatch(unlikeOptimisticApplied({ targetId, clientAt: at }));
+				api.dispatch(unlikeOptimisticApplied({ targetId, clientAt: at, commandId }));
 				api.dispatch(likeSyncPending({ targetId, commandId, ttlMs: 2_000 }));
 				api.dispatch(
 					enqueueCommitted({

@@ -12,6 +12,13 @@ export type LikeAggregate = {
 	version: number;      // version serveur de l’agrégat
 	updatedAt?: ISODate;  // watermark serveur
 	optimistic?: boolean; // une action locale en vol ?
+	pendingIntent?: {
+		desiredMe: boolean;
+		baseCount: number;
+		baseMe: boolean;
+		baseVersion?: number;
+		commandId?: string;
+	};
 	lastFetchedAtMs?: number;
 
 	// ⬇️ NEW: anneau doux autour du coeur

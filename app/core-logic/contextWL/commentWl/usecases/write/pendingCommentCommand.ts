@@ -10,11 +10,27 @@ export const hasPendingCommentCommandForComment = (
 	outbox: OutboxStateWl | undefined,
 	commentId: string,
 ): boolean => {
+	return hasPendingCommentCommandForCommentMatching(outbox, commentId);
+};
+
+export const hasPendingCommentDeleteCommandForComment = (
+	outbox: OutboxStateWl | undefined,
+	commentId: string,
+): boolean => {
+	return hasPendingCommentCommandForCommentMatching(outbox, commentId, new Set([commandKinds.CommentDelete]));
+};
+
+const hasPendingCommentCommandForCommentMatching = (
+	outbox: OutboxStateWl | undefined,
+	commentId: string,
+	kinds?: Set<string>,
+): boolean => {
 	const records = Object.values(outbox?.byId ?? {}) as any[];
 	return records.some((rec) => {
 		if (!pendingStatuses.has(rec?.status)) return false;
 		const command = rec?.item?.command;
 		if (!command) return false;
+		if (kinds && !kinds.has(command.kind)) return false;
 		if (
 			command.kind !== commandKinds.CommentCreate &&
 			command.kind !== commandKinds.CommentUpdate &&
