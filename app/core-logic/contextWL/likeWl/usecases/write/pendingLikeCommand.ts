@@ -9,13 +9,15 @@ const pendingStatuses = new Set<string>([
 export const hasPendingLikeCommandForTarget = (
 	outbox: OutboxStateWl | undefined,
 	targetId: string,
+	userId?: string,
 ): boolean => {
-	return getPendingLikeCommandKindForTarget(outbox, targetId) !== null;
+	return getPendingLikeCommandKindForTarget(outbox, targetId, userId) !== null;
 };
 
 export const getPendingLikeCommandKindForTarget = (
 	outbox: OutboxStateWl | undefined,
 	targetId: string,
+	userId?: string,
 ): typeof commandKinds.LikeAdd | typeof commandKinds.LikeRemove | null => {
 	const records = Object.values(outbox?.byId ?? {}) as any[];
 	for (const rec of records) {
@@ -25,7 +27,9 @@ export const getPendingLikeCommandKindForTarget = (
 		if (command.kind !== commandKinds.LikeAdd && command.kind !== commandKinds.LikeRemove) {
 			continue;
 		}
-		if (String(command.targetId ?? "") === String(targetId)) return command.kind;
+		if (String(command.targetId ?? "") !== String(targetId)) continue;
+		if (userId && command.userId && String(command.userId) !== String(userId)) continue;
+		return command.kind;
 	}
 	return null;
 };

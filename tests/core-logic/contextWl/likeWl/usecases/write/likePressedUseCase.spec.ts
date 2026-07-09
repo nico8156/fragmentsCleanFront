@@ -4,6 +4,7 @@ import type { DependenciesWl } from "@/app/store/appStateWl";
 import { likeToggleUseCaseFactory, uiLikeToggleRequested } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import { likesRetrieved } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { commandKinds, ISODate, CommandId } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {FakeLikesGateway} from "@/tests/core-logic/fakes/FakeLikesGateway";
 import {FakeAuthTokenBridge} from "@/tests/core-logic/fakes/FakeAuthTokenBridge";
 
@@ -126,15 +127,16 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
         expect(agg.optimistic).toBe(true);
 
         // Outbox record
-	const rec = s.oState.byId["obx_like_001"];
-        expect(rec).toBeDefined();
-        expect(s.oState.queue).toContain("obx_like_001");
+		const rec = s.oState.byId["obx_like_001"];
+	        expect(rec).toBeDefined();
+	        expect(s.oState.queue).toContain("obx_like_001");
 
-        const cmd = rec.item.command;
-        expect(cmd.kind).toBe(commandKinds.LikeAdd);
-        expect(cmd.commandId).toBe("cmd_like_001");
-        expect(cmd.targetId).toBe("cafe_A");
-        expect(cmd.at).toBe("2025-10-10T07:02:00.000Z");
+	        const cmd = rec.item.command;
+	        expect(cmd.kind).toBe(commandKinds.LikeAdd);
+	        expect(cmd.commandId).toBe("cmd_like_001");
+	        expect(cmd.targetId).toBe("cafe_A");
+	        expect(cmd.userId).toBe("user_test");
+	        expect(cmd.at).toBe("2025-10-10T07:02:00.000Z");
 
         const undo = rec.item.undo;
         expect(undo.kind).toBe(commandKinds.LikeAdd);
@@ -189,13 +191,14 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
 
         const rec = s.oState.byId["obx_unlike_001"];
         expect(rec).toBeDefined();
-        expect(s.oState.queue).toContain("obx_unlike_001");
+	        expect(s.oState.queue).toContain("obx_unlike_001");
 
-        const cmd = rec.item.command;
-        expect(cmd.kind).toBe(commandKinds.LikeRemove);
-        expect(cmd.commandId).toBe("cmd_unlike_001");
-        expect(cmd.targetId).toBe("cafe_A");
-        expect(cmd.at).toBe("2025-10-10T07:02:10.000Z");
+	        const cmd = rec.item.command;
+	        expect(cmd.kind).toBe(commandKinds.LikeRemove);
+	        expect(cmd.commandId).toBe("cmd_unlike_001");
+	        expect(cmd.targetId).toBe("cafe_A");
+	        expect(cmd.userId).toBe("user_test");
+	        expect(cmd.at).toBe("2025-10-10T07:02:10.000Z");
 
         const undo = rec.item.undo;
         expect(undo.kind).toBe(commandKinds.LikeRemove);
@@ -268,10 +271,72 @@ describe("Like toggle listener (optimistic + enqueue)", () => {
             me: false,
             optimistic: true,
             version: 1,
-        });
-        expect(Object.keys(s.oState.byId)).toEqual(["obx_like_001", "obx_unlike_001"]);
-        expect(s.oState.queue).toEqual(["obx_like_001", "obx_unlike_001"]);
-        expect(s.oState.byId.obx_like_001.item.command.kind).toBe(commandKinds.LikeAdd);
-        expect(s.oState.byId.obx_unlike_001.item.command.kind).toBe(commandKinds.LikeRemove);
-    });
-});
+	        });
+	        expect(Object.keys(s.oState.byId)).toEqual(["obx_like_001", "obx_unlike_001"]);
+	        expect(s.oState.queue).toEqual(["obx_like_001", "obx_unlike_001"]);
+	        expect(s.oState.byId.obx_like_001.item.command.kind).toBe(commandKinds.LikeAdd);
+	        expect(s.oState.byId.obx_unlike_001.item.command.kind).toBe(commandKinds.LikeRemove);
+	    });
+
+	    it("does not let an old pending add block a new visual add when read model still says not liked", async () => {
+	        const likes = new FakeLikesGateway();
+	        const authToken = new FakeAuthTokenBridge("token_test", "user_test");
+
+	        const deps = makeDeps({
+	            likes,
+	            authToken,
+	            nowIso: "2025-10-10T07:02:00.000Z" as ISODate,
+	            outboxId: "obx_like_new",
+	            commandId: "cmd_like_new" as CommandId,
+	        });
+
+	        const store = initReduxStoreWl({
+	            dependencies: deps,
+	            listeners: [likeToggleUseCaseFactory(deps).middleware],
+	        });
+
+	        store.dispatch(enqueueCommitted({
+	            id: "obx_like_old",
+	            item: {
+	                command: {
+	                    kind: commandKinds.LikeAdd,
+	                    commandId: "cmd_like_old",
+	                    targetId: "cafe_A",
+	                    userId: "user_test",
+	                    at: "2025-10-10T07:00:00.000Z",
+	                },
+	                undo: {
+	                    kind: commandKinds.LikeAdd,
+	                    targetId: "cafe_A",
+	                    prevCount: 0,
+	                    prevMe: false,
+	                },
+	            },
+	            enqueuedAt: "2025-10-10T07:00:00.000Z",
+	        }));
+
+	        store.dispatch(
+	            likesRetrieved({
+	                targetId: "cafe_A",
+	                count: 0,
+	                me: false,
+	                version: 1,
+	                serverTime: "2025-10-10T07:01:00.000Z" as ISODate,
+	            }),
+	        );
+
+	        store.dispatch(uiLikeToggleRequested({ targetId: "cafe_A" }));
+	        await flushPromises();
+
+	        const s = store.getState() as any;
+	        expect(s.lState.byTarget.cafe_A).toMatchObject({
+	            count: 1,
+	            me: true,
+	            optimistic: true,
+	        });
+	        expect(Object.values(s.oState.byId).map((rec: any) => rec.item.command.commandId)).toEqual([
+	            "cmd_like_old",
+	            "cmd_like_new",
+	        ]);
+	    });
+	});
