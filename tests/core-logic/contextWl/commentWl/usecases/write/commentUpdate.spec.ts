@@ -4,7 +4,8 @@ import type { DependenciesWl } from "@/app/store/appStateWl";
 import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { cuAction, commentUpdateWlUseCase } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
-import { commandKinds, type CommandId, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { commandKinds, statusTypes, type CommandId, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { enqueueCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import type { CommentUpdateCommand } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 import {FakeCommentsWlGateway} from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
 
@@ -107,5 +108,38 @@ describe("Comments WRITE - UPDATE (optimistic + enqueue)", () => {
         expect(ent.body).toBe("ancien texte");
         expect(ent.optimistic).toBe(false);
         expect(s.oState.queue.length).toBe(0);
+    });
+
+    it("should not depend on hydrated auth state once the UI has requested update", async () => {
+        store.dispatch(cuAction({ commentId, newBody: "texte modifié" }));
+        await flushPromises();
+
+        const s: any = store.getState();
+        expect(s.cState.entities.entities[commentId].body).toBe("texte modifié");
+        expect(s.oState.byId.obx_update_001.item.command.kind).toBe(commandKinds.CommentUpdate);
+    });
+
+    it("should allow update when a non-update command is already pending for the comment", async () => {
+        store.dispatch(enqueueCommitted({
+            id: "obx_delete_pending",
+            item: {
+                command: {
+                    kind: commandKinds.CommentDelete,
+                    commandId: "cmd_delete_pending",
+                    commentId,
+                    at: "2025-10-10T07:02:00.000Z",
+                } as any,
+                undo: { kind: commandKinds.CommentDelete, commentId, prevBody: "ancien texte", prevVersion: 7 } as any,
+            },
+            enqueuedAt: "2025-10-10T07:02:00.000Z",
+        }) as any);
+        (store.getState() as any).oState.byId.obx_delete_pending.status = statusTypes.awaitingAck;
+
+        store.dispatch(cuAction({ commentId, newBody: "texte après pending" }));
+        await flushPromises();
+
+        const s: any = store.getState();
+        expect(s.cState.entities.entities[commentId].body).toBe("texte après pending");
+        expect(s.oState.byId.obx_update_001.item.command.kind).toBe(commandKinds.CommentUpdate);
     });
 });

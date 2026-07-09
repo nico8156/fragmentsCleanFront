@@ -9,17 +9,11 @@ import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {updateOptimisticApplied} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
-import { hasPendingCommentCommandForComment } from "@/app/core-logic/contextWL/commentWl/usecases/write/pendingCommentCommand";
+import { hasPendingCommentUpdateCommandForComment } from "@/app/core-logic/contextWL/commentWl/usecases/write/pendingCommentCommand";
 
 export const cuAction = createAction<{ commentId: string; newBody: string }>(
     "UI/COMMENT/UPDATE",
 );
-
-const getCurrentUserId = (state: any, deps: DependenciesWl): string | undefined =>
-    state.aState?.session?.userId ??
-    state.aState?.currentUser?.id ??
-    deps.helpers?.currentUserId?.();
-
 
 export const commentUpdateWlUseCase = (deps: DependenciesWl, callback?: () => void) => {
     const mw = createListenerMiddleware();
@@ -35,10 +29,7 @@ export const commentUpdateWlUseCase = (deps: DependenciesWl, callback?: () => vo
             const state: any = api.getState();
             const cur = state.cState.entities.entities[commentId];
             if (!cur) return;
-            if (hasPendingCommentCommandForComment(state.oState, commentId)) return;
-
-            const currentUserId = getCurrentUserId(state, deps);
-            if (!currentUserId || String(cur.authorId) !== String(currentUserId)) return;
+            if (hasPendingCommentUpdateCommandForComment(state.oState, commentId)) return;
 
             const commandId = deps.helpers?.newCommandId?.() ?? (`cmd_${nanoid()}` as any);
             const outboxId = deps.helpers?.getCommandIdForTests?.() ?? `obx_${nanoid()}`;

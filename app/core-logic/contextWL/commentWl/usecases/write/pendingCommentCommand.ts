@@ -20,6 +20,13 @@ export const hasPendingCommentDeleteCommandForComment = (
 	return hasPendingCommentCommandForCommentMatching(outbox, commentId, new Set([commandKinds.CommentDelete]));
 };
 
+export const hasPendingCommentUpdateCommandForComment = (
+	outbox: OutboxStateWl | undefined,
+	commentId: string,
+): boolean => {
+	return hasPendingCommentCommandForCommentMatching(outbox, commentId, new Set([commandKinds.CommentUpdate]));
+};
+
 const hasPendingCommentCommandForCommentMatching = (
 	outbox: OutboxStateWl | undefined,
 	commentId: string,
