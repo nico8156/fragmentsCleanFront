@@ -22,6 +22,7 @@ import type { CommandStatusGateway } from "@/app/core-logic/contextWL/outboxWl/g
 
 import type { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import type { ProjectionSyncGateway } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
+import type { StudioGateway } from "@/app/core-logic/contextWL/studioWl/gateway/studioWl.gateway";
 
 export type GatewaysWl = {
 	coffees: CoffeeWlGateway;
@@ -36,6 +37,7 @@ export type GatewaysWl = {
 	entitlements: EntitlementWlGateway;
 	locations: LocationWlGateway;
 	articles: ArticleWlGateway;
+	studio: StudioGateway;
 
 	auth: {
 		oauth: OAuthGateway;

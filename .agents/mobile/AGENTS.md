@@ -12,7 +12,8 @@ Before coding, classify the task:
 4. Bootstrap/runtime: app lifecycle, auth init, outbox rehydration, connectivity.
 5. Screen feature: UI composition over an existing view model.
 6. External/native adapter: SecureStore, MMKV, Location, ImagePicker, NetInfo, STOMP.
-7. Architecture/doc feature: changes rules or documentation.
+7. Studio/admin feature: internal editing UX backed by view models and admin gateways.
+8. Architecture/doc feature: changes rules or documentation.
 
 Use the matching orchestrator in `.agents/mobile/orchestrators`.
 
@@ -28,6 +29,8 @@ Use the matching orchestrator in `.agents/mobile/orchestrators`.
 - Concrete gateways are wired centrally.
 - Screens do not fetch.
 - View models do not instantiate gateways.
+- Studio screens do not bypass `studioWl` use cases or gateways.
+- Admin tokens must not be stored in Expo config or logged.
 - Tests are fake-first.
 
 ## Definition of Done
@@ -39,4 +42,3 @@ Before completing a mobile task:
 - command status fallback is considered for writes
 - configuration/secrets are safe for EAS/App Store
 - no UI global refactor was introduced unless requested
-

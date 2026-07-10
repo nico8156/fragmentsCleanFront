@@ -6,6 +6,7 @@ Ce contexte fournit le read-model éditorial (articles, sliders, catégories) co
 - **Réducteur** : `articleWl.reducer.ts` gère les requêtes ponctuelles (`articleRequested`) et les listes paginées en veillant à fusionner les entités, maintenir `bySlug` et mémoriser `status/errors` par référence.【F:app/core-logic/contextWL/articleWl/reducer/articleWl.reducer.ts†L1-L82】【F:app/core-logic/contextWL/articleWl/reducer/articleWl.reducer.ts†L83-L138】
 - **Use cases** : `articleRetrieval.ts` expose deux thunks (`articleRetrievalBySlug`, `articlesListRetrieval`) qui dispatchent `articleRequested`/`articleListRequested`, interrogent `gateways.articles` puis publient `articleReceived` ou les erreurs correspondantes.【F:app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval.ts†L1-L61】【F:app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval.ts†L62-L94】
 - **Sélecteurs/View models** : `selectArticlesForLocale` alimente `useArticlesHome`, lequel construit les sliders et catégories pour la Home tout en relançant la récupération lorsque `status` revient à `IDLE`.【F:app/adapters/secondary/viewModel/useArticlesHome.ts†L1-L66】【F:app/adapters/secondary/viewModel/useArticlesHome.ts†L67-L113】
+- **Studio** : la création/édition admin ne passe pas par `articleWl`. Elle passe par `studioWl`, qui soumet une commande article au backend Studio et observe le `commandId`. `articleWl` reste le read model public consommé par la Home et l'écran article.
 
 ## Flux standard
 
