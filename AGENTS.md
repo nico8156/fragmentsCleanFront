@@ -40,7 +40,6 @@ Reverse dependencies are forbidden.
 - `wsWl`: opportunistic WebSocket lifecycle.
 - `locationWl`: device location.
 - `entitlementWl`: product capabilities/rewards.
-- `studioWl`: admin/studio editing UX for cafes and editorial submissions.
 
 ## Screen Rules
 
@@ -55,9 +54,6 @@ Screens must not:
 - dispatch deep business actions directly when a view model exists
 - contain offline/retry/ACK logic
 - contain backend DTO mapping
-
-Studio screens follow the same rule. They render editor state, call view model
-callbacks, and never call admin HTTP endpoints directly.
 
 ## ViewModel Rules
 
@@ -208,8 +204,6 @@ Auth refresh failures caused by offline mode, timeout, 408/429, or 5xx must keep
 No hardcoded production API URL.
 No secrets in Expo config.
 No tokens in logs.
-No admin/studio token in Expo config. Admin tokens are runtime operator input or
-must come from a future secure admin auth flow.
 
 Production values must come from:
 - EAS env/secrets

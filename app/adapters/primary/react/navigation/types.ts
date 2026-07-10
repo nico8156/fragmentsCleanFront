@@ -16,7 +16,6 @@ export type RootTabsParamList = {
 	// Tab name can stay "Rewards" even if UI label is "Pass"
 	Rewards: undefined;
 
-	Studio: undefined;
 	Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 

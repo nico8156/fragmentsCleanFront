@@ -33,7 +33,6 @@ import { PassScreen } from "@/app/adapters/primary/react/features/pass/screens/P
 import { ScanTicketScreen } from "@/app/adapters/primary/react/features/scan/screens/ScanTicketScreen";
 import { SearchScreen } from "@/app/adapters/primary/react/features/search/screens/SearchScreen";
 import ScanTicketSuccessScreen from "../features/scan/screens/ScanTicketSuccessScreen";
-import { StudioScreen } from "@/app/adapters/primary/react/features/studio/screens/StudioScreen";
 
 import {
 	ProfileStackParamList,
@@ -81,7 +80,6 @@ const linking: LinkingOptions<RootStackParamList> = {
 							AppSettings: "settings",
 						},
 					},
-					Studio: "studio",
 				},
 			},
 		},
@@ -152,7 +150,6 @@ function TabsNavigator() {
 						Home: "home",
 						Map: "map",
 						Rewards: "gift",
-						Studio: "create",
 						Profile: "person",
 					};
 					const iconName = iconMap[route.name] ?? "ellipse";
@@ -163,7 +160,6 @@ function TabsNavigator() {
 			<Tabs.Screen name="Home" component={HomeScreen} options={{ title: "Home" }} />
 			<Tabs.Screen name="Map" component={MapScreen} options={{ title: "Carte" }} />
 			<Tabs.Screen name="Rewards" component={PassScreen} options={{ title: "Pass" }} />
-			<Tabs.Screen name="Studio" component={StudioScreen} options={{ title: "Studio" }} />
 			<Tabs.Screen name="Profile" component={ProfileNavigator} options={{ title: "Profil" }} />
 		</Tabs.Navigator>
 	);
@@ -255,3 +251,4 @@ export function RootNavigator() {
 		</NavigationIndependentTree>
 	);
 }
+
