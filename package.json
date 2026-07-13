@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest --clearCache && jest",
+    "redux:map": "node scripts/generate-redux-action-map.js",
     "build:dev": "eas build --profile development",
     "build:dev:fresh": "eas build --profile development --clear-cache",
     "build:prod": "eas build --profile production",
