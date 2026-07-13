@@ -43,7 +43,6 @@ export const runtimeListenerFactory = () => {
 		dispatch: AppDispatchWl;
 		getState: () => RootStateWl;
 	}) => {
-		api.dispatch(outboxResumeRequested());
 		api.dispatch(projectionSyncEnsureConnectedRequested());
 		api.dispatch(outboxProcessOnce());
 		api.dispatch(outboxWatchdogTick());
@@ -73,6 +72,10 @@ export const runtimeListenerFactory = () => {
 			const bootReady = selectBootReady(state);
 
 			logger.info("[APP RUNTIME] appBecameActive", { online, authed, bootReady });
+
+			if (online) {
+				api.dispatch(outboxResumeRequested());
+			}
 
 			if (!bootReady) return;
 			if (!authed) return;

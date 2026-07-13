@@ -18,7 +18,7 @@ import {
 	outboxWatchdogTick,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
-import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { appBecameActive, appBecameBackground, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 import {
 	reconcileAppliedOutboxRecord,
@@ -159,8 +159,16 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
+			stopTimer();
 			startTimer(api.dispatch);
 			await runOnce(api);
+		},
+	});
+
+	listen({
+		actionCreator: appBecameBackground,
+		effect: async () => {
+			stopTimer();
 		},
 	});
 

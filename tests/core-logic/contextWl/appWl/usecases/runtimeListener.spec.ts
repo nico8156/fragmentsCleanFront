@@ -58,13 +58,13 @@ describe("runtimeListenerFactory (appWl)", () => {
 	// appBecameActive
 	// ─────────────────────────────────────────────────────────────
 
-	it("appBecameActive / not signedIn => no side effects", async () => {
+	it("appBecameActive / not signedIn => resumes outbox suspension only", async () => {
 		rec.clear();
 
 		store.dispatch(appBecameActive());
 		await flush();
 
-		expect(rec.getTypes()).toEqual(["APP/BECAME_ACTIVE"]);
+		expect(rec.getTypes()).toEqual(["APP/BECAME_ACTIVE", "OUTBOX/RESUME_REQUESTED"]);
 	});
 
 	it("appBecameActive / signedIn => projectionSyncEnsure + outboxProcessOnce + watchdogTick", async () => {
@@ -79,6 +79,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
+				outboxResumeRequested.type,
 				projectionSyncEnsureConnectedRequested.type,
 				outboxProcessOnce.type,
 				outboxWatchdogTick.type,
@@ -112,7 +113,6 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		store.dispatch(appConnectivityChanged({ online: true }));
 		await flush();
-		console.log(rec.getTypes())
 		expect(rec.getTypes()).toEqual(["APP/CONNECTIVITY_CHANGED", 'OUTBOX/RESUME_REQUESTED']);
 	});
 
@@ -156,6 +156,35 @@ describe("runtimeListenerFactory (appWl)", () => {
 				outboxSuspendRequested.type,
 				projectionSyncDisconnectRequested.type,
 			]),
+		);
+	});
+
+	it("background then active / signedIn => suspend then resume + restart runtime work", async () => {
+		seedSignedIn(store, { userId: "u1" });
+		seedBootReady(store);
+
+		rec.clear();
+		store.dispatch(appBecameBackground());
+		await flush();
+		store.dispatch(appBecameActive());
+		await flush();
+
+		const types = rec.getTypes();
+
+		expect(types).toEqual(
+			expect.arrayContaining([
+				outboxSuspendRequested.type,
+				projectionSyncDisconnectRequested.type,
+				outboxResumeRequested.type,
+				authMaybeRefreshRequested.type,
+				authUserHydrationRequested.type,
+				projectionSyncEnsureConnectedRequested.type,
+				outboxProcessOnce.type,
+				outboxWatchdogTick.type,
+			]),
+		);
+		expect(types.indexOf(outboxSuspendRequested.type)).toBeLessThan(
+			types.indexOf(outboxResumeRequested.type),
 		);
 	});
 });
