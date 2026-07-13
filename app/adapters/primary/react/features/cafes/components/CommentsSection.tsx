@@ -1,11 +1,13 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
 import type { CommentItemVM } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
+import { PassRingViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
+import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 import { SymbolView } from "expo-symbols";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	findNodeHandle,
-	Image,
 	Keyboard,
 	Pressable,
 	StyleSheet,
@@ -45,6 +47,7 @@ export function CommentsSection({
 	const trimmed = draft.trim();
 	const canSend = trimmed.length > 0;
 	const charCount = trimmed.length;
+	const pass = usePassRingsViewModel();
 
 	const inputRef = useRef<TextInput>(null);
 
@@ -91,6 +94,7 @@ export function CommentsSection({
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
 							onDelete={() => comments.uiViaHookDeleteComment({ commentId: c.id })}
 							onRequestScrollToY={onRequestScrollToY}
+							earnedRings={c.isAuthor ? pass.completedRings : []}
 						/>
 					))}
 				</View>
@@ -142,11 +146,13 @@ function CommentCard({
 	onEdit,
 	onDelete,
 	onRequestScrollToY,
+	earnedRings,
 }: {
 	item: CommentItemVM;
 	onEdit: (body: string) => void;
 	onDelete: () => void;
 	onRequestScrollToY?: (y: number) => void;
+	earnedRings: PassRingViewModel[];
 }) {
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(item.body);
@@ -231,7 +237,12 @@ function CommentCard({
 
 	return (
 		<View ref={cardRef} style={s.commentCard}>
-			<Image source={{ uri: item.avatarUrl }} style={s.avatar} />
+			<PassAvatar
+				imageUrl={item.avatarUrl}
+				rings={earnedRings}
+				size={34}
+				accessibilityLabel={`${item.authorName}, avatar`}
+			/>
 
 			<View style={s.commentContent}>
 				<View style={s.commentHeader}>
@@ -323,8 +334,6 @@ const s = StyleSheet.create({
 		borderColor: palette.border_muted_30,
 		marginBottom: 9,
 	},
-	avatar: { width: 34, height: 34, borderRadius: 17, backgroundColor: palette.bg_dark_50 },
-
 	commentContent: { flex: 1, marginLeft: 10 },
 
 	commentHeader: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },

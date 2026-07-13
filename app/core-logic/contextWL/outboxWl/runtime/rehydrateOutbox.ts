@@ -94,7 +94,7 @@ const sanitizeOutboxState = (snapshot: any): OutboxStateWl => {
 
 	// queue = ids existants + queued, puis records récupérables absents de la queue stockée.
 	const queuedFromSnapshot = rawQueue.filter(
-		(id) => Boolean(sanitizedById[id]) && sanitizedById[id].status === statusTypes.queued,
+		(id: string) => Boolean(sanitizedById[id]) && sanitizedById[id].status === statusTypes.queued,
 	);
 	const queuedIds = new Set(queuedFromSnapshot);
 	const recoveredQueuedIds = Object.values(sanitizedById)
