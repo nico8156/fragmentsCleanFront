@@ -1,10 +1,5 @@
-import { commandKinds, statusTypes, type OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-
-const pendingStatuses = new Set<string>([
-	statusTypes.queued,
-	statusTypes.processing,
-	statusTypes.awaitingAck,
-]);
+import { isOutboxPendingStatus } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import { commandKinds, type OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const hasPendingLikeCommandForTarget = (
 	outbox: OutboxStateWl | undefined,
@@ -21,7 +16,7 @@ export const getPendingLikeCommandKindForTarget = (
 ): typeof commandKinds.LikeAdd | typeof commandKinds.LikeRemove | null => {
 	const records = Object.values(outbox?.byId ?? {}) as any[];
 	for (const rec of records) {
-		if (!pendingStatuses.has(rec?.status)) continue;
+		if (!isOutboxPendingStatus(rec?.status)) continue;
 		const command = rec?.item?.command;
 		if (!command) continue;
 		if (command.kind !== commandKinds.LikeAdd && command.kind !== commandKinds.LikeRemove) {

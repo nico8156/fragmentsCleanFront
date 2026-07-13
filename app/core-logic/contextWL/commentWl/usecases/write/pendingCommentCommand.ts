@@ -1,10 +1,5 @@
-import { commandKinds, statusTypes, type OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-
-const pendingStatuses = new Set<string>([
-	statusTypes.queued,
-	statusTypes.processing,
-	statusTypes.awaitingAck,
-]);
+import { isOutboxPendingStatus } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import { commandKinds, type OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export const hasPendingCommentCommandForComment = (
 	outbox: OutboxStateWl | undefined,
@@ -34,7 +29,7 @@ const hasPendingCommentCommandForCommentMatching = (
 ): boolean => {
 	const records = Object.values(outbox?.byId ?? {}) as any[];
 	return records.some((rec) => {
-		if (!pendingStatuses.has(rec?.status)) return false;
+		if (!isOutboxPendingStatus(rec?.status)) return false;
 		const command = rec?.item?.command;
 		if (!command) return false;
 		if (kinds && !kinds.has(command.kind)) return false;
