@@ -241,7 +241,7 @@ describe("projectionSyncListenerFactory", () => {
 		expect((store.getState() as any).psState.lastEventId).toBe("4");
 	});
 
-	it("routes projection.updated/entitlements to entitlements snapshot GET", async () => {
+	it("routes projection.updated/entitlements to entitlements snapshot GET and keeps backend-published rights", async () => {
 		const projectionSync = new FakeProjectionSyncGateway();
 		const entitlements = new FakeEntitlementWlGateway();
 		entitlements.store.set("user-42", {
@@ -293,7 +293,7 @@ describe("projectionSyncListenerFactory", () => {
 		expect((store.getState() as any).enState.byUser["user-42"]).toMatchObject({
 			userId: "user-42",
 			confirmedTickets: 5,
-			rights: ["LIKE", "COMMENT", "SUBMIT_CAFE"],
+			rights: [],
 			updatedAt: "2026-07-06T12:00:00.000Z",
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("5");

@@ -8,6 +8,7 @@ import {
 	markAwaitingAck,
 	markFailed,
 	markProcessing,
+	outboxDevClearCommitted,
 	outboxRehydrateCommitted,
 	outboxResumeRequested,
 	outboxSuspendRequested,
@@ -28,6 +29,7 @@ const trackedActions = [
 	scheduleRetry,
 	outboxSuspendRequested,
 	outboxResumeRequested,
+	outboxDevClearCommitted,
 ];
 
 export const outboxPersistenceMiddlewareFactory = (deps: OutboxPersistenceDeps) => {
@@ -69,4 +71,3 @@ export const outboxPersistenceMiddlewareFactory = (deps: OutboxPersistenceDeps) 
 
 	return middleware.middleware;
 };
-

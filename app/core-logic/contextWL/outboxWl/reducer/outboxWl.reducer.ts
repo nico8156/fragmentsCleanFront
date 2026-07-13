@@ -8,6 +8,7 @@ import {
 	markAwaitingAck,
 	markFailed,
 	markProcessing,
+	outboxDevClearCommitted,
 	outboxRehydrateCommitted,
 	outboxResumeRequested,
 	outboxSuspendRequested,
@@ -35,6 +36,13 @@ export const outboxWlReducer = createReducer(initialOutboxState, (builder) => {
 		.addCase(outboxResumeRequested, (state) => {
 			state.suspended = false;
 		})
+
+		.addCase(outboxDevClearCommitted, () => ({
+			byId: {},
+			queue: [],
+			byCommandId: {},
+			suspended: false,
+		}))
 
 		.addCase(enqueueCommitted, (state, action) => {
 			const { id, item, enqueuedAt } = action.payload;

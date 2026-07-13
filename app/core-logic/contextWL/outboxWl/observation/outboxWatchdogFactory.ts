@@ -24,6 +24,7 @@ import {
 	reconcileAppliedOutboxRecord,
 	rollbackRejectedOutboxRecord,
 } from "@/app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers";
+import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 
 import { logger } from "@/app/core-logic/utils/logger";
 
@@ -109,11 +110,13 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			}
 
 			logger.info("[OUTBOX_WD] checking status", { id: rec.id, commandId });
+			outboxTelemetry.ackCheck(rec);
 
 			const verdict = await commandStatus.getStatus(commandId);
 
 			if (verdict.status === "APPLIED") {
 				logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
+				outboxTelemetry.ackVerdict(rec, "APPLIED", { appliedAt: verdict.appliedAt });
 				reconcileAppliedOutboxRecord({
 					record: rec,
 					dispatch: api.dispatch,
@@ -127,6 +130,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			if (verdict.status === "REJECTED") {
 				const reason = verdict.reason ?? "rejected";
 				logger.warn("[OUTBOX_WD] rejected => rollback + fail + drop", { commandId, reason, rejectedAt: verdict.rejectedAt });
+				outboxTelemetry.ackVerdict(rec, "REJECTED", { reason, rejectedAt: verdict.rejectedAt });
 
 				rollbackRejectedOutboxRecord({
 					record: rec,
@@ -142,6 +146,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 			// PENDING => replanifie prochain check
 			const next = new Date(Date.now() + 5_000).toISOString();
+			outboxTelemetry.ackVerdict(rec, "PENDING", { nextCheckAt: next });
 			api.dispatch(markAwaitingAck({ id: rec.id, ackByIso: next }));
 		} catch (e: any) {
 			logger.error("[OUTBOX_WD] runOnce error", { error: String(e?.message ?? e) });

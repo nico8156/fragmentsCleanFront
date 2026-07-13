@@ -14,6 +14,7 @@ import {
 	type OutboxCommand,
 	type OutboxRecord,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import type { GatewaysWl } from "@/app/adapters/primary/wiring/types";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
@@ -136,6 +137,7 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.LikeRemove: {
 			const u = undo as LikeUndo;
 			if (!u) return;
+			outboxTelemetry.rollback(record, "like command rejected");
 			if (markLikeSyncFailed) {
 				dispatch(likeSyncFailed({
 					targetId: u.targetId,
@@ -154,6 +156,7 @@ export const rollbackRejectedOutboxRecord = ({
 
 		case commandKinds.CommentCreate:
 			if (isCommentCreateUndo(undo)) {
+				outboxTelemetry.rollback(record, "comment create rejected");
 				dispatch(createRollback({ tempId: undo.tempId, targetId: undo.targetId, parentId: undo.parentId ?? undefined }));
 			} else {
 				logger?.warn?.("[OUTBOX] CommentCreate undo shape mismatch", { undo });
@@ -163,6 +166,7 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.CommentUpdate: {
 			const u = undo as { commentId: string; prevBody: string; prevVersion?: number };
 			if (!u?.commentId) return;
+			outboxTelemetry.rollback(record, "comment update rejected");
 			dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
 			return;
 		}
@@ -170,6 +174,7 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.CommentDelete: {
 			const u = undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
 			if (!u?.commentId) return;
+			outboxTelemetry.rollback(record, "comment delete rejected");
 			dispatch(deleteRollback({
 				commentId: u.commentId,
 				prevBody: u.prevBody,
@@ -182,6 +187,7 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.TicketVerify: {
 			const u = undo as { ticketId: string };
 			if (!u?.ticketId) return;
+			outboxTelemetry.rollback(record, "ticket verify rejected");
 			dispatch(ticketRollBack({ ticketId: u.ticketId }));
 			return;
 		}
@@ -209,16 +215,24 @@ export const reconcileAppliedOutboxRecord = ({
 	switch (command.kind) {
 		case commandKinds.LikeAdd:
 		case commandKinds.LikeRemove:
+			outboxTelemetry.reconcile(record, "likes");
 			dispatch(likeSyncAcked({
 				targetId: command.targetId,
 				commandId: command.commandId,
 			}));
 			if (gateways?.likes && command.targetId) {
+				outboxTelemetry.projectionRefreshRequested({
+					projection: "likes",
+					scope: "target",
+					entityId: command.targetId,
+					source: "ackReconcile",
+				});
 				dispatch(likesRetrieval({ targetId: command.targetId }) as any);
 			}
 			return;
 
 		case commandKinds.CommentCreate:
+			outboxTelemetry.reconcile(record, "comments");
 			if (command.tempId) {
 				dispatch(createReconciled({
 					commentId: command.tempId,
@@ -228,6 +242,7 @@ export const reconcileAppliedOutboxRecord = ({
 			return;
 
 		case commandKinds.CommentUpdate: {
+			outboxTelemetry.reconcile(record, "comments");
 			const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
 			dispatch(updateReconciled({
 				commentId: command.commentId,
@@ -241,6 +256,7 @@ export const reconcileAppliedOutboxRecord = ({
 		}
 
 		case commandKinds.CommentDelete: {
+			outboxTelemetry.reconcile(record, "comments");
 			const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
 			dispatch(deleteReconciled({
 				commentId: command.commentId,

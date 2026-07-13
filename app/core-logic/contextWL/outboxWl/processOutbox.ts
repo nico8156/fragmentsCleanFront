@@ -31,6 +31,7 @@ import {
 	rollbackRejectedOutboxRecord,
 	sendOutboxCommand,
 } from "@/app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers";
+import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 
 import { computeNextAttemptAtMs } from "@/app/core-logic/contextWL/outboxWl/utils/computeNextAttemptAtMs";
 import { isGatewayError } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
@@ -159,9 +160,11 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					api.dispatch(markAwaitingAck({ id, ackByIso: iso } as any));
 					api.dispatch(dequeueCommitted({ id }));
 					api.dispatch(outboxAwaitingAckAdded({ id }));
+					outboxTelemetry.awaitingAck(record, iso);
 				};
 
 				api.dispatch(markProcessing({ id }));
+				outboxTelemetry.enqueuedForSend(record);
 
 				logger.info("[OUTBOX] processOnce: processing", {
 					id,
@@ -207,6 +210,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 						attemptsSoFar,
 						nowMs: Date.now(),
 					});
+					outboxTelemetry.retryScheduled(record, nextAttemptAtMs, String(e?.message ?? e));
 
 					// compat: ton action semble être nextAttemptAtMs
 					api.dispatch(scheduleRetry({ id, nextAttemptAtMs } as any));

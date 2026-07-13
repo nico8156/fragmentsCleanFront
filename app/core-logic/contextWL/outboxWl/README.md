@@ -118,6 +118,35 @@ watchdog ->
 * **REJECTED** → `markFailed` + `dropCommitted`
 * **PENDING** → replanification `nextCheckAt(now + 5s)`
 
+## Observability
+
+Le cycle de vie commande publie des logs structures en dev :
+
+```txt
+[OUTBOX_TRACE] send:start
+[OUTBOX_TRACE] ack:awaiting
+[OUTBOX_TRACE] ack:check
+[OUTBOX_TRACE] ack:verdict
+[OUTBOX_TRACE] reconcile
+[OUTBOX_TRACE] rollback
+[OUTBOX_TRACE] retry:scheduled
+[OUTBOX_TRACE] projection:refresh_requested
+```
+
+`ack:*` concerne uniquement `/commands/{commandId}`. `projection:refresh_requested`
+signale une relecture de read model declenchee par `projectionSync` ou par une
+reconciliation locale. Un evenement de projection ne drop jamais une commande.
+
+En dev, `AppBootstrap` installe des helpers console :
+
+```ts
+globalThis.__FRAGMENTS_DEV__.printOutbox()
+await globalThis.__FRAGMENTS_DEV__.clearOutbox()
+```
+
+`clearOutbox` vide le storage durable et dispatch `OUTBOX/DEV_CLEAR_COMMITTED`.
+Il ne doit pas etre utilise comme mecanisme produit.
+
 ---
 
 ## Persistence
@@ -225,4 +254,3 @@ Ce n’est pas une queue.
 Ce n’est pas un middleware.
 
 C’est une **architecture distribuée client-side**.
-
