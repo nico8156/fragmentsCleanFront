@@ -26,8 +26,7 @@ export const entitlementsRetrieval =
                         updatedAt: res.data.updatedAt,
                     })
                 );
-            }catch (e){
-                console.log("error in entitlementsRetrieval", e);
+            }catch (_e){
             }finally {
                 return;
             }

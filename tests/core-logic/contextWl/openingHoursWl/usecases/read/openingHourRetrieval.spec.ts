@@ -20,7 +20,6 @@ describe('On OpeningHourRetrieval', () => {
     })
 
     it('should retrieve opening hours', async () => {
-        console.log(new Date().getDay())
         await store.dispatch<any>(onOpeningHourRetrieval())
         const state = store.getState() as any
         expect((state.ohState as AppStateWl["openingHours"]).byCoffeeIdDayWindow).toBeDefined()

@@ -30,7 +30,6 @@ export const coffeeGlobalRetrieval =
                 // Pas d’optimisme ici : c’est pure read
                 dispatch(coffeesHydrated(items));
             } catch (e: any) {
-                console.error(e);
                 throw new Error("Error loading coffee global");
 
             }

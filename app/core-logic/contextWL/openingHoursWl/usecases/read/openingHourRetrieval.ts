@@ -14,8 +14,7 @@ export const onOpeningHourRetrieval = ():AppThunkWl<Promise<void>> =>
             dispatch(hoursHydrated({
                 data:res.data
             }))
-        }catch (e){
-            console.log(String(e))
+        }catch (_e){
             dispatch(hoursHydrated(
                 {data: [] as OpeningHours[]}))
         }finally {

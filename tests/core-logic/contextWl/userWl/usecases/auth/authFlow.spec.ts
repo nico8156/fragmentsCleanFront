@@ -40,7 +40,6 @@ describe("auth flow", () => {
 		await flush();
 
 		const state = store.getState().aState;
-		console.log("auth : apres signed in : ", state)
 		expect(state.status).toBe("signedIn");
 		expect(state.session?.provider).toBe("google");
 		expect(state.session?.tokens).toEqual(
