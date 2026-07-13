@@ -9,6 +9,7 @@ export const outboxRehydrateCommitted =
 export const outboxProcessOnce = createAction("OUTBOX/PROCESS_ONCE");
 export const outboxSuspendRequested = createAction("OUTBOX/SUSPEND_REQUESTED");
 export const outboxResumeRequested = createAction("OUTBOX/RESUME_REQUESTED");
+export const outboxDevClearCommitted = createAction("OUTBOX/DEV_CLEAR_COMMITTED");
 
 // --- retry scheduling ---
 export const scheduleRetry =

@@ -22,7 +22,11 @@ describe("On Entitlements retrieval, ", () => {
 
         const ue = store.getState().enState.byUser["user_test"];
         expect(ue.confirmedTickets).toBe(4);
+        expect(ue.publishedComments).toBe(2);
+        expect(ue.confirmedLikes).toBe(1);
         expect(ue.rights).toEqual(["LIKE", "COMMENT"]);
+        expect(ue.pass?.currentLevel).toBe("URBAN_EXPLORER");
+        expect(ue.pass?.levels?.[0].status).toBe("COMPLETED");
     });
 
     it("keeps rights published by the gateway even when thresholds would compute differently", async () => {
@@ -42,7 +46,31 @@ describe("On Entitlements retrieval, ", () => {
     const entitlementForTest :UserEntitlements = {
         userId: "user_test",
         confirmedTickets: 4,
+        publishedComments: 2,
+        confirmedLikes: 1,
         rights: ["LIKE", "COMMENT"],
         updatedAt: "2025-10-10T07:10:00.000Z" as ISODate,
+        pass: {
+            currentLevel: "URBAN_EXPLORER",
+            counters: {
+                validatedTickets: 4,
+                publishedComments: 2,
+                confirmedLikes: 1,
+            },
+            levels: [
+                {
+                    level: "COFFEE_TASTER",
+                    status: "COMPLETED",
+                    requirements: { validatedTickets: 3 },
+                    unlockedCapabilities: ["SCAN_TICKET"],
+                },
+                {
+                    level: "URBAN_EXPLORER",
+                    status: "IN_PROGRESS",
+                    requirements: { validatedTickets: 5, publishedComments: 3 },
+                    unlockedCapabilities: ["COMMENT"],
+                },
+            ],
+        },
     }
 });

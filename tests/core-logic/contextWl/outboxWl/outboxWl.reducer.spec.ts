@@ -5,6 +5,7 @@ import {
 	enqueueCommitted,
 	markAwaitingAck,
 	markProcessing,
+	outboxDevClearCommitted,
 	outboxRehydrateCommitted,
 	scheduleRetry,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
@@ -47,3 +48,26 @@ it("markAwaitingAck removes from queue and sets nextCheckAt", () => {
 	expect(s.queue).toEqual([]);
 });
 
+it("outboxDevClearCommitted clears queued and awaitingAck residue", () => {
+	let s: any = outboxWlReducer(
+		initialOutboxState as any,
+		enqueueCommitted({
+			id: "obx_1",
+			item: { command: { kind: commandKinds.LikeAdd, commandId: "cmd_1" } as any, undo: {} as any },
+			enqueuedAt: "x",
+		}) as any,
+	);
+	s = outboxWlReducer(
+		s,
+		enqueueCommitted({
+			id: "obx_2",
+			item: { command: { kind: commandKinds.CommentCreate, commandId: "cmd_2" } as any, undo: {} as any },
+			enqueuedAt: "x",
+		}) as any,
+	);
+	s = outboxWlReducer(s, markAwaitingAck({ id: "obx_2", ackByIso: "2025-10-10T07:00:30.000Z" }) as any);
+
+	s = outboxWlReducer(s, outboxDevClearCommitted());
+
+	expect(s).toEqual(initialOutboxState);
+});

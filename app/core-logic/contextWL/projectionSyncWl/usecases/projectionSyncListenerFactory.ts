@@ -27,6 +27,7 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
+import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { logger } from "@/app/core-logic/utils/logger";
 
 export type ProjectionSyncSessionRef = { current?: AuthSession };
@@ -91,6 +92,12 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		if (event.eventName !== "projection.updated") return;
 
 		if (event.projection === "comments" && event.scope === "target" && event.entityId) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "comments",
+				scope: "target",
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
 			dispatch(
 				commentRetrieval({
 					targetId: event.entityId as any,
@@ -100,14 +107,32 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		}
 
 		if (event.projection === "likes" && event.scope === "target" && event.entityId) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "likes",
+				scope: "target",
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
 			dispatch(likesRetrieval({ targetId: event.entityId as any }) as any);
 		}
 
 		if (event.projection === "tickets" && event.scope === "entity" && event.entityId) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "tickets",
+				scope: "entity",
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
 			dispatch(ticketRetrieval({ ticketId: event.entityId as any }) as any);
 		}
 
 		if (event.projection === "entitlements" && event.scope === "user" && event.entityId) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "entitlements",
+				scope: "user",
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
 			dispatch(entitlementsRetrieval({ userId: event.entityId }) as any);
 		}
 	};

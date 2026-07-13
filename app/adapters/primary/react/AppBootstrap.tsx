@@ -7,6 +7,7 @@ import { mountAppStateAdapter } from "@/app/adapters/primary/runtime/appState.ad
 import { mountNetInfoAdapter } from "@/app/adapters/primary/runtime/netInfo.adapter";
 
 import { createApplicationBootProcess } from "@/app/core-logic/contextWL/appWl/usecases/applicationBootProcess";
+import { installOutboxDevTools } from "@/app/core-logic/contextWL/outboxWl/runtime/outboxDevTools";
 import { logger } from "@/app/core-logic/utils/logger";
 
 // ✅ runtime deps (no store/gateways wiring import)
@@ -24,6 +25,7 @@ export const AppBootstrap = () => {
 		// 0) Adapters (runtime signals)
 		const unmountNetInfo = mountNetInfoAdapter(store);
 		const unmountAppState = mountAppStateAdapter(store, { ignoreFirstActive: false });
+		const uninstallOutboxDevTools = installOutboxDevTools({ store, outboxStorage, logger });
 
 		logger.info("[BOOT] NetInfo + AppState adapters mounted");
 
@@ -39,6 +41,7 @@ export const AppBootstrap = () => {
 		return () => {
 			logger.info("[BOOT] AppBootstrap unmount");
 			bootProcess.cancel();
+			uninstallOutboxDevTools();
 
 			unmountAppState?.();
 			unmountNetInfo?.();
