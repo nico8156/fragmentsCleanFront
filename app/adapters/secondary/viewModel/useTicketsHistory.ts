@@ -3,8 +3,8 @@ import { useSelector } from "react-redux";
 
 import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 import { TicketAggregate } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import { commandKinds, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
-import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import { selectOutboxStatusByTicketId } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import { statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 export type TicketHistoryItemVM = {
     id: string;
@@ -47,19 +47,6 @@ const formatDate = (iso?: string) => {
     return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-const buildOutboxStatusIndex = (state: RootStateWl["oState"]) => {
-    const records = state?.byId ?? {};
-    const index: Record<string, (typeof statusTypes)[keyof typeof statusTypes]> = {};
-    Object.values(records).forEach((record: any) => {
-        const command = record?.item?.command;
-        if (!command) return;
-        if (command.kind === commandKinds.TicketVerify) {
-            index[command.ticketId] = record.status;
-        }
-    });
-    return index;
-};
-
 const toVM = (
     ticket: TicketAggregate,
     outboxStatusByTicketId: Record<string, (typeof statusTypes)[keyof typeof statusTypes]>,
@@ -86,9 +73,7 @@ const toVM = (
 
 export function useTicketsHistory() {
     const tickets = useSelector(selectSortedTickets);
-    const outboxState = useSelector((state: RootStateWl) => state.oState);
-
-    const outboxStatusByTicketId = useMemo(() => buildOutboxStatusIndex(outboxState), [outboxState]);
+    const outboxStatusByTicketId = useSelector(selectOutboxStatusByTicketId);
 
     const items = useMemo(
         () => tickets.map((ticket) => toVM(ticket, outboxStatusByTicketId)),

@@ -15,8 +15,13 @@ export interface UserEntitlements {
     userId: UserId | string;
     confirmedTickets: number;
     rights: Entitlement[];
+    rightsSource?: "backend" | "thresholds";
     updatedAt?: ISODate;
 }
+
+export type UserEntitlementsSnapshot = Omit<UserEntitlements, "rights" | "rightsSource"> & {
+    rights?: Entitlement[];
+};
 
 export interface EntitlementStateWl {
     byUser: Record<string, UserEntitlements>;

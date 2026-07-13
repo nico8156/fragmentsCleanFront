@@ -44,6 +44,8 @@ export const authReducer = createReducer(initialState, (builder) => {
 			state.status = "signedIn";
 			state.session = payload.session;
 			state.error = undefined;
+			state.profileStatus = state.currentUser ? "loaded" : "idle";
+			state.profileError = undefined;
 		})
 		.addCase(authSessionLoadFailed, (state, { payload }) => {
 			state.status = "error";
@@ -57,6 +59,8 @@ export const authReducer = createReducer(initialState, (builder) => {
 			state.status = "signedIn";
 			state.session = payload.session;
 			state.error = undefined;
+			state.profileStatus = state.currentUser ? "loaded" : "idle";
+			state.profileError = undefined;
 		})
 		.addCase(authSignInFailed, (state, { payload }) => {
 			state.status = "error";
@@ -83,17 +87,28 @@ export const authReducer = createReducer(initialState, (builder) => {
 		// (sinon flicker + runtime "pas signedIn" + pas de resync)
 		.addCase(authUserHydrationRequested, (state) => {
 			// Ne touche pas au status ni aux erreurs de refresh transitoires.
+			state.profileStatus = "loading";
+			state.profileError = undefined;
 		})
 
 		.addCase(authUserHydrationSucceeded, (state, { payload }) => {
 			state.status = "signedIn";
 			state.currentUser = mergeUser(state.currentUser, payload.user);
 			state.error = undefined;
+			state.profileStatus = "loaded";
+			state.profileError = undefined;
 		})
 		.addCase(authUserHydrationFailed, (state, { payload }) => {
-			// on garde "error" si tu veux que l'UI le voie, sinon on peut rester signedIn + error
+			if (state.session) {
+				state.status = "signedIn";
+				state.profileStatus = "error";
+				state.profileError = payload.error;
+				return;
+			}
 			state.status = "error";
 			state.error = payload.error;
+			state.profileStatus = "error";
+			state.profileError = payload.error;
 		})
 		.addCase(authSignOutRequested, (state) => {
 			state.status = "loading";
@@ -103,6 +118,8 @@ export const authReducer = createReducer(initialState, (builder) => {
 			state.session = undefined;
 			state.currentUser = undefined;
 			state.error = undefined;
+			state.profileStatus = "idle";
+			state.profileError = undefined;
 		})
 		.addCase(authErrorCleared, (state) => {
 			state.error = undefined;

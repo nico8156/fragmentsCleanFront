@@ -22,6 +22,7 @@ export const entitlementsRetrieval =
                     entitlementsHydrated({
                         userId: input.userId,
                         confirmedTickets: res.data.confirmedTickets,
+                        rights: res.data.rights,
                         updatedAt: res.data.updatedAt,
                     })
                 );

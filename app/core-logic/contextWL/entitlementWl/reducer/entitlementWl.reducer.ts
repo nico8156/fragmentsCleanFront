@@ -34,16 +34,22 @@ export const entitlementWlReducer = createReducer(
             // Optionnel : recalcul global si tu as déjà des users chargés
             for (const uid of Object.keys(state.byUser)) {
                 const ue = state.byUser[uid];
+                if (ue.rightsSource === "backend") continue;
                 ue.rights = computeRights(ue.confirmedTickets, state.thresholds);
+                ue.rightsSource = "thresholds";
             }
         })
         // hydration depuis API
         builder.addCase(entitlementsHydrated, (state, { payload }) => {
-            const rights = computeRights(payload.confirmedTickets, state.thresholds);
+            const hasPublishedRights = Array.isArray(payload.rights);
+            const rights = hasPublishedRights
+                ? payload.rights!
+                : computeRights(payload.confirmedTickets, state.thresholds);
             state.byUser[String(payload.userId)] = {
                 userId: payload.userId,
                 confirmedTickets: payload.confirmedTickets,
                 rights,
+                rightsSource: hasPublishedRights ? "backend" : "thresholds",
                 updatedAt: payload.updatedAt,
             };
         });

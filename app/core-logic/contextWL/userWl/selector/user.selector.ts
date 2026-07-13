@@ -11,6 +11,13 @@ export const selectAuthStatus = createSelector(selectAuthState, (state) => state
 
 export const selectAuthError = createSelector(selectAuthState, (state) => state.error);
 
+export const selectProfileStatus = createSelector(
+    selectAuthState,
+    (state) => state.profileStatus ?? (state.currentUser ? "loaded" : "idle"),
+);
+
+export const selectProfileError = createSelector(selectAuthState, (state) => state.profileError);
+
 export const selectCurrentUser = createSelector(
     selectAuthState,
     (state) => state.currentUser,

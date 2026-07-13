@@ -1,9 +1,9 @@
 import {EntitlementWlGateway} from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
-import { UserEntitlements } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
+import { UserEntitlementsSnapshot } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 
 export class FakeEntitlementWlGateway implements EntitlementWlGateway {
     willFailGet = false;
-    store = new Map<string, UserEntitlements>();
+    store = new Map<string, UserEntitlementsSnapshot>();
 
     nextEtag?: string;
 
@@ -15,7 +15,7 @@ export class FakeEntitlementWlGateway implements EntitlementWlGateway {
                 userId,
                 confirmedTickets: 0,
                 updatedAt: new Date(0).toISOString(),
-            } as UserEntitlements);
+            } as UserEntitlementsSnapshot);
         return { etag: this.nextEtag, data };
     }
 

@@ -1,8 +1,8 @@
-import {UserEntitlements} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
+import {UserEntitlementsSnapshot} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 
 export interface EntitlementWlGateway {
     get(input: {
         userId: string;
         ifNoneMatch?: string;
-    }): Promise<{ etag?: string; data: UserEntitlements }>;
+    }): Promise<{ etag?: string; data: UserEntitlementsSnapshot }>;
 }

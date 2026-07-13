@@ -28,6 +28,7 @@ import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecas
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
+import { articlesListRetrieval } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 
 import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import { logger } from "@/app/core-logic/utils/logger";
@@ -124,6 +125,7 @@ export const AppBootstrap = () => {
 			await runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval()));
 			await runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval()));
 			await runWarmupStep("opening hours", () => dispatch(onOpeningHourRetrieval()));
+			await runWarmupStep("articles", () => dispatch(articlesListRetrieval({ locale: "fr-FR" })));
 
 			// Entitlements (si userId connu)
 			const uid = selectUserIdForEntitlements(store.getState());

@@ -7,7 +7,7 @@ import { likeSyncCleared } from "@/app/core-logic/contextWL/likeWl/typeAction/li
 import { loadingStates } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { uiLikeToggleRequested } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
-import { getPendingLikeCommandKindForTarget } from "@/app/core-logic/contextWL/likeWl/usecases/write/pendingLikeCommand";
+import { selectPendingLikeCommandKindForTarget } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 
 const DEFAULT_STALE_AFTER_MS = 60_000;
@@ -52,7 +52,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		sync,
 	} = useSelector(selector);
 	const pendingCommandKind = useSelector((state: RootStateWl) =>
-		targetId ? getPendingLikeCommandKindForTarget(state.oState, targetId) : null,
+		targetId ? selectPendingLikeCommandKindForTarget(targetId)(state) : null,
 	);
 
 	// ✅ Auto-clear du ring après TTL

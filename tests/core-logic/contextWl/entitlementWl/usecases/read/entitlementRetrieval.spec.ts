@@ -24,6 +24,21 @@ describe("On Entitlements retrieval, ", () => {
         expect(ue.confirmedTickets).toBe(4);
         expect(ue.rights).toEqual(["LIKE", "COMMENT"]);
     });
+
+    it("keeps rights published by the gateway even when thresholds would compute differently", async () => {
+        entitlementsGateway.store.set("user_backend_policy", {
+            userId: "user_backend_policy",
+            confirmedTickets: 0,
+            rights: ["SUBMIT_CAFE"],
+            updatedAt: "2025-10-10T07:10:00.000Z" as ISODate,
+        });
+
+        await store.dispatch<any>(entitlementsRetrieval({ userId: "user_backend_policy" }));
+
+        const ue = store.getState().enState.byUser["user_backend_policy"];
+        expect(ue.confirmedTickets).toBe(0);
+        expect(ue.rights).toEqual(["SUBMIT_CAFE"]);
+    });
     const entitlementForTest :UserEntitlements = {
         userId: "user_test",
         confirmedTickets: 4,

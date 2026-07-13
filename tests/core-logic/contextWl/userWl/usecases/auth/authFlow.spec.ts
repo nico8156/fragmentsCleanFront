@@ -170,6 +170,45 @@ describe("auth flow", () => {
 		expect(secureStore.snapshot()?.tokens.accessToken).toBe("expired-offline");
 	});
 
+	it("keeps signedIn session when user profile hydration fails", async () => {
+		const oauth = new FakeOAuthGateway();
+		const secureStore = new FakeAuthSecureStore();
+		const userRepo = {
+			async getById() {
+				throw new Error("profile service unavailable");
+			},
+		};
+		const session: AuthSession = {
+			userId: makeDemoUser().id,
+			provider: "google",
+			scopes: ["openid"],
+			establishedAt: Date.now() - 1000,
+			tokens: {
+				accessToken: "stored-token",
+				expiresAt: Date.now() + 60 * 60 * 1000,
+				tokenType: "Bearer",
+			},
+		};
+		await secureStore.saveSession(session);
+		const deps = {
+			gateways: {
+				auth: { oauth, secureStore, userRepo },
+			},
+			helpers: {},
+		};
+		const store = createTestStore(deps);
+
+		store.dispatch<any>(initializeAuth());
+		await flush();
+		await flush();
+
+		const state = store.getState().aState;
+		expect(state.status).toBe("signedIn");
+		expect(state.session?.userId).toBe(session.userId);
+		expect(state.profileStatus).toBe("error");
+		expect(state.profileError).toBe("profile service unavailable");
+	});
+
 	it("clears session on sign out", async () => {
 		const oauth = new FakeOAuthGateway();
 		const secureStore = new FakeAuthSecureStore();

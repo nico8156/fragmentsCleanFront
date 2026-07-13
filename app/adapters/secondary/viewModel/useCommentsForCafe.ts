@@ -18,7 +18,11 @@ import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/u
 import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
 
-import { commandKinds, StatusType, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import {
+	isOutboxPendingStatus,
+	selectOutboxStatusByCommentId,
+} from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import { StatusType, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { selectCurrentUser, selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
 import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
@@ -93,8 +97,7 @@ const formatRelativeTime = (isoDate: string): string => {
 	return d.toLocaleDateString("fr-FR");
 };
 
-const isPendingStatus = (s?: StatusType) =>
-	s === statusTypes.queued || s === statusTypes.processing || s === statusTypes.awaitingAck;
+const isPendingStatus = (s?: StatusType) => isOutboxPendingStatus(s);
 
 export function useCommentsForCafe(targetId?: CafeId) {
 	const dispatch = useDispatch<any>();
@@ -140,57 +143,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	// outbox -> status mapping
 	// IMPORTANT: front is source of truth => key is commentId
 	// -------------------------
-	const outboxRecords = useSelector((state: RootStateWl) => state.oState.byId);
-
-	const outboxStatusByCommentId = useMemo(() => {
-		const result: Record<string, StatusType> = {};
-		const values = Object.values(outboxRecords ?? {}) as any[];
-
-		for (const rec of values) {
-			const cmd = rec?.item?.command;
-			if (!cmd) continue;
-
-			// We want the ID of the comment being transported
-			// - Create: cmd.commentId (preferred) else cmd.tempId (legacy)
-			// - Update/Delete: cmd.commentId
-			let commentId: string | null = null;
-
-			if (cmd.kind === commandKinds.CommentCreate) {
-				commentId = String(cmd.commentId ?? cmd.tempId ?? "");
-			} else if (cmd.kind === commandKinds.CommentUpdate || cmd.kind === commandKinds.CommentDelete) {
-				commentId = String(cmd.commentId ?? "");
-			}
-
-			if (!commentId) continue;
-
-			// If multiple records exist (rare), we keep the "most blocking" one:
-			// failed > pending > succeeded
-			const cur = result[commentId];
-			const next: StatusType = rec.status;
-
-			if (!cur) {
-				result[commentId] = next;
-				continue;
-			}
-
-			if (cur === statusTypes.failed) continue;
-			if (next === statusTypes.failed) {
-				result[commentId] = next;
-				continue;
-			}
-
-			if (isPendingStatus(cur)) continue;
-			if (isPendingStatus(next)) {
-				result[commentId] = next;
-				continue;
-			}
-
-			// else both succeeded -> keep succeeded
-			result[commentId] = statusTypes.succeeded;
-		}
-
-		return result;
-	}, [outboxRecords]);
+	const outboxStatusByCommentId = useSelector(selectOutboxStatusByCommentId);
 
 	const pendingIdsAtEntryRef = useRef<Set<string>>(new Set());
 	const localPendingIdsRef = useRef<Set<string>>(new Set());

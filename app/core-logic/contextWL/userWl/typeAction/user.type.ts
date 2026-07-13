@@ -113,6 +113,8 @@ export interface AuthState {
     session?: AuthSessionSnapshot;       // présent uniquement si signedIn (tokens tronqués)
     currentUser?: AppUser;       // read model hydraté (peut arriver async après sign-in)
     error?: string;
+    profileStatus?: "idle" | "loading" | "loaded" | "error";
+    profileError?: string;
 }
 
 // Ce que ton serveur renverra (exemples)

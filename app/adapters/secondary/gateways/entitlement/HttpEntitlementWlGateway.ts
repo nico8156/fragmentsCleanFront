@@ -1,6 +1,7 @@
 import { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
-import { UserEntitlements } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
+import { UserEntitlements, UserEntitlementsSnapshot } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
+import type { ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 type HttpEntitlementWlGatewayDeps = {
 	baseUrl: string;
@@ -35,17 +36,20 @@ export class HttpEntitlementWlGateway implements EntitlementWlGateway {
 		const json = (await response.json()) as {
 			userId: string;
 			confirmedTickets: number;
+			rights?: UserEntitlements["rights"];
 			updatedAt?: string;
 		};
 
+		const data: UserEntitlementsSnapshot = {
+			userId: json.userId,
+			confirmedTickets: json.confirmedTickets,
+			updatedAt: json.updatedAt as ISODate | undefined,
+		};
+		if (Array.isArray(json.rights)) data.rights = json.rights;
+
 		return {
 			etag: response.headers?.get?.("ETag") ?? undefined,
-			data: {
-				userId: json.userId,
-				confirmedTickets: json.confirmedTickets,
-				rights: [],
-				updatedAt: json.updatedAt,
-			} as UserEntitlements,
+			data,
 		};
 	}
 }
