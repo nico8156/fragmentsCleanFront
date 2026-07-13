@@ -1,6 +1,12 @@
 import { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
-import { UserEntitlements, UserEntitlementsSnapshot } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
+import {
+	PassCounters,
+	PassLevel,
+	PassLevelSnapshot,
+	UserEntitlements,
+	UserEntitlementsSnapshot,
+} from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 import type { ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 type HttpEntitlementWlGatewayDeps = {
@@ -36,16 +42,30 @@ export class HttpEntitlementWlGateway implements EntitlementWlGateway {
 		const json = (await response.json()) as {
 			userId: string;
 			confirmedTickets: number;
+			publishedComments?: number;
+			confirmedLikes?: number;
 			rights?: UserEntitlements["rights"];
+			currentLevel?: PassLevel;
+			counters?: PassCounters;
+			levels?: PassLevelSnapshot[];
 			updatedAt?: string;
 		};
 
 		const data: UserEntitlementsSnapshot = {
 			userId: json.userId,
 			confirmedTickets: json.confirmedTickets,
+			publishedComments: json.publishedComments,
+			confirmedLikes: json.confirmedLikes,
 			updatedAt: json.updatedAt as ISODate | undefined,
 		};
 		if (Array.isArray(json.rights)) data.rights = json.rights;
+		if (json.currentLevel || json.counters || Array.isArray(json.levels)) {
+			data.pass = {
+				currentLevel: json.currentLevel,
+				counters: json.counters,
+				levels: Array.isArray(json.levels) ? json.levels : undefined,
+			};
+		}
 
 		return {
 			etag: response.headers?.get?.("ETag") ?? undefined,

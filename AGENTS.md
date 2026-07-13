@@ -199,6 +199,12 @@ Remote cafe images must use the image cache gateway or native disk cache. Screen
 
 Auth refresh failures caused by offline mode, timeout, 408/429, or 5xx must keep the stored session. Only explicit auth rejection should clear SecureStore and sign the user out.
 
+## Pass Policy
+
+The backend owns Pass counters, thresholds, level status, and unlocked capabilities through the entitlements snapshot. Mobile may compute ring progress and presentation text from backend `counters`, `requirements`, and `levels`, but screens and components must not duplicate Pass thresholds or use optimistic local counts as the source of truth.
+
+Use the shared Pass avatar/rings component for profile thumbnails that display earned levels. Do not duplicate SVG ring rendering or Pass colors in individual screens.
+
 ## Configuration and Secrets
 
 No hardcoded production API URL.

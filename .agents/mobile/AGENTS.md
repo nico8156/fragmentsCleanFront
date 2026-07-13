@@ -29,6 +29,7 @@ Use the matching orchestrator in `.agents/mobile/orchestrators`.
 - Screens do not fetch.
 - View models do not instantiate gateways.
 - Tests are fake-first.
+- Pass levels, thresholds, counters, and unlocked capabilities come from the backend entitlements snapshot; mobile only derives ring presentation from that snapshot.
 
 ## Definition of Done
 
@@ -39,4 +40,3 @@ Before completing a mobile task:
 - command status fallback is considered for writes
 - configuration/secrets are safe for EAS/App Store
 - no UI global refactor was introduced unless requested
-

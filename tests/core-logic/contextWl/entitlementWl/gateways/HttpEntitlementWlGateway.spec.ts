@@ -31,6 +31,35 @@ describe("HttpEntitlementWlGateway", () => {
 			makeResponse({
 				userId: "user-42",
 				confirmedTickets: 5,
+				publishedComments: 3,
+				confirmedLikes: 1,
+				rights: ["COMMENT"],
+				currentLevel: "SOCIAL_BEAN",
+				counters: {
+					validatedTickets: 5,
+					publishedComments: 3,
+					confirmedLikes: 1,
+				},
+				levels: [
+					{
+						level: "COFFEE_TASTER",
+						status: "COMPLETED",
+						requirements: { validatedTickets: 3 },
+						unlockedCapabilities: ["SCAN"],
+					},
+					{
+						level: "URBAN_EXPLORER",
+						status: "COMPLETED",
+						requirements: { validatedTickets: 5, publishedComments: 3 },
+						unlockedCapabilities: ["COMMENT"],
+					},
+					{
+						level: "SOCIAL_BEAN",
+						status: "IN_PROGRESS",
+						requirements: { validatedTickets: 10, publishedComments: 5, confirmedLikes: 5 },
+						unlockedCapabilities: ["LIKE"],
+					},
+				],
 				version: 8,
 				updatedAt: "2026-07-06T12:00:00.000Z",
 				serverTime: "2026-07-06T12:00:01.000Z",
@@ -63,7 +92,17 @@ describe("HttpEntitlementWlGateway", () => {
 				data: {
 					userId: "user-42",
 					confirmedTickets: 5,
-					rights: [],
+					publishedComments: 3,
+					confirmedLikes: 1,
+					rights: ["COMMENT"],
+					pass: {
+						currentLevel: "SOCIAL_BEAN",
+						counters: {
+							validatedTickets: 5,
+							publishedComments: 3,
+							confirmedLikes: 1,
+						},
+					},
 					updatedAt: "2026-07-06T12:00:00.000Z",
 				},
 			});

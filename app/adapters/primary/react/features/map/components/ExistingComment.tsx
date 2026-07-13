@@ -7,12 +7,13 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 
 import { CommentItemVM } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import EditModal from "@/app/adapters/primary/react/features/map/components/EditModal";
+import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
+import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 
 type Props = {
     comment: CommentItemVM;
@@ -33,6 +34,7 @@ const STATUS_LABELS = {
 } as const;
 
 const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) => {
+    const pass = usePassRingsViewModel();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditingBody, setIsEditingBody] = useState(false);
     const [draftBody, setDraftBody] = useState(comment.body);
@@ -90,7 +92,12 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
         >
             <View style={styles.commentHeader}>
                 <View style={styles.commentUserHeader}>
-                    <Image source={{ uri: comment.avatarUrl }} style={styles.avatar} />
+                    <PassAvatar
+                        imageUrl={comment.avatarUrl}
+                        rings={comment.isAuthor ? pass.completedRings : []}
+                        size={30}
+                        accessibilityLabel={`${comment.authorName}, avatar`}
+                    />
                     <Text style={styles.userName}>{comment.authorName}</Text>
                 </View>
                 <Pressable style={styles.commentHeaderMeta} onPress={handleOpenModal}>
@@ -195,11 +202,6 @@ const styles = StyleSheet.create({
         color: palette.background_30,
         marginBottom: 4,
         fontSize: 12,
-    },
-    avatar: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
     },
     statusLight: {
         width: 8,

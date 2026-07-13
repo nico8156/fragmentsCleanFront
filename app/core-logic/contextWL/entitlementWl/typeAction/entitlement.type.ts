@@ -11,12 +11,57 @@ export const entitlements = {
 
 export type Entitlement = typeof entitlements[keyof typeof entitlements];
 
+export const passLevels = {
+    COFFEE_TASTER: "COFFEE_TASTER",
+    URBAN_EXPLORER: "URBAN_EXPLORER",
+    SOCIAL_BEAN: "SOCIAL_BEAN",
+    FRAGMENTS_MASTER: "FRAGMENTS_MASTER",
+} as const;
+
+export type PassLevel = typeof passLevels[keyof typeof passLevels];
+
+export const passLevelStatuses = {
+    LOCKED: "LOCKED",
+    IN_PROGRESS: "IN_PROGRESS",
+    COMPLETED: "COMPLETED",
+} as const;
+
+export type PassLevelStatus = typeof passLevelStatuses[keyof typeof passLevelStatuses];
+
+export type PassCounters = {
+    validatedTickets: number;
+    publishedComments: number;
+    confirmedLikes: number;
+};
+
+export type PassRequirements = {
+    validatedTickets?: number;
+    publishedComments?: number;
+    confirmedLikes?: number;
+};
+
+export type PassLevelSnapshot = {
+    level: PassLevel;
+    status: PassLevelStatus;
+    requirements: PassRequirements;
+    unlockedCapabilities: string[];
+};
+
+export type PassProgressSnapshot = {
+    currentLevel?: PassLevel;
+    counters?: PassCounters;
+    levels?: PassLevelSnapshot[];
+};
+
 export interface UserEntitlements {
     userId: UserId | string;
     confirmedTickets: number;
+    publishedComments?: number;
+    confirmedLikes?: number;
     rights: Entitlement[];
     rightsSource?: "backend" | "thresholds";
     updatedAt?: ISODate;
+    pass?: PassProgressSnapshot;
 }
 
 export type UserEntitlementsSnapshot = Omit<UserEntitlements, "rights" | "rightsSource"> & {
