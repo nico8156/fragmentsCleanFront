@@ -83,6 +83,77 @@ describe("outboxWatchdogFactory", () => {
 		expect(commandStatus.calls).toEqual(["cmd_1"]);
 	});
 
+	it("does not let an old PENDING ACK starve newer awaiting commands", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = {
+			calls: [] as string[],
+			async getStatus(commandId: string) {
+				this.calls.push(commandId);
+				if (commandId === "cmd_old_like") return { status: "PENDING" as const };
+				if (commandId === "cmd_ticket") return { status: "APPLIED" as const };
+				return { status: "PENDING" as const };
+			},
+		};
+
+		const deps = makeDeps({ commandStatus });
+		const store = makeStoreWl({
+			deps,
+			listeners: [outboxWatchdogFactory({ gateways: deps.gateways, enableTimer: false } as any)],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(
+			enqueueCommitted({
+				id: "obx_old_like",
+				item: {
+					command: {
+						kind: commandKinds.LikeAdd,
+						commandId: "cmd_old_like",
+						targetId: "cafe_A",
+						at: "x",
+					} as any,
+					undo: {} as any,
+				},
+				enqueuedAt: "x",
+			}) as any,
+		);
+		store.dispatch(
+			enqueueCommitted({
+				id: "obx_ticket",
+				item: {
+					command: {
+						kind: commandKinds.TicketVerify,
+						commandId: "cmd_ticket",
+						ticketId: "ticket_1",
+						userId: "user_test",
+						ocrText: "ticket text",
+						at: "x",
+					} as any,
+					undo: {} as any,
+				},
+				enqueuedAt: "x",
+			}) as any,
+		);
+
+		store.dispatch(markAwaitingAck({ id: "obx_old_like", ackByIso: new Date(now - 10_000).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_ticket", ackByIso: new Date(now - 1_000).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_old_like", "cmd_ticket"]);
+		const outbox = store.getState().oState;
+		expect(outbox.byId["obx_old_like"]).toBeDefined();
+		expect(outbox.byId["obx_old_like"].status).toBe("awaitingAck");
+		expect(outbox.byId["obx_ticket"]).toBeUndefined();
+		expect(outbox.byCommandId["cmd_ticket"]).toBeUndefined();
+	});
+
 	const flush = () => new Promise<void>((r) => setImmediate(r));
 
 	it("APPLIED => DROP_COMMITTED + PROCESS_ONCE (recorded)", async () => {
