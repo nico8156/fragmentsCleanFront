@@ -71,6 +71,74 @@ describe("rehydrateOutboxFactory", () => {
 		expect(s.byId.goodAwait).toBeDefined();
 	});
 
+	it("recovers a command stuck in processing as queued after restart", async () => {
+		const dirty: any = {
+			byId: {
+				stuckProcessing: {
+					id: "stuckProcessing",
+					item: { command: { commandId: "cmd_processing", kind: "Like.Add" }, undo: {} },
+					status: "processing",
+					attempts: 1,
+					enqueuedAt: "2025-10-10T07:00:00.000Z",
+				},
+			},
+			queue: [],
+			byCommandId: { cmd_processing: "stuckProcessing" },
+		};
+
+		const storage = new FakeOutboxStorage();
+		storage.loadResult = dirty;
+
+		const store = makeStore();
+		const rehydrate = rehydrateOutboxFactory({ storage: storage as any });
+
+		const result = await rehydrate(store);
+
+		expect(result.byId.stuckProcessing.status).toBe("queued");
+		expect(result.queue).toEqual(["stuckProcessing"]);
+
+		const state = store.getState().oState as OutboxStateWl;
+		expect(state.byId.stuckProcessing.status).toBe("queued");
+		expect(state.queue).toEqual(["stuckProcessing"]);
+	});
+
+	it("rebuilds missing queued ids in queue while keeping awaitingAck out of queue", async () => {
+		const dirty: any = {
+			byId: {
+				missingQueued: {
+					id: "missingQueued",
+					item: { command: { commandId: "cmd_missing", kind: "Like.Add" }, undo: {} },
+					status: "queued",
+					attempts: 0,
+					enqueuedAt: "2025-10-10T07:00:00.000Z",
+				},
+				awaitingAck: {
+					id: "awaitingAck",
+					item: { command: { commandId: "cmd_awaiting", kind: "Like.Add" }, undo: {} },
+					status: "awaitingAck",
+					attempts: 1,
+					enqueuedAt: "2025-10-10T07:00:00.000Z",
+				},
+			},
+			queue: [],
+			byCommandId: {
+				cmd_missing: "missingQueued",
+				cmd_awaiting: "awaitingAck",
+			},
+		};
+
+		const storage = new FakeOutboxStorage();
+		storage.loadResult = dirty;
+
+		const store = makeStore();
+		const rehydrate = rehydrateOutboxFactory({ storage: storage as any });
+
+		const result = await rehydrate(store);
+
+		expect(result.queue).toEqual(["missingQueued"]);
+		expect(result.byId.awaitingAck.status).toBe("awaitingAck");
+	});
+
 	it("fallback to empty if snapshot is null", async () => {
 		const storage = new FakeOutboxStorage();
 		storage.loadResult = null;
@@ -107,4 +175,3 @@ describe("rehydrateOutboxFactory", () => {
 		expect(result).toEqual({ byId: {}, queue: [], byCommandId: {}, suspended: false });
 	});
 });
-
