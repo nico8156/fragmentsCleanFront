@@ -18,6 +18,8 @@ Persisted slices:
 
 The cache stores Redux read shapes, not backend DTOs. Reducers accept `READ_MODEL_CACHE/REHYDRATED` and replace only the slices present in the snapshot.
 
+The entitlements slice also stores the backend Pass snapshot: counters, level statuses, requirements, and rights. Pass rings are a visual projection of that snapshot; optimistic local counts are not the source of truth for levels.
+
 ## Images
 
 Cafe images use the image cache gateway and the native image disk cache. Photo metadata is part of the read-model cache; image bytes remain a native cache concern.
