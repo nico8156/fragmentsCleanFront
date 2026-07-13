@@ -14,6 +14,12 @@ type RehydrateOutboxDeps = {
 
 const isStatus = (x: any) => Object.values(statusTypes).includes(x);
 
+const normalizeStoredStatus = (status: any) => {
+	if (!isStatus(status)) return statusTypes.queued;
+	if (status === statusTypes.processing) return statusTypes.queued;
+	return status;
+};
+
 const sanitizeRecord = (record: any): OutboxRecord | null => {
 	if (!record || typeof record !== "object") return null;
 	if (typeof record.id !== "string") return null;
@@ -24,7 +30,7 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
 	const cmd = item.command;
 	if (!cmd || typeof cmd !== "object") return null;
 
-	const status = isStatus(record.status) ? record.status : statusTypes.queued;
+	const status = normalizeStoredStatus(record.status);
 	const attempts =
 		typeof record.attempts === "number" && Number.isFinite(record.attempts) && record.attempts >= 0
 			? record.attempts
@@ -86,10 +92,15 @@ const sanitizeOutboxState = (snapshot: any): OutboxStateWl => {
 		? snapshot.queue.filter((id: any): id is string => typeof id === "string")
 		: [];
 
-	// queue = uniquement ids existants + queued
-	const sanitizedQueue = rawQueue.filter(
+	// queue = ids existants + queued, puis records récupérables absents de la queue stockée.
+	const queuedFromSnapshot = rawQueue.filter(
 		(id) => Boolean(sanitizedById[id]) && sanitizedById[id].status === statusTypes.queued,
 	);
+	const queuedIds = new Set(queuedFromSnapshot);
+	const recoveredQueuedIds = Object.values(sanitizedById)
+		.filter((record) => record.status === statusTypes.queued && !queuedIds.has(record.id))
+		.map((record) => record.id);
+	const sanitizedQueue = [...queuedFromSnapshot, ...recoveredQueuedIds];
 
 	const sanitizedByCommandId: Record<string, string> = {};
 	if (snapshot.byCommandId && typeof snapshot.byCommandId === "object") {
