@@ -17,6 +17,7 @@ import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway
 import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 import { seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 import { flush, makeFixedHelpers, makeStoreWl } from "@/tests/core-logic/fakes/wlTestHarness";
+import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 
 describe("processOutboxFactory", () => {
@@ -52,6 +53,34 @@ describe("processOutboxFactory", () => {
 		await flush();
 
 		expect(likes.addCalls.length).toBe(0);
+	});
+
+	it("continues when auth status is transient loading but session still exists", async () => {
+		const authToken = new FakeAuthTokenBridge("token", "user_test");
+		const likes = new FakeLikesGateway();
+
+		const deps = makeDeps({ authToken, likes });
+		const store = makeStoreWl({ deps, listeners: [processOutboxFactory(deps as any).middleware] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		store.dispatch(authSessionLoadRequested());
+
+		store.dispatch(
+			enqueueCommitted({
+				id: "obx_loading_session",
+				item: {
+					command: { kind: commandKinds.LikeAdd, commandId: "cmd_loading_session", targetId: "tA", at: "x" } as any,
+					undo: {} as any,
+				},
+				enqueuedAt: "x",
+			}) as any,
+		);
+
+		store.dispatch(outboxProcessOnce());
+		await flush();
+
+		expect(likes.addCalls.length).toBe(1);
+		expect(likes.addCalls[0].commandId).toBe("cmd_loading_session");
 	});
 
 	it("eligible selection respects nextAttemptAt", async () => {

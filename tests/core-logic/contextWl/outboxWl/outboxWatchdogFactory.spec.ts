@@ -9,6 +9,7 @@ import { seedBootReady, seedOffline, seedOnline, seedSignedIn } from "@/tests/co
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
+import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 class FakeCommandStatusGateway {
 	calls: string[] = [];
@@ -39,6 +40,47 @@ describe("outboxWatchdogFactory", () => {
 		await flush();
 
 		expect(commandStatus.calls.length).toBe(0);
+	});
+
+	it("checks ACK when auth status is transient loading but session still exists", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "PENDING" };
+		const deps = makeDeps({ commandStatus });
+
+		const store = makeStoreWl({
+			deps,
+			listeners: [outboxWatchdogFactory({ gateways: deps.gateways, enableTimer: false } as any)],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		store.dispatch(authSessionLoadRequested());
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(
+			enqueueCommitted({
+				id: "obx_1",
+				item: {
+					command: {
+						kind: commandKinds.LikeAdd,
+						commandId: "cmd_1",
+						targetId: "cafe_A",
+						at: "x",
+					} as any,
+					undo: {} as any,
+				},
+				enqueuedAt: "x",
+			}) as any,
+		);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_1"]);
 	});
 
 	const flush = () => new Promise<void>((r) => setImmediate(r));

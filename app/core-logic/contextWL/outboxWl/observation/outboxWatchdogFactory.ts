@@ -28,7 +28,7 @@ import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation
 
 import { logger } from "@/app/core-logic/utils/logger";
 
-const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
+const hasSession = (s: RootStateWl) => Boolean(s.aState?.session?.userId);
 
 const parseIsoMs = (iso?: string) => {
 	if (!iso) return undefined;
@@ -79,11 +79,11 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		try {
 			const state = api.getState();
 			if (!selectBootReady(state)) return;
-			if (!isSignedIn(state)) return;
+			if (!hasSession(state)) return;
 			if (!selectIsOnline(state)) return;
 			if (!state.appState?.boot?.doneWarmup) return;
 
-			if (!isSignedIn(state)) return;
+			if (!hasSession(state)) return;
 			if (!selectIsOnline(state)) return;
 
 			if (state.oState?.suspended) {

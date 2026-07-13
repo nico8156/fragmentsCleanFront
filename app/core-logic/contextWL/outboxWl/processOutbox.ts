@@ -37,7 +37,7 @@ import { computeNextAttemptAtMs } from "@/app/core-logic/contextWL/outboxWl/util
 import { isGatewayError } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 import { logger } from "@/app/core-logic/utils/logger";
 
-const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
+const hasSession = (s: RootStateWl) => Boolean(s.aState?.session?.userId);
 
 const getAuthedUserId = (s: RootStateWl): string | undefined =>
 	s.aState?.session?.userId ?? (s.aState as any)?.currentUser?.id ?? undefined;
@@ -84,8 +84,8 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					return;
 				}
 
-				if (!isSignedIn(state)) {
-					logger.debug("[OUTBOX] processOnce: skipped (not signedIn)");
+				if (!hasSession(state)) {
+					logger.debug("[OUTBOX] processOnce: skipped (no session)");
 					return;
 				}
 
