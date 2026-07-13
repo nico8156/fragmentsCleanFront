@@ -4,7 +4,7 @@ import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit"
 
 import { selectBootReady, selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import { selectOutboxById } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-import { commandKinds, statusTypes, type OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { statusTypes, type OutboxRecord } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 
 import {
 	dropCommitted,
@@ -20,13 +20,10 @@ import {
 
 import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
-import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import { likeSyncAcked, likeSyncFailed } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
-import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
-import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
-import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
-import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import {
+	reconcileAppliedOutboxRecord,
+	rollbackRejectedOutboxRecord,
+} from "@/app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers";
 
 import { logger } from "@/app/core-logic/utils/logger";
 
@@ -46,13 +43,6 @@ type WatchdogDeps = {
 
 const getCommandIdFromRecord = (rec: OutboxRecord): string | undefined =>
 	(rec.item as any)?.command?.commandId;
-
-const isCommentCreateUndo = (
-	u: unknown,
-): u is { tempId: string; targetId: string; parentId?: string } => {
-	const x = u as any;
-	return !!x && typeof x.tempId === "string" && typeof x.targetId === "string";
-};
 
 export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
@@ -81,128 +71,6 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			if (!due) return false;
 			return due <= now;
 		});
-
-	const rollbackForRejected = (rec: OutboxRecord, dispatch: AppDispatchWl) => {
-		const item = rec.item as any;
-		const cmd = item?.command;
-		const undo = item?.undo;
-
-		if (!cmd?.kind) return;
-
-		switch (cmd.kind) {
-			case commandKinds.LikeAdd:
-			case commandKinds.LikeRemove: {
-				const u = undo as LikeUndo;
-				if (!u) return;
-				dispatch(likeSyncFailed({
-					targetId: u.targetId,
-					commandId: cmd.commandId,
-					error: "rejected",
-				}));
-				dispatch(likeRollback({
-					targetId: u.targetId,
-					prevCount: u.prevCount,
-					prevMe: u.prevMe,
-					prevVersion: u.prevVersion,
-				}));
-				return;
-			}
-
-			case commandKinds.CommentCreate: {
-				if (isCommentCreateUndo(undo)) {
-					dispatch(createRollback({ tempId: undo.tempId, targetId: undo.targetId, parentId: undo.parentId }));
-				}
-				return;
-			}
-
-			case commandKinds.CommentUpdate: {
-				const u = undo as { commentId: string; prevBody: string; prevVersion?: number };
-				if (!u?.commentId) return;
-				dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
-				return;
-			}
-
-			case commandKinds.CommentDelete: {
-				const u = undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
-				if (!u?.commentId) return;
-				dispatch(deleteRollback({
-					commentId: u.commentId,
-					prevBody: u.prevBody,
-					prevVersion: u.prevVersion,
-					prevDeletedAt: u.prevDeletedAt,
-				}));
-				return;
-			}
-
-			case commandKinds.TicketVerify: {
-				const u = undo as { ticketId: string };
-				if (!u?.ticketId) return;
-				dispatch(ticketRollBack({ ticketId: u.ticketId }));
-				return;
-			}
-
-			default:
-				return;
-		}
-	};
-
-	const reconcileForApplied = (rec: OutboxRecord, dispatch: AppDispatchWl) => {
-		const item = rec.item as any;
-		const cmd = item?.command;
-		const undo = item?.undo;
-
-		if (!cmd?.kind) return;
-
-		switch (cmd.kind) {
-			case commandKinds.LikeAdd:
-			case commandKinds.LikeRemove:
-				dispatch(likeSyncAcked({
-					targetId: cmd.targetId,
-					commandId: cmd.commandId,
-				}));
-				if (deps.gateways?.likes && cmd.targetId) {
-					dispatch(likesRetrieval({ targetId: cmd.targetId }) as any);
-				}
-				return;
-
-			case commandKinds.CommentCreate:
-				if (cmd.tempId) {
-					dispatch(createReconciled({
-						commentId: cmd.tempId,
-						server: { createdAt: cmd.at, version: cmd.version ?? 0 },
-					}));
-				}
-				return;
-
-			case commandKinds.CommentUpdate: {
-				const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
-				dispatch(updateReconciled({
-					commentId: cmd.commentId,
-					server: {
-						body: cmd.newBody,
-						editedAt: cmd.at,
-						version: previousVersion + 1,
-					},
-				}));
-				return;
-			}
-
-			case commandKinds.CommentDelete: {
-				const previousVersion = typeof undo?.prevVersion === "number" ? undo.prevVersion : 0;
-				dispatch(deleteReconciled({
-					commentId: cmd.commentId,
-					server: {
-						deletedAt: cmd.at,
-						version: previousVersion + 1,
-					},
-				}));
-				return;
-			}
-
-			default:
-				return;
-		}
-	};
 
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {
 		if (inFlight) return;
@@ -246,7 +114,11 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 			if (verdict.status === "APPLIED") {
 				logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
-				reconcileForApplied(rec, api.dispatch);
+				reconcileAppliedOutboxRecord({
+					record: rec,
+					dispatch: api.dispatch,
+					gateways: deps.gateways,
+				});
 				api.dispatch(dropCommitted({ commandId }));
 				api.dispatch(outboxProcessOnce());
 				return;
@@ -256,7 +128,12 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 				const reason = verdict.reason ?? "rejected";
 				logger.warn("[OUTBOX_WD] rejected => rollback + fail + drop", { commandId, reason, rejectedAt: verdict.rejectedAt });
 
-				rollbackForRejected(rec, api.dispatch);
+				rollbackRejectedOutboxRecord({
+					record: rec,
+					dispatch: api.dispatch,
+					logger,
+					markLikeSyncFailed: true,
+				});
 
 				api.dispatch(markFailed({ id: rec.id, error: reason }));
 				api.dispatch(dropCommitted({ commandId }));

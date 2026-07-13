@@ -16,7 +16,6 @@ import {
 import { outboxAwaitingAckAdded } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
 import {
-	commandKinds,
 	OutboxItem,
 	OutboxStateWl,
 	statusTypes,
@@ -27,15 +26,11 @@ import {
 	selectOutboxQueue,
 } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 
-import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
-import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
-import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
-
 import {
-	createRollback,
-	deleteRollback,
-	updateRollback,
-} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
+	getOutboxCommandGateway,
+	rollbackRejectedOutboxRecord,
+	sendOutboxCommand,
+} from "@/app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers";
 
 import { computeNextAttemptAtMs } from "@/app/core-logic/contextWL/outboxWl/utils/computeNextAttemptAtMs";
 import { isGatewayError } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
@@ -45,13 +40,6 @@ const isSignedIn = (s: RootStateWl) => s.aState?.status === "signedIn";
 
 const getAuthedUserId = (s: RootStateWl): string | undefined =>
 	s.aState?.session?.userId ?? (s.aState as any)?.currentUser?.id ?? undefined;
-
-const isCommentCreateUndo = (
-	u: unknown,
-): u is { tempId: string; targetId: string; parentId?: string } => {
-	const x = u as any;
-	return !!x && typeof x.tempId === "string" && typeof x.targetId === "string";
-};
 
 const ackByIsoIn30s = () => new Date(Date.now() + 30_000).toISOString();
 
@@ -149,24 +137,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 				const item = record.item as OutboxItem;
 				const cmd = item.command;
 
-				// ---- resolve gateway once, and ALWAYS use it ----
-				const resolveGateway = (kind: string) => {
-					switch (kind) {
-						case commandKinds.LikeAdd:
-						case commandKinds.LikeRemove:
-							return deps.gateways?.likes;
-						case commandKinds.CommentCreate:
-						case commandKinds.CommentUpdate:
-						case commandKinds.CommentDelete:
-							return deps.gateways?.comments;
-						case commandKinds.TicketVerify:
-							return deps.gateways?.tickets;
-						default:
-							return null;
-					}
-				};
-
-				const gw: any = resolveGateway(cmd.kind as any);
+				const gw = getOutboxCommandGateway(deps.gateways, cmd.kind as any);
 
 				// ✅ missing gateway => deterministic drop (matches your test)
 				if (!gw) {
@@ -199,75 +170,17 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 				});
 
 				try {
-					switch (cmd.kind) {
-						case commandKinds.LikeAdd:
-							await gw.add({
-								commandId: cmd.commandId,
-								targetId: cmd.targetId,
-								at: cmd.at,
-							});
-							sentAndAwaitAck();
-							break;
-
-						case commandKinds.LikeRemove:
-							await gw.remove({
-								commandId: cmd.commandId,
-								targetId: cmd.targetId,
-								at: cmd.at,
-							});
-							sentAndAwaitAck();
-							break;
-
-						case commandKinds.CommentCreate:
-							await gw.create({
-								commandId: cmd.commandId,
-								targetId: cmd.targetId,
-								parentId: cmd.parentId ?? null,
-								body: cmd.body,
-								tempId: cmd.tempId,
-							});
-							sentAndAwaitAck();
-							break;
-
-						case commandKinds.CommentUpdate:
-							await gw.update({
-								commandId: cmd.commandId,
-								commentId: cmd.commentId,
-								body: cmd.newBody,
-								editedAt: cmd.at,
-							});
-							sentAndAwaitAck();
-							break;
-
-						case commandKinds.CommentDelete:
-							await gw.delete({
-								commandId: cmd.commandId,
-								commentId: cmd.commentId,
-								deletedAt: cmd.at,
-							});
-							sentAndAwaitAck();
-							break;
-
-						case commandKinds.TicketVerify:
-							await gw.verify({
-								commandId: cmd.commandId,
-								ticketId: cmd.ticketId,
-								imageRef: cmd.imageRef,
-								ocrText: cmd.ocrText ?? null,
-								at: cmd.at,
-							});
-							sentAndAwaitAck();
-							break;
-
-						default:
-							logger.warn("[OUTBOX] processOnce: unknown command kind, dropping", {
-								id,
-								kind: (cmd as any).kind,
-								commandId: (cmd as any).commandId,
-							});
-							api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
-							api.dispatch(dequeueCommitted({ id }));
-							break;
+					const sendResult = await sendOutboxCommand({ command: cmd, gateway: gw });
+					if (sendResult === "sent") {
+						sentAndAwaitAck();
+					} else {
+						logger.warn("[OUTBOX] processOnce: unknown command kind, dropping", {
+							id,
+							kind: (cmd as any).kind,
+							commandId: (cmd as any).commandId,
+						});
+						api.dispatch(dropCommitted({ commandId: (cmd as any).commandId }));
+						api.dispatch(dequeueCommitted({ id }));
 					}
 				} catch (e: any) {
 					logger.error("[OUTBOX] processOnce: error", {
@@ -278,59 +191,11 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					});
 
 					if (isExplicitBusinessRejection(e)) {
-						switch (item.command.kind) {
-							case commandKinds.LikeAdd:
-							case commandKinds.LikeRemove: {
-								const u = item.undo as LikeUndo;
-								api.dispatch(
-									likeRollback({
-										targetId: u.targetId,
-										prevCount: u.prevCount,
-										prevMe: u.prevMe,
-										prevVersion: u.prevVersion,
-									}),
-								);
-								break;
-							}
-
-							case commandKinds.CommentCreate: {
-								const u = item.undo;
-								if (isCommentCreateUndo(u)) {
-									api.dispatch(createRollback({ tempId: u.tempId, targetId: u.targetId, parentId: u.parentId }));
-								} else {
-									logger.warn("[OUTBOX] CommentCreate undo shape mismatch", { undo: u });
-								}
-								break;
-							}
-
-							case commandKinds.CommentUpdate: {
-								const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number };
-								api.dispatch(updateRollback({ commentId: u.commentId, prevBody: u.prevBody, prevVersion: u.prevVersion }));
-								break;
-							}
-
-							case commandKinds.CommentDelete: {
-								const u = item.undo as { commentId: string; prevBody: string; prevVersion?: number; prevDeletedAt?: string };
-								api.dispatch(
-									deleteRollback({
-										commentId: u.commentId,
-										prevBody: u.prevBody,
-										prevVersion: u.prevVersion,
-										prevDeletedAt: u.prevDeletedAt,
-									}),
-								);
-								break;
-							}
-
-							case commandKinds.TicketVerify: {
-								const u = item.undo as { ticketId: string };
-								api.dispatch(ticketRollBack({ ticketId: u.ticketId }));
-								break;
-							}
-
-							default:
-								break;
-						}
+						rollbackRejectedOutboxRecord({
+							record,
+							dispatch: api.dispatch,
+							logger,
+						});
 					}
 
 					api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
