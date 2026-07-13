@@ -48,9 +48,12 @@ export const entitlementWlReducer = createReducer(
             state.byUser[String(payload.userId)] = {
                 userId: payload.userId,
                 confirmedTickets: payload.confirmedTickets,
+                publishedComments: payload.publishedComments,
+                confirmedLikes: payload.confirmedLikes,
                 rights,
                 rightsSource: hasPublishedRights ? "backend" : "thresholds",
                 updatedAt: payload.updatedAt,
+                pass: payload.pass,
             };
         });
     }
