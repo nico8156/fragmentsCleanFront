@@ -25,7 +25,6 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
             if (!deps.gateways.locations) return
             try {
                 const status = await deps.gateways.locations.getPermissionStatus();
-                console.log('permissionCheckRequested', status)
                 api.dispatch(permissionUpdated ({status}));
             } catch (e: any) {
                 api.dispatch(watchError({scope: 'permission', message: e?.message ?? String(e)}));

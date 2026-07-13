@@ -25,7 +25,6 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
                 }
                 return
             }; // rien à faire
-            console.log("[commentCreateRequested] / / current user : ",deps.helpers.currentUserId?.())
             const me = deps.helpers.currentUserId?.() ?? "anonymous";
             if (me === "anonymous") return;
 
@@ -33,8 +32,6 @@ export const createCommentUseCaseFactory = (deps: DependenciesWl,callback?: () =
 
             const authorName = meProfile?.displayName ?? "Moi";
             const avatarUrl = meProfile?.avatarUrl ?? undefined;
-            console.log("authorName from usecase",authorName)
-            console.log("avatarUrl from usecase",avatarUrl)
 
             const tempId = deps.helpers.getCommentIdForTests?.() ?? deps.helpers.newCommandId();
 

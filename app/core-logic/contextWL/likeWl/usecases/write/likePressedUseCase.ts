@@ -19,13 +19,10 @@ export const likeToggleUseCaseFactory = (deps: DependenciesWl) => {
 		actionCreator: uiLikeToggleRequested,
 		effect: async ({ payload: { targetId } }, api) => {
 
-			console.log("[LIKE] uiLikeToggleRequested", { targetId });
-
 			const token = await deps.gateways.authToken!.getAccessToken();
 			const userId = deps.gateways.authToken!.getCurrentUserId();
 
 			if (!token || !userId) {
-				console.log("[LIKE] no token/userId yet → ignoring like toggle");
 				return;
 			}
 

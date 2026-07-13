@@ -141,11 +141,6 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					scopes: action.payload.scopes ?? [],
 				});
 
-				console.log("[AUTH] backend signInWithProvider returned session", {
-					userId: (session as any)?.userId,
-					hasRefresh: !!(session as any)?.tokens?.refreshToken,
-				});
-
 				// 3️⃣ persist
 				activeSession = session;
 				deps.onSessionChanged?.(activeSession);
@@ -184,23 +179,13 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 		actionCreator: authMaybeRefreshRequested,
 		effect: async (_action, api) => {
 			if (!activeSession) {
-				console.log("[REFRESH] no activeSession, skipping");
 				return;
 			}
 
 			const { tokens } = activeSession;
 			const now = Date.now();
-			console.log(
-				"[REFRESH] now=",
-				now,
-				"expiresAt=",
-				tokens.expiresAt,
-				"delta=",
-				tokens.expiresAt - now,
-			);
 
 			if (tokens.expiresAt - now > MINIMUM_TOKEN_TTL_MS) {
-				console.log("[REFRESH] token still fresh, skipping");
 				return;
 			}
 
@@ -208,22 +193,17 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			const secureStore = getSecureStore();
 
 			if (!authServer) {
-				console.log("[REFRESH] no authServerGateway");
 				api.dispatch(authSessionExpired({ reason: "Session expirée" }));
 				return;
 			}
 
 			if (!secureStore) {
-				console.log("[REFRESH] no secureStore");
 				api.dispatch(authSessionRefreshFailed({ error: "auth secure store unavailable" }));
 				return;
 			}
 
 			try {
-				console.log("[REFRESH] calling backend /auth/refresh");
-
 				const refreshed = await authServer.refreshSession(activeSession);
-				console.log("[REFRESH] success");
 
 				activeSession = refreshed.session;
 				deps.onSessionChanged?.(activeSession);
@@ -235,7 +215,6 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					api.dispatch(authUserHydrationSucceeded({ user: refreshed.user }));
 				}
 			} catch (error: any) {
-				console.log("[REFRESH] FAILED", error);
 				const errorMessage = error?.message ?? "Session refresh failed";
 				if (isTransientRefreshFailure(error)) {
 					api.dispatch(
@@ -278,9 +257,6 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			} catch (error: any) {
 				// ✅ 404 => user pas encore provisionné côté backend => soft fail
 				if (isHttp404(error)) {
-					console.log(
-						"[AUTH] hydrate user: /auth/me returned 404 (profile not ready). Keeping session; will retry later.",
-					);
 					return;
 				}
 
