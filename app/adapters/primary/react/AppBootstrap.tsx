@@ -3,34 +3,10 @@ import { useStore } from "react-redux";
 
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
-import {
-	appBootFailed,
-	appBootSucceeded,
-	appHydrationDone,
-	appWarmupDone,
-} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
-
 import { mountAppStateAdapter } from "@/app/adapters/primary/runtime/appState.adapter";
 import { mountNetInfoAdapter } from "@/app/adapters/primary/runtime/netInfo.adapter";
 
-import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
-
-import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
-import { rehydrateReadModelCacheFactory } from "@/app/core-logic/contextWL/appWl/runtime/readModelCachePersistenceFactory";
-import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
-
-import {
-	getOnceRequested,
-	requestPermission,
-} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
-
-import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
-import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
-import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
-import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
-import { articlesListRetrieval } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
-
-import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import { createApplicationBootProcess } from "@/app/core-logic/contextWL/appWl/usecases/applicationBootProcess";
 import { logger } from "@/app/core-logic/utils/logger";
 
 // ✅ runtime deps (no store/gateways wiring import)
@@ -38,15 +14,6 @@ import { outboxStorage, readModelCacheStorage } from "@/app/adapters/primary/wir
 
 // ---- dev guard (jamais en prod) ----
 const CLEAR_OUTBOX_ON_BOOT = __DEV__ && false;
-
-const selectUserIdForEntitlements = (state: any): string | undefined =>
-	state?.aState?.session?.userId ??
-	state?.aState?.currentUser?.id ??
-	state?.auth?.userId ??
-	state?.user?.id ??
-	undefined;
-
-const isSignedIn = (state: any): boolean => state?.aState?.status === "signedIn";
 
 export const AppBootstrap = () => {
 	const store = useStore() as unknown as ReduxStoreWl;
@@ -60,100 +27,18 @@ export const AppBootstrap = () => {
 
 		logger.info("[BOOT] NetInfo + AppState adapters mounted");
 
-		let cancelled = false;
-		const dispatch: any = store.dispatch;
-
-		// create here to avoid module-level surprises (tests / hot reload)
-		const runRehydrateOutbox = rehydrateOutboxFactory({ storage: outboxStorage });
-		const runRehydrateReadModelCache = rehydrateReadModelCacheFactory({
-			storage: readModelCacheStorage,
-			logger: logger.info,
+		const bootProcess = createApplicationBootProcess({
+			store,
+			outboxStorage,
+			readModelCacheStorage,
+			logger,
+			clearOutboxOnBoot: CLEAR_OUTBOX_ON_BOOT,
 		});
-
-		const bootRuntime = async () => {
-			// 1) Hydration app
-			store.dispatch(appHydrationDone());
-
-			// 2) Auth early (charge session secure store)
-			await dispatch(initializeAuth());
-			if (cancelled) return;
-
-			// 3) Outbox storage (DEV only)
-			if (CLEAR_OUTBOX_ON_BOOT) {
-				logger.info("[BOOT] DEV: clearing outbox storage (flag enabled)");
-				await outboxStorage.clear();
-			}
-
-			// 4) Outbox rehydrate
-			logger.info("[BOOT] Rehydrate outbox: start");
-			const snapshot = await runRehydrateOutbox(store);
-			logger.info("[BOOT] Rehydrate outbox: done, queue length =", snapshot.queue.length);
-			if (cancelled) return;
-
-			logger.info("[BOOT] Rehydrate read model cache: start");
-			const readCacheSnapshot = await runRehydrateReadModelCache(store);
-			logger.info("[BOOT] Rehydrate read model cache: done", {
-				hit: Boolean(readCacheSnapshot),
-				updatedAt: readCacheSnapshot?.updatedAt,
-			});
-			if (cancelled) return;
-
-			// 5) Optionnel: kick outbox once si on est déjà authed + online
-			// (sinon runtimeListener fera le job à appBecameActive / connectivity online)
-			const stateNow: any = store.getState();
-			if (snapshot.queue.length && isSignedIn(stateNow) && selectIsOnline(stateNow)) {
-				store.dispatch(outboxProcessOnce());
-			}
-		};
-
-		const warmupData = async () => {
-			const runWarmupStep = async (label: string, step: () => Promise<unknown>) => {
-				try {
-					await step();
-				} catch (e: any) {
-					logger.warn(`[BOOT] Warmup skipped: ${label}`, String(e?.message ?? e));
-				}
-			};
-
-			// Location permissions + once (ne bloque pas le boot si ça échoue)
-			try {
-				store.dispatch(requestPermission());
-				store.dispatch(getOnceRequested({ accuracy: "high" }));
-			} catch { }
-
-			// Global data
-			await runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval()));
-			await runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval()));
-			await runWarmupStep("opening hours", () => dispatch(onOpeningHourRetrieval()));
-			await runWarmupStep("articles", () => dispatch(articlesListRetrieval({ locale: "fr-FR" })));
-
-			// Entitlements (si userId connu)
-			const uid = selectUserIdForEntitlements(store.getState());
-			if (uid) {
-				await runWarmupStep("entitlements", () => dispatch(entitlementsRetrieval({ userId: uid })));
-			}
-		};
-
-		(async () => {
-			try {
-				await bootRuntime();
-				if (cancelled) return;
-
-				await warmupData();
-				if (cancelled) return;
-
-				store.dispatch(appWarmupDone({ message: "Warmup OK" }));
-				store.dispatch(appBootSucceeded());
-				logger.info("[BOOT] App boot succeeded");
-			} catch (e: any) {
-				logger.error("[BOOT] App boot failed", e);
-				store.dispatch(appBootFailed({ message: String(e?.message ?? e) }));
-			}
-		})();
+		void bootProcess.start();
 
 		return () => {
 			logger.info("[BOOT] AppBootstrap unmount");
-			cancelled = true;
+			bootProcess.cancel();
 
 			unmountAppState?.();
 			unmountNetInfo?.();
