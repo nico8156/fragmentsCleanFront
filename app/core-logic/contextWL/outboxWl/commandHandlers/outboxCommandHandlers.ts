@@ -16,6 +16,7 @@ import {
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import type { GatewaysWl } from "@/app/adapters/primary/wiring/types";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
@@ -267,6 +268,19 @@ export const reconcileAppliedOutboxRecord = ({
 			}));
 			return;
 		}
+
+		case commandKinds.TicketVerify:
+			outboxTelemetry.reconcile(record, "tickets");
+			if (command.ticketId && gateways?.tickets) {
+				outboxTelemetry.projectionRefreshRequested({
+					projection: "tickets",
+					scope: "entity",
+					entityId: command.ticketId,
+					source: "ackReconcile",
+				});
+				dispatch(ticketRetrieval({ ticketId: command.ticketId }) as any);
+			}
+			return;
 
 		default:
 			return;

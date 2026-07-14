@@ -137,10 +137,6 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			if (!selectBootReady(state)) return;
 			if (!hasSession(state)) return;
 			if (!selectIsOnline(state)) return;
-			if (!state.appState?.boot?.doneWarmup) return;
-
-			if (!hasSession(state)) return;
-			if (!selectIsOnline(state)) return;
 
 			if (state.oState?.suspended) {
 				logger.debug("[OUTBOX_WD] suspended => skip");

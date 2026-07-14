@@ -27,3 +27,10 @@ import {RootStateWl} from "@/app/store/reduxStoreWl";
                 return (bDate ?? "").localeCompare(aDate ?? "");
             })
     );
+
+    export const selectNonTerminalTicketIds = createSelector(
+        [selectTicketsList],
+        (tickets) => tickets
+            .filter((ticket) => ticket.status === "CAPTURED" || ticket.status === "ANALYZING")
+            .map((ticket) => ticket.ticketId)
+    );
