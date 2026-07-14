@@ -11,7 +11,19 @@ type DispatchCapableStore = Pick<ReduxStoreWl, "dispatch">;
 
 type AppStateAdapterOptions = {
     ignoreFirstActive?: boolean;
+    currentStatePollMs?: number;
 };
+
+type AppStateLike = Pick<typeof AppState, "currentState" | "addEventListener"> & {
+    removeEventListener?: (eventType: "change", listener: (state: AppStateStatus) => void) => void;
+};
+
+type TimerLike = {
+    setInterval: typeof setInterval;
+    clearInterval: typeof clearInterval;
+};
+
+const DEFAULT_CURRENT_STATE_POLL_MS = 1_000;
 
 export type AppLifecycleTransition =
     | "active"
@@ -37,11 +49,16 @@ export const resolveAppLifecycleTransition = (
     return "unchanged";
 };
 
-export function mountAppStateAdapter(store: DispatchCapableStore, opts?: AppStateAdapterOptions) {
+export function mountAppStateAdapterWithRuntime(
+    store: DispatchCapableStore,
+    appState: AppStateLike,
+    timer: TimerLike,
+    opts?: AppStateAdapterOptions,
+) {
     let mounted = true;
     let firstActiveSeen = false;
 
-    let lastStatus: AppStateStatus | null = AppState.currentState ?? null;
+    let lastStatus: AppStateStatus | null = appState.currentState ?? null;
 
     const handler = (status: AppStateStatus) => {
         if (!mounted) return;
@@ -74,16 +91,32 @@ export function mountAppStateAdapter(store: DispatchCapableStore, opts?: AppStat
         }
     };
 
-    const subscription = AppState.addEventListener("change", handler);
+    const subscription = appState.addEventListener("change", handler);
+    const pollMs = opts?.currentStatePollMs ?? DEFAULT_CURRENT_STATE_POLL_MS;
+    const currentStatePoll =
+        pollMs > 0
+            ? timer.setInterval(() => {
+                const currentStatus = appState.currentState;
+                if (!currentStatus) return;
+                handler(currentStatus);
+            }, pollMs)
+            : null;
 
     return () => {
         mounted = false;
+        if (currentStatePoll) {
+            timer.clearInterval(currentStatePoll);
+        }
         try {
             subscription?.remove?.();
         } catch {
             // RN legacy
             // @ts-ignore
-            AppState.removeEventListener?.("change", handler);
+            appState.removeEventListener?.("change", handler);
         }
     };
+}
+
+export function mountAppStateAdapter(store: DispatchCapableStore, opts?: AppStateAdapterOptions) {
+    return mountAppStateAdapterWithRuntime(store, AppState, { setInterval, clearInterval }, opts);
 }
