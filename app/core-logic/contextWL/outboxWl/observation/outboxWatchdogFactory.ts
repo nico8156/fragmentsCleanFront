@@ -18,7 +18,7 @@ import {
 	outboxWatchdogTick,
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outboxWatchdog.actions";
 
-import { appBecameActive, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { appBecameActive, appBecameBackground, appConnectivityChanged } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 import {
 	reconcileAppliedOutboxRecord,
@@ -29,6 +29,7 @@ import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation
 import { logger } from "@/app/core-logic/utils/logger";
 
 const hasSession = (s: RootStateWl) => Boolean(s.aState?.session?.userId);
+const MAX_ACK_CHECKS_PER_TICK = 5;
 
 const parseIsoMs = (iso?: string) => {
 	if (!iso) return undefined;
@@ -65,13 +66,68 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		timer = null;
 	};
 
-	const pickExpiredAwaitingAck = (byId: Record<string, OutboxRecord>, now: number) =>
-		Object.values(byId).find((rec) => {
+	const pickExpiredAwaitingAcks = (byId: Record<string, OutboxRecord>, now: number) =>
+		Object.values(byId).filter((rec) => {
 			if (rec.status !== statusTypes.awaitingAck) return false;
 			const due = parseIsoMs(rec.nextCheckAt);
 			if (!due) return false;
 			return due <= now;
-		});
+		}).sort((a, b) => {
+			const aDue = parseIsoMs(a.nextCheckAt) ?? Number.MAX_SAFE_INTEGER;
+			const bDue = parseIsoMs(b.nextCheckAt) ?? Number.MAX_SAFE_INTEGER;
+			return aDue - bDue;
+		}).slice(0, MAX_ACK_CHECKS_PER_TICK);
+
+	const checkRecord = async (
+		rec: OutboxRecord,
+		api: { dispatch: AppDispatchWl },
+		commandStatus: NonNullable<DependenciesWl["gateways"]["commandStatus"]>,
+	) => {
+		const commandId = getCommandIdFromRecord(rec);
+		if (!commandId) {
+			api.dispatch(markFailed({ id: rec.id, error: "missing commandId for awaitingAck record" }));
+			return;
+		}
+
+		logger.info("[OUTBOX_WD] checking status", { id: rec.id, commandId });
+		outboxTelemetry.ackCheck(rec);
+
+		const verdict = await commandStatus.getStatus(commandId);
+
+		if (verdict.status === "APPLIED") {
+			logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
+			outboxTelemetry.ackVerdict(rec, "APPLIED", { appliedAt: verdict.appliedAt });
+			reconcileAppliedOutboxRecord({
+				record: rec,
+				dispatch: api.dispatch,
+				gateways: deps.gateways,
+			});
+			api.dispatch(dropCommitted({ commandId }));
+			api.dispatch(outboxProcessOnce());
+			return;
+		}
+
+		if (verdict.status === "REJECTED") {
+			const reason = verdict.reason ?? "rejected";
+			logger.warn("[OUTBOX_WD] rejected => rollback + fail + drop", { commandId, reason, rejectedAt: verdict.rejectedAt });
+			outboxTelemetry.ackVerdict(rec, "REJECTED", { reason, rejectedAt: verdict.rejectedAt });
+
+			rollbackRejectedOutboxRecord({
+				record: rec,
+				dispatch: api.dispatch,
+				logger,
+				markLikeSyncFailed: true,
+			});
+
+			api.dispatch(markFailed({ id: rec.id, error: reason }));
+			api.dispatch(dropCommitted({ commandId }));
+			return;
+		}
+
+		const next = new Date(Date.now() + 5_000).toISOString();
+		outboxTelemetry.ackVerdict(rec, "PENDING", { nextCheckAt: next });
+		api.dispatch(markAwaitingAck({ id: rec.id, ackByIso: next }));
+	};
 
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {
 		if (inFlight) return;
@@ -100,54 +156,14 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			const byId = selectOutboxById(state) as Record<string, OutboxRecord>;
 			const now = Date.now();
 
-			const rec = pickExpiredAwaitingAck(byId, now);
-			if (!rec) return;
+			const records = pickExpiredAwaitingAcks(byId, now);
+			if (!records.length) return;
 
-			const commandId = getCommandIdFromRecord(rec);
-			if (!commandId) {
-				api.dispatch(markFailed({ id: rec.id, error: "missing commandId for awaitingAck record" }));
-				return;
+			for (const rec of records) {
+				const current = (selectOutboxById(api.getState()) as Record<string, OutboxRecord>)[rec.id];
+				if (!current || current.status !== statusTypes.awaitingAck) continue;
+				await checkRecord(current, api, commandStatus);
 			}
-
-			logger.info("[OUTBOX_WD] checking status", { id: rec.id, commandId });
-			outboxTelemetry.ackCheck(rec);
-
-			const verdict = await commandStatus.getStatus(commandId);
-
-			if (verdict.status === "APPLIED") {
-				logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
-				outboxTelemetry.ackVerdict(rec, "APPLIED", { appliedAt: verdict.appliedAt });
-				reconcileAppliedOutboxRecord({
-					record: rec,
-					dispatch: api.dispatch,
-					gateways: deps.gateways,
-				});
-				api.dispatch(dropCommitted({ commandId }));
-				api.dispatch(outboxProcessOnce());
-				return;
-			}
-
-			if (verdict.status === "REJECTED") {
-				const reason = verdict.reason ?? "rejected";
-				logger.warn("[OUTBOX_WD] rejected => rollback + fail + drop", { commandId, reason, rejectedAt: verdict.rejectedAt });
-				outboxTelemetry.ackVerdict(rec, "REJECTED", { reason, rejectedAt: verdict.rejectedAt });
-
-				rollbackRejectedOutboxRecord({
-					record: rec,
-					dispatch: api.dispatch,
-					logger,
-					markLikeSyncFailed: true,
-				});
-
-				api.dispatch(markFailed({ id: rec.id, error: reason }));
-				api.dispatch(dropCommitted({ commandId }));
-				return;
-			}
-
-			// PENDING => replanifie prochain check
-			const next = new Date(Date.now() + 5_000).toISOString();
-			outboxTelemetry.ackVerdict(rec, "PENDING", { nextCheckAt: next });
-			api.dispatch(markAwaitingAck({ id: rec.id, ackByIso: next }));
 		} catch (e: any) {
 			logger.error("[OUTBOX_WD] runOnce error", { error: String(e?.message ?? e) });
 		} finally {
@@ -159,8 +175,16 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
+			stopTimer();
 			startTimer(api.dispatch);
 			await runOnce(api);
+		},
+	});
+
+	listen({
+		actionCreator: appBecameBackground,
+		effect: async () => {
+			stopTimer();
 		},
 	});
 
