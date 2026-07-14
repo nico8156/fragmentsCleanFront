@@ -12,6 +12,7 @@ import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeA
 import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import { appBecameForeground } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 class FakeCommandStatusGateway {
 	calls: string[] = [];
@@ -83,6 +84,48 @@ describe("outboxWatchdogFactory", () => {
 		await flush();
 
 		expect(commandStatus.calls).toEqual(["cmd_1"]);
+	});
+
+	it("checks due ACKs immediately when app returns to foreground", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "PENDING" };
+		const deps = makeDeps({ commandStatus });
+
+		const store = makeStoreWl({
+			deps,
+			listeners: [outboxWatchdogFactory({ gateways: deps.gateways, enableTimer: false } as any)],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(
+			enqueueCommitted({
+				id: "obx_1",
+				item: {
+					command: {
+						kind: commandKinds.TicketVerify,
+						commandId: "cmd_ticket",
+						ticketId: "ticket_1",
+						userId: "user_test",
+						ocrText: "ticket text",
+						at: "x",
+					} as any,
+					undo: {} as any,
+				},
+				enqueuedAt: "x",
+			}) as any,
+		);
+		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(appBecameForeground());
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_ticket"]);
 	});
 
 	it("does not let an old PENDING ACK starve newer awaiting commands", async () => {

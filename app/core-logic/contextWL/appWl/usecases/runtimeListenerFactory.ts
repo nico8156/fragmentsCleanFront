@@ -6,6 +6,8 @@ import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit"
 import {
 	appBecameActive,
 	appBecameBackground,
+	appBecameForeground,
+	appBecameInactive,
 	appConnectivityChanged,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
@@ -106,31 +108,58 @@ export const runtimeListenerFactory = () => {
 		refreshKnownTicketsInProgress(api);
 	};
 
+	const resumeRuntime = async (
+		api: {
+			dispatch: AppDispatchWl;
+			getState: () => RootStateWl;
+		},
+		source: "appBecameActive" | "appBecameForeground",
+	) => {
+		const state = api.getState();
+		const online = selectIsOnline(state);
+		const authed = hasSession(state);
+		const bootReady = selectBootReady(state);
+
+		logger.info(`[APP RUNTIME] ${source}`, { online, authed, bootReady });
+
+		if (online) {
+			api.dispatch(outboxResumeRequested());
+		}
+
+		if (!bootReady) return;
+		if (!authed) return;
+
+		// ✅ Toujours : refresh + hydrate.
+		refreshAndHydrate(api);
+
+		// ✅ Si online, on kick aussi outbox/watchdog
+		if (!online) return;
+		refreshKnownReadModels(api);
+		kickOnlineAuthed(api);
+	};
+
+	const suspendRuntime = (
+		api: {
+			dispatch: AppDispatchWl;
+		},
+		source: "appBecameBackground" | "appBecameInactive",
+	) => {
+		logger.info(`[APP RUNTIME] ${source}: suspend outbox + projection sync disconnect`);
+		api.dispatch(outboxSuspendRequested());
+		api.dispatch(projectionSyncDisconnectRequested());
+	};
+
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
-			const state = api.getState();
-			const online = selectIsOnline(state);
-			const authed = hasSession(state);
-			const bootReady = selectBootReady(state);
+			await resumeRuntime(api, "appBecameActive");
+		},
+	});
 
-			logger.info("[APP RUNTIME] appBecameActive", { online, authed, bootReady });
-
-			if (online) {
-				api.dispatch(outboxResumeRequested());
-			}
-
-			if (!bootReady) return;
-			if (!authed) return;
-
-			// ✅ Toujours : refresh + hydrate + tentative projection sync
-			refreshAndHydrate(api);
-			api.dispatch(projectionSyncEnsureConnectedRequested());
-
-			// ✅ Si online, on kick aussi outbox/watchdog
-			if (!online) return;
-			refreshKnownReadModels(api);
-			kickOnlineAuthed(api);
+	listen({
+		actionCreator: appBecameForeground,
+		effect: async (_, api) => {
+			await resumeRuntime(api, "appBecameForeground");
 		},
 	});
 
@@ -168,9 +197,14 @@ export const runtimeListenerFactory = () => {
 	listen({
 		actionCreator: appBecameBackground,
 		effect: async (_, api) => {
-			logger.info("[APP RUNTIME] appBecameBackground: suspend outbox + projection sync disconnect");
-			api.dispatch(outboxSuspendRequested());
-			api.dispatch(projectionSyncDisconnectRequested());
+			suspendRuntime(api, "appBecameBackground");
+		},
+	});
+
+	listen({
+		actionCreator: appBecameInactive,
+		effect: async (_, api) => {
+			suspendRuntime(api, "appBecameInactive");
 		},
 	});
 

@@ -1,6 +1,7 @@
 import {createAction} from "@reduxjs/toolkit";
 
 export const appBecameActive     = createAction("APP/BECAME_ACTIVE");
+export const appBecameForeground = createAction("APP/BECAME_FOREGROUND");
 export const appBecameBackground = createAction("APP/BECAME_BACKGROUND");
 export const appBecameInactive   = createAction("APP/BECAME_INACTIVE");
 export const appConnectivityChanged = createAction<{ online: boolean }>("APP/CONNECTIVITY_CHANGED");
