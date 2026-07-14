@@ -38,6 +38,25 @@ Projection refreshes are logged separately as `projection:refresh_requested` for
 `comments`, `likes`, `tickets`, and `entitlements`. These logs explain why a read
 model is refreshed, but they are not command ACKs and must not drop outbox records.
 
+## Foreground Recovery
+
+Projection Sync is opportunistic while the app is active. App runtime owns
+foreground/background transitions and asks Projection Sync to connect or
+disconnect; Projection Sync should not also react directly to the same AppState
+events. This keeps the lifecycle single-owned and avoids duplicate connect or
+disconnect logs for one transition.
+
+When the app comes back to foreground or network connectivity returns, the
+runtime refreshes read models already known locally:
+- comments targets already present in the comment read model
+- likes targets already present in the like read model
+- the current user's entitlements when a local snapshot exists
+- non-terminal tickets (`CAPTURED`, `ANALYZING`)
+
+This is a recovery net for projection events missed while backgrounded. It is
+not a global data crawl; first-load reads remain owned by the boot process and
+screen view models.
+
 In development builds, the console exposes:
 
 ```ts
