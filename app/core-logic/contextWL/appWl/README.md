@@ -39,6 +39,7 @@ Il orchestre l’activation et la suspension des sous-systèmes techniques
 - **Adapter** : `mountAppStateAdapter`
   - Écoute `react-native AppState`
   - Dispatch des actions AppWL
+  - Resynchronise périodiquement `AppState.currentState` pour récupérer un retour foreground dont l'événement `change` aurait été manqué après verrouillage / sommeil
   - Zéro logique métier
 
 - **Runtime Listener** : `runtimeListenerFactory`

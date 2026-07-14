@@ -1,4 +1,12 @@
-import { resolveAppLifecycleTransition } from "@/app/adapters/primary/runtime/appState.adapter";
+import {
+	mountAppStateAdapterWithRuntime,
+	resolveAppLifecycleTransition,
+} from "@/app/adapters/primary/runtime/appState.adapter";
+import {
+	appBecameBackground,
+	appBecameForeground,
+	appBecameInactive,
+} from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
 describe("resolveAppLifecycleTransition", () => {
 	it("detects explicit foreground return from background to active", () => {
@@ -20,5 +28,47 @@ describe("resolveAppLifecycleTransition", () => {
 
 	it("ignores duplicate native states", () => {
 		expect(resolveAppLifecycleTransition("background", "background")).toBe("unchanged");
+	});
+});
+
+describe("mountAppStateAdapterWithRuntime", () => {
+	it("recovers a missed active event by polling AppState.currentState after sleep", () => {
+		const dispatch = jest.fn();
+		let intervalCallback: (() => void) | undefined;
+		let changeHandler: ((status: any) => void) | undefined;
+
+		const appState = {
+			currentState: "active" as any,
+			addEventListener: jest.fn((_event: string, handler: (status: any) => void) => {
+				changeHandler = handler;
+				return { remove: jest.fn() };
+			}),
+		};
+		const timer = {
+			setInterval: jest.fn((callback: () => void) => {
+				intervalCallback = callback;
+				return 1 as any;
+			}),
+			clearInterval: jest.fn(),
+		};
+
+		const unmount = mountAppStateAdapterWithRuntime(
+			{ dispatch } as any,
+			appState as any,
+			timer as any,
+			{ currentStatePollMs: 1_000 },
+		);
+
+		changeHandler?.("inactive");
+		changeHandler?.("background");
+		appState.currentState = "active";
+		intervalCallback?.();
+
+		expect(dispatch).toHaveBeenCalledWith(appBecameInactive());
+		expect(dispatch).toHaveBeenCalledWith(appBecameBackground());
+		expect(dispatch).toHaveBeenCalledWith(appBecameForeground());
+
+		unmount();
+		expect(timer.clearInterval).toHaveBeenCalledWith(1);
 	});
 });
