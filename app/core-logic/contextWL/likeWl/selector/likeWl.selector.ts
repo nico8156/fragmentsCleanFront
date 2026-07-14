@@ -28,6 +28,11 @@ type LikeSelectorResult = {
 const selectLikesState = (state: RootStateWl): LikeSlice => state.lState;
 export const selectAllLikeAggs = (state: RootStateWl) => state.lState.byTarget;
 
+export const selectKnownLikeTargetIds = createSelector(
+	[selectLikesState],
+	(likesState): string[] => Object.keys(likesState.byTarget ?? {}),
+);
+
 export const selectLikesForTarget = (targetId: string) =>
 	createSelector(
 		[(state: RootStateWl) => selectLikesState(state).byTarget[targetId]],
@@ -61,4 +66,3 @@ export const selectLikesForTarget = (targetId: string) =>
 			};
 		},
 	);
-

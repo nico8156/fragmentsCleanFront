@@ -23,6 +23,12 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { refreshNonTerminalTickets } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import { selectNonTerminalTicketIds } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import { selectKnownCommentTargetIds } from "@/app/core-logic/contextWL/commentWl/selector/commentWl.selector";
+import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
+import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
+import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -73,6 +79,33 @@ export const runtimeListenerFactory = () => {
 		api.dispatch(refreshNonTerminalTickets() as any);
 	};
 
+	const refreshKnownReadModels = (api: {
+		dispatch: AppDispatchWl;
+		getState: () => RootStateWl;
+	}) => {
+		const state = api.getState();
+		const userId = getSessionUserId(state);
+
+		if (userId && state.enState?.byUser?.[String(userId)]) {
+			api.dispatch(entitlementsRetrieval({ userId }) as any);
+		}
+
+		for (const targetId of selectKnownCommentTargetIds(state)) {
+			api.dispatch(commentRetrieval({
+				targetId,
+				op: opTypes.REFRESH,
+				cursor: "",
+				limit: 20,
+			}) as any);
+		}
+
+		for (const targetId of selectKnownLikeTargetIds(state)) {
+			api.dispatch(likesRetrieval({ targetId }) as any);
+		}
+
+		refreshKnownTicketsInProgress(api);
+	};
+
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
@@ -96,7 +129,7 @@ export const runtimeListenerFactory = () => {
 
 			// ✅ Si online, on kick aussi outbox/watchdog
 			if (!online) return;
-			refreshKnownTicketsInProgress(api);
+			refreshKnownReadModels(api);
 			kickOnlineAuthed(api);
 		},
 	});
@@ -124,7 +157,7 @@ export const runtimeListenerFactory = () => {
 			// ✅ Même si WS/outbox, on hydrate aussi (re-sync après offline)
 			if (authed) {
 				refreshAndHydrate(api);
-				refreshKnownTicketsInProgress(api);
+				refreshKnownReadModels(api);
 				kickOnlineAuthed(api);
 			} else {
 				logger.info("[APP RUNTIME] online: skip ws/outbox/watchdog (no session)");

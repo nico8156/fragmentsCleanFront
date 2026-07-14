@@ -40,10 +40,13 @@ const formatAmount = (amountCents?: number, currency?: string) => {
     }
 };
 
-const formatDate = (iso?: string) => {
-    if (!iso) return "Date inconnue";
+const isPlausibleBusinessDate = (date: Date) => date.getUTCFullYear() >= 2020;
+
+const formatOptionalDate = (iso?: string) => {
+    if (!iso) return undefined;
     const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return "Date inconnue";
+    if (Number.isNaN(date.getTime())) return undefined;
+    if (!isPlausibleBusinessDate(date)) return undefined;
     return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
@@ -61,7 +64,7 @@ const toVM = (
         id: ticket.ticketId,
         merchantName: ticket.merchantName ?? "Ticket scanné",
         amountLabel: formatAmount(ticket.amountCents, ticket.currency),
-        dateLabel: formatDate(ticket.ticketDate ?? ticket.updatedAt),
+        dateLabel: formatOptionalDate(ticket.ticketDate) ?? formatOptionalDate(ticket.updatedAt) ?? "Date inconnue",
         statusLabel: meta.label,
         statusTone: meta.tone,
         rejectionReason: ticket.rejectionReason ?? undefined,

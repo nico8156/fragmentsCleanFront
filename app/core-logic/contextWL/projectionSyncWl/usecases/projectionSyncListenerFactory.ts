@@ -3,9 +3,7 @@ import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
 
 import {
-	appBecameActive,
 	appBecameBackground,
-	appConnectivityChanged,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
@@ -214,11 +212,6 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	});
 
 	listen({
-		actionCreator: appBecameActive,
-		effect: async (_, api) => ensureConnected(api as any),
-	});
-
-	listen({
 		actionCreator: appBecameBackground,
 		effect: async (_, api) => {
 			void deps.syncMetaStorage?.updateLastActiveAt(Date.now()).catch((e) => {
@@ -226,15 +219,6 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 					error: String((e as any)?.message ?? e),
 				});
 			});
-			disconnect(api as any, "background");
-		},
-	});
-
-	listen({
-		actionCreator: appConnectivityChanged,
-		effect: async (action, api) => {
-			if (action.payload.online) await ensureConnected(api as any);
-			else disconnect(api as any, "offline");
 		},
 	});
 

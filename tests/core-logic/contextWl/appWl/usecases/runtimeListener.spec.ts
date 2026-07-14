@@ -26,6 +26,15 @@ import {
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import { seedBootReady, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
+import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
+import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
+import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
+import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
+import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import { likesRetrieved } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
+import { entitlementsHydrated } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
+import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 
 const flush = () => new Promise<void>((r) => setImmediate(r));
 
@@ -186,5 +195,87 @@ describe("runtimeListenerFactory (appWl)", () => {
 		expect(types.indexOf(outboxSuspendRequested.type)).toBeLessThan(
 			types.indexOf(outboxResumeRequested.type),
 		);
+	});
+
+	it("appBecameActive refreshes known read models missed while backgrounded", async () => {
+		const comments = new FakeCommentsWlGateway();
+		const likes = new FakeLikesGateway();
+		const tickets = new FakeTicketsGateway();
+		const entitlements = new FakeEntitlementWlGateway();
+
+		comments.nextListResponse = {
+			items: [],
+			serverTime: "2026-07-14T07:00:00.000Z",
+		} as any;
+		likes.nextGetResponse = {
+			count: 3,
+			me: true,
+			version: 2,
+			serverTime: "2026-07-14T07:00:01.000Z",
+		};
+		tickets.nextStatusResponse = {
+			...tickets.nextStatusResponse,
+			status: "COMPLETED",
+			outcome: "APPROVED",
+			version: 3,
+		};
+		entitlements.store.set("u1", {
+			userId: "u1",
+			confirmedTickets: 1,
+			publishedComments: 2,
+			confirmedLikes: 3,
+			updatedAt: "2026-07-14T07:00:02.000Z",
+		});
+
+		const localStore = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					comments,
+					likes,
+					tickets,
+					entitlements,
+				} as any,
+				helpers: {} as any,
+			},
+			listeners: [runtimeListenerFactory()],
+		});
+
+		seedSignedIn(localStore, { userId: "u1" });
+		seedBootReady(localStore);
+		localStore.dispatch(commentsRetrieved({
+			targetId: "coffee_1",
+			op: opTypes.RETRIEVE,
+			items: [],
+		}));
+		localStore.dispatch(likesRetrieved({
+			targetId: "coffee_1",
+			count: 1,
+			me: false,
+			version: 1,
+		}));
+		localStore.dispatch(entitlementsHydrated({
+			userId: "u1",
+			confirmedTickets: 0,
+			updatedAt: "2026-07-14T06:00:00.000Z",
+		}));
+		localStore.dispatch(ticketOptimisticCreated({
+			ticketId: "ticket_1" as any,
+			imageRef: "image_1",
+			ocrText: null,
+			at: "2026-07-14T06:30:00.000Z" as any,
+		}));
+
+		localStore.dispatch(appBecameActive());
+		await flush();
+		await flush();
+
+		expect(comments.listCalls.map((call) => call.targetId)).toEqual(["coffee_1"]);
+		expect(likes.getCalls).toEqual([{ targetId: "coffee_1" }]);
+		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket_1"]);
+		expect(localStore.getState().enState.byUser.u1).toMatchObject({
+			confirmedTickets: 1,
+			publishedComments: 2,
+			confirmedLikes: 3,
+		});
 	});
 });

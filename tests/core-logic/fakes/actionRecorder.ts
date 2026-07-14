@@ -11,6 +11,9 @@ export function createActionsRecorder(options?: {
     const cap = options?.cap ?? 2000;
 
     const middleware: Middleware = () => (next) => (action:any) => {
+        if (typeof action?.type !== "string") {
+            return next(action);
+        }
         const rec = { type: action.type as string, payload: (action as any).payload };
         if (filter(rec)) {
             log.push(rec);
