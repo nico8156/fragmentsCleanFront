@@ -26,7 +26,8 @@ Il orchestre l’activation et la suspension des sous-systèmes techniques
 
 | Action | Signification |
 |------|---------------|
-| `appBecameActive` | App visible et utilisable |
+| `appBecameActive` | App visible et utilisable hors reprise explicite |
+| `appBecameForeground` | Retour explicite de `background`/`inactive` vers `active` |
 | `appBecameInactive` | Transition courte (lock, multitâche) |
 | `appBecameBackground` | App en arrière-plan |
 | `appConnectivityChanged` | Changement online/offline |
@@ -48,7 +49,7 @@ Il orchestre l’activation et la suspension des sous-systèmes techniques
 
 ## Règles runtime
 
-### App active
+### App active / foreground
 - Si **connecté + authentifié** :
   - Projection Sync connect
   - Outbox process

@@ -2,8 +2,16 @@ import { createReducer } from "@reduxjs/toolkit";
 import {
 	appBecameActive,
 	appBecameBackground,
-	appBecameInactive, appBootFailed, appBootRequested, appBootSucceeded,
-	appConnectivityChanged, appHydrationDone, appWarmupDone, markHasCompletedOnboarding, markHasNotCompletedOnboarding
+	appBecameForeground,
+	appBecameInactive,
+	appBootFailed,
+	appBootRequested,
+	appBootSucceeded,
+	appConnectivityChanged,
+	appHydrationDone,
+	appWarmupDone,
+	markHasCompletedOnboarding,
+	markHasNotCompletedOnboarding,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { AppRuntimeState, ISODate } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.type";
 
@@ -25,6 +33,10 @@ export const appReducer = createReducer(
 				s.boot.doneHydration = true
 			})
 			.addCase(appBecameActive, (s) => {
+				s.phase = s.boot.doneHydration ? "ready" : "booting";
+				s.lastActiveAt = new Date().toISOString() as ISODate;
+			})
+			.addCase(appBecameForeground, (s) => {
 				s.phase = s.boot.doneHydration ? "ready" : "booting";
 				s.lastActiveAt = new Date().toISOString() as ISODate;
 			})

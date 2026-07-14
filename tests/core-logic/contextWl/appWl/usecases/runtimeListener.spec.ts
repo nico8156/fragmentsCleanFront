@@ -4,6 +4,8 @@ import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 import {
 	appBecameActive,
 	appBecameBackground,
+	appBecameForeground,
+	appBecameInactive,
 	appConnectivityChanged,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 
@@ -94,6 +96,30 @@ describe("runtimeListenerFactory (appWl)", () => {
 				outboxWatchdogTick.type,
 			]),
 		);
+		expect(types.filter((type) => type === projectionSyncEnsureConnectedRequested.type)).toHaveLength(1);
+	});
+
+	it("appBecameForeground / signedIn => resumes outbox + restarts runtime work", async () => {
+		seedSignedIn(store, { userId: "u1" });
+		seedBootReady(store);
+
+		rec.clear();
+		store.dispatch(appBecameForeground());
+		await flush();
+
+		const types = rec.getTypes();
+
+		expect(types).toEqual(
+			expect.arrayContaining([
+				outboxResumeRequested.type,
+				authMaybeRefreshRequested.type,
+				authUserHydrationRequested.type,
+				projectionSyncEnsureConnectedRequested.type,
+				outboxProcessOnce.type,
+				outboxWatchdogTick.type,
+			]),
+		);
+		expect(types.filter((type) => type === projectionSyncEnsureConnectedRequested.type)).toHaveLength(1);
 	});
 
 	// ─────────────────────────────────────────────────────────────
@@ -168,14 +194,31 @@ describe("runtimeListenerFactory (appWl)", () => {
 		);
 	});
 
-	it("background then active / signedIn => suspend then resume + restart runtime work", async () => {
+	it("appBecameInactive => outboxSuspend + projectionSyncDisconnect", async () => {
+		seedSignedIn(store, { userId: "u1" });
+
+		rec.clear();
+		store.dispatch(appBecameInactive());
+		await flush();
+
+		const types = rec.getTypes();
+
+		expect(types).toEqual(
+			expect.arrayContaining([
+				outboxSuspendRequested.type,
+				projectionSyncDisconnectRequested.type,
+			]),
+		);
+	});
+
+	it("background then foreground / signedIn => suspend then resume + restart runtime work", async () => {
 		seedSignedIn(store, { userId: "u1" });
 		seedBootReady(store);
 
 		rec.clear();
 		store.dispatch(appBecameBackground());
 		await flush();
-		store.dispatch(appBecameActive());
+		store.dispatch(appBecameForeground());
 		await flush();
 
 		const types = rec.getTypes();
