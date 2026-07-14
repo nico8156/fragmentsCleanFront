@@ -1,6 +1,8 @@
 import {ISODate, TicketId, TicketStatus} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
+import { selectOutboxStatusByTicketId, isOutboxPendingStatus } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
+import { selectNonTerminalTicketIds } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 
 const inflight = new Map<string, AbortController>();
 
@@ -23,16 +25,16 @@ const toTicketStatus = (status: string, outcome?: string | null): TicketStatus =
 export const ticketRetrieval =
     (input: {
         ticketId: TicketId | string;
-        __testServer__?: {
-            status: TicketStatus;
-            version: number;
-            updatedAt: ISODate;
-            ocrText?: string | null;
-            amountCents?: number;
-            currency?: string;
-            ticketDate?: ISODate;
-        };
-    }) :AppThunkWl<Promise<void>> =>
+	        __testServer__?: {
+	            status: TicketStatus;
+	            version: number;
+	            updatedAt: ISODate;
+	            ocrText?: string | null;
+	            amountCents?: number;
+	            currency?: string;
+	            ticketDate?: ISODate;
+	        };
+	    }) :AppThunkWl<Promise<void>> =>
         async (dispatch,_, gateways) => {
             const ticketId = input.ticketId as TicketId;
             dispatch(ticketSetLoading({ ticketId }));
@@ -95,5 +97,22 @@ export const ticketRetrieval =
                 if (current && !current.signal.aborted) {
                     inflight.delete(ticketId);
                 }
+	            }
+	        };
+
+export const refreshNonTerminalTickets =
+    (input?: { includePendingOutbox?: boolean }): AppThunkWl<Promise<void>> =>
+        async (dispatch, getState) => {
+            const state = getState();
+            const ids = selectNonTerminalTicketIds(state);
+            if (!ids.length) return;
+
+            const outboxStatusByTicketId = selectOutboxStatusByTicketId(state);
+            for (const ticketId of ids) {
+                const pendingOutboxStatus = outboxStatusByTicketId[String(ticketId)];
+                if (!input?.includePendingOutbox && isOutboxPendingStatus(pendingOutboxStatus)) {
+                    continue;
+                }
+                await dispatch(ticketRetrieval({ ticketId }) as any);
             }
         };

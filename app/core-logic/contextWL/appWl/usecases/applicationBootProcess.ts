@@ -19,6 +19,7 @@ import type { OutboxStorageGateway } from "@/app/core-logic/contextWL/outboxWl/g
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
 import { outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
+import { refreshNonTerminalTickets } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
@@ -116,6 +117,7 @@ export const createApplicationBootProcess = ({
 		const uid = selectUserIdForEntitlements(store.getState());
 		if (uid) {
 			await runWarmupStep("entitlements", () => dispatch(entitlementsRetrieval({ userId: uid })));
+			await runWarmupStep("tickets in progress", () => dispatch(refreshNonTerminalTickets()));
 		}
 	};
 

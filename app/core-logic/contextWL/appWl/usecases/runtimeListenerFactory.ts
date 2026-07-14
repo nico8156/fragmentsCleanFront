@@ -21,6 +21,8 @@ import {
 	authMaybeRefreshRequested,
 	authUserHydrationRequested,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { refreshNonTerminalTickets } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
+import { selectNonTerminalTicketIds } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -63,6 +65,14 @@ export const runtimeListenerFactory = () => {
 		api.dispatch(authUserHydrationRequested({ userId }));
 	};
 
+	const refreshKnownTicketsInProgress = (api: {
+		dispatch: AppDispatchWl;
+		getState: () => RootStateWl;
+	}) => {
+		if (!selectNonTerminalTicketIds(api.getState()).length) return;
+		api.dispatch(refreshNonTerminalTickets() as any);
+	};
+
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {
@@ -86,6 +96,7 @@ export const runtimeListenerFactory = () => {
 
 			// ✅ Si online, on kick aussi outbox/watchdog
 			if (!online) return;
+			refreshKnownTicketsInProgress(api);
 			kickOnlineAuthed(api);
 		},
 	});
@@ -113,6 +124,7 @@ export const runtimeListenerFactory = () => {
 			// ✅ Même si WS/outbox, on hydrate aussi (re-sync après offline)
 			if (authed) {
 				refreshAndHydrate(api);
+				refreshKnownTicketsInProgress(api);
 				kickOnlineAuthed(api);
 			} else {
 				logger.info("[APP RUNTIME] online: skip ws/outbox/watchdog (no session)");

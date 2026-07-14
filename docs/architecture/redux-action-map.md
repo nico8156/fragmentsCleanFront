@@ -144,9 +144,10 @@ This is a static map. It intentionally does not infer runtime ordering, thunk in
 | `likesRetrieval` | `app/adapters/secondary/viewModel/useLikesForCafe.ts`<br>`app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts` |
 | `onCfPhotoRetrieval` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
 | `onOpeningHourRetrieval` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
+| `refreshNonTerminalTickets` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts`<br>`app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts` |
 | `signInWithProvider` | `app/adapters/secondary/viewModel/useAuthUser.ts` |
 | `signOut` | `app/adapters/secondary/viewModel/useAuthUser.ts` |
-| `ticketRetrieval` | `app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts` |
+| `ticketRetrieval` | `app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts`<br>`app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval.ts` |
 
 ## Suggested Event Storming Use
 

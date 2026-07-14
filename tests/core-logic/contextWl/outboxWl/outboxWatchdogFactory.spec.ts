@@ -10,6 +10,8 @@ import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { createActionsRecorder } from "@/tests/core-logic/fakes/actionRecorder";
 import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
+import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 
 class FakeCommandStatusGateway {
 	calls: string[] = [];
@@ -374,6 +376,63 @@ describe("outboxWatchdogFactory", () => {
 		expect(s.cState.entities.entities.c1.moderation).toBe("SOFT_DELETED");
 		expect(s.cState.entities.entities.c1.version).toBe(8);
 		expect(s.oState.byId.obx_1).toBeUndefined();
+	});
+
+	it("APPLIED TicketVerify => drops record and refreshes ticket status", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "APPLIED" };
+		const tickets = new FakeTicketsGateway();
+		tickets.nextStatusResponse = {
+			...tickets.nextStatusResponse,
+			status: "CONFIRMED",
+			outcome: "APPROVED",
+			version: 1,
+			occurredAt: "2026-07-14T06:10:00.000Z",
+			amountCents: 660,
+			currency: "EUR",
+		};
+
+		const deps = makeDeps({ commandStatus, tickets });
+		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(ticketOptimisticCreated({
+			ticketId: "ticket_1" as any,
+			at: "2026-07-14T06:00:00.000Z" as any,
+			status: "ANALYZING",
+		}));
+		store.dispatch(enqueueCommitted({
+			id: "obx_ticket",
+			item: {
+				command: {
+					kind: commandKinds.TicketVerify,
+					commandId: "cmd_ticket",
+					ticketId: "ticket_1",
+					ocrText: "ticket text",
+					at: "2026-07-14T06:00:00.000Z",
+				} as any,
+				undo: { ticketId: "ticket_1" } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_ticket", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_ticket"]);
+		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket_1"]);
+		const state = store.getState();
+		expect(state.oState.byId.obx_ticket).toBeUndefined();
+		expect(state.tState.byId["ticket_1" as any].status).toBe("CONFIRMED");
+		expect(state.tState.byId["ticket_1" as any].optimistic).toBe(false);
 	});
 
 	it("PENDING => replanifies nextCheckAt = now+5s", async () => {

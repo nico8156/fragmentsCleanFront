@@ -49,6 +49,29 @@ await globalThis.__FRAGMENTS_DEV__.clearOutbox()
 `OUTBOX/DEV_CLEAR_COMMITTED`. It exists only to remove local development residue;
 production recovery must continue to rely on `/commands/{commandId}`.
 
+## Ticket Recovery
+
+`Ticket.Verify` has two separate backend milestones:
+
+```text
+/commands/{commandId} = APPLIED
+-> backend accepted the verification command
+-> ticket read model may still be ANALYZING
+
+projection.updated tickets/entity
+-> backend ticket analysis completed or changed
+-> mobile fetches /api/tickets/{ticketId}/status
+```
+
+Because SSE can be missed while the app is backgrounded, ticket recovery does
+not rely only on projection events. The mobile app also refreshes known
+non-terminal tickets (`CAPTURED`, `ANALYZING`) on boot, on foreground/network
+resume, and after a `Ticket.Verify` command status becomes `APPLIED`.
+
+The refresh skips tickets that still have a pending local outbox command, so a
+fresh optimistic ticket is not turned into a read error before its command has
+reached the backend.
+
 ## Required Data
 
 Each command stores:
