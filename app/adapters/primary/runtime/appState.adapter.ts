@@ -1,4 +1,4 @@
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Platform } from "react-native";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 import {
     appBecameActive,
@@ -113,7 +113,10 @@ export function mountAppStateAdapterWithRuntime(
     };
 
     const subscription = appState.addEventListener("change", handler);
-    const focusSubscription = appState.addEventListener?.("focus" as any, recoverCurrentActiveState as any);
+    const focusSubscription =
+        Platform.OS === "android"
+            ? appState.addEventListener?.("focus" as any, recoverCurrentActiveState as any)
+            : undefined;
     const pollMs = opts?.currentStatePollMs ?? DEFAULT_CURRENT_STATE_POLL_MS;
     const currentStatePoll =
         pollMs > 0
