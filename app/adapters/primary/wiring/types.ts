@@ -6,6 +6,7 @@ import type { OpeningHoursGateway } from "@/app/core-logic/contextWL/openingHour
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { LikeWlGateway } from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
 import type { TicketsWlGateway } from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
+import type { SavedCoffeeGateway } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
 
 import type { ArticleWlGateway } from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
 import type { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
@@ -31,6 +32,7 @@ export type GatewaysWl = {
 
 	comments: CommentsWlGateway;
 	likes: LikeWlGateway;
+	savedCoffees: SavedCoffeeGateway;
 	tickets: TicketsWlGateway;
 
 	entitlements: EntitlementWlGateway;

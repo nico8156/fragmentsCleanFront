@@ -14,6 +14,7 @@ import { googleOAuthGateway } from "@/app/adapters/secondary/gateways/auth/googl
 import { HttpCommentsGateway } from "@/app/adapters/secondary/gateways/comments/HttpCommentsGateway";
 import { HttpEntitlementWlGateway } from "@/app/adapters/secondary/gateways/entitlement/HttpEntitlementWlGateway";
 import { HttpLikesGateway } from "@/app/adapters/secondary/gateways/like/HttpLikesGateway";
+import { HttpSavedCoffeeGateway } from "@/app/adapters/secondary/gateways/savedCoffee/HttpSavedCoffeeGateway";
 import { HttpCommandStatusGateway } from "@/app/adapters/secondary/gateways/outbox/HttpCommandStatusGateway";
 import { HttpTicketsGateway } from "@/app/adapters/secondary/gateways/ticket/HttpTicketsGateway";
 import { HttpUserRepo } from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
@@ -59,6 +60,11 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		}),
 
 		likes: new HttpLikesGateway({
+			baseUrl,
+			authToken,
+		}),
+
+		savedCoffees: new HttpSavedCoffeeGateway({
 			baseUrl,
 			authToken,
 		}),

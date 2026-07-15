@@ -3,6 +3,7 @@ import { CoffeeStateWl } from "@/app/core-logic/contextWL/coffeeWl/typeAction/co
 import { CommentsStateWl } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { EntitlementStateWl } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.type";
 import { LikesStateWl } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
+import { SavedCoffeeStateWl } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.type";
 import { CommandId, OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { TicketsStateWl } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 
@@ -24,6 +25,7 @@ export interface AppStateWl {
 	openingHours: ohStateWl
 	comments: CommentsStateWl
 	likes: LikesStateWl
+	savedCoffees: SavedCoffeeStateWl
 	tickets: TicketsStateWl
 	entitlement: EntitlementStateWl
 	oState: OutboxStateWl

@@ -7,6 +7,7 @@ import { DependenciesWl} from "@/app/store/appStateWl";
 import { commentWlReducer as cState } from "@/app/core-logic/contextWL/commentWl/reducer/commentWl.reducer"
 import { outboxWlReducer as oState } from "@/app/core-logic/contextWL/outboxWl/reducer/outboxWl.reducer"
 import { likeWlReducer as lState } from "@/app/core-logic/contextWL/likeWl/reducer/likeWl.reducer"
+import { savedCoffeeReducer as scState } from "@/app/core-logic/contextWL/savedCoffeeWl/reducer/savedCoffee.reducer";
 import { ticketWlReducer as tState } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer"
 import {entitlementWlReducer as enState} from "@/app/core-logic/contextWL/entitlementWl/reducer/entitlementWl.reducer"
 import {coffeeWlReducer as cfState} from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer"
@@ -30,6 +31,7 @@ export const initReduxStoreWl = (config: {
             cState,
             oState,
             lState,
+            scState,
             tState,
             enState,
             cfState,

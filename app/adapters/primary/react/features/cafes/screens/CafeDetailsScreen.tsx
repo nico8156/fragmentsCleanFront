@@ -27,6 +27,7 @@ import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/
 
 import { useCommentsForCafe } from "@/app/adapters/secondary/viewModel/useCommentsForCafe";
 import { useLikesForCafe } from "@/app/adapters/secondary/viewModel/useLikesForCafe";
+import { useSavedCoffeeForCafe } from "@/app/adapters/secondary/viewModel/useSavedCoffeeForCafe";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { CafeDetailsHeader } from "../components/CafeDetailsHeader";
@@ -49,6 +50,7 @@ export default function CafeDetailsScreen() {
 	const isOpenNow = useCafeOpenNow(coffeeId);
 
 	const likes = useLikesForCafe(coffeeId ?? undefined);
+	const savedCoffee = useSavedCoffeeForCafe(coffeeId ? String(coffeeId) : undefined);
 	const comments = useCommentsForCafe(coffeeId ?? undefined);
 
 	// --- Keyboard (stable, no KAV)
@@ -169,7 +171,16 @@ export default function CafeDetailsScreen() {
 					}}
 					contentContainerStyle={[styles.content, { paddingBottom: 120 + keyboardHeight }]}
 				>
-					<DetailsActionsRow coffee={coffee} addressLine={addressLine} onLayout={onActionsLayout} />
+					<DetailsActionsRow
+						coffee={coffee}
+						addressLine={addressLine}
+						saved={{
+							saved: savedCoffee.saved,
+							pending: savedCoffee.isOptimistic,
+							onToggle: savedCoffee.toggle,
+						}}
+						onLayout={onActionsLayout}
+					/>
 
 					<PhotosSection photos={coffee.photos ?? []} />
 					<InfoSection coffee={coffee} addressLine={addressLine} />
@@ -188,7 +199,16 @@ export default function CafeDetailsScreen() {
 				{showSticky && (
 					<Animated.View style={[styles.bottomBar, bottomBarStyle]}>
 						<View style={{ width: "100%" }}>
-							<DetailsActionsRow coffee={coffee} addressLine={addressLine} compact />
+							<DetailsActionsRow
+								coffee={coffee}
+								addressLine={addressLine}
+								compact
+								saved={{
+									saved: savedCoffee.saved,
+									pending: savedCoffee.isOptimistic,
+									onToggle: savedCoffee.toggle,
+								}}
+							/>
 						</View>
 					</Animated.View>
 				)}

@@ -20,6 +20,12 @@ import {
 	likesRetrieved,
 	unlikeOptimisticApplied,
 } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
+import {
+	savedCoffeeOptimisticSet,
+	savedCoffeeReconciled,
+	savedCoffeeRollback,
+	savedCoffeesRetrieved,
+} from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.action";
 import { hoursHydrated } from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.action";
 import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 import {
@@ -44,6 +50,7 @@ const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
 	openingHours: state.ohState,
 	comments: state.cState,
 	likes: state.lState,
+	savedCoffees: state.scState,
 	tickets: state.tState,
 	entitlement: state.enState,
 	articles: state.arState,
@@ -88,6 +95,10 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 			unlikeOptimisticApplied,
 			likeReconciled,
 			likeRollback,
+			savedCoffeesRetrieved,
+			savedCoffeeOptimisticSet,
+			savedCoffeeReconciled,
+			savedCoffeeRollback,
 			ticketRetrieved,
 			ticketOptimisticCreated,
 			ticketReconciledConfirmed,

@@ -4,6 +4,8 @@ import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeW
 import { likeSyncAcked, likeSyncFailed } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
 import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
+import { savedCoffeeReconciled, savedCoffeeRollback } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.action";
+import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 import {
 	createReconciled,
 	createRollback,
@@ -33,6 +35,8 @@ export const getOutboxCommandGateway = (
 		case commandKinds.LikeAdd:
 		case commandKinds.LikeRemove:
 			return gateways?.likes;
+		case commandKinds.SavedCoffeeSet:
+			return gateways?.savedCoffees;
 		case commandKinds.CommentCreate:
 		case commandKinds.CommentUpdate:
 		case commandKinds.CommentDelete:
@@ -92,6 +96,16 @@ export const sendOutboxCommand = async ({
 				commandId: command.commandId,
 				commentId: command.commentId,
 				deletedAt: command.at,
+			});
+			return "sent";
+
+		case commandKinds.SavedCoffeeSet:
+			await gateway.set({
+				commandId: command.commandId,
+				savedCoffeeId: command.savedCoffeeId,
+				coffeeId: command.coffeeId,
+				value: command.value,
+				at: command.at,
 			});
 			return "sent";
 
@@ -194,6 +208,18 @@ export const rollbackRejectedOutboxRecord = ({
 			return;
 		}
 
+		case commandKinds.SavedCoffeeSet: {
+			const u = undo as { coffeeId: string; prevSaved: boolean; prevItem?: any };
+			if (!u?.coffeeId) return;
+			outboxTelemetry.rollback(record, "saved coffee command rejected");
+			dispatch(savedCoffeeRollback({
+				coffeeId: u.coffeeId,
+				prevSaved: u.prevSaved,
+				prevItem: u.prevItem,
+			}));
+			return;
+		}
+
 		default:
 			return;
 	}
@@ -256,6 +282,23 @@ export const reconcileAppliedOutboxRecord = ({
 				}));
 			}
 			refreshEntitlements();
+			return;
+
+		case commandKinds.SavedCoffeeSet:
+			outboxTelemetry.reconcile(record, "savedCoffees");
+			dispatch(savedCoffeeReconciled({
+				coffeeId: command.coffeeId,
+				commandId: command.commandId,
+			}));
+			if (gateways?.savedCoffees) {
+				outboxTelemetry.projectionRefreshRequested({
+					projection: "savedCoffees",
+					scope: "user",
+					entityId: userId ?? "me",
+					source: "ackReconcile",
+				});
+				dispatch(savedCoffeesRetrieval() as any);
+			}
 			return;
 
 		case commandKinds.CommentUpdate: {

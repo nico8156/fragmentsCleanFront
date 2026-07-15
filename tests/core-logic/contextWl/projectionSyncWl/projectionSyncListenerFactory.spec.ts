@@ -13,6 +13,7 @@ import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
+import type { SavedCoffeeGateway, SavedCoffeeSnapshot } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -44,6 +45,28 @@ class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	emit(event: ProjectionSyncEvent) {
 		if (event.id) this.lastEventId = event.id;
 		this.params?.onEvent(event);
+	}
+}
+
+class FakeSavedCoffeeGateway implements SavedCoffeeGateway {
+	getCalls = 0;
+	snapshot: SavedCoffeeSnapshot = {
+		items: [{
+			coffeeId: "coffee-42",
+			name: "Cafe saved",
+			savedAt: "2026-07-15T10:00:00.000Z",
+			version: 2,
+		}],
+		version: 2,
+	};
+
+	async get(): Promise<SavedCoffeeSnapshot> {
+		this.getCalls++;
+		return this.snapshot;
+	}
+
+	async set(): Promise<void> {
+		return undefined;
 	}
 }
 
@@ -297,6 +320,57 @@ describe("projectionSyncListenerFactory", () => {
 			updatedAt: "2026-07-06T12:00:00.000Z",
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("5");
+	});
+
+	it("routes projection.updated/savedCoffees to saved coffees snapshot GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const savedCoffees = new FakeSavedCoffeeGateway();
+
+		const store = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					projectionSync,
+					savedCoffees,
+				} as any,
+			},
+			listeners: [
+				projectionSyncListenerFactory({
+					gateways: {
+						projectionSync,
+						savedCoffees,
+					} as any,
+					sessionRef: {
+						current: {
+							tokens: {
+								accessToken: "mobile-token",
+							},
+						} as any,
+					},
+				}),
+			],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		projectionSync.emit({
+			id: "6",
+			eventName: "projection.updated",
+			schemaVersion: 1,
+			projection: "savedCoffees",
+			scope: "user",
+			entityId: "user-42",
+			hints: ["set"],
+		});
+		await flush();
+		await flush();
+
+		expect(savedCoffees.getCalls).toBe(1);
+		expect((store.getState() as any).scState.byCoffeeId["coffee-42"]).toMatchObject({
+			name: "Cafe saved",
+			version: 2,
+		});
+		expect((store.getState() as any).psState.lastEventId).toBe("6");
 	});
 
 	it("connects from the persisted projection cursor and stores the latest event id", async () => {
