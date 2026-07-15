@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { SymbolView } from "expo-symbols";
 import React, { useCallback } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -25,22 +25,21 @@ export function PassScreen() {
 				contentContainerStyle={styles.container}
 				showsVerticalScrollIndicator={false}
 			>
-				<Text style={styles.title}>{vm.title}</Text>
-				<Text style={styles.subtitle}>Progressez à votre rythme</Text>
+				<View style={styles.summary}>
+					<View style={styles.hero}>
+						<PassAvatar
+							imageUrl={vm.profileImageUrl}
+							rings={vm.rings}
+							size={108}
+							accessibilityLabel={vm.accessibilityLabel}
+						/>
+					</View>
 
-				<View style={styles.hero}>
-					<PassAvatar
-						imageUrl={vm.profileImageUrl}
-						rings={vm.rings}
-						size={132}
-						accessibilityLabel={vm.accessibilityLabel}
-					/>
-				</View>
-
-				<View style={styles.currentBlock}>
-					<Text style={styles.levelEyebrow}>Niveau actuel</Text>
-					<Text style={styles.levelTitle}>{vm.currentLevel.label}</Text>
-					<Text style={styles.progressText}>{vm.currentLevel.progressPercent} %</Text>
+					<View style={styles.currentBlock}>
+						<Text style={styles.levelEyebrow}>Niveau actuel</Text>
+						<Text style={styles.levelTitle}>{vm.currentLevel.label}</Text>
+						<Text style={styles.progressText}>{vm.currentLevel.progressPercent} %</Text>
+					</View>
 				</View>
 
 				<View style={styles.panel}>
@@ -72,17 +71,7 @@ export function PassScreen() {
 					))}
 				</View>
 
-				<Pressable
-					onPress={onPrimaryAction}
-					style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-					accessibilityRole="button"
-					accessibilityLabel="Scanner un ticket"
-				>
-					<SymbolView name="ticket" size={18} tintColor={palette.textPrimary} />
-					<Text style={styles.primaryButtonText}>Scanner un ticket</Text>
-				</Pressable>
-
-				<View style={{ height: 120 }} />
+				<View style={styles.fabClearance} />
 			</ScrollView>
 
 			<ScanTicketFab onPress={onPrimaryAction} insetBottom={inset.bottom} />
@@ -129,83 +118,77 @@ function LevelDot({ ring }: { ring: PassRingViewModel }) {
 const styles = StyleSheet.create({
 	safeArea: { flex: 1, backgroundColor: palette.background },
 	container: {
-		paddingHorizontal: 24,
-		paddingTop: 18,
-		paddingBottom: 32,
+		paddingHorizontal: 20,
+		paddingTop: 8,
+		paddingBottom: 10,
 		alignItems: "center",
 	},
-	title: {
-		color: palette.textPrimary,
-		fontSize: 38,
-		fontWeight: "800",
-		letterSpacing: 0,
-	},
-	subtitle: {
-		marginTop: 6,
-		color: palette.textSecondary,
-		fontSize: 16,
-		fontWeight: "600",
+	summary: {
+		width: "100%",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 18,
 	},
 	hero: {
-		marginTop: 26,
-		marginBottom: 18,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	currentBlock: {
-		alignItems: "center",
-		marginTop: 6,
+		flex: 1,
+		alignItems: "flex-start",
+		minWidth: 0,
 	},
 	levelEyebrow: {
 		color: palette.textMuted,
-		fontSize: 12,
+		fontSize: 11,
 		fontWeight: "800",
 		textTransform: "uppercase",
 	},
 	levelTitle: {
-		marginTop: 6,
+		marginTop: 4,
 		color: palette.textPrimary,
-		fontSize: 28,
+		fontSize: 24,
 		fontWeight: "800",
-		textAlign: "center",
+		textAlign: "left",
 	},
 	progressText: {
 		marginTop: 4,
 		color: palette.accent,
-		fontSize: 15,
+		fontSize: 14,
 		fontWeight: "800",
 	},
 	panel: {
 		width: "100%",
-		marginTop: 24,
+		marginTop: 18,
 		borderTopWidth: 1,
 		borderBottomWidth: 1,
 		borderColor: palette.border,
-		paddingVertical: 18,
+		paddingVertical: 14,
 	},
 	panelTitle: {
 		color: palette.textPrimary,
-		fontSize: 15,
+		fontSize: 14,
 		fontWeight: "800",
-		marginBottom: 12,
+		marginBottom: 10,
 	},
 	requirements: {
-		gap: 12,
+		gap: 8,
 	},
 	requirementRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		minHeight: 44,
+		minHeight: 38,
 	},
 	check: {
-		width: 24,
-		height: 24,
-		borderRadius: 12,
+		width: 22,
+		height: 22,
+		borderRadius: 11,
 		borderWidth: 1,
 		borderColor: palette.border_70,
 		alignItems: "center",
 		justifyContent: "center",
-		marginRight: 12,
+		marginRight: 10,
 	},
 	checkCompleted: {
 		backgroundColor: palette.success,
@@ -217,31 +200,30 @@ const styles = StyleSheet.create({
 	},
 	requirementLabel: {
 		color: palette.textPrimary,
-		fontSize: 15,
+		fontSize: 14,
 		fontWeight: "700",
 	},
 	requirementHint: {
-		marginTop: 2,
 		color: palette.textMuted,
-		fontSize: 12,
+		fontSize: 11,
 		fontWeight: "600",
 	},
 	requirementValue: {
 		color: palette.textSecondary,
-		fontSize: 15,
+		fontSize: 14,
 		fontWeight: "800",
-		marginLeft: 12,
+		marginLeft: 10,
 	},
 	finalText: {
 		color: palette.textSecondary,
-		fontSize: 15,
-		lineHeight: 21,
+		fontSize: 14,
+		lineHeight: 19,
 	},
 	unlockBand: {
 		width: "100%",
-		marginTop: 16,
-		paddingVertical: 14,
-		paddingHorizontal: 16,
+		marginTop: 12,
+		paddingVertical: 11,
+		paddingHorizontal: 14,
 		borderRadius: 8,
 		borderWidth: 1,
 		borderColor: palette.accent_30,
@@ -252,19 +234,19 @@ const styles = StyleSheet.create({
 	},
 	unlockLabel: {
 		color: palette.textMuted,
-		fontSize: 12,
+		fontSize: 11,
 		fontWeight: "800",
 		textTransform: "uppercase",
 	},
 	unlockValue: {
 		marginTop: 2,
 		color: palette.textPrimary,
-		fontSize: 18,
+		fontSize: 16,
 		fontWeight: "800",
 	},
 	levelStrip: {
 		width: "100%",
-		marginTop: 22,
+		marginTop: 16,
 		flexDirection: "row",
 		justifyContent: "space-between",
 		gap: 8,
@@ -288,33 +270,17 @@ const styles = StyleSheet.create({
 		borderRadius: 4,
 	},
 	levelDotLabel: {
-		marginTop: 7,
+		marginTop: 5,
 		color: palette.textSecondary,
-		fontSize: 11,
+		fontSize: 10,
 		fontWeight: "700",
 		textAlign: "center",
 	},
 	lockedLabel: {
 		color: palette.textMuted,
 	},
-	primaryButton: {
-		marginTop: 24,
-		minHeight: 48,
-		borderRadius: 8,
-		paddingHorizontal: 18,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "center",
-		gap: 8,
-		backgroundColor: palette.accent,
-	},
-	primaryButtonText: {
-		color: palette.textPrimary,
-		fontSize: 15,
-		fontWeight: "800",
-	},
-	pressed: {
-		opacity: 0.86,
+	fabClearance: {
+		height: 32,
 	},
 });
 
