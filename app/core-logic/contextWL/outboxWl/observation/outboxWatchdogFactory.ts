@@ -35,6 +35,8 @@ import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation
 import { logger } from "@/app/core-logic/utils/logger";
 
 const hasSession = (s: RootStateWl) => Boolean(s.aState?.session?.userId);
+const getAuthedUserId = (s: RootStateWl): string | undefined =>
+	s.aState?.session?.userId ?? (s.aState as any)?.currentUser?.id ?? undefined;
 const MAX_ACK_CHECKS_PER_TICK = 5;
 
 const parseIsoMs = (iso?: string) => {
@@ -86,7 +88,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 	const checkRecord = async (
 		rec: OutboxRecord,
-		api: { dispatch: AppDispatchWl },
+		api: { dispatch: AppDispatchWl; getState: () => RootStateWl },
 		commandStatus: NonNullable<DependenciesWl["gateways"]["commandStatus"]>,
 	) => {
 		const commandId = getCommandIdFromRecord(rec);
@@ -107,6 +109,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 				record: rec,
 				dispatch: api.dispatch,
 				gateways: deps.gateways,
+				userId: getAuthedUserId(api.getState()),
 			});
 			api.dispatch(dropCommitted({ commandId }));
 			api.dispatch(outboxProcessOnce());
