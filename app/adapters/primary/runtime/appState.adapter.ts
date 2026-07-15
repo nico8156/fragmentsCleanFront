@@ -59,6 +59,21 @@ export function mountAppStateAdapterWithRuntime(
     let firstActiveSeen = false;
 
     let lastStatus: AppStateStatus | null = appState.currentState ?? null;
+    let suspendedSinceLastResume = lastStatus === "inactive" || lastStatus === "background";
+
+    const dispatchActiveTransition = (transition: "active" | "foreground") => {
+        if (opts?.ignoreFirstActive && !firstActiveSeen) {
+            firstActiveSeen = true;
+            return;
+        }
+        firstActiveSeen = true;
+        suspendedSinceLastResume = false;
+        if (transition === "foreground") {
+            store.dispatch(appBecameForeground());
+            return;
+        }
+        store.dispatch(appBecameActive());
+    };
 
     const handler = (status: AppStateStatus) => {
         if (!mounted) return;
@@ -67,35 +82,43 @@ export function mountAppStateAdapterWithRuntime(
         lastStatus = status;
 
         if (transition === "active" || transition === "foreground") {
-            if (opts?.ignoreFirstActive && !firstActiveSeen) {
-                firstActiveSeen = true;
-                return;
-            }
-            firstActiveSeen = true;
-            if (transition === "foreground") {
-                store.dispatch(appBecameForeground());
-                return;
-            }
-            store.dispatch(appBecameActive());
+            dispatchActiveTransition(transition);
             return;
         }
 
         if (transition === "inactive") {
+            suspendedSinceLastResume = true;
             store.dispatch(appBecameInactive());
             return;
         }
 
         if (transition === "background") {
+            suspendedSinceLastResume = true;
             store.dispatch(appBecameBackground());
             return;
         }
     };
 
+    const recoverCurrentActiveState = () => {
+        if (!mounted) return;
+        if (appState.currentState !== "active") return;
+        if (lastStatus === "active" && !suspendedSinceLastResume) return;
+
+        const transition =
+            lastStatus === "background" || lastStatus === "inactive" || suspendedSinceLastResume
+                ? "foreground"
+                : "active";
+        lastStatus = "active";
+        dispatchActiveTransition(transition);
+    };
+
     const subscription = appState.addEventListener("change", handler);
+    const focusSubscription = appState.addEventListener?.("focus" as any, recoverCurrentActiveState as any);
     const pollMs = opts?.currentStatePollMs ?? DEFAULT_CURRENT_STATE_POLL_MS;
     const currentStatePoll =
         pollMs > 0
             ? timer.setInterval(() => {
+                recoverCurrentActiveState();
                 const currentStatus = appState.currentState;
                 if (!currentStatus) return;
                 handler(currentStatus);
@@ -108,6 +131,7 @@ export function mountAppStateAdapterWithRuntime(
             timer.clearInterval(currentStatePoll);
         }
         try {
+            focusSubscription?.remove?.();
             subscription?.remove?.();
         } catch {
             // RN legacy

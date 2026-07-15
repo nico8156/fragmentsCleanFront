@@ -39,8 +39,8 @@ describe("mountAppStateAdapterWithRuntime", () => {
 
 		const appState = {
 			currentState: "active" as any,
-			addEventListener: jest.fn((_event: string, handler: (status: any) => void) => {
-				changeHandler = handler;
+			addEventListener: jest.fn((event: string, handler: (status: any) => void) => {
+				if (event === "change") changeHandler = handler;
 				return { remove: jest.fn() };
 			}),
 		};
@@ -70,5 +70,72 @@ describe("mountAppStateAdapterWithRuntime", () => {
 
 		unmount();
 		expect(timer.clearInterval).toHaveBeenCalledWith(1);
+	});
+
+	it("recovers resume from a native focus event when change active is missed", () => {
+		const dispatch = jest.fn();
+		let changeHandler: ((status: any) => void) | undefined;
+		let focusHandler: (() => void) | undefined;
+
+		const appState = {
+			currentState: "active" as any,
+			addEventListener: jest.fn((event: string, handler: any) => {
+				if (event === "change") changeHandler = handler;
+				if (event === "focus") focusHandler = handler;
+				return { remove: jest.fn() };
+			}),
+		};
+		const timer = {
+			setInterval: jest.fn(() => 1 as any),
+			clearInterval: jest.fn(),
+		};
+
+		mountAppStateAdapterWithRuntime(
+			{ dispatch } as any,
+			appState as any,
+			timer as any,
+			{ currentStatePollMs: 1_000 },
+		);
+
+		changeHandler?.("inactive");
+		changeHandler?.("background");
+		appState.currentState = "active";
+		focusHandler?.();
+
+		expect(dispatch).toHaveBeenCalledWith(appBecameForeground());
+		expect(dispatch.mock.calls.filter(([action]) => action.type === appBecameForeground.type)).toHaveLength(1);
+	});
+
+	it("does not duplicate foreground recovery after a normal active change", () => {
+		const dispatch = jest.fn();
+		let changeHandler: ((status: any) => void) | undefined;
+		let focusHandler: (() => void) | undefined;
+
+		const appState = {
+			currentState: "active" as any,
+			addEventListener: jest.fn((event: string, handler: any) => {
+				if (event === "change") changeHandler = handler;
+				if (event === "focus") focusHandler = handler;
+				return { remove: jest.fn() };
+			}),
+		};
+		const timer = {
+			setInterval: jest.fn(() => 1 as any),
+			clearInterval: jest.fn(),
+		};
+
+		mountAppStateAdapterWithRuntime(
+			{ dispatch } as any,
+			appState as any,
+			timer as any,
+			{ currentStatePollMs: 1_000 },
+		);
+
+		changeHandler?.("inactive");
+		changeHandler?.("background");
+		changeHandler?.("active");
+		focusHandler?.();
+
+		expect(dispatch.mock.calls.filter(([action]) => action.type === appBecameForeground.type)).toHaveLength(1);
 	});
 });
