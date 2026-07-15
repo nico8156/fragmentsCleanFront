@@ -7,6 +7,14 @@ import {
 	appBecameForeground,
 	appBecameInactive,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { Platform } from "react-native";
+
+const setPlatformOS = (os: "ios" | "android") => {
+	Object.defineProperty(Platform, "OS", {
+		configurable: true,
+		value: os,
+	});
+};
 
 describe("resolveAppLifecycleTransition", () => {
 	it("detects explicit foreground return from background to active", () => {
@@ -32,6 +40,10 @@ describe("resolveAppLifecycleTransition", () => {
 });
 
 describe("mountAppStateAdapterWithRuntime", () => {
+	beforeEach(() => {
+		setPlatformOS("ios");
+	});
+
 	it("recovers a missed active event by polling AppState.currentState after sleep", () => {
 		const dispatch = jest.fn();
 		let intervalCallback: (() => void) | undefined;
@@ -72,7 +84,31 @@ describe("mountAppStateAdapterWithRuntime", () => {
 		expect(timer.clearInterval).toHaveBeenCalledWith(1);
 	});
 
-	it("recovers resume from a native focus event when change active is missed", () => {
+	it("does not subscribe to Android-only focus events on iOS", () => {
+		const dispatch = jest.fn();
+
+		const appState = {
+			currentState: "active" as any,
+			addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+		};
+		const timer = {
+			setInterval: jest.fn(() => 1 as any),
+			clearInterval: jest.fn(),
+		};
+
+		mountAppStateAdapterWithRuntime(
+			{ dispatch } as any,
+			appState as any,
+			timer as any,
+			{ currentStatePollMs: 1_000 },
+		);
+
+		expect(appState.addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+		expect(appState.addEventListener).not.toHaveBeenCalledWith("focus", expect.any(Function));
+	});
+
+	it("recovers resume from an Android native focus event when change active is missed", () => {
+		setPlatformOS("android");
 		const dispatch = jest.fn();
 		let changeHandler: ((status: any) => void) | undefined;
 		let focusHandler: (() => void) | undefined;
@@ -107,6 +143,7 @@ describe("mountAppStateAdapterWithRuntime", () => {
 	});
 
 	it("does not duplicate foreground recovery after a normal active change", () => {
+		setPlatformOS("android");
 		const dispatch = jest.fn();
 		let changeHandler: ((status: any) => void) | undefined;
 		let focusHandler: (() => void) | undefined;
