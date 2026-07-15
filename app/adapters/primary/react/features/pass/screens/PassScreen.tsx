@@ -29,8 +29,8 @@ export function PassScreen() {
 					<View style={styles.hero}>
 						<PassAvatar
 							imageUrl={vm.profileImageUrl}
-							rings={vm.rings}
-							size={108}
+							rings={vm.displayRings}
+							size={96}
 							accessibilityLabel={vm.accessibilityLabel}
 						/>
 					</View>

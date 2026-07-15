@@ -47,6 +47,8 @@ export type PassViewModel = {
 	userName: string;
 	currentLevel: PassLevelViewModel;
 	rings: PassRingViewModel[];
+	currentRing?: PassRingViewModel;
+	displayRings: PassRingViewModel[];
 	completedRings: PassRingViewModel[];
 	counters: {
 		tickets: number;
@@ -218,6 +220,7 @@ export const buildPassViewModel = (
 			remainingRequirements: currentRequirements.filter((req) => !req.completed),
 		}
 		: undefined;
+	const currentRing = rings.find((ring) => ring.level === currentLevelVm.level);
 
 	const profileImageUrl = input.user?.avatarUrl;
 	const userName = input.user?.displayName ?? "Votre profil";
@@ -231,6 +234,8 @@ export const buildPassViewModel = (
 		userName,
 		currentLevel: currentLevelVm,
 		rings,
+		currentRing,
+		displayRings: currentRing ? [currentRing] : [],
 		completedRings: rings.filter((ring) => ring.status === "completed"),
 		counters: {
 			tickets: counters.validatedTickets,
