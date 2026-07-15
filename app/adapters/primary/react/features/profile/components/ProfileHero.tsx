@@ -5,12 +5,14 @@ import { StyleSheet, Text, View } from "react-native";
 
 interface ProfileHeroProps {
 	avatarUrl?: string;
-	displayName: string;
+	displayName?: string;
+	email?: string;
 	rings?: PassRingViewModel[];
 }
 
-export function ProfileHero({ avatarUrl, displayName, rings = [] }: ProfileHeroProps) {
-	const fallbackInitial = (displayName?.trim()?.[0] ?? "?").toUpperCase();
+export function ProfileHero({ avatarUrl, displayName, email, rings = [] }: ProfileHeroProps) {
+	const safeDisplayName = displayName ?? "Profil";
+	const fallbackInitial = (safeDisplayName.trim()?.[0] ?? "?").toUpperCase();
 
 	return (
 		<View style={styles.wrapper}>
@@ -19,10 +21,11 @@ export function ProfileHero({ avatarUrl, displayName, rings = [] }: ProfileHeroP
 				rings={rings}
 				size={132}
 				fallbackInitial={fallbackInitial}
-				accessibilityLabel={`${displayName}, progression Pass actuelle`}
+				accessibilityLabel={`${safeDisplayName}, progression Pass actuelle`}
 			/>
 
-			<Text style={styles.name}>{displayName}</Text>
+			<Text style={styles.name}>{safeDisplayName}</Text>
+			{email ? <Text style={styles.email}>{email}</Text> : null}
 		</View>
 	);
 }
@@ -38,5 +41,9 @@ const styles = StyleSheet.create({
 		fontSize: 28,
 		fontWeight: "600",
 		color: palette.text_90,
+	},
+	email: {
+		fontSize: 14,
+		color: palette.textSecondary,
 	},
 });
