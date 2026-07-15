@@ -1,7 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { useCallback } from "react";
 
-import { ProfileCoffeeBadge } from "@/app/adapters/primary/react/features/profile/components/ProfileCoffeeBadge";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import {
@@ -15,6 +14,7 @@ import {
 } from "@/app/adapters/primary/react/navigation/types";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
+import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 
 type ProfileMenuDestination = Exclude<keyof ProfileStackParamList, "ProfileHome">;
 
@@ -28,6 +28,7 @@ const MENU_ITEMS: ProfileMenuItem<ProfileMenuDestination>[] = [
 export function ProfileScreen() {
 	const navigation = useNavigation<ProfileStackNavigationProp>();
 	const { displayName, avatarUrl } = useAuthUser();
+	const pass = usePassRingsViewModel();
 
 	const safeDisplayName = displayName ?? "Profil";
 
@@ -40,12 +41,10 @@ export function ProfileScreen() {
 
 	return (
 		<ProfileLayout>
-			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} />
-			<ProfileCoffeeBadge label="Coffee Lover" />
+			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} rings={pass.displayRings} />
 			<ProfileMenuList items={MENU_ITEMS} onNavigate={handleNavigate} />
 		</ProfileLayout>
 	);
 }
 
 export default ProfileScreen;
-

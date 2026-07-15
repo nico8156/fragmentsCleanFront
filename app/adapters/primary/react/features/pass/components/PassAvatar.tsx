@@ -10,9 +10,10 @@ type PassAvatarProps = {
 	rings: PassRingViewModel[];
 	size: number;
 	accessibilityLabel?: string;
+	fallbackInitial?: string;
 };
 
-export function PassAvatar({ imageUrl, rings, size, accessibilityLabel }: PassAvatarProps) {
+export function PassAvatar({ imageUrl, rings, size, accessibilityLabel, fallbackInitial = "F" }: PassAvatarProps) {
 	const ringGap = Math.max(4, Math.round(size * 0.045));
 	const strokeWidth = Math.max(2, Math.round(size * 0.032));
 	const outerPadding = rings.length * (strokeWidth + ringGap) + strokeWidth;
@@ -77,7 +78,7 @@ export function PassAvatar({ imageUrl, rings, size, accessibilityLabel }: PassAv
 				{imageUrl ? (
 					<Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
 				) : (
-					<Text style={[styles.fallback, { fontSize: initialsSize }]}>F</Text>
+					<Text style={[styles.fallback, { fontSize: initialsSize }]}>{fallbackInitial}</Text>
 				)}
 			</View>
 		</View>

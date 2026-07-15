@@ -1,25 +1,26 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
+import type { PassRingViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
+import { StyleSheet, Text, View } from "react-native";
 
 interface ProfileHeroProps {
 	avatarUrl?: string;
 	displayName: string;
+	rings?: PassRingViewModel[];
 }
 
-export function ProfileHero({ avatarUrl, displayName }: ProfileHeroProps) {
-	const hasAvatar = typeof avatarUrl === "string" && avatarUrl.length > 0;
+export function ProfileHero({ avatarUrl, displayName, rings = [] }: ProfileHeroProps) {
+	const fallbackInitial = (displayName?.trim()?.[0] ?? "?").toUpperCase();
 
 	return (
 		<View style={styles.wrapper}>
-			{hasAvatar ? (
-				<Image source={{ uri: avatarUrl }} style={styles.avatar} />
-			) : (
-				<View style={[styles.avatar, styles.avatarPlaceholder]}>
-					<Text style={styles.avatarInitial}>
-						{(displayName?.trim()?.[0] ?? "?").toUpperCase()}
-					</Text>
-				</View>
-			)}
+			<PassAvatar
+				imageUrl={avatarUrl}
+				rings={rings}
+				size={132}
+				fallbackInitial={fallbackInitial}
+				accessibilityLabel={`${displayName}, progression Pass actuelle`}
+			/>
 
 			<Text style={styles.name}>{displayName}</Text>
 		</View>
@@ -33,27 +34,9 @@ const styles = StyleSheet.create({
 		paddingTop: 8,
 		paddingBottom: 12,
 	},
-	avatar: {
-		width: 140,
-		height: 140,
-		borderRadius: 70,
-	},
-	avatarPlaceholder: {
-		backgroundColor: palette.bg_dark_30,
-		borderWidth: 1,
-		borderColor: palette.border,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	avatarInitial: {
-		fontSize: 44,
-		fontWeight: "700",
-		color: palette.textPrimary,
-	},
 	name: {
 		fontSize: 28,
 		fontWeight: "600",
 		color: palette.text_90,
 	},
 });
-
