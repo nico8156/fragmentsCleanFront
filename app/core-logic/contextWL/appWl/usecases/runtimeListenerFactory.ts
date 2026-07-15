@@ -144,9 +144,7 @@ export const runtimeListenerFactory = () => {
 		},
 		source: "appBecameBackground" | "appBecameInactive",
 	) => {
-		logger.info(`[APP RUNTIME] ${source}: suspend outbox + projection sync disconnect`);
-		api.dispatch(outboxSuspendRequested());
-		api.dispatch(projectionSyncDisconnectRequested());
+		logger.info(`[APP RUNTIME] ${source}: lifecycle pause observed`);
 	};
 
 	listen({
