@@ -20,6 +20,13 @@ export type TicketHistoryItemVM = {
     transportStatus: "pending" | "success" | "failed";
 };
 
+export type TicketHistorySummaryVM = {
+    totalCount: number;
+    confirmedCount: number;
+    pendingCount: number;
+    rejectedCount: number;
+};
+
 const statusCopy: Record<TicketAggregate["status"], { label: string; tone: TicketHistoryItemVM["statusTone"] }> = {
     CAPTURED: { label: "Capturé", tone: "pending" },
     ANALYZING: { label: "Analyse en cours", tone: "pending" },
@@ -83,8 +90,24 @@ export function useTicketsHistory() {
         [tickets, outboxStatusByTicketId],
     );
 
+    const recentItems = useMemo(() => items.slice(0, 3), [items]);
+    const archivedItems = useMemo(() => items.slice(3), [items]);
+    const summary = useMemo<TicketHistorySummaryVM>(
+        () => ({
+            totalCount: items.length,
+            confirmedCount: items.filter((item) => item.statusTone === "success").length,
+            pendingCount: items.filter((item) => item.statusTone === "pending").length,
+            rejectedCount: items.filter((item) => item.statusTone === "error").length,
+        }),
+        [items],
+    );
+
     return {
         items,
+        recentItems,
+        archivedItems,
+        archiveCount: archivedItems.length,
+        summary,
         isEmpty: items.length === 0,
     } as const;
 }
