@@ -94,7 +94,7 @@ export function CommentsSection({
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
 							onDelete={() => comments.uiViaHookDeleteComment({ commentId: c.id })}
 							onRequestScrollToY={onRequestScrollToY}
-							earnedRings={c.isAuthor ? pass.completedRings : []}
+							earnedRings={c.isAuthor ? pass.displayRings : []}
 						/>
 					))}
 				</View>
@@ -240,7 +240,7 @@ function CommentCard({
 			<PassAvatar
 				imageUrl={item.avatarUrl}
 				rings={earnedRings}
-				size={34}
+				size={30}
 				accessibilityLabel={`${item.authorName}, avatar`}
 			/>
 

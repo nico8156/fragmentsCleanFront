@@ -94,8 +94,8 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
                 <View style={styles.commentUserHeader}>
                     <PassAvatar
                         imageUrl={comment.avatarUrl}
-                        rings={comment.isAuthor ? pass.completedRings : []}
-                        size={30}
+                        rings={comment.isAuthor ? pass.displayRings : []}
+                        size={28}
                         accessibilityLabel={`${comment.authorName}, avatar`}
                     />
                     <Text style={styles.userName}>{comment.authorName}</Text>

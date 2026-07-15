@@ -60,6 +60,8 @@ describe("buildPassViewModel", () => {
 		expect(vm.rings[0].status).toBe("inProgress");
 		expect(vm.rings[1].status).toBe("locked");
 		expect(vm.rings[0].progressColor).toBe(palette.accent);
+		expect(vm.currentRing?.level).toBe(passLevels.COFFEE_TASTER);
+		expect(vm.displayRings.map((ring) => ring.level)).toEqual([passLevels.COFFEE_TASTER]);
 	});
 
 	it("computes partial progress and clamps over-completed objectives", () => {
@@ -110,6 +112,8 @@ describe("buildPassViewModel", () => {
 			expect.objectContaining({ label: "commentaires publiés", current: 1, required: 3, remaining: 2, completed: false }),
 		]);
 		expect(vm.nextUnlock?.label).toBe("Commentaires");
+		expect(vm.currentRing?.level).toBe(passLevels.URBAN_EXPLORER);
+		expect(vm.displayRings.map((ring) => ring.level)).toEqual([passLevels.URBAN_EXPLORER]);
 	});
 
 	it("keeps completed rings completed while the next level progresses", () => {
@@ -139,6 +143,7 @@ describe("buildPassViewModel", () => {
 		expect(vm.rings[0].progress).toBe(1);
 		expect(vm.rings[1].progress).toBe(1);
 		expect(vm.rings[2].progress).toBeCloseTo((0.7 + 0.8 + 0.2) / 3);
+		expect(vm.displayRings.map((ring) => ring.level)).toEqual([passLevels.SOCIAL_BEAN]);
 	});
 
 	it("represents Fragments Master as final and free without extra requirements", () => {
@@ -165,5 +170,6 @@ describe("buildPassViewModel", () => {
 		expect(vm.currentLevel.requirements).toEqual([]);
 		expect(vm.nextUnlock).toBeUndefined();
 		expect(vm.rings[3].progress).toBe(1);
+		expect(vm.displayRings.map((ring) => ring.level)).toEqual([passLevels.FRAGMENTS_MASTER]);
 	});
 });
