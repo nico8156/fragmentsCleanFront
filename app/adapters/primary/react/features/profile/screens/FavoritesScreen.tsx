@@ -1,21 +1,19 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import type { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
-
-const MOCK_FAVORITES = [
-	{ id: "fav-1", name: "Fragments République", description: "Paris 11e" },
-	{ id: "fav-2", name: "Fragments Pigalle", description: "Paris 09e" },
-];
+import { useSavedCoffees } from "@/app/adapters/secondary/viewModel/useSavedCoffees";
 
 export function FavoritesScreen() {
+	const navigation = useNavigation<RootStackNavigationProp>();
 	const { displayName, primaryEmail, avatarUrl } = useAuthUser();
-
-	const isEmpty = MOCK_FAVORITES.length === 0;
+	const vm = useSavedCoffees();
 
 	return (
 		<ProfileLayout>
@@ -29,23 +27,30 @@ export function FavoritesScreen() {
 				title="Cafés enregistrés"
 				subtitle="Retrouve rapidement tes adresses préférées"
 			>
-				{isEmpty ? (
+				{vm.isEmpty ? (
 					<View style={styles.emptyState}>
 						<Text style={styles.emptyTitle}>Aucun favori</Text>
 						<Text style={styles.emptySubtitle}>
-							Ajoute des cafés en favoris depuis leur fiche pour les retrouver
+							Enregistre des cafés depuis leur fiche pour les retrouver
 							facilement ici.
 						</Text>
 					</View>
 				) : (
 					<View style={styles.list}>
-						{MOCK_FAVORITES.map((favorite) => (
-							<View key={favorite.id} style={styles.favoriteCard}>
-								<Text style={styles.favoriteName}>{favorite.name}</Text>
+						{vm.items.map((favorite) => (
+							<Pressable
+								key={favorite.coffeeId}
+								onPress={() => navigation.navigate("CafeDetails", { id: favorite.coffeeId })}
+								style={({ pressed }) => [
+									styles.favoriteCard,
+									pressed && styles.pressed,
+								]}
+							>
+								<Text style={styles.favoriteName} numberOfLines={1}>{favorite.name}</Text>
 								<Text style={styles.favoriteDescription}>
-									{favorite.description}
+									{[favorite.addressLine, favorite.postalCode, favorite.city].filter(Boolean).join(", ")}
 								</Text>
-							</View>
+							</Pressable>
 						))}
 					</View>
 				)}
@@ -76,11 +81,12 @@ const styles = StyleSheet.create({
 	},
 
 	favoriteCard: {
-		borderRadius: 14,
+		borderRadius: 12,
 		padding: 14,
 		backgroundColor: palette.bg_dark_10,
 		borderWidth: 1,
 		borderColor: palette.border,
+		gap: 4,
 	},
 
 	favoriteName: {
@@ -92,6 +98,10 @@ const styles = StyleSheet.create({
 	favoriteDescription: {
 		fontSize: 14,
 		color: palette.textSecondary,
+	},
+
+	pressed: {
+		opacity: 0.75,
 	},
 });
 

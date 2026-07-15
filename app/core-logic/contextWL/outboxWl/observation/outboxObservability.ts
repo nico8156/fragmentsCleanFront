@@ -81,7 +81,7 @@ export const outboxTelemetry = {
 	},
 
 	projectionRefreshRequested(input: {
-		projection: "likes" | "comments" | "tickets" | "entitlements";
+		projection: "likes" | "comments" | "tickets" | "entitlements" | "savedCoffees";
 		scope: string;
 		entityId?: string | null;
 		source: "projectionSync" | "ackReconcile" | "manual";

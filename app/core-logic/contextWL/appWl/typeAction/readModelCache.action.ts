@@ -12,6 +12,7 @@ export type DurableReadModelCacheSnapshot = {
 	openingHours?: AppStateWl["openingHours"];
 	comments?: AppStateWl["comments"];
 	likes?: AppStateWl["likes"];
+	savedCoffees?: AppStateWl["savedCoffees"];
 	tickets?: AppStateWl["tickets"];
 	entitlement?: AppStateWl["entitlement"];
 	articles?: AppStateWl["articles"];

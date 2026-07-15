@@ -8,11 +8,17 @@ export function DetailsActionsRow({
 	addressLine,
 	compact,
 	onLayout,
+	saved,
 }: {
 	coffee: any;
 	addressLine: string;
 	compact?: boolean;
 	onLayout?: (e: LayoutChangeEvent) => void;
+	saved?: {
+		saved: boolean;
+		pending?: boolean;
+		onToggle: () => void;
+	};
 }) {
 	const phoneNumber: string | undefined = (coffee as any).phoneNumber;
 	const website: string | undefined = (coffee as any).website;
@@ -38,10 +44,6 @@ export function DetailsActionsRow({
 		}
 	}, [coffee?.location?.lat, coffee?.location?.lon, coffee?.name, addressLine]);
 
-	const onPressFollow = useCallback(() => {
-		// TODO: brancher wishlist/follow
-	}, []);
-
 	const onPressCall = useCallback(async () => {
 		if (!phoneNumber) return;
 		const url = `tel:${phoneNumber}`;
@@ -58,11 +60,18 @@ export function DetailsActionsRow({
 		() =>
 			[
 				{ key: "itinerary", icon: "figure.walk", label: "Itinéraire", onPress: onPressItinerary, kind: "primary" as const, disabled: false },
-				{ key: "follow", icon: "plus", label: "Suivre", onPress: onPressFollow, kind: "neutral" as const, disabled: false },
+				{
+					key: "save",
+					icon: saved?.saved ? "bookmark.fill" : "bookmark",
+					label: saved?.saved ? "Enregistré" : "Enregistrer",
+					onPress: saved?.onToggle ?? (() => undefined),
+					kind: saved?.saved ? "primary" as const : "neutral" as const,
+					disabled: !saved,
+				},
 				{ key: "call", icon: "phone", label: "Appeler", onPress: onPressCall, kind: "neutral" as const, disabled: !phoneNumber },
 				{ key: "share", icon: "square.and.arrow.up", label: "Partager", onPress: onPressShare, kind: "neutral" as const, disabled: false },
 			] as const,
-		[onPressItinerary, onPressFollow, onPressCall, onPressShare, phoneNumber],
+		[onPressItinerary, saved, onPressCall, onPressShare, phoneNumber],
 	);
 
 	return (
@@ -75,6 +84,7 @@ export function DetailsActionsRow({
 					kind={it.kind}
 					compact={compact}
 					disabled={it.disabled}
+					pending={it.key === "save" ? saved?.pending : false}
 					onPress={it.onPress}
 				/>
 			))}
@@ -88,6 +98,7 @@ function ActionItem({
 	kind,
 	compact,
 	disabled,
+	pending,
 	onPress,
 }: {
 	icon: string;
@@ -95,6 +106,7 @@ function ActionItem({
 	kind: "primary" | "neutral";
 	compact?: boolean;
 	disabled?: boolean;
+	pending?: boolean;
 	onPress: () => void;
 }) {
 	return (
@@ -115,7 +127,7 @@ function ActionItem({
 			</View>
 
 			<Text style={[s.label, compact && s.labelCompact, disabled && s.labelDisabled]} numberOfLines={1}>
-				{label}
+				{pending ? "Sync..." : label}
 			</Text>
 		</Pressable>
 	);
@@ -208,4 +220,3 @@ const s = StyleSheet.create({
 	disabled: { opacity: 0.45 },
 	pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
 });
-

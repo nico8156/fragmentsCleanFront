@@ -40,6 +40,33 @@ const responseThatStaysOpen = (chunk: string) => {
 };
 
 describe("HttpProjectionSyncGateway", () => {
+	it("stops reconnecting after an auth rejection", async () => {
+		const fetcher = jest.fn(async () => ({
+			ok: false,
+			status: 401,
+		})) as any;
+		const sleep = jest.fn(async () => undefined);
+		const statuses: any[] = [];
+		const gateway = new HttpProjectionSyncGateway({
+			baseUrl: "https://example.test",
+			fetcher,
+			sleep,
+			initialBackoffMs: 1,
+		});
+
+		gateway.connect({
+			token: "expired-token",
+			onStatus: (status) => statuses.push(status),
+			onEvent: jest.fn(),
+		});
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(sleep).not.toHaveBeenCalled();
+		expect(statuses).toContainEqual({ state: "failed", error: "HTTP 401" });
+	});
+
 	it("reconnects with Last-Event-ID after stream interruption", async () => {
 		const calls: any[] = [];
 		const fetcher = jest.fn(async (_url: string, init: any) => {

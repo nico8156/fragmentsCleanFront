@@ -49,6 +49,13 @@ const decodeChunk = (value: any): string => {
 	return String(value ?? "");
 };
 
+class NonRetryableProjectionSyncError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "NonRetryableProjectionSyncError";
+	}
+}
+
 export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 	private readonly url: string;
 	private readonly fetcher: FetchLike;
@@ -112,6 +119,20 @@ export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 				if (this.stopped || seq !== this.connectSeq) return;
 
 				const message = String(error?.message ?? error);
+				if (error instanceof NonRetryableProjectionSyncError) {
+					this.stopped = true;
+					this.emitStatus({
+						state: "failed",
+						lastEventId: this.lastEventId,
+						error: message,
+					});
+					logger.warn("[ProjectionSync] stopped after non-retryable error", {
+						lastEventId: this.lastEventId,
+						error: message,
+					});
+					return;
+				}
+
 				this.emitStatus({
 					state: "reconnecting",
 					lastEventId: this.lastEventId,
@@ -158,6 +179,9 @@ export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 		});
 
 		if (!response.ok) {
+			if (response.status === 401 || response.status === 403) {
+				throw new NonRetryableProjectionSyncError(`HTTP ${response.status}`);
+			}
 			throw new Error(`HTTP ${response.status}`);
 		}
 		if (!response.body?.getReader) {

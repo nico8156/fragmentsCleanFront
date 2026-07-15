@@ -9,6 +9,7 @@ import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/comment
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
+import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 import type { ProjectionSyncEvent } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
 import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import {
@@ -19,6 +20,7 @@ import {
 	projectionSyncStateChanged,
 } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.action";
 import {
+	authMaybeRefreshRequested,
 	authSessionRefreshed,
 	authSignedOut,
 	authSignInSucceeded,
@@ -133,6 +135,16 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			});
 			dispatch(entitlementsRetrieval({ userId: event.entityId }) as any);
 		}
+
+		if (event.projection === "savedCoffees" && event.scope === "user" && event.entityId) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "savedCoffees",
+				scope: "user",
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
+			dispatch(savedCoffeesRetrieval() as any);
+		}
 	};
 
 	const disconnect = (api: { dispatch: AppDispatchWl }, reason: string) => {
@@ -171,6 +183,12 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			onStatus: (status) => {
 				persistCursor(status.lastEventId);
 				api.dispatch(projectionSyncStateChanged(status));
+				if (status.state === "failed" && /HTTP (401|403)/.test(status.error ?? "")) {
+					logger.warn("[ProjectionSync] auth failure observed; requesting session refresh", {
+						error: status.error,
+					});
+					api.dispatch(authMaybeRefreshRequested());
+				}
 			},
 			onEvent: (event) => {
 				persistCursor(event.id);
