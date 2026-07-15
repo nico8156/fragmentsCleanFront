@@ -1,4 +1,5 @@
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { likeSyncAcked, likeSyncFailed } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
 import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
@@ -202,16 +203,29 @@ export const reconcileAppliedOutboxRecord = ({
 	record,
 	dispatch,
 	gateways,
+	userId,
 }: {
 	record: OutboxRecord;
 	dispatch: AppDispatchWl;
 	gateways: Partial<GatewaysWl> | undefined;
+	userId?: string;
 }) => {
 	const item = record.item as any;
 	const command = item?.command;
 	const undo = item?.undo;
 
 	if (!command?.kind) return;
+
+	const refreshEntitlements = () => {
+		if (!userId || !gateways?.entitlements) return;
+		outboxTelemetry.projectionRefreshRequested({
+			projection: "entitlements",
+			scope: "user",
+			entityId: userId,
+			source: "ackReconcile",
+		});
+		dispatch(entitlementsRetrieval({ userId }) as any);
+	};
 
 	switch (command.kind) {
 		case commandKinds.LikeAdd:
@@ -230,6 +244,7 @@ export const reconcileAppliedOutboxRecord = ({
 				});
 				dispatch(likesRetrieval({ targetId: command.targetId }) as any);
 			}
+			refreshEntitlements();
 			return;
 
 		case commandKinds.CommentCreate:
@@ -240,6 +255,7 @@ export const reconcileAppliedOutboxRecord = ({
 					server: { createdAt: command.at, version: command.version ?? 0 },
 				}));
 			}
+			refreshEntitlements();
 			return;
 
 		case commandKinds.CommentUpdate: {
@@ -280,6 +296,7 @@ export const reconcileAppliedOutboxRecord = ({
 				});
 				dispatch(ticketRetrieval({ ticketId: command.ticketId }) as any);
 			}
+			refreshEntitlements();
 			return;
 
 		default:

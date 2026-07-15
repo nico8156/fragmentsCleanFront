@@ -13,6 +13,7 @@ import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/type
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import { appBecameForeground } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 
 class FakeCommandStatusGateway {
 	calls: string[] = [];
@@ -20,6 +21,15 @@ class FakeCommandStatusGateway {
 	async getStatus(commandId: string) {
 		this.calls.push(commandId);
 		return this.verdict;
+	}
+}
+
+class RecordingEntitlementsGateway extends FakeEntitlementWlGateway {
+	calls: string[] = [];
+
+	override async get({ userId }: { userId: string }) {
+		this.calls.push(userId);
+		return super.get({ userId });
 	}
 }
 
@@ -428,6 +438,22 @@ describe("outboxWatchdogFactory", () => {
 		const commandStatus = new FakeCommandStatusGateway();
 		commandStatus.verdict = { status: "APPLIED" };
 		const tickets = new FakeTicketsGateway();
+		const entitlements = new RecordingEntitlementsGateway();
+		entitlements.store.set("user_test", {
+			userId: "user_test",
+			confirmedTickets: 1,
+			publishedComments: 0,
+			confirmedLikes: 0,
+			rights: ["LIKE"],
+			updatedAt: "2026-07-14T06:10:01.000Z" as any,
+			pass: {
+				counters: {
+					validatedTickets: 1,
+					publishedComments: 0,
+					confirmedLikes: 0,
+				},
+			},
+		});
 		tickets.nextStatusResponse = {
 			...tickets.nextStatusResponse,
 			status: "CONFIRMED",
@@ -438,7 +464,7 @@ describe("outboxWatchdogFactory", () => {
 			currency: "EUR",
 		};
 
-		const deps = makeDeps({ commandStatus, tickets });
+		const deps = makeDeps({ commandStatus, tickets, entitlements });
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
 
 		seedSignedIn(store, { userId: "user_test" });
@@ -472,10 +498,125 @@ describe("outboxWatchdogFactory", () => {
 
 		expect(commandStatus.calls).toEqual(["cmd_ticket"]);
 		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket_1"]);
+		expect(entitlements.calls).toEqual(["user_test"]);
 		const state = store.getState();
 		expect(state.oState.byId.obx_ticket).toBeUndefined();
 		expect(state.tState.byId["ticket_1" as any].status).toBe("CONFIRMED");
 		expect(state.tState.byId["ticket_1" as any].optimistic).toBe(false);
+		expect(state.enState.byUser.user_test.confirmedTickets).toBe(1);
+		expect(state.enState.byUser.user_test.pass?.counters?.validatedTickets).toBe(1);
+	});
+
+	it("APPLIED LikeAdd => refreshes entitlements snapshot", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "APPLIED" };
+		const entitlements = new RecordingEntitlementsGateway();
+		entitlements.store.set("user_test", {
+			userId: "user_test",
+			confirmedTickets: 0,
+			publishedComments: 0,
+			confirmedLikes: 3,
+			rights: ["LIKE"],
+			updatedAt: "2026-07-14T06:11:00.000Z" as any,
+			pass: {
+				counters: {
+					validatedTickets: 0,
+					publishedComments: 0,
+					confirmedLikes: 3,
+				},
+			},
+		});
+
+		const deps = makeDeps({ commandStatus, entitlements });
+		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(enqueueCommitted({
+			id: "obx_like",
+			item: {
+				command: {
+					kind: commandKinds.LikeAdd,
+					commandId: "cmd_like",
+					targetId: "cafe_A",
+					at: "2026-07-14T06:10:00.000Z",
+				} as any,
+				undo: {} as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_like", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_like"]);
+		expect(entitlements.calls).toEqual(["user_test"]);
+		expect(store.getState().enState.byUser.user_test.confirmedLikes).toBe(3);
+		expect(store.getState().enState.byUser.user_test.pass?.counters?.confirmedLikes).toBe(3);
+	});
+
+	it("APPLIED CommentCreate => refreshes entitlements snapshot", async () => {
+		const now = 1_000_000;
+		jest.spyOn(Date, "now").mockReturnValue(now);
+
+		const commandStatus = new FakeCommandStatusGateway();
+		commandStatus.verdict = { status: "APPLIED" };
+		const entitlements = new RecordingEntitlementsGateway();
+		entitlements.store.set("user_test", {
+			userId: "user_test",
+			confirmedTickets: 0,
+			publishedComments: 2,
+			confirmedLikes: 0,
+			rights: ["LIKE", "COMMENT"],
+			updatedAt: "2026-07-14T06:12:00.000Z" as any,
+			pass: {
+				counters: {
+					validatedTickets: 0,
+					publishedComments: 2,
+					confirmedLikes: 0,
+				},
+			},
+		});
+
+		const deps = makeDeps({ commandStatus, entitlements });
+		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(enqueueCommitted({
+			id: "obx_comment",
+			item: {
+				command: {
+					kind: commandKinds.CommentCreate,
+					commandId: "cmd_comment",
+					tempId: "comment_tmp",
+					targetId: "cafe_A",
+					body: "hello",
+					at: "2026-07-14T06:10:00.000Z",
+				} as any,
+				undo: {} as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_comment", ackByIso: new Date(now - 1).toISOString() }) as any);
+
+		store.dispatch(outboxWatchdogTick());
+		await flush();
+		await flush();
+
+		expect(commandStatus.calls).toEqual(["cmd_comment"]);
+		expect(entitlements.calls).toEqual(["user_test"]);
+		expect(store.getState().enState.byUser.user_test.publishedComments).toBe(2);
+		expect(store.getState().enState.byUser.user_test.pass?.counters?.publishedComments).toBe(2);
 	});
 
 	it("PENDING => replanifies nextCheckAt = now+5s", async () => {
