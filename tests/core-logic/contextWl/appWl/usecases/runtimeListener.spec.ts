@@ -177,7 +177,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 	// appBecameBackground
 	// ─────────────────────────────────────────────────────────────
 
-	it("appBecameBackground => outboxSuspend + projectionSyncDisconnect", async () => {
+	it("appBecameBackground => records lifecycle pause without durable runtime suspension", async () => {
 		seedSignedIn(store, { userId: "u1" });
 
 		rec.clear();
@@ -186,15 +186,12 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		const types = rec.getTypes();
 
-		expect(types).toEqual(
-			expect.arrayContaining([
-				outboxSuspendRequested.type,
-				projectionSyncDisconnectRequested.type,
-			]),
-		);
+		expect(types).toEqual([appBecameBackground.type]);
+		expect(types).not.toContain(outboxSuspendRequested.type);
+		expect(types).not.toContain(projectionSyncDisconnectRequested.type);
 	});
 
-	it("appBecameInactive => outboxSuspend + projectionSyncDisconnect", async () => {
+	it("appBecameInactive => records lifecycle pause without durable runtime suspension", async () => {
 		seedSignedIn(store, { userId: "u1" });
 
 		rec.clear();
@@ -203,15 +200,12 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		const types = rec.getTypes();
 
-		expect(types).toEqual(
-			expect.arrayContaining([
-				outboxSuspendRequested.type,
-				projectionSyncDisconnectRequested.type,
-			]),
-		);
+		expect(types).toEqual([appBecameInactive.type]);
+		expect(types).not.toContain(outboxSuspendRequested.type);
+		expect(types).not.toContain(projectionSyncDisconnectRequested.type);
 	});
 
-	it("background then foreground / signedIn => suspend then resume + restart runtime work", async () => {
+	it("background then foreground / signedIn => foreground resumes and restarts runtime work", async () => {
 		seedSignedIn(store, { userId: "u1" });
 		seedBootReady(store);
 
@@ -225,8 +219,6 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(types).toEqual(
 			expect.arrayContaining([
-				outboxSuspendRequested.type,
-				projectionSyncDisconnectRequested.type,
 				outboxResumeRequested.type,
 				authMaybeRefreshRequested.type,
 				authUserHydrationRequested.type,
@@ -235,9 +227,8 @@ describe("runtimeListenerFactory (appWl)", () => {
 				outboxWatchdogTick.type,
 			]),
 		);
-		expect(types.indexOf(outboxSuspendRequested.type)).toBeLessThan(
-			types.indexOf(outboxResumeRequested.type),
-		);
+		expect(types).not.toContain(outboxSuspendRequested.type);
+		expect(types).not.toContain(projectionSyncDisconnectRequested.type);
 	});
 
 	it("appBecameActive refreshes known read models missed while backgrounded", async () => {

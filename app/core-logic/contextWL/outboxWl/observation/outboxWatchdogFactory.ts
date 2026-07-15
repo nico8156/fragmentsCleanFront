@@ -198,14 +198,14 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	listen({
 		actionCreator: appBecameBackground,
 		effect: async () => {
-			stopTimer();
+			logger.debug("[OUTBOX_WD] app background observed; keep watchdog timer registered");
 		},
 	});
 
 	listen({
 		actionCreator: appBecameInactive,
 		effect: async () => {
-			stopTimer();
+			logger.debug("[OUTBOX_WD] app inactive observed; keep watchdog timer registered");
 		},
 	});
 

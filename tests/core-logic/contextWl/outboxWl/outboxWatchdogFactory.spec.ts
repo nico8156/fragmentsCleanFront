@@ -12,7 +12,7 @@ import { addOptimisticCreated } from "@/app/core-logic/contextWL/commentWl/typeA
 import { authSessionLoadRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
-import { appBecameForeground } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { appBecameBackground, appBecameForeground } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
 
 class FakeCommandStatusGateway {
@@ -136,6 +136,35 @@ describe("outboxWatchdogFactory", () => {
 		await flush();
 
 		expect(commandStatus.calls).toEqual(["cmd_ticket"]);
+	});
+
+	it("keeps watchdog timer registered when app moves to background", async () => {
+		const setIntervalSpy = jest
+			.spyOn(global, "setInterval")
+			.mockImplementation((() => 123) as any);
+		const clearIntervalSpy = jest.spyOn(global, "clearInterval");
+
+		const commandStatus = new FakeCommandStatusGateway();
+		const deps = makeDeps({ commandStatus });
+
+		const store = makeStoreWl({
+			deps,
+			listeners: [outboxWatchdogFactory({ gateways: deps.gateways, enableTimer: true, tickMs: 20_000 } as any)],
+		});
+
+		seedSignedIn(store, { userId: "user_test" });
+		seedBootReady(store);
+		seedOnline(store);
+
+		store.dispatch(appBecameForeground());
+		await flush();
+		clearIntervalSpy.mockClear();
+
+		store.dispatch(appBecameBackground());
+		await flush();
+
+		expect(setIntervalSpy).toHaveBeenCalled();
+		expect(clearIntervalSpy).not.toHaveBeenCalled();
 	});
 
 	it("does not let an old PENDING ACK starve newer awaiting commands", async () => {
