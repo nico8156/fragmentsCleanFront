@@ -25,7 +25,7 @@ const seedComment = {
 
 describe("comment read merge while write is optimistic", () => {
 	it("keeps an optimistic update when a stale read returns the previous body", () => {
-		const store = initReduxStoreWl({});
+		const store = initReduxStoreWl({ dependencies: {} });
 
 		store.dispatch(addOptimisticCreated({ entity: seedComment }));
 		store.dispatch(updateOptimisticApplied({
@@ -47,7 +47,7 @@ describe("comment read merge while write is optimistic", () => {
 	});
 
 	it("keeps an optimistic delete when a stale read still contains the comment", () => {
-		const store = initReduxStoreWl({});
+		const store = initReduxStoreWl({ dependencies: {} });
 
 		store.dispatch(addOptimisticCreated({ entity: seedComment }));
 		store.dispatch(deleteOptimisticApplied({
@@ -69,7 +69,7 @@ describe("comment read merge while write is optimistic", () => {
 	});
 
 	it("accepts a newer server version and clears the local optimistic flag", () => {
-		const store = initReduxStoreWl({});
+		const store = initReduxStoreWl({ dependencies: {} });
 
 		store.dispatch(addOptimisticCreated({ entity: seedComment }));
 		store.dispatch(updateOptimisticApplied({

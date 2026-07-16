@@ -211,7 +211,7 @@ describe("projectionSyncListenerFactory", () => {
 			currency: "EUR",
 			merchantName: "Cafe Test",
 			occurredAt: "2026-07-06T11:00:00.000Z",
-		};
+		} as any;
 
 		const store = initReduxStoreWl({
 			dependencies: {
@@ -271,7 +271,7 @@ describe("projectionSyncListenerFactory", () => {
 			userId: "user-42",
 			confirmedTickets: 5,
 			rights: [],
-			updatedAt: "2026-07-06T12:00:00.000Z",
+			updatedAt: "2026-07-06T12:00:00.000Z" as any,
 		});
 
 		const store = initReduxStoreWl({

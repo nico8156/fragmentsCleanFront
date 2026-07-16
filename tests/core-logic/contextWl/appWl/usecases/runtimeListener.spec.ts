@@ -269,13 +269,13 @@ describe("runtimeListenerFactory (appWl)", () => {
 			status: "COMPLETED",
 			outcome: "APPROVED",
 			version: 3,
-		};
+		} as any;
 		entitlements.store.set("u1", {
 			userId: "u1",
 			confirmedTickets: 1,
 			publishedComments: 2,
 			confirmedLikes: 3,
-			updatedAt: "2026-07-14T07:00:02.000Z",
+			updatedAt: "2026-07-14T07:00:02.000Z" as any,
 		});
 
 		const localStore = initReduxStoreWl({
@@ -309,7 +309,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 			items: [{
 				coffeeId: "coffee_1",
 				name: "Cafe 1",
-				savedAt: "2026-07-14T06:00:00.000Z",
+				savedAt: "2026-07-14T06:00:00.000Z" as any,
 				version: 1,
 			}],
 			version: 1,
@@ -317,7 +317,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		localStore.dispatch(entitlementsHydrated({
 			userId: "u1",
 			confirmedTickets: 0,
-			updatedAt: "2026-07-14T06:00:00.000Z",
+			updatedAt: "2026-07-14T06:00:00.000Z" as any,
 		}));
 		localStore.dispatch(ticketOptimisticCreated({
 			ticketId: "ticket_1" as any,

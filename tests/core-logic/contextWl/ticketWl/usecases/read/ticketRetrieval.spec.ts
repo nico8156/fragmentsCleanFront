@@ -22,7 +22,7 @@ describe("Ticket retrieval", () => {
             ocrText: "cafe la plume 9,20€ 09/10/2025",
             amountCents: 920,
             currency: "EUR",
-        };
+        } as any;
         store = initReduxStoreWl({
             dependencies: {
                 gateways: {
@@ -75,7 +75,7 @@ describe("Ticket retrieval", () => {
             occurredAt: "2026-07-14T06:10:00.000Z",
             amountCents: 660,
             currency: "EUR",
-        };
+        } as any;
         store = initReduxStoreWl({
             dependencies: {
                 gateways: { tickets } as any,

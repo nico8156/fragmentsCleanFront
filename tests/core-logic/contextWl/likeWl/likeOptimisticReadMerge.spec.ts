@@ -9,7 +9,7 @@ const targetId = "cafe_A";
 
 describe("like optimistic read merge", () => {
 	it("keeps a local like intent when a newer target read still says me=false", () => {
-		const store = initReduxStoreWl({});
+		const store = initReduxStoreWl({ dependencies: {} });
 
 		store.dispatch(likesRetrieved({
 			targetId,
@@ -20,7 +20,7 @@ describe("like optimistic read merge", () => {
 		}));
 		store.dispatch(likeOptimisticApplied({
 			targetId,
-			clientAt: "2026-01-01T10:01:00.000Z",
+			clientAt: "2026-01-01T10:01:00.000Z" as any,
 			commandId: "cmd_like",
 		}));
 		store.dispatch(likesRetrieved({
@@ -38,7 +38,7 @@ describe("like optimistic read merge", () => {
 	});
 
 	it("keeps a local unlike intent when a newer target read still says me=true", () => {
-		const store = initReduxStoreWl({});
+		const store = initReduxStoreWl({ dependencies: {} });
 
 		store.dispatch(likesRetrieved({
 			targetId,
@@ -49,7 +49,7 @@ describe("like optimistic read merge", () => {
 		}));
 		store.dispatch(unlikeOptimisticApplied({
 			targetId,
-			clientAt: "2026-01-01T10:01:00.000Z",
+			clientAt: "2026-01-01T10:01:00.000Z" as any,
 			commandId: "cmd_unlike",
 		}));
 		store.dispatch(likesRetrieved({
