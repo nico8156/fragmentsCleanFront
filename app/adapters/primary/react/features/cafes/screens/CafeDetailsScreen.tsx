@@ -6,11 +6,13 @@ import {
 	LayoutChangeEvent,
 	Platform,
 	RefreshControl,
+	Dimensions,
 	View,
 } from "react-native";
 import Animated, {
 	Extrapolation,
 	interpolate,
+	runOnJS,
 	useAnimatedScrollHandler,
 	useAnimatedStyle,
 	useSharedValue,
@@ -73,12 +75,20 @@ export default function CafeDetailsScreen() {
 
 	// --- Scroll + sticky actions
 	const scrollRef = useRef<any>(null);
+	const currentScrollYRef = useRef(0);
 	const scrollY = useSharedValue(0);
 	const actionsThreshold = useSharedValue(180);
 	const dragStartY = useSharedValue(0);
 
+	const updateCurrentScrollY = (y: number) => {
+		currentScrollYRef.current = y;
+	};
+
 	const onScroll = useAnimatedScrollHandler({
-		onScroll: (e) => (scrollY.value = e.contentOffset.y),
+		onScroll: (e) => {
+			scrollY.value = e.contentOffset.y;
+			runOnJS(updateCurrentScrollY)(e.contentOffset.y);
+		},
 	});
 
 	const bottomBarStyle = useAnimatedStyle(() => {
@@ -131,6 +141,18 @@ export default function CafeDetailsScreen() {
 				scrollRef.current?.scrollToEnd?.({ animated: true });
 			});
 		});
+	};
+
+	const ensureRectVisibleAboveKeyboard = ({ windowY, height }: { windowY: number; height: number }) => {
+		const keyboardTop = Dimensions.get("window").height - keyboardHeight;
+		const visibleBottom = keyboardHeight > 0 ? keyboardTop - 24 : Dimensions.get("window").height - 24;
+		const rectBottom = windowY + height;
+		const overflow = rectBottom - visibleBottom;
+
+		if (overflow <= 0) return;
+
+		const nextY = Math.max(0, currentScrollYRef.current + overflow + 24);
+		scrollRef.current?.scrollTo?.({ y: nextY, animated: true });
 	};
 
 	return (
@@ -190,9 +212,7 @@ export default function CafeDetailsScreen() {
 						coffeeId={String(coffeeId)}
 						comments={comments}
 						onRequestScrollToComposer={scrollToCommentsEnd}
-						onRequestScrollToY={(y) => {
-							requestAnimationFrame(() => scrollRef.current?.scrollTo?.({ y, animated: true }));
-						}}
+						onRequestEnsureVisible={ensureRectVisibleAboveKeyboard}
 					/>
 				</Animated.ScrollView>
 
