@@ -135,7 +135,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 		const next = new Date(Date.now() + 5_000).toISOString();
 		outboxTelemetry.ackVerdict(rec, "PENDING", { nextCheckAt: next });
-		api.dispatch(markAwaitingAck({ id: rec.id, ackByIso: next }));
+		api.dispatch(markAwaitingAck({ id: rec.id, nextCheckAt: next }));
 	};
 
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {

@@ -42,14 +42,11 @@ const hasSession = (s: RootStateWl) => Boolean(s.aState?.session?.userId);
 const getAuthedUserId = (s: RootStateWl): string | undefined =>
 	s.aState?.session?.userId ?? (s.aState as any)?.currentUser?.id ?? undefined;
 
-const ackByIsoIn30s = () => new Date(Date.now() + 30_000).toISOString();
+const nextCheckAtIn30s = () => new Date(Date.now() + 30_000).toISOString();
 
-const getNextAttemptAtMs = (rec: any): number | undefined => {
-	// compat: ancien champ nextAttemptAt / nouveau nextAttemptAtMs
-	const a = rec?.nextAttemptAt;
-	if (typeof a === "number" && Number.isFinite(a)) return a;
-	const b = rec?.nextAttemptAtMs;
-	if (typeof b === "number" && Number.isFinite(b)) return b;
+const getNextAttemptAt = (rec: any): number | undefined => {
+	const value = rec?.nextAttemptAt;
+	if (typeof value === "number" && Number.isFinite(value)) return value;
 	return undefined;
 };
 
@@ -115,7 +112,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					if (!rec) return false;
 					if (rec.status !== statusTypes.queued) return false;
 
-					const nextAttemptAt = getNextAttemptAtMs(rec as any);
+					const nextAttemptAt = getNextAttemptAt(rec as any);
 					if (nextAttemptAt && nextAttemptAt > nowMs) return false;
 
 					return true;
@@ -154,10 +151,9 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 				}
 
 				const sentAndAwaitAck = () => {
-					const iso = ackByIsoIn30s();
+					const iso = nextCheckAtIn30s();
 
-					// compat: ancien payload ackBy / nouveau ackByIso
-					api.dispatch(markAwaitingAck({ id, ackByIso: iso } as any));
+					api.dispatch(markAwaitingAck({ id, nextCheckAt: iso }));
 					api.dispatch(dequeueCommitted({ id }));
 					api.dispatch(outboxAwaitingAckAdded({ id }));
 					outboxTelemetry.awaitingAck(record, iso);
@@ -206,14 +202,13 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					const stateAfterFail = api.getState();
 					const attemptsSoFar = selectOutboxById(stateAfterFail)[id]?.attempts ?? 0;
 
-					const nextAttemptAtMs = computeNextAttemptAtMs({
+					const nextAttemptAt = computeNextAttemptAtMs({
 						attemptsSoFar,
 						nowMs: Date.now(),
 					});
-					outboxTelemetry.retryScheduled(record, nextAttemptAtMs, String(e?.message ?? e));
+					outboxTelemetry.retryScheduled(record, nextAttemptAt, String(e?.message ?? e));
 
-					// compat: ton action semble être nextAttemptAtMs
-					api.dispatch(scheduleRetry({ id, nextAttemptAtMs } as any));
+					api.dispatch(scheduleRetry({ id, nextAttemptAt }));
 				}
 
 				callback?.();

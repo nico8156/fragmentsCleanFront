@@ -68,14 +68,14 @@ export const outboxTelemetry = {
 		});
 	},
 
-	retryScheduled(record: OutboxRecord, nextAttemptAtMs: number, error: string) {
+	retryScheduled(record: OutboxRecord, nextAttemptAt: number, error: string) {
 		const command = commandOf(record);
 		logger.warn("[OUTBOX_TRACE] retry:scheduled", {
 			outboxId: record.id,
 			commandId: command?.commandId,
 			kind: command?.kind,
 			attempts: record.attempts,
-			nextAttemptAtMs,
+			nextAttemptAt,
 			error,
 		});
 	},

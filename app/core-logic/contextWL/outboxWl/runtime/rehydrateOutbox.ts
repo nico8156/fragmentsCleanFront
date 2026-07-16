@@ -43,7 +43,7 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
 	const nextCheckAt =
 		typeof record.nextCheckAt === "string"
 			? record.nextCheckAt
-			: // compat: si tu as un vieux champ ackByIso
+			: // Legacy persisted payloads used ackByIso before nextCheckAt.
 			typeof record.ackByIso === "string"
 				? record.ackByIso
 				: undefined;
@@ -51,7 +51,7 @@ const sanitizeRecord = (record: any): OutboxRecord | null => {
 	const nextAttemptAt =
 		typeof record.nextAttemptAt === "number" && Number.isFinite(record.nextAttemptAt)
 			? record.nextAttemptAt
-			: // compat: si tu as un nouveau champ nextAttemptAtMs
+			: // Legacy persisted payloads used nextAttemptAtMs before nextAttemptAt.
 			typeof record.nextAttemptAtMs === "number" && Number.isFinite(record.nextAttemptAtMs)
 				? record.nextAttemptAtMs
 				: undefined;
