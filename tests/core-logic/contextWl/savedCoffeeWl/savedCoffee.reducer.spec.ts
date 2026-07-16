@@ -24,6 +24,8 @@ describe("savedCoffeeReducer", () => {
 				version: 3,
 				loading: savedCoffeeLoadingStates.SUCCESS,
 			},
+			schemaVersion: 1,
+			updatedAt: "2026-07-15T09:00:00.000Z",
 		}));
 
 		expect(state.ids).toEqual(["coffee-1"]);

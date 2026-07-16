@@ -491,7 +491,7 @@ describe("outboxWatchdogFactory", () => {
 			occurredAt: "2026-07-14T06:10:00.000Z",
 			amountCents: 660,
 			currency: "EUR",
-		};
+		} as any;
 
 		const deps = makeDeps({ commandStatus, tickets, entitlements });
 		const store = makeStoreWl({ deps, listeners: [outboxWatchdogFactory({ gateways: deps.gateways } as any)] });

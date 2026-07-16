@@ -25,7 +25,7 @@ describe('userLocationListenerFactory', () => {
         gateway = new FakeLocationGateway();
         const dependencies: DependenciesWl = {
             gateways: { locations: gateway },
-            helpers: {},
+            helpers: {} as any,
         };
         store = initReduxStoreWl({
             dependencies,
