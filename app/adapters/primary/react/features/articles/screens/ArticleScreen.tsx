@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
     ActivityIndicator,
     Pressable,
@@ -9,12 +9,9 @@ import {
     View,
 } from "react-native";
 import { Image } from "expo-image";
-import { useDispatch } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { useArticle } from "@/app/adapters/secondary/viewModel/useArticle";
-import { articleRetrievalBySlug } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
-import { articleLoadingStates } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import { RootStackParamList, RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
@@ -33,15 +30,7 @@ export function ArticleScreen() {
     const navigation = useNavigation<RootStackNavigationProp>();
     const normalizedSlug = useMemo(() => params.slug, [params.slug]);
     const insets = useSafeAreaInsets();
-    const dispatch = useDispatch<any>();
-    const { article, status } = useArticle(normalizedSlug);
-
-    useEffect(() => {
-        if (!normalizedSlug) return;
-        if (!article && status !== articleLoadingStates.PENDING) {
-            dispatch(articleRetrievalBySlug({ slug: normalizedSlug, locale: "fr-FR" }));
-        }
-    }, [dispatch, normalizedSlug, article, status]);
+    const { article, isLoading } = useArticle(normalizedSlug);
 
     const publishedOn = formatDate(article?.publishedAt ?? article?.updatedAt);
 
@@ -53,7 +42,7 @@ export function ArticleScreen() {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
             <AnimatedBackButton onPress={goBack} topInset={insets.top} />
-            {!article && status === articleLoadingStates.PENDING ? (
+            {!article && isLoading ? (
                 <View style={styles.loaderWrapper}>
                     <ActivityIndicator size="large" color="#2F2F2F" />
                 </View>
