@@ -21,7 +21,7 @@ it("scheduleRetry puts back to queued, sets nextAttemptAt and ensures in queue",
 	);
 
 	s = outboxWlReducer(s, markProcessing({ id: "obx_1" }) as any);
-	s = outboxWlReducer(s, scheduleRetry({ id: "obx_1", nextAttemptAtMs: 123 }) as any);
+	s = outboxWlReducer(s, scheduleRetry({ id: "obx_1", nextAttemptAt: 123 }) as any);
 
 	expect(s.byId["obx_1"].status).toBe(statusTypes.queued);
 	expect((s.byId["obx_1"] as any).nextAttemptAt).toBe(123);
@@ -40,7 +40,7 @@ it("markAwaitingAck removes from queue and sets nextCheckAt", () => {
 
 	s = outboxWlReducer(
 		s,
-		markAwaitingAck({ id: "obx_1", ackByIso: "2025-10-10T07:00:30.000Z" }) as any,
+		markAwaitingAck({ id: "obx_1", nextCheckAt: "2025-10-10T07:00:30.000Z" }) as any,
 	);
 
 	expect(s.byId["obx_1"].status).toBe(statusTypes.awaitingAck);
@@ -65,7 +65,7 @@ it("outboxDevClearCommitted clears queued and awaitingAck residue", () => {
 			enqueuedAt: "x",
 		}) as any,
 	);
-	s = outboxWlReducer(s, markAwaitingAck({ id: "obx_2", ackByIso: "2025-10-10T07:00:30.000Z" }) as any);
+	s = outboxWlReducer(s, markAwaitingAck({ id: "obx_2", nextCheckAt: "2025-10-10T07:00:30.000Z" }) as any);
 
 	s = outboxWlReducer(s, outboxDevClearCommitted());
 

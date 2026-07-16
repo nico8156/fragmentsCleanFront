@@ -13,7 +13,7 @@ export const outboxDevClearCommitted = createAction("OUTBOX/DEV_CLEAR_COMMITTED"
 
 // --- retry scheduling ---
 export const scheduleRetry =
-	createAction<{ id: string; nextAttemptAtMs: number }>("OUTBOX/SCHEDULE_RETRY");
+	createAction<{ id: string; nextAttemptAt: number }>("OUTBOX/SCHEDULE_RETRY");
 
 // --- lifecycle markers ---
 export const markProcessing =
@@ -23,7 +23,7 @@ export const markFailed =
 	createAction<{ id: string; error: string }>("OUTBOX/MARK_FAILED");
 
 export const markAwaitingAck =
-	createAction<{ id: string; ackByIso: string }>("OUTBOX/MARK_AWAITING_ACK");
+	createAction<{ id: string; nextCheckAt: string }>("OUTBOX/MARK_AWAITING_ACK");
 
 // --- queue bookkeeping ---
 export const dequeueCommitted =

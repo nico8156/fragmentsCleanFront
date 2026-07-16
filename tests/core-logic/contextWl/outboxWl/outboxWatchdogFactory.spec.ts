@@ -88,7 +88,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -130,7 +130,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(appBecameForeground());
 		await flush();
@@ -224,8 +224,8 @@ describe("outboxWatchdogFactory", () => {
 			}) as any,
 		);
 
-		store.dispatch(markAwaitingAck({ id: "obx_old_like", ackByIso: new Date(now - 10_000).toISOString() }) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_ticket", ackByIso: new Date(now - 1_000).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_old_like", nextCheckAt: new Date(now - 10_000).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_ticket", nextCheckAt: new Date(now - 1_000).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -295,7 +295,7 @@ describe("outboxWatchdogFactory", () => {
 		store.dispatch(
 			markAwaitingAck({
 				id: "obx_1",
-				ackByIso: new Date(now - 1).toISOString(),
+				nextCheckAt: new Date(now - 1).toISOString(),
 			}) as any,
 		);
 
@@ -340,7 +340,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -394,7 +394,7 @@ describe("outboxWatchdogFactory", () => {
 			},
 			enqueuedAt: "x",
 		}) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -448,7 +448,7 @@ describe("outboxWatchdogFactory", () => {
 			},
 			enqueuedAt: "x",
 		}) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -519,7 +519,7 @@ describe("outboxWatchdogFactory", () => {
 			},
 			enqueuedAt: "x",
 		}) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_ticket", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_ticket", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -579,7 +579,7 @@ describe("outboxWatchdogFactory", () => {
 			},
 			enqueuedAt: "x",
 		}) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_like", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_like", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -636,7 +636,7 @@ describe("outboxWatchdogFactory", () => {
 			},
 			enqueuedAt: "x",
 		}) as any);
-		store.dispatch(markAwaitingAck({ id: "obx_comment", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_comment", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -669,7 +669,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		await flush();
@@ -705,7 +705,7 @@ describe("outboxWatchdogFactory", () => {
 				enqueuedAt: "x",
 			}) as any,
 		);
-		store.dispatch(markAwaitingAck({ id: "obx_1", ackByIso: new Date(now - 1).toISOString() }) as any);
+		store.dispatch(markAwaitingAck({ id: "obx_1", nextCheckAt: new Date(now - 1).toISOString() }) as any);
 
 		store.dispatch(outboxWatchdogTick());
 		store.dispatch(outboxWatchdogTick());

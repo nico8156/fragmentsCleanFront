@@ -98,14 +98,9 @@ export const outboxWlReducer = createReducer(initialOutboxState, (builder) => {
 		})
 
 		.addCase(scheduleRetry, (state, action) => {
-			const { id } = action.payload as any;
+			const { id, nextAttemptAt } = action.payload;
 			const r = state.byId[id];
 			if (!r) return;
-
-			// ✅ compat: ancien nextAttemptAt / nouveau nextAttemptAtMs
-			const nextAttemptAt: number | undefined =
-				(action.payload as any).nextAttemptAt ??
-				(action.payload as any).nextAttemptAtMs;
 
 			if (typeof nextAttemptAt !== "number") return;
 
@@ -119,14 +114,9 @@ export const outboxWlReducer = createReducer(initialOutboxState, (builder) => {
 		})
 
 		.addCase(markAwaitingAck, (state, action) => {
-			const { id } = action.payload as any;
+			const { id, nextCheckAt } = action.payload;
 			const rec = state.byId[id];
 			if (!rec) return;
-
-			// ✅ compat: ancien ackBy / nouveau ackByIso
-			const nextCheckAt: string | undefined =
-				(action.payload as any).ackBy ??
-				(action.payload as any).ackByIso;
 
 			removeFromQueue(state, id);
 
