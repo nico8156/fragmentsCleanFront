@@ -101,7 +101,7 @@ This is a static map. It intentionally does not infer runtime ordering, thunk in
 | `permissionUpdated` | `PHONE/LOCATION/PERMISSION_UPDATED` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - | `app/core-logic/contextWL/locationWl/reducer/location.reducer.ts` |
 | `requestPermission` | `PHONE/LOCATION/REQUEST_PERMISSION` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | `app/adapters/secondary/viewModel/useUserLocation.ts`<br>`app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - |
 | `userLocationRequested` | `PHONE/LOCATION/REQUESTED` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | - | - | - |
-| `startWatchRequested` | `PHONE/LOCATION/START_WATCH_REQUESTED` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | - | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - |
+| `startWatchRequested` | `PHONE/LOCATION/START_WATCH_REQUESTED` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | `app/adapters/secondary/viewModel/useUserLocation.ts` | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - |
 | `stopWatchRequested` | `PHONE/LOCATION/STOP_WATCH_REQUESTED` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | `app/adapters/secondary/viewModel/useUserLocation.ts` | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - |
 | `getLocationSuccess` | `PHONE/LOCATION/SUCCESS` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | - | - | - |
 | `watchError` | `PHONE/LOCATION/WATCH_ERROR` | `app/core-logic/contextWL/locationWl/typeAction/location.action.ts` | `app/core-logic/contextWL/locationWl/usecases/userLocationFactory.ts` | - | `app/core-logic/contextWL/locationWl/reducer/location.reducer.ts` |
@@ -143,7 +143,7 @@ This is a static map. It intentionally does not infer runtime ordering, thunk in
 
 | Symbol | Producers |
 |---|---|
-| `articleRetrievalBySlug` | `app/adapters/primary/react/features/articles/screens/ArticleScreen.tsx` |
+| `articleRetrievalBySlug` | `app/adapters/secondary/viewModel/useArticle.ts` |
 | `articlesListRetrieval` | `app/adapters/secondary/viewModel/useArticlesHome.ts`<br>`app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
 | `coffeeGlobalRetrieval` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
 | `commentRetrieval` | `app/adapters/secondary/viewModel/useCommentsForCafe.ts`<br>`app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts` |
@@ -153,7 +153,7 @@ This is a static map. It intentionally does not infer runtime ordering, thunk in
 | `onCfPhotoRetrieval` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
 | `onOpeningHourRetrieval` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts` |
 | `refreshNonTerminalTickets` | `app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts`<br>`app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts` |
-| `savedCoffeesRetrieval` | `app/adapters/secondary/viewModel/useSavedCoffees.ts`<br>`app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts`<br>`app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts` |
+| `savedCoffeesRetrieval` | `app/adapters/secondary/viewModel/useSavedCoffees.ts`<br>`app/core-logic/contextWL/appWl/usecases/applicationBootProcess.ts`<br>`app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory.ts`<br>`app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts` |
 | `signInWithProvider` | `app/adapters/secondary/viewModel/useAuthUser.ts` |
 | `signOut` | `app/adapters/secondary/viewModel/useAuthUser.ts` |
 | `ticketRetrieval` | `app/core-logic/contextWL/outboxWl/commandHandlers/outboxCommandHandlers.ts`<br>`app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory.ts`<br>`app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval.ts` |
