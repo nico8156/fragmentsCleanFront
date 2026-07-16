@@ -37,8 +37,24 @@ import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/comment
 import { likesRetrieved } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { entitlementsHydrated } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
 import { ticketOptimisticCreated } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import type { SavedCoffeeGateway, SavedCoffeeSnapshot } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
+import { savedCoffeesRetrieved } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.action";
 
 const flush = () => new Promise<void>((r) => setImmediate(r));
+
+class FakeSavedCoffeeGateway implements SavedCoffeeGateway {
+	getCalls = 0;
+	nextSnapshot: SavedCoffeeSnapshot = { items: [], version: 1 };
+
+	async get(): Promise<SavedCoffeeSnapshot> {
+		this.getCalls += 1;
+		return this.nextSnapshot;
+	}
+
+	async set(): Promise<void> {
+		return undefined;
+	}
+}
 
 describe("runtimeListenerFactory (appWl)", () => {
 	let store: ReduxStoreWl;
@@ -236,6 +252,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		const likes = new FakeLikesGateway();
 		const tickets = new FakeTicketsGateway();
 		const entitlements = new FakeEntitlementWlGateway();
+		const savedCoffees = new FakeSavedCoffeeGateway();
 
 		comments.nextListResponse = {
 			items: [],
@@ -268,6 +285,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 					likes,
 					tickets,
 					entitlements,
+					savedCoffees,
 				} as any,
 				helpers: {} as any,
 			},
@@ -285,6 +303,15 @@ describe("runtimeListenerFactory (appWl)", () => {
 			targetId: "coffee_1",
 			count: 1,
 			me: false,
+			version: 1,
+		}));
+		localStore.dispatch(savedCoffeesRetrieved({
+			items: [{
+				coffeeId: "coffee_1",
+				name: "Cafe 1",
+				savedAt: "2026-07-14T06:00:00.000Z",
+				version: 1,
+			}],
 			version: 1,
 		}));
 		localStore.dispatch(entitlementsHydrated({
@@ -305,6 +332,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 
 		expect(comments.listCalls.map((call) => call.targetId)).toEqual(["coffee_1"]);
 		expect(likes.getCalls).toEqual([{ targetId: "coffee_1" }]);
+		expect(savedCoffees.getCalls).toBe(1);
 		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket_1"]);
 		expect(localStore.getState().enState.byUser.u1).toMatchObject({
 			confirmedTickets: 1,

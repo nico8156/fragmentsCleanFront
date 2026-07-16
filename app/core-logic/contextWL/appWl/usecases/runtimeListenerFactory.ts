@@ -31,6 +31,7 @@ import { selectKnownCommentTargetIds } from "@/app/core-logic/contextWL/commentW
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
+import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -103,6 +104,10 @@ export const runtimeListenerFactory = () => {
 
 		for (const targetId of selectKnownLikeTargetIds(state)) {
 			api.dispatch(likesRetrieval({ targetId }) as any);
+		}
+
+		if (state.scState?.ids?.length) {
+			api.dispatch(savedCoffeesRetrieval() as any);
 		}
 
 		refreshKnownTicketsInProgress(api);
