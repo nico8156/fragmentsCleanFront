@@ -5,7 +5,6 @@ import {selectAllLikeAggs} from "@/app/core-logic/contextWL/likeWl/selector/like
 import {UserId} from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 export const selectAuthState = (state: RootStateWl) => state.aState;
-const selectCurrentUserId = (state: RootStateWl) => state.aState.currentUser?.id;
 
 export const selectAuthStatus = createSelector(selectAuthState, (state) => state.status);
 

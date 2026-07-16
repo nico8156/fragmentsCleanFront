@@ -15,7 +15,7 @@ export const onCfPhotoRetrieval = ():AppThunkWl<Promise<void>> =>
         dispatch(photosHydrated(
             {photos: res.data}
         ))
-    } catch (_e) {
+    } catch {
         dispatch(photosHydrated(
             {photos: [] as PhotoURI[]}
         ))

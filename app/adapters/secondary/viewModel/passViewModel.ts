@@ -97,11 +97,11 @@ const toRingStatus = (status?: string): PassRingStatus => {
 	return "locked";
 };
 
-const requirementSpecs: Array<{
+const requirementSpecs: {
 	key: keyof PassRequirements;
 	counterKey: keyof PassCounters;
 	label: string;
-}> = [
+}[] = [
 	{ key: "validatedTickets", counterKey: "validatedTickets", label: "tickets validés" },
 	{ key: "publishedComments", counterKey: "publishedComments", label: "commentaires publiés" },
 	{ key: "confirmedLikes", counterKey: "confirmedLikes", label: "likes confirmés" },

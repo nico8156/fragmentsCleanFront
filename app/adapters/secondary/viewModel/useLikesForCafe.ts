@@ -66,7 +66,7 @@ export function useLikesForCafe(targetId?: CoffeeId) {
 		}, delay);
 
 		return () => clearTimeout(t);
-	}, [dispatch, targetId, sync?.state, sync?.untilMs]);
+	}, [dispatch, targetId, sync]);
 
 	useEffect(() => {
 		if (!targetId) return;

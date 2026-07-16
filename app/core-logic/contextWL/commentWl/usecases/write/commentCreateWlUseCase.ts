@@ -2,7 +2,7 @@ import {createAction, createListenerMiddleware, TypedStartListening, nanoid} fro
 import {AppStateWl, DependenciesWl} from "@/app/store/appStateWl";
 import {AppDispatchWl} from "@/app/store/reduxStoreWl";
 import { moderationTypes} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
-import {commandKinds, OutboxItem} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import {commandKinds} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {enqueueCommitted, outboxProcessOnce} from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import {addOptimisticCreated} from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 

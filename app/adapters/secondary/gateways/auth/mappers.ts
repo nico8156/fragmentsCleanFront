@@ -7,7 +7,6 @@ import {
 
 
 const ACCESS_TOKEN_LIFETIME_MS = 15 * 60 * 1000; // TODO: aligner avec ton backend
-const REFRESH_TOKEN_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // optionnel
 
 export interface GoogleLoginResponseDTO {
     accessToken: string;
