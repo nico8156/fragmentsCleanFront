@@ -22,7 +22,7 @@ export function CommentsSection({
 	coffeeId,
 	comments,
 	onRequestScrollToComposer,
-	onRequestScrollToY,
+	onRequestEnsureVisible,
 }: {
 	coffeeId: string;
 	comments: {
@@ -35,12 +35,7 @@ export function CommentsSection({
 		uiViaHookDeleteComment: (p: { commentId: string }) => void;
 	};
 	onRequestScrollToComposer?: () => void;
-
-	/**
-	 * Optionnel : permet de scroller vers une coordonnée Y (ex: parent scrollView).
-	 * Le parent peut faire : scrollRef.current?.scrollTo({ y, animated: true })
-	 */
-	onRequestScrollToY?: (y: number) => void;
+	onRequestEnsureVisible?: (rect: { windowY: number; height: number }) => void;
 }) {
 	const [draft, setDraft] = useState("");
 
@@ -93,7 +88,7 @@ export function CommentsSection({
 							item={c}
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
 							onDelete={() => comments.uiViaHookDeleteComment({ commentId: c.id })}
-							onRequestScrollToY={onRequestScrollToY}
+							onRequestEnsureVisible={onRequestEnsureVisible}
 							earnedRings={c.isAuthor ? pass.displayRings : []}
 						/>
 					))}
@@ -145,13 +140,13 @@ function CommentCard({
 	item,
 	onEdit,
 	onDelete,
-	onRequestScrollToY,
+	onRequestEnsureVisible,
 	earnedRings,
 }: {
 	item: CommentItemVM;
 	onEdit: (body: string) => void;
 	onDelete: () => void;
-	onRequestScrollToY?: (y: number) => void;
+	onRequestEnsureVisible?: (rect: { windowY: number; height: number }) => void;
 	earnedRings: PassRingViewModel[];
 }) {
 	const [editing, setEditing] = useState(false);
@@ -190,30 +185,29 @@ function CommentCard({
 		return () => clearTimeout(t);
 	}, [item.transportStatus]);
 
-	const requestScrollIntoView = useCallback(() => {
-		if (!onRequestScrollToY) return;
-		const node = cardRef.current ? findNodeHandle(cardRef.current) : null;
+	const requestEditInputVisible = useCallback(() => {
+		if (!onRequestEnsureVisible) return;
+		const node = editInputRef.current
+			? findNodeHandle(editInputRef.current)
+			: cardRef.current
+				? findNodeHandle(cardRef.current)
+				: null;
 		if (!node) return;
 
-		// measure position in window; parent decides how to scroll
-		UIManager.measureInWindow(node, (_x, y, _w, _h) => {
-			// small offset so it doesn't stick to top
-			const targetY = Math.max(0, y - 80);
-			onRequestScrollToY(targetY);
+		UIManager.measureInWindow(node, (_x, windowY, _w, height) => {
+			onRequestEnsureVisible({ windowY, height });
 		});
-	}, [onRequestScrollToY]);
+	}, [onRequestEnsureVisible]);
 
 	const startEdit = useCallback(() => {
 		setEditing(true);
 
-		// next tick: scroll card into view, then focus
 		requestAnimationFrame(() => {
-			requestScrollIntoView();
-			requestAnimationFrame(() => {
-				editInputRef.current?.focus();
-			});
+			editInputRef.current?.focus();
+			requestAnimationFrame(requestEditInputVisible);
+			setTimeout(requestEditInputVisible, 280);
 		});
-	}, [requestScrollIntoView]);
+	}, [requestEditInputVisible]);
 
 	const save = () => {
 		const txt = draft.trim();
@@ -270,7 +264,10 @@ function CommentCard({
 							multiline
 							textAlignVertical="top"
 							selectionColor={palette.accent}
-							onFocus={requestScrollIntoView}
+							onFocus={() => {
+								requestAnimationFrame(requestEditInputVisible);
+								setTimeout(requestEditInputVisible, 280);
+							}}
 						/>
 						<View style={s.editActions}>
 							<Pressable
