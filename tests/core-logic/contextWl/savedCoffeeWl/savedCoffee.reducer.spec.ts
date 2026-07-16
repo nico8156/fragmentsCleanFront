@@ -65,6 +65,37 @@ describe("savedCoffeeReducer", () => {
 		expect(state.byCoffeeId["coffee-server"]).not.toHaveProperty("optimistic");
 	});
 
+	it("preserves enriched display fields when a server snapshot is generic", () => {
+		const enriched = savedCoffeeReducer(undefined, savedCoffeesRetrieved({
+			items: [{
+				coffeeId: "coffee-1",
+				name: "Café Belleville",
+				addressLine: "12 rue des Fleurs",
+				city: "Rennes",
+				savedAt: "2026-07-15T09:30:00.000Z",
+				version: 8,
+			}],
+			version: 8,
+		}));
+
+		const state = savedCoffeeReducer(enriched, savedCoffeesRetrieved({
+			items: [{
+				coffeeId: "coffee-1",
+				name: "Café",
+				savedAt: "2026-07-15T09:30:00.000Z",
+				version: 9,
+			}],
+			version: 9,
+		}));
+
+		expect(state.byCoffeeId["coffee-1"]).toMatchObject({
+			name: "Café Belleville",
+			addressLine: "12 rue des Fleurs",
+			city: "Rennes",
+			version: 9,
+		});
+	});
+
 	it("reconciles applied saves and rolls rejected removals back to the previous item", () => {
 		const previous = {
 			coffeeId: "coffee-1",
