@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 export function useBlurOverlay(isOpen: boolean) {
 	const [shouldRender, setShouldRender] = useState(false);
@@ -10,7 +10,7 @@ export function useBlurOverlay(isOpen: boolean) {
 	const hideFast = useCallback(() => {
 		opacity.value = withTiming(0, { duration: 90 });
 		setTimeout(() => setShouldRender(false), 110);
-	}, []);
+	}, [opacity]);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -21,8 +21,7 @@ export function useBlurOverlay(isOpen: boolean) {
 		opacity.value = withTiming(0, { duration: 120 });
 		const t = setTimeout(() => setShouldRender(false), 140);
 		return () => clearTimeout(t);
-	}, [isOpen]);
+	}, [isOpen, opacity]);
 
 	return { shouldRender, style, hideFast };
 }
-

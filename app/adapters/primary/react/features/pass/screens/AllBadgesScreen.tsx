@@ -1,7 +1,7 @@
 // AllBadgesScreen.tsx
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -45,4 +45,3 @@ const styles = StyleSheet.create({
 });
 
 export default AllBadgesScreen;
-

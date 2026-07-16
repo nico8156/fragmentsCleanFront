@@ -29,7 +29,7 @@ export const coffeeGlobalRetrieval =
                 const { items } = await coffeeWlGateway!.coffees!.getAllSummaries();
                 // Pas d’optimisme ici : c’est pure read
                 dispatch(coffeesHydrated(items));
-            } catch (e: any) {
+            } catch {
                 throw new Error("Error loading coffee global");
 
             }

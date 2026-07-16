@@ -1,7 +1,5 @@
 const isDev = __DEV__ === true;
 
-type LogLevel = "debug" | "info" | "warn" | "error";
-
 type Logger = {
 	debug: (...args: any[]) => void;
 	info: (...args: any[]) => void;
@@ -32,4 +30,3 @@ export const logger: Logger = {
 		console.error("[ERROR]", ...redactor(args));
 	},
 };
-

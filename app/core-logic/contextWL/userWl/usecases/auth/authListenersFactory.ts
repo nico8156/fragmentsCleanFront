@@ -164,7 +164,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				}
 
 				api.dispatch(authMaybeRefreshRequested());
-			} catch (error: any) {
+			} catch {
 				activeSession = undefined;
 				api.dispatch(
 					authSignInFailed({

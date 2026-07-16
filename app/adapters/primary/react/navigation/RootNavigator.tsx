@@ -32,7 +32,7 @@ import { PassScreen } from "@/app/adapters/primary/react/features/pass/screens/P
 
 import { ScanTicketScreen } from "@/app/adapters/primary/react/features/scan/screens/ScanTicketScreen";
 import { SearchScreen } from "@/app/adapters/primary/react/features/search/screens/SearchScreen";
-import ScanTicketSuccessScreen from "../features/scan/screens/ScanTicketSuccessScreen";
+import { ScanTicketSuccessScreen } from "../features/scan/screens/ScanTicketSuccessScreen";
 
 import {
 	ProfileStackParamList,
@@ -251,4 +251,3 @@ export function RootNavigator() {
 		</NavigationIndependentTree>
 	);
 }
-

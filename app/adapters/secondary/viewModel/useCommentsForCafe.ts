@@ -209,7 +209,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		const delay = Math.max(0, sync.untilMs - Date.now());
 		const t = setTimeout(() => setSync(null), delay);
 		return () => clearTimeout(t);
-	}, [sync?.state, sync?.untilMs]);
+	}, [sync]);
 
 	// -------------------------
 	// read lifecycle

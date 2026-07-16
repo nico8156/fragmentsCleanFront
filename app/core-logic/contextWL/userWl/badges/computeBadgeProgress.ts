@@ -8,8 +8,6 @@ export const computeBadgeProgressFromState = (state: RootStateWl): BadgeProgress
     const currentUser = state.aState.currentUser;
     if (!currentUser) return getDefaultBadgeProgress();
 
-    const base = currentUser?.preferences?.badgeProgress ?? getDefaultBadgeProgress();
-
     const confirmedTickets = Object.values(state.tState.byId).filter((ticket) => ticket.status === "CONFIRMED");
     const exploration = unique(
         confirmedTickets.map((ticket) => ticket.merchantName?.trim()).filter(Boolean) as string[],
