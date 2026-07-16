@@ -11,8 +11,7 @@ const googleIosClientId =
   base.expo.extra?.googleMobileIosClientId;
 const googleMobileIosRedirectUri =
   process.env.EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI ??
-  base.expo.extra?.googleMobileIosRedirectUri ??
-  "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect";
+  base.expo.extra?.googleMobileIosRedirectUri;
 
 const plugins = env === "production"
   ? base.expo.plugins?.filter((plugin) => {
@@ -23,6 +22,10 @@ const plugins = env === "production"
 
 if (env === "production" && !envApiBaseUrl) {
   throw new Error("Missing EXPO_PUBLIC_API_BASE_URL for production build");
+}
+
+if (env === "production" && googleIosClientId && !googleMobileIosRedirectUri) {
+  throw new Error("Missing EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI for production build");
 }
 
 module.exports = {
