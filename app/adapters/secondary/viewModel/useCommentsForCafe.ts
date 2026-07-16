@@ -22,21 +22,16 @@ import {
 	isOutboxPendingStatus,
 	selectOutboxStatusByCommentId,
 } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
-import { StatusType, statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { StatusType } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { selectCurrentUser, selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 
-import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
 import {
 	computeCommentSyncDecision,
 	computeLocalPendingFeedbackIds,
 } from "@/app/adapters/secondary/viewModel/commentSyncVm";
+import { buildCommentItemVM } from "@/app/adapters/secondary/viewModel/commentItemVm";
 
 const DEFAULT_STALE_AFTER_MS = 30_000;
-
-const buildFallbackAvatarUrl = (id: string) =>
-	`https://i.pravatar.cc/120?u=${encodeURIComponent(id)}`;
-
-const normalizeAuthorId = (authorId: string) => authorId;
 
 export type CommentSyncState = "pending" | "acked" | "failed";
 export type CommentSyncVM = { state: CommentSyncState; untilMs: number } | null;
@@ -73,29 +68,6 @@ const EMPTY_COMMENTS_RESULT: CommentsSelectorResult = {
 
 const selectEmptyComments: (state: RootStateWl) => CommentsSelectorResult = () =>
 	EMPTY_COMMENTS_RESULT;
-
-const formatRelativeTime = (isoDate: string): string => {
-	const d = new Date(isoDate);
-	if (Number.isNaN(d.getTime())) return "Date inconnue";
-
-	const diffMs = Date.now() - d.getTime();
-	const diffSec = Math.max(1, Math.floor(diffMs / 1000));
-	if (diffSec < 60) return "À l'instant";
-
-	const diffMin = Math.floor(diffSec / 60);
-	if (diffMin < 60) return `Il y a ${diffMin} min`;
-
-	const diffHours = Math.floor(diffMin / 60);
-	if (diffHours < 24) return `Il y a ${diffHours} h`;
-
-	const diffDays = Math.floor(diffHours / 24);
-	if (diffDays < 7) return `Il y a ${diffDays} j`;
-
-	const diffWeeks = Math.floor(diffDays / 7);
-	if (diffWeeks < 5) return `Il y a ${diffWeeks} sem`;
-
-	return d.toLocaleDateString("fr-FR");
-};
 
 const isPendingStatus = (s?: StatusType) => isOutboxPendingStatus(s);
 
@@ -172,48 +144,22 @@ export function useCommentsForCafe(targetId?: CafeId) {
 	// -------------------------
 	const viewModel: CommentItemVM[] = useMemo(() => {
 		const meId = effectiveUserId ? String(effectiveUserId) : undefined;
+		const nowMs = Date.now();
 
 		const visible = comments.filter(
 			(c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED,
 		);
 
 		return visible.map((c) => {
-			const normalizedAuthorId = normalizeAuthorId(c.authorId);
-			const isCurrentUser = Boolean(meId) && String(meId) === String(c.authorId);
-
-			const communityProfile = getCommunityProfile(normalizedAuthorId);
-
-			// ✅ transportStatus derived from outbox status (NOT optimistic flag)
 			const status = outboxStatusByCommentId[c.id];
-
-			let transportStatus: "pending" | "success" | "failed" = "success";
-			if (status === statusTypes.failed) transportStatus = "failed";
-			else if (isPendingStatus(status)) transportStatus = "pending";
-			else transportStatus = "success";
-
-			const fallbackName = isCurrentUser
-				? currentUser?.displayName ?? "Moi"
-				: communityProfile?.displayName ?? normalizedAuthorId;
-
-			const fallbackAvatar = isCurrentUser
-				? currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(meId ?? "me"))
-				: communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId);
-
-			const authorName = c.authorName ?? fallbackName;
-			const avatarUrl = (c.avatarUrl ?? undefined) ?? fallbackAvatar;
-
-			return {
-				id: c.id,
-				authorName,
-				avatarUrl,
-				body: c.body,
-				createdAt: c.createdAt,
-				relativeTime: formatRelativeTime(c.createdAt),
-				transportStatus,
-				showPendingFeedback: transportStatus === "pending" && localPendingIdsRef.current.has(c.id),
-				isOptimistic: Boolean(c.optimistic),
-				isAuthor: isCurrentUser,
-			};
+			return buildCommentItemVM({
+				comment: c,
+				currentUser,
+				effectiveUserId: meId,
+				outboxStatus: status,
+				showPendingFeedback: localPendingIdsRef.current.has(c.id),
+				nowMs,
+			});
 		});
 	}, [comments, outboxStatusByCommentId, currentUser, effectiveUserId]);
 
