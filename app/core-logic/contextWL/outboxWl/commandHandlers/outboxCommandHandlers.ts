@@ -1,9 +1,13 @@
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
+import type { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
+import type { LikeWlGateway } from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
 import { likeRollback } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.action";
 import { likeSyncAcked, likeSyncFailed } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
 import type { LikeUndo } from "@/app/core-logic/contextWL/likeWl/typeAction/likeWl.type";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
+import type { SavedCoffeeGateway } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
 import { savedCoffeeReconciled, savedCoffeeRollback } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.action";
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 import {
@@ -19,16 +23,24 @@ import {
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import type { TicketsWlGateway } from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
-import type { GatewaysWl } from "@/app/adapters/primary/wiring/types";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
 type CommandHandlerLogger = {
 	warn?: (message: string, payload?: unknown) => void;
 };
 
+export type OutboxCommandGatewayDeps = {
+	comments?: CommentsWlGateway;
+	likes?: LikeWlGateway;
+	savedCoffees?: SavedCoffeeGateway;
+	tickets?: TicketsWlGateway;
+	entitlements?: EntitlementWlGateway;
+};
+
 export const getOutboxCommandGateway = (
-	gateways: Partial<GatewaysWl> | undefined,
+	gateways: OutboxCommandGatewayDeps | undefined,
 	kind: string,
 ) => {
 	switch (kind) {
@@ -233,7 +245,7 @@ export const reconcileAppliedOutboxRecord = ({
 }: {
 	record: OutboxRecord;
 	dispatch: AppDispatchWl;
-	gateways: Partial<GatewaysWl> | undefined;
+	gateways: OutboxCommandGatewayDeps | undefined;
 	userId?: string;
 }) => {
 	const item = record.item as any;
