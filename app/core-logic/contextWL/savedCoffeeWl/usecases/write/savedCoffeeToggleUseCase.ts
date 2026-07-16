@@ -1,8 +1,8 @@
 import { createAction, createListenerMiddleware, nanoid, TypedStartListening } from "@reduxjs/toolkit";
 
-import { computeSavedCoffeeId } from "@/app/adapters/secondary/gateways/savedCoffee/helpers/savedCoffeeId";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { computeSavedCoffeeId } from "@/app/core-logic/contextWL/savedCoffeeWl/model/savedCoffeeId";
 import { selectSavedCoffeeById } from "@/app/core-logic/contextWL/savedCoffeeWl/selector/savedCoffee.selector";
 import { savedCoffeeOptimisticSet } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.action";
 import type { SavedCoffeeItem } from "@/app/core-logic/contextWL/savedCoffeeWl/typeAction/savedCoffee.type";
