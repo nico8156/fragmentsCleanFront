@@ -8,6 +8,7 @@ import {
 import {
     getOnceRequested,
     permissionCheckRequested, requestPermission,
+    startWatchRequested,
     stopWatchRequested
 } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 
@@ -22,7 +23,7 @@ export function useUserLocationFromStore() {
     return {
         coords, status, permission, lastUpdated,
         refresh: () => dispatch(getOnceRequested({accuracy:"balanced"})),
-        startWatch: (opts?: any) => dispatch({ type: 'Location/StartWatchRequested', payload: opts }),
+        startWatch: (opts?: any) => dispatch(startWatchRequested(opts)),
         stopWatch: () => dispatch(stopWatchRequested()),
         checkPermission: () => dispatch(permissionCheckRequested()),
         requestPermission: () => dispatch(requestPermission()),
