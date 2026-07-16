@@ -97,37 +97,35 @@ export function CommentsSection({
 
 			{/* COMPOSER (lighter) */}
 			<View style={s.composer}>
-				<View style={s.composerRow}>
-					<TextInput
-						ref={inputRef}
-						value={draft}
-						onChangeText={setDraft}
-						onFocus={() => onRequestScrollToComposer?.()}
-						placeholder="Écris un commentaire…"
-						placeholderTextColor={palette.textMuted}
-						style={s.input}
-						multiline
-						textAlignVertical="top"
-						selectionColor={palette.accent}
-					/>
+				<TextInput
+					ref={inputRef}
+					value={draft}
+					onChangeText={setDraft}
+					onFocus={() => onRequestScrollToComposer?.()}
+					placeholder="Écris un commentaire…"
+					placeholderTextColor={palette.textMuted}
+					style={s.input}
+					multiline
+					textAlignVertical="top"
+					selectionColor={palette.accent}
+				/>
 
-					<Pressable
-						onPress={submit}
-						disabled={!canSend}
-						style={({ pressed }) => [
-							s.sendIconBtn,
-							!canSend && s.sendBtnDisabled,
-							pressed && canSend && s.pressed,
-						]}
-					>
-						<SymbolView
-							name="paperplane.fill"
-							size={16}
-							tintColor={palette.textPrimary}
-							fallback={<Text>➤</Text>}
-						/>
-					</Pressable>
-				</View>
+				<Pressable
+					onPress={submit}
+					disabled={!canSend}
+					style={({ pressed }) => [
+						s.sendIconBtn,
+						!canSend && s.sendBtnDisabled,
+						pressed && canSend && s.pressed,
+					]}
+				>
+					<SymbolView
+						name="paperplane.fill"
+						size={16}
+						tintColor={palette.textPrimary}
+						fallback={<Text>➤</Text>}
+					/>
+				</Pressable>
 
 				{/* show counter only when it starts to matter */}
 				{charCount > 220 ? <Text style={s.counterHint}>{charCount} car.</Text> : null}
@@ -404,20 +402,19 @@ const s = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
 		padding: 9,
-	},
-	composerRow: {
-		flexDirection: "row",
-		alignItems: "flex-end",
+		position: "relative",
 	},
 
 	input: {
-		flex: 1,
+		width: "100%",
 		minHeight: 92,
 		borderRadius: 16,
 		borderWidth: 1,
 		borderColor: palette.border_muted_30,
 		backgroundColor: palette.elevated,
 		padding: 10,
+		paddingRight: 58,
+		paddingBottom: 44,
 		color: palette.textPrimary,
 		fontWeight: "400",
 		fontSize: 14,
@@ -425,17 +422,27 @@ const s = StyleSheet.create({
 	},
 
 	sendIconBtn: {
-		marginLeft: 10,
+		position: "absolute",
+		right: 18,
+		bottom: 18,
 		height: 44,
 		width: 44,
-		borderRadius: 16,
-		backgroundColor: palette.accentSoft,
+		borderRadius: 22,
+		backgroundColor: palette.accent,
 		borderWidth: 1,
-		borderColor: palette.accent_30,
+		borderColor: palette.accent_80,
 		alignItems: "center",
 		justifyContent: "center",
+		shadowColor: "#000000",
+		shadowOpacity: 0.18,
+		shadowRadius: 8,
+		shadowOffset: { width: 0, height: 4 },
 	},
-	sendBtnDisabled: { opacity: 0.45 },
+	sendBtnDisabled: {
+		opacity: 0.5,
+		backgroundColor: palette.overlay,
+		borderColor: palette.border_muted_30,
+	},
 
 	counterHint: {
 		marginTop: 8,
