@@ -31,7 +31,7 @@ describe("commentItemVm", () => {
 				body: "Bonjour",
 				createdAt: "2026-07-16T11:59:40.000Z",
 				version: 1,
-				moderation: moderationTypes.VISIBLE,
+				moderation: moderationTypes.PUBLISHED,
 			} as any,
 			currentUser: { displayName: "Nicolas", avatarUrl: null },
 			effectiveUserId: "user_1",

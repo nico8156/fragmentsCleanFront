@@ -18,9 +18,13 @@ const CoffeeSelection = ({ onSelect, selectedId, zoomLevel, coffee }: Props) => 
                 <CoffeeMarker
                     key={id}
                     coffee={coffee}
-                    onSelect={onSelect}
+                    onSelect={() => onSelect?.(String(id))}
                     selected={selectedId === id}
                     zoomLevel={zoomLevel}
+                    coordinate={{
+                        latitude: coffee.location.lat,
+                        longitude: coffee.location.lng,
+                    }}
                 />
             ))}
         </>
