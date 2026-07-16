@@ -16,6 +16,19 @@ import { RootStackParamList, RootStackNavigationProp } from "@/app/adapters/prim
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
 
+const articleColors = {
+    background: "#FFFFFF",
+    ink: "#111827",
+    text: "#374151",
+    muted: "#4B5563",
+    subtle: "#6A6A6A",
+    soft: "#9A9A9A",
+    chipBackground: "#F3F4F6",
+    backIcon: "#1C1C1E",
+    backSurface: "rgba(255,255,255,0.85)",
+    shadow: "#000000",
+};
+
 const formatDate = (value?: string) => {
     if (!value) return undefined;
     try {
@@ -102,7 +115,7 @@ type AnimatedBackButtonProps = {
 function AnimatedBackButton({ onPress, topInset }: AnimatedBackButtonProps) {
     return (
         <Pressable onPress={onPress} style={[styles.backButton, { top: topInset + 12 }]}>
-            <SymbolView name="chevron.left" size={18} tintColor="#1C1C1E    " />
+            <SymbolView name="chevron.left" size={18} tintColor={articleColors.backIcon} />
         </Pressable>
     );
 }
@@ -110,7 +123,7 @@ function AnimatedBackButton({ onPress, topInset }: AnimatedBackButtonProps) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: articleColors.background,
     },
     scrollContent: {
         paddingBottom: 48,
@@ -124,7 +137,7 @@ const styles = StyleSheet.create({
     errorText: {
         textAlign: "center",
         fontSize: 16,
-        color: "#5B5B5B",
+        color: articleColors.subtle,
     },
     coverImage: {
         width: "100%",
@@ -137,13 +150,13 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 13,
-        color: "#6A6A6A",
+        color: articleColors.subtle,
         textTransform: "uppercase",
         letterSpacing: 0.8,
     },
     dateText: {
         fontSize: 12,
-        color: "#9A9A9A",
+        color: articleColors.soft,
         marginTop: 8,
         marginBottom: 16,
     },
@@ -154,7 +167,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     tag: {
-        backgroundColor: "#F3F4F6",
+        backgroundColor: articleColors.chipBackground,
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 20,
@@ -162,19 +175,19 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     tagText: {
-        color: "#4B5563",
+        color: articleColors.muted,
         fontSize: 12,
         fontWeight: "600",
     },
     title: {
         fontSize: 28,
         fontWeight: "700",
-        color: "#111827",
+        color: articleColors.ink,
         marginTop: 16,
     },
     intro: {
         fontSize: 16,
-        color: "#4B5563",
+        color: articleColors.muted,
         marginTop: 12,
         lineHeight: 24,
     },
@@ -185,22 +198,22 @@ const styles = StyleSheet.create({
     blockHeading: {
         fontSize: 22,
         fontWeight: "700",
-        color: "#111827",
+        color: articleColors.ink,
     },
     blockParagraph: {
         fontSize: 16,
-        color: "#374151",
+        color: articleColors.text,
         lineHeight: 24,
     },
     blockImage: {
         width: "100%",
         height: 220,
-        borderRadius: 16,
+        borderRadius: 8,
     },
     conclusion: {
         marginTop: 32,
         fontSize: 16,
-        color: "#111827",
+        color: articleColors.ink,
         lineHeight: 24,
         fontWeight: "600",
     },
@@ -214,11 +227,11 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         gap: 4,
         zIndex: 10,
-        backgroundColor: "rgba(255,255,255,0.85)",
+        backgroundColor: articleColors.backSurface,
         borderWidth: 1,
         borderColor: palette.secondary_90,
         borderRadius: 999,
-        shadowColor: "#000000",
+        shadowColor: articleColors.shadow,
         shadowOpacity: 0.12,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },
@@ -226,7 +239,7 @@ const styles = StyleSheet.create({
     backText: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#111827",
+        color: articleColors.ink,
     },
 });
 
