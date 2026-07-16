@@ -32,20 +32,46 @@ const removeId = (state: SavedCoffeeStateWl, coffeeId: string) => {
 	state.ids = state.ids.filter((id) => id !== coffeeId);
 };
 
+const GENERIC_COFFEE_NAME = "Café";
+
+const hasText = (value?: string | null): value is string =>
+	typeof value === "string" && value.trim().length > 0;
+
+const isGenericName = (value?: string | null) =>
+	!hasText(value) || value.trim() === GENERIC_COFFEE_NAME;
+
+const preserveDisplayFields = (
+	item: SavedCoffeeItem,
+	local?: SavedCoffeeItem,
+): SavedCoffeeItem => {
+	if (!local) return item;
+
+	const localHasSpecificName = !isGenericName(local.name);
+	return {
+		...item,
+		name: isGenericName(item.name) && localHasSpecificName ? local.name : item.name,
+		addressLine: hasText(item.addressLine) ? item.addressLine : local.addressLine,
+		city: hasText(item.city) ? item.city : local.city,
+		postalCode: hasText(item.postalCode) ? item.postalCode : local.postalCode,
+		country: hasText(item.country) ? item.country : local.country,
+	};
+};
+
 const applyServerItems = (state: SavedCoffeeStateWl, items: SavedCoffeeItem[]) => {
 	const nextById: Record<string, SavedCoffeeItem> = {};
 	const nextIds: string[] = [];
 
 	for (const item of items) {
 		const local = state.byCoffeeId[item.coffeeId];
+		const displaySafeItem = preserveDisplayFields(item, local);
 		if (local?.optimistic) {
 			nextById[item.coffeeId] = {
-				...item,
+				...displaySafeItem,
 				...local,
-				version: Math.max(item.version, local.version),
+				version: Math.max(displaySafeItem.version, local.version),
 			};
 		} else {
-			nextById[item.coffeeId] = item;
+			nextById[item.coffeeId] = displaySafeItem;
 		}
 		nextIds.push(item.coffeeId);
 	}
