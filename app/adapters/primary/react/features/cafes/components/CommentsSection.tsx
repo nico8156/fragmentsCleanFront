@@ -122,7 +122,7 @@ export function CommentsSection({
 					<SymbolView
 						name="paperplane.fill"
 						size={16}
-						tintColor={palette.textPrimary}
+						tintColor={palette.danger}
 						fallback={<Text>➤</Text>}
 					/>
 				</Pressable>
@@ -428,9 +428,9 @@ const s = StyleSheet.create({
 		height: 44,
 		width: 44,
 		borderRadius: 22,
-		backgroundColor: palette.accent,
+		backgroundColor: palette.danger_30,
 		borderWidth: 1,
-		borderColor: palette.accent_80,
+		borderColor: palette.danger,
 		alignItems: "center",
 		justifyContent: "center",
 		shadowColor: "#000000",
