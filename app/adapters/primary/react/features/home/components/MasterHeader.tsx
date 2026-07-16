@@ -49,7 +49,7 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                     <Pressable style={styles.card} onPress={() => handlePress(item.slug)}>
                         <View style={styles.imageWrapper}>
                             <Image
-                                source={{ uri: item.cover.url }}
+                                source={item.cover.url}
                                 style={styles.backgroundImage}
                                 contentFit="cover"
                                 cachePolicy="memory-disk"

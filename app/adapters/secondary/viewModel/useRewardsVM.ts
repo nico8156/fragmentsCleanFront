@@ -14,6 +14,7 @@ import {
 
 import { selectVisitedCafesCount } from "@/app/core-logic/contextWL/locationWl/selector/location.selector";
 import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+import type { TicketAggregate } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import { BadgeProgress } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));

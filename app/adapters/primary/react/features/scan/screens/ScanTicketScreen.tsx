@@ -59,7 +59,7 @@ export function ScanTicketScreen() {
 
 				{error && <Text style={styles.error}>{error}</Text>}
 
-				{hasImage && (
+				{imageUri && (
 					<View style={styles.previewBlock}>
 						<Image source={{ uri: imageUri }} style={styles.preview} />
 
