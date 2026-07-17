@@ -28,6 +28,7 @@ import { selectNonTerminalTicketIds } from "@/app/core-logic/contextWL/ticketWl/
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { selectKnownCommentTargetIds } from "@/app/core-logic/contextWL/commentWl/selector/commentWl.selector";
+import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
@@ -82,6 +83,13 @@ export const runtimeListenerFactory = () => {
 		api.dispatch(refreshNonTerminalTickets() as any);
 	};
 
+	const refreshExpiringPublicReadModels = (api: {
+		dispatch: AppDispatchWl;
+		getState: () => RootStateWl;
+	}) => {
+		api.dispatch(onCfPhotoRetrieval() as any);
+	};
+
 	const refreshKnownReadModels = (api: {
 		dispatch: AppDispatchWl;
 		getState: () => RootStateWl;
@@ -132,6 +140,9 @@ export const runtimeListenerFactory = () => {
 		}
 
 		if (!bootReady) return;
+		if (online) {
+			refreshExpiringPublicReadModels(api);
+		}
 		if (!authed) return;
 
 		// ✅ Toujours : refresh + hydrate.

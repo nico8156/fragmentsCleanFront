@@ -30,6 +30,7 @@ import {
 import { seedBootReady, seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 import { FakeCommentsWlGateway } from "@/tests/core-logic/fakes/FakeCommentsWlGateway";
 import { FakeEntitlementWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeEntitlementWlGateway";
+import { FakeCfPhotoWlGateway } from "@/app/adapters/secondary/gateways/fake/fakeCfPhotoWlGateway";
 import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
@@ -136,6 +137,28 @@ describe("runtimeListenerFactory (appWl)", () => {
 			]),
 		);
 		expect(types.filter((type) => type === projectionSyncEnsureConnectedRequested.type)).toHaveLength(1);
+	});
+
+	it("appBecameForeground refreshes coffee photos to renew signed URLs", async () => {
+		const cfPhotos = new FakeCfPhotoWlGateway();
+		const localStore = initReduxStoreWl({
+			dependencies: {
+				gateways: {
+					cfPhotos,
+				} as any,
+				helpers: {} as any,
+			},
+			listeners: [runtimeListenerFactory()],
+		});
+
+		seedSignedIn(localStore, { userId: "u1" });
+		seedBootReady(localStore);
+
+		localStore.dispatch(appBecameForeground());
+		await flush();
+		await flush();
+
+		expect(cfPhotos.getCalls).toBe(1);
 	});
 
 	// ─────────────────────────────────────────────────────────────
@@ -252,6 +275,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		const likes = new FakeLikesGateway();
 		const tickets = new FakeTicketsGateway();
 		const entitlements = new FakeEntitlementWlGateway();
+		const cfPhotos = new FakeCfPhotoWlGateway();
 		const savedCoffees = new FakeSavedCoffeeGateway();
 
 		comments.nextListResponse = {
@@ -285,6 +309,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 					likes,
 					tickets,
 					entitlements,
+					cfPhotos,
 					savedCoffees,
 				} as any,
 				helpers: {} as any,
@@ -331,6 +356,7 @@ describe("runtimeListenerFactory (appWl)", () => {
 		await flush();
 
 		expect(comments.listCalls.map((call) => call.targetId)).toEqual(["coffee_1"]);
+		expect(cfPhotos.getCalls).toBe(1);
 		expect(likes.getCalls).toEqual([{ targetId: "coffee_1" }]);
 		expect(savedCoffees.getCalls).toBe(1);
 		expect(tickets.getStatusCalls.map((call) => call.ticketId)).toEqual(["ticket_1"]);
