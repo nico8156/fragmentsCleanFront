@@ -277,19 +277,9 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			const authServer = getAuthServer();
 
 			const session = activeSession;
-
-			try {
-				if (session && authServer) {
-					await authServer.logout(session);
-				}
-
-				if (session && oAuthGateway) {
-					await oAuthGateway.signOut(session.provider);
-				}
-			} catch (e) {
-				console.warn("[LOGOUT] error during remote logout", e);
-			}
-
+			// Signing out must always release the UI immediately. Remote logout is
+			// best-effort only: a stalled network request must never trap the root
+			// navigator on its loading screen.
 			activeSession = undefined;
 			deps.onSessionChanged?.(activeSession);
 
@@ -298,6 +288,20 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			}
 
 			api.dispatch(authSignedOut());
+
+			void (async () => {
+				try {
+					if (session && authServer) {
+						await authServer.logout(session);
+					}
+
+					if (session && oAuthGateway) {
+						await oAuthGateway.signOut(session.provider);
+					}
+				} catch (e) {
+					console.warn("[LOGOUT] error during remote logout", e);
+				}
+			})();
 		},
 	});
 
