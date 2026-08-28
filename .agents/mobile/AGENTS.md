@@ -16,6 +16,11 @@ Before coding, classify the task:
 
 Use the matching orchestrator in `.agents/mobile/orchestrators`.
 
+Article responses are untrusted transport data. The HTTP gateway must validate
+and map the structured public contract explicitly; backend JSON must never be
+cast directly to the `Article` domain type. The public shape remains
+`title -> intro -> ordered blocks -> conclusion`, with cover and tags metadata.
+
 ## Mandatory Rules
 
 - Mobile owns UX, not backend truth.

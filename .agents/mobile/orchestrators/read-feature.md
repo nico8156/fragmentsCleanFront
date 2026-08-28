@@ -9,6 +9,9 @@ Use this when retrieving data for display.
 - map backend DTOs in gateways or use cases, not JSX
 - keep selectors stable for view models
 
+For articles, the gateway mapper owns transport-to-domain conversion. Screens,
+reducers, and selectors do not parse backend JSON or provider payloads.
+
 ## Steps
 
 1. Identify owning client context.
@@ -34,4 +37,3 @@ Use this when retrieving data for display.
 - failure path exposes error
 - screen consumes a view model
 - tests use fake gateway, not real network
-

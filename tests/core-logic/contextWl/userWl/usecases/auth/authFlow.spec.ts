@@ -230,4 +230,32 @@ describe("auth flow", () => {
 		expect(state.status).toBe("signedOut");
 		expect(secureStore.snapshot()).toBeUndefined();
 	});
+
+	it("signs out locally even when remote logout never resolves", async () => {
+		const oauth = new FakeOAuthGateway();
+		const secureStore = new FakeAuthSecureStore();
+		const userRepo = new FakeUserRepo([makeDemoUser()]);
+		const authServer = {
+			async logout() {
+				await new Promise<void>(() => undefined);
+			},
+		};
+		const deps = {
+			gateways: {
+				auth: { oauth, secureStore, userRepo, server: authServer },
+			},
+			helpers: {},
+		};
+		const store = createTestStore(deps);
+
+		store.dispatch<any>(signInWithProvider({ provider: "google" }));
+		await flush();
+
+		store.dispatch<any>(signOut());
+		await flush();
+
+		const state = store.getState().aState;
+		expect(state.status).toBe("signedOut");
+		expect(secureStore.snapshot()).toBeUndefined();
+	});
 });
