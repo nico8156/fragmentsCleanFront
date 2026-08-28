@@ -13,6 +13,7 @@ Read in order:
 3. [Offline readiness](offline-readiness.md)
 4. [ACK and command status](ack-and-command-status.md)
 5. [Configuration and App Store](configuration-app-store.md)
+6. [Article reading flow](article-reading-flow.md)
 
 ## Redux Action Map
 
