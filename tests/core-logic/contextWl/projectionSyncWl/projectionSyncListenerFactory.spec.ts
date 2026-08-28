@@ -14,6 +14,7 @@ import { FakeLikesGateway } from "@/tests/core-logic/fakes/FakeLikesGateway";
 import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway";
 import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
 import type { SavedCoffeeGateway, SavedCoffeeSnapshot } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
+import type { ArticleWlGateway } from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -70,9 +71,46 @@ class FakeSavedCoffeeGateway implements SavedCoffeeGateway {
 	}
 }
 
+class FakeArticleGateway implements ArticleWlGateway {
+	listCalls = 0;
+
+	async list() {
+		this.listCalls++;
+		return { items: [] };
+	}
+
+	async getBySlug(): Promise<any> {
+		throw new Error("not used");
+	}
+}
+
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("projectionSyncListenerFactory", () => {
+	it("routes projection.updated/articles to the canonical articles GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const articles = new FakeArticleGateway();
+		const gateways = { projectionSync, articles } as any;
+		const store = initReduxStoreWl({
+			dependencies: { gateways },
+			listeners: [projectionSyncListenerFactory({
+				gateways,
+				sessionRef: { current: { tokens: { accessToken: "mobile-token" } } as any },
+			})],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+		projectionSync.emit({
+			id: "article-event-1", eventName: "projection.updated", schemaVersion: 1,
+			projection: "articles", scope: "entity", entityId: "article-1", hints: ["published"],
+		});
+		await flush();
+		await flush();
+
+		expect(articles.listCalls).toBe(1);
+	});
+
 	it("ignores heartbeat and routes projection.updated/comments to comments refresh GET", async () => {
 		const projectionSync = new FakeProjectionSyncGateway();
 		const comments = new FakeCommentsWlGateway();

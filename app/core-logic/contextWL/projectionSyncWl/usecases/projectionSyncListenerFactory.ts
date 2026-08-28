@@ -5,6 +5,7 @@ import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit"
 import {
 	appBecameBackground,
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { articlesListRetrieval } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
@@ -90,6 +91,16 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	const routeProjectionUpdated = (event: ProjectionSyncEvent, dispatch: AppDispatchWl) => {
 		if (isIgnorableSyncEvent(event)) return;
 		if (event.eventName !== "projection.updated") return;
+
+		if (event.projection === "articles" && (event.scope === "entity" || event.scope === "collection")) {
+			outboxTelemetry.projectionRefreshRequested({
+				projection: "articles",
+				scope: event.scope,
+				entityId: event.entityId,
+				source: "projectionSync",
+			});
+			dispatch(articlesListRetrieval({ locale: "fr-FR" }) as any);
+		}
 
 		if (event.projection === "comments" && event.scope === "target" && event.entityId) {
 			outboxTelemetry.projectionRefreshRequested({
