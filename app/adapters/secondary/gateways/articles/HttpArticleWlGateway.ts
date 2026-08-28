@@ -1,5 +1,6 @@
 import type { ArticleWlGateway } from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
 import type { Article, Locale } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
+import {mapArticleTransport} from "./ArticleTransportMapper";
 
 type HttpArticleWlGatewayDeps = {
 	baseUrl: string; // ex: https://api.fragments.app
@@ -30,7 +31,7 @@ export class HttpArticleWlGateway implements ArticleWlGateway {
 		if (!res.ok) throw new Error(`Article get failed: HTTP ${res.status}`);
 
 		const etag = res.headers.get("ETag") ?? undefined;
-		const data = (await res.json()) as Article;
+		const data = mapArticleTransport(await res.json());
 
 		return { etag, data };
 	}
@@ -50,17 +51,16 @@ export class HttpArticleWlGateway implements ArticleWlGateway {
 
 		// back returns ArticleListView
 		const payload = (await res.json()) as {
-			items: Article[];
+			items: unknown;
 			nextCursor?: string;
 			prevCursor?: string;
 		};
 
 		return {
-			items: payload.items ?? [],
+			items: Array.isArray(payload.items) ? payload.items.map(mapArticleTransport) : [],
 			nextCursor: payload.nextCursor,
 			prevCursor: payload.prevCursor,
 			etag,
 		};
 	}
 }
-
