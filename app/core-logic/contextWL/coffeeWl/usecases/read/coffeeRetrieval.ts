@@ -5,7 +5,7 @@ import {
     coffeeRetrieved,
     coffeeSetError,
     coffeeSetLoading,
-    coffeesHydrated
+    coffeesHydrated, coffeeListRequested, coffeeListFailed
 } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 
 
@@ -25,11 +25,13 @@ export const coffeeRetrieval =
 export const coffeeGlobalRetrieval =
     () :AppThunkWl<Promise<void>> =>
         async (dispatch, _, coffeeWlGateway ) => {
+			dispatch(coffeeListRequested());
             try {
                 const { items } = await coffeeWlGateway!.coffees!.getAllSummaries();
                 // Pas d’optimisme ici : c’est pure read
                 dispatch(coffeesHydrated(items));
-            } catch {
+			} catch (error: any) {
+				dispatch(coffeeListFailed({ message: error?.message ?? "Error loading coffee global" }));
                 throw new Error("Error loading coffee global");
 
             }
