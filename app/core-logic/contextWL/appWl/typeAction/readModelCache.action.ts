@@ -4,10 +4,13 @@ import type { AppStateWl } from "@/app/store/appStateWl";
 
 export const READ_MODEL_CACHE_SCHEMA_VERSION = 1;
 
+type DurableCoffeeState = Omit<AppStateWl["coffees"], "requests"> &
+	Partial<Pick<AppStateWl["coffees"], "requests">>;
+
 export type DurableReadModelCacheSnapshot = {
 	schemaVersion: typeof READ_MODEL_CACHE_SCHEMA_VERSION;
 	updatedAt: string;
-	coffees?: AppStateWl["coffees"];
+	coffees?: DurableCoffeeState;
 	cfPhotos?: AppStateWl["cfPhotos"];
 	openingHours?: AppStateWl["openingHours"];
 	comments?: AppStateWl["comments"];

@@ -5,6 +5,7 @@ import {
     coffeeRetrieval
 } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import {AppStateWl} from "@/app/store/appStateWl";
+import { coffeeRetrieved } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 
 describe("On Coffee retrieval (single) : ", () => {
     let store: ReduxStoreWl;
@@ -44,9 +45,9 @@ describe("On Coffee retrieval (single) : ", () => {
         coffeeGateway.willFailGet = true;
 
         await store.dispatch<any>(coffeeRetrieval({ id: "missing" as any }));
-        const c = (store.getState() as any).cfState.byId["missing"];
-        expect(c?.loading).toBe("error");
-        expect(c?.error).toBe("coffee get failed");
+		const state = (store.getState() as any).cfState;
+		expect(state.byId["missing"]).toBeUndefined();
+		expect(state.requests.byId["missing"]).toEqual({ status: "error", error: "coffee get failed" });
     });
 
     it("should hydrates coffees (global) from gateway", async () => {
@@ -76,4 +77,41 @@ describe("On Coffee retrieval (single) : ", () => {
         expect(catalogue.ids).toEqual([]);
         expect(catalogue.byCity).toEqual({});
     });
+
+	it("does not let an out-of-order detail response overwrite a newer projection", () => {
+		const base = {
+			id: "coffee-versioned",
+			location: { lat: 48.11, lon: -1.67 },
+			address: { city: "Rennes" },
+			tags: [],
+			updatedAt: "2026-08-29T10:00:00Z" as any,
+		};
+
+		store.dispatch(coffeeRetrieved({ ...base, name: "Projection récente", version: 4 }));
+		store.dispatch(coffeeRetrieved({ ...base, name: "Projection ancienne", version: 3 }));
+
+		expect((store.getState() as any).cfState.byId["coffee-versioned"]).toMatchObject({
+			name: "Projection récente",
+			version: 4,
+		});
+	});
+
+	it("replaying the same projection snapshot is idempotent", async () => {
+		coffeeGateway.nextItems = [{
+			id: "coffee-replayed",
+			name: "Projection rejouée",
+			location: { lat: 48.11, lon: -1.67 },
+			address: { city: "Rennes" },
+			tags: [],
+			version: 2,
+			updatedAt: "2026-08-29T10:00:00Z" as any,
+		}];
+
+		await store.dispatch<any>(coffeeGlobalRetrieval());
+		await store.dispatch<any>(coffeeGlobalRetrieval());
+
+		const catalogue = (store.getState() as any).cfState;
+		expect(catalogue.ids).toEqual(["coffee-replayed"]);
+		expect(catalogue.byCity.rennes).toEqual(["coffee-replayed"]);
+	});
 });
