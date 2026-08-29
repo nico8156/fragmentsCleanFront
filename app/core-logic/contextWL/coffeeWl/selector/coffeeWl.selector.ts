@@ -13,11 +13,11 @@ import {HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction
 
 export type CafeFullVM = {
     id: CoffeeId | string;
-    googleId:string;
+    googleId?:string;
     name: string;
     location: GeoPoint;
     address: Address;
-    phoneNumber:string;
+    phoneNumber?:string;
     website?:string;
     rating?: number;     // optionnel (avg)
     tags?: string[];     // ex: ["espresso", "filter", "roaster"] FAIRE feature plus tard !
@@ -43,7 +43,7 @@ export const selectCoffeeFullVM = (id:CoffeeId) => createSelector(
     (s:RootStateWl) => selectHoursByDayVM(s,id )],
     (coffee, photos, openingHours) :CafeFullVM |undefined=> {
         if(!coffee) return undefined;
-        const photosVM = photos ?? ["https://images.unsplash.com/photo-1761026532879-0b5301cca459?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzOXx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=900"]
+        const photosVM = photos ?? [];
 
         return {
             ...coffee,

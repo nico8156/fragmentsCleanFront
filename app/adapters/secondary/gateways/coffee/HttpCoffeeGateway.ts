@@ -1,5 +1,5 @@
 import type { CoffeeWlGateway } from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
-import type { Coffee } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { mapCoffeeSummaryTransport } from "./CoffeeTransportMapper";
 
 type HttpCoffeeGatewayDeps = {
 	baseUrl: string; // ex: https://api.fragments.app
@@ -25,7 +25,7 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		if (!res.ok) throw new Error(`Coffee get failed: HTTP ${res.status}`);
 
 		const etag = res.headers.get("ETag") ?? undefined;
-		const data = (await res.json()) as Coffee;
+		const data = mapCoffeeSummaryTransport(await res.json());
 
 		return { etag, data };
 	}
@@ -37,12 +37,14 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		const res = await fetch(`${this.baseUrl}/api/coffees`, { headers });
 
 		if (res.status === 304) {
-			return { etag: input?.ifNoneMatch, items: [] }; // ou une convention “no change”
+			throw new Error("Coffee list not modified");
 		}
 		if (!res.ok) throw new Error(`Coffee list failed: HTTP ${res.status}`);
 
 		const etag = res.headers.get("ETag") ?? undefined;
-		const items = (await res.json()) as Coffee[];
+		const payload = await res.json();
+		if (!Array.isArray(payload)) throw new Error("Invalid coffee list");
+		const items = payload.map(mapCoffeeSummaryTransport);
 
 		return { etag, items };
 	}
@@ -91,4 +93,3 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		return { items: out, nextCursor: undefined };
 	}
 }
-

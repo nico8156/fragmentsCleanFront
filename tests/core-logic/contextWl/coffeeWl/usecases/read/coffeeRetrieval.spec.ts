@@ -50,14 +50,15 @@ describe("On Coffee retrieval (single) : ", () => {
     });
 
     it("should hydrates coffees (global) from gateway", async () => {
+        coffeeGateway.nextItems = [
+            { id: "coffee-1", googleId: "place-1", name: "Projection Café", location: { lat: 48.11, lon: -1.67 }, address: { city: "Rennes", country: "FR" }, phoneNumber: "0102030405", tags: [], version: 1, updatedAt: "2026-08-29T10:00:00Z" as any },
+            { id: "coffee-2", name: "Second Café", location: { lat: 48.12, lon: -1.68 }, address: { city: "Rennes", country: "FR" }, tags: [], version: 1, updatedAt: "2026-08-29T10:00:00Z" as any },
+        ];
         await store.dispatch<any>(coffeeGlobalRetrieval())
         const c = (store.getState() as any).cfState
-        expect(c.byId["07dae867-1273-4d0f-b1dd-f206b290626b"]).toBeDefined()
-        expect(c.byId["07dae867-1273-4d0f-b1dd-f206b290626b"].name).toEqual("Columbus Café & Co")
-        expect(c.byId["4302ac89-13ad-415b-9edf-d9c52957ac33"]).toBeDefined()
-        expect(c.byId["4302ac89-13ad-415b-9edf-d9c52957ac33"].name).toEqual("GANG Café de quartier")
-        expect(c.byId["4302ac89-15ad-415b-9edf-d9c52957ac33"]).toBeUndefined()
-        expect(c.byCity["rennes"].length).toEqual(14)
-        expect(c.ids.length).toEqual(15)
+        expect(c.byId["coffee-1"].name).toEqual("Projection Café")
+        expect(c.byId["coffee-2"].name).toEqual("Second Café")
+        expect(c.byCity["rennes"].length).toEqual(2)
+        expect(c.ids.length).toEqual(2)
     })
 });

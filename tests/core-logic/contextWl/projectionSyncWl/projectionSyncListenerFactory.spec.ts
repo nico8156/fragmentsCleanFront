@@ -15,6 +15,7 @@ import { FakeTicketsGateway } from "@/tests/core-logic/fakes/fakeTicketWlGateway
 import { createMemorySyncMetaStorage } from "@/app/adapters/secondary/gateways/storage/syncMetaStorage.native";
 import type { SavedCoffeeGateway, SavedCoffeeSnapshot } from "@/app/core-logic/contextWL/savedCoffeeWl/gateway/savedCoffee.gateway";
 import type { ArticleWlGateway } from "@/app/core-logic/contextWL/articleWl/gateway/articleWl.gateway";
+import { FakeCoffeeGateway } from "@/app/adapters/secondary/gateways/fake/fakeCoffeeWlGateway";
 
 class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	params?: ProjectionSyncConnectParams;
@@ -87,6 +88,30 @@ class FakeArticleGateway implements ArticleWlGateway {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("projectionSyncListenerFactory", () => {
+	it("routes projection.updated/coffees to the public projection GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const coffees = new FakeCoffeeGateway();
+		const gateways = { projectionSync, coffees } as any;
+		const store = initReduxStoreWl({
+			dependencies: { gateways },
+			listeners: [projectionSyncListenerFactory({
+				gateways,
+				sessionRef: { current: { tokens: { accessToken: "mobile-token" } } as any },
+			})],
+		});
+
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+		projectionSync.emit({
+			id: "coffee-event-1", eventName: "projection.updated", schemaVersion: 1,
+			projection: "coffees", scope: "entity", entityId: "coffee-1", hints: ["published"],
+		});
+		await flush();
+		await flush();
+
+		expect(coffees.listCalls).toBe(1);
+	});
+
 	it("routes projection.updated/articles to the canonical articles GET", async () => {
 		const projectionSync = new FakeProjectionSyncGateway();
 		const articles = new FakeArticleGateway();
