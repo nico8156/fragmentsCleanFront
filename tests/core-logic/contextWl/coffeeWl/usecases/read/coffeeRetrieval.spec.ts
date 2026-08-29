@@ -61,4 +61,19 @@ describe("On Coffee retrieval (single) : ", () => {
         expect(c.byCity["rennes"].length).toEqual(2)
         expect(c.ids.length).toEqual(2)
     })
+
+    it("replaces the catalogue snapshot and removes coffees absent from the public projection", async () => {
+        const coffee = { id: "coffee-archived", name: "Archived later", location: { lat: 48.11, lon: -1.67 }, address: { city: "Rennes" }, tags: [], version: 1, updatedAt: "2026-08-29T10:00:00Z" as any };
+        coffeeGateway.nextItems = [coffee];
+        await store.dispatch<any>(coffeeGlobalRetrieval());
+        expect((store.getState() as any).cfState.byId["coffee-archived"]).toBeDefined();
+
+        coffeeGateway.nextItems = [];
+        await store.dispatch<any>(coffeeGlobalRetrieval());
+
+        const catalogue = (store.getState() as any).cfState;
+        expect(catalogue.byId["coffee-archived"]).toBeUndefined();
+        expect(catalogue.ids).toEqual([]);
+        expect(catalogue.byCity).toEqual({});
+    });
 });
