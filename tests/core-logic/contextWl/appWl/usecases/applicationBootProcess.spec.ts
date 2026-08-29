@@ -61,6 +61,7 @@ describe("ApplicationBootProcess", () => {
 				gateways: {
 					coffees: {
 						getAllSummaries: async () => ({
+							kind: "updated",
 							items: [{
 								id: "coffee_1",
 								googleId: "google_1",

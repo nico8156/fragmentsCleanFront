@@ -7,6 +7,8 @@ import {
 } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
 import { articlesListRetrieval } from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
+import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
+import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
@@ -111,6 +113,8 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 				source: "projectionSync",
 			});
 			dispatch(coffeeGlobalRetrieval() as any);
+			dispatch(onCfPhotoRetrieval() as any);
+			dispatch(onOpeningHourRetrieval() as any);
 		}
 
 		if (event.projection === "comments" && event.scope === "target" && event.entityId) {

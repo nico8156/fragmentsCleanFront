@@ -27,10 +27,14 @@ describe("On Coffees search (batch hydrate)", () => {
             address: { city: "Rennes", country: "FR" },phoneNumber:"014287549832", tags: ["espresso"], version: 2, updatedAt: "2025-10-10T08:06:00.000Z" as any,
         });
 
-        await store.dispatch<any>(coffeesSearch({ city: "Rennes", query: "espresso" }));
+		await store.dispatch<any>(coffeesSearch({ query: "espresso" }));
 
         const state: any = store.getState();
         expect(Object.keys(state.cfState.byId)).toContain("b");
         expect(Object.keys(state.cfState.byId)).not.toContain("a");
+		expect(state.cfState.requests.search).toMatchObject({
+			status: "success",
+			ids: ["b"],
+		});
     });
 });

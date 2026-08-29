@@ -91,7 +91,9 @@ describe("projectionSyncListenerFactory", () => {
 	it("routes projection.updated/coffees to the public projection GET", async () => {
 		const projectionSync = new FakeProjectionSyncGateway();
 		const coffees = new FakeCoffeeGateway();
-		const gateways = { projectionSync, coffees } as any;
+		const cfPhotos = { calls: 0, async getAllphotos() { this.calls++; return { data: [] }; } };
+		const openingHours = { calls: 0, async getAllOpeningHours() { this.calls++; return { data: [] }; } };
+		const gateways = { projectionSync, coffees, cfPhotos, openingHours } as any;
 		const store = initReduxStoreWl({
 			dependencies: { gateways },
 			listeners: [projectionSyncListenerFactory({
@@ -110,6 +112,8 @@ describe("projectionSyncListenerFactory", () => {
 		await flush();
 
 		expect(coffees.listCalls).toBe(1);
+		expect(cfPhotos.calls).toBe(1);
+		expect(openingHours.calls).toBe(1);
 	});
 
 	it("routes projection.updated/articles to the canonical articles GET", async () => {

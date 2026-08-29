@@ -5,7 +5,8 @@ import {
     coffeeRetrieved,
     coffeeSetError,
     coffeeSetLoading,
-    coffeesHydrated, coffeeListRequested, coffeeListFailed
+    coffeesHydrated, coffeeListRequested, coffeeListFailed, coffeeListNotModified,
+	coffeeListMetadataReceived, coffeeSearchRequested, coffeeSearchReceived, coffeeSearchFailed
 } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 
 
@@ -24,12 +25,19 @@ export const coffeeRetrieval =
         };
 export const coffeeGlobalRetrieval =
     () :AppThunkWl<Promise<void>> =>
-        async (dispatch, _, coffeeWlGateway ) => {
+		async (dispatch, getState, coffeeWlGateway ) => {
 			dispatch(coffeeListRequested());
             try {
-                const { items } = await coffeeWlGateway!.coffees!.getAllSummaries();
+				const currentEtag = getState().cfState.requests.list.etag;
+				const result = await coffeeWlGateway!.coffees!.getAllSummaries({ ifNoneMatch: currentEtag });
+				const fetchedAt = new Date().toISOString();
+				if (result.kind === "not-modified") {
+					dispatch(coffeeListNotModified({ etag: result.etag, fetchedAt }));
+					return;
+				}
                 // Pas d’optimisme ici : c’est pure read
-                dispatch(coffeesHydrated(items));
+				dispatch(coffeesHydrated(result.items));
+				dispatch(coffeeListMetadataReceived({ etag: result.etag, fetchedAt }));
 			} catch (error: any) {
 				dispatch(coffeeListFailed({ message: error?.message ?? "Error loading coffee global" }));
                 throw new Error("Error loading coffee global");
@@ -39,10 +47,15 @@ export const coffeeGlobalRetrieval =
 
 // Search (batch hydrate)
 export const coffeesSearch =
-    (input: Parameters<CoffeeWlGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
-        async (dispatch, _, coffeeWlGateway) => {
-            if(!coffeeWlGateway?.coffees)return
-            const res = await coffeeWlGateway.coffees.search(input);
-            dispatch(coffeesHydrated(res.items));
-            //return res.nextCursor;
-        };
+	(input: Parameters<CoffeeWlGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
+		async (dispatch, _, coffeeWlGateway) => {
+			if (!coffeeWlGateway?.coffees) return;
+			dispatch(coffeeSearchRequested());
+			try {
+				const result = await coffeeWlGateway.coffees.search(input);
+				if (result.kind === "not-modified") return;
+				dispatch(coffeeSearchReceived(result));
+			} catch (error: any) {
+				dispatch(coffeeSearchFailed({ message: error?.message ?? "coffee search failed" }));
+			}
+		};

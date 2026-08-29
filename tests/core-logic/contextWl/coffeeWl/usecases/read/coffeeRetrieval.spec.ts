@@ -78,6 +78,23 @@ describe("On Coffee retrieval (single) : ", () => {
         expect(catalogue.byCity).toEqual({});
     });
 
+	it("keeps the cached catalogue when the backend returns not modified", async () => {
+		coffeeGateway.nextItems = [{
+			id: "coffee-cached", name: "Café en cache", location: { lat: 48.11, lon: -1.67 },
+			address: { city: "Rennes" }, tags: [], version: 1,
+			updatedAt: "2026-08-29T10:00:00Z" as any,
+		}];
+		await store.dispatch<any>(coffeeGlobalRetrieval());
+		coffeeGateway.nextListNotModified = true;
+
+		await store.dispatch<any>(coffeeGlobalRetrieval());
+
+		const catalogue = (store.getState() as any).cfState;
+		expect(catalogue.byId["coffee-cached"].name).toBe("Café en cache");
+		expect(coffeeGateway.lastListInput).toEqual({ ifNoneMatch: "fake-catalogue" });
+		expect(catalogue.requests.list).toMatchObject({ status: "success", etag: "fake-catalogue" });
+	});
+
 	it("does not let an out-of-order detail response overwrite a newer projection", () => {
 		const base = {
 			id: "coffee-versioned",

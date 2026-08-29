@@ -46,6 +46,18 @@ export interface CoffeeStateWl {
     byCity?: Record<string, string[]>; // city -> [ids]
 	requests: {
 		byId: Record<string, { status: "idle" | "loading" | "success" | "error"; error?: string }>;
-		list: { status: "idle" | "loading" | "success" | "error"; error?: string };
+		list: {
+			status: "idle" | "loading" | "success" | "error";
+			error?: string;
+			etag?: string;
+			lastSuccessfulFetch?: string;
+		};
+		search: {
+			status: "idle" | "loading" | "success" | "error";
+			error?: string;
+			ids: string[];
+			nextCursor?: string;
+			etag?: string;
+		};
 	};
 }

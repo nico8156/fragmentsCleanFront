@@ -10,6 +10,8 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
     listCalls = 0;
     store = new Map<string, Coffee>();
     nextCursor?: string;
+	nextListNotModified = false;
+	lastListInput?: { ifNoneMatch?: string; limit?: number };
 
     async get({ id }: { id: string }) {
         if (this.willFailGet) throw new Error("coffee get failed");
@@ -17,13 +19,15 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
         if (!data) throw new Error("coffee not found");
         return { data, etag: undefined };
     }
-    async getAllSummaries(input?: { ifNoneMatch?: string; }): Promise<{ etag?: string; items: Coffee[]; }> {
+	async getAllSummaries(input?: { ifNoneMatch?: string; limit?: number }) {
         if (this.willFailGet) throw new Error("coffee get failed");
         this.listCalls++;
-        return { items: [...this.nextItems] };
+		this.lastListInput = input;
+		if (this.nextListNotModified) return { kind: "not-modified" as const, etag: input?.ifNoneMatch };
+		return { kind: "updated" as const, items: [...this.nextItems], etag: "fake-catalogue" };
     }
 
-    async search({ query, bbox, city, limit = 50 }: any) {
+	async search({ query, limit = 50 }: any) {
         if (this.willFailSearch) throw new Error("coffee search failed");
         let items = Array.from(this.store.values());
 
@@ -35,18 +39,7 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
                     (c.tags ?? []).some((t) => t.toLowerCase().includes(q))
             );
         }
-        if (city) {
-            const c = String(city).toLowerCase();
-            items = items.filter((x) => x.address?.city?.toLowerCase() === c);
-        }
-        if (bbox) {
-            items = items.filter((x) => {
-                if (!x.location) return false;
-                const { lat, lon } = x.location;
-                return lat >= bbox.minLat && lat <= bbox.maxLat && lon >= bbox.minLon && lon <= bbox.maxLon;
-            });
-        }
-        items = items.slice(0, limit);
-        return { items, nextCursor: this.nextCursor };
+		items = items.slice(0, limit);
+		return { kind: "updated" as const, items, nextCursor: this.nextCursor };
     }
 }

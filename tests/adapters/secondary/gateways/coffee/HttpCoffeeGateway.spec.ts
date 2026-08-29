@@ -19,7 +19,9 @@ describe("HttpCoffeeGateway", () => {
 
 		const result = await gateway.getAllSummaries();
 
-		expect(global.fetch).toHaveBeenCalledWith("https://backend.test/api/coffees", { headers: { Accept: "application/json" } });
+		expect(global.fetch).toHaveBeenCalledWith("https://backend.test/api/coffees?limit=100", { headers: { Accept: "application/json" } });
+		expect(result.kind).toBe("updated");
+		if (result.kind !== "updated") throw new Error("expected updated catalogue");
 		expect(result.items).toHaveLength(1);
 		expect(result.items[0]).toMatchObject({ name: "Projection Café", googleId: undefined });
 	});
@@ -29,6 +31,48 @@ describe("HttpCoffeeGateway", () => {
 		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
 
 		await expect(gateway.getAllSummaries({ ifNoneMatch: "catalog-v1" }))
-			.rejects.toThrow("Coffee list not modified");
+			.resolves.toEqual({ kind: "not-modified", etag: "catalog-v1" });
+	});
+
+	it("delegates search and cursor pagination to the backend", async () => {
+		jest.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify([responseCoffee]), {
+			status: 200,
+			headers: { "Content-Type": "application/json", ETag: '"page-v1"', "X-Next-Cursor": "next-page" },
+		}));
+		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
+
+		const result = await gateway.search({ query: "Rennes", cursor: "page-1", limit: 20 });
+
+		expect(global.fetch).toHaveBeenCalledWith(
+			"https://backend.test/api/coffees?query=Rennes&cursor=page-1&limit=20",
+			{ headers: { Accept: "application/json" } },
+		);
+		expect(result).toMatchObject({ kind: "updated", etag: '"page-v1"', nextCursor: "next-page" });
+	});
+
+	it("assembles every backend page for the authoritative catalogue snapshot", async () => {
+		const secondCoffee = { ...responseCoffee, id: "22222222-2222-2222-2222-222222222222", name: "Second Café" };
+		jest.spyOn(global, "fetch")
+			.mockResolvedValueOnce(new Response(JSON.stringify([responseCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v2"', "X-Next-Cursor": "page-2" },
+			}))
+			.mockResolvedValueOnce(new Response(JSON.stringify([secondCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v2"' },
+			}));
+		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
+
+		const result = await gateway.getAllSummaries({ ifNoneMatch: '"catalog-v1"' });
+
+		expect(global.fetch).toHaveBeenNthCalledWith(1,
+			"https://backend.test/api/coffees?limit=100",
+			{ headers: { Accept: "application/json", "If-None-Match": '"catalog-v1"' } },
+		);
+		expect(global.fetch).toHaveBeenNthCalledWith(2,
+			"https://backend.test/api/coffees?cursor=page-2&limit=100",
+			{ headers: { Accept: "application/json" } },
+		);
+		expect(result).toMatchObject({ kind: "updated", etag: '"catalog-v2"' });
+		if (result.kind !== "updated") throw new Error("expected updated catalogue");
+		expect(result.items.map((coffee) => coffee.name)).toEqual(["Projection Café", "Second Café"]);
 	});
 });

@@ -10,16 +10,22 @@ export const coffeeSetLoading = createAction<{ id: CoffeeId | string }>("COFFEE/
 export const coffeeSetError   = createAction<{ id: CoffeeId | string; message: string }>("COFFEE/SET_ERROR");
 export const coffeeListRequested = createAction("COFFEE/LIST_REQUESTED");
 export const coffeeListFailed = createAction<{ message: string }>("COFFEE/LIST_FAILED");
+export const coffeeListNotModified = createAction<{ etag?: string; fetchedAt: string }>("COFFEE/LIST_NOT_MODIFIED");
+export const coffeeListMetadataReceived = createAction<{ etag?: string; fetchedAt: string }>("COFFEE/LIST_METADATA_RECEIVED");
+export const coffeeSearchRequested = createAction("COFFEE/SEARCH_REQUESTED");
+export const coffeeSearchReceived = createAction<{ items: Coffee[]; nextCursor?: string; etag?: string }>("COFFEE/SEARCH_RECEIVED");
+export const coffeeSearchFailed = createAction<{ message: string }>("COFFEE/SEARCH_FAILED");
 
 const initialState: AppStateWl["coffees"] = {
 	byId: {},
 	ids: [],
 	byCity: {},
-	requests: { byId: {}, list: { status: "idle" } },
+	requests: { byId: {}, list: { status: "idle" }, search: { status: "idle", ids: [] } },
 };
 
 function ensureRequests(state: CoffeeStateWl) {
-	state.requests ??= { byId: {}, list: { status: "idle" } };
+	state.requests ??= { byId: {}, list: { status: "idle" }, search: { status: "idle", ids: [] } };
+	state.requests.search ??= { status: "idle", ids: [] };
 }
 
 function indexByCity(state: CoffeeStateWl, coffee: Coffee) {
@@ -69,17 +75,62 @@ export const coffeeWlReducer = createReducer(
 			})
 			.addCase(coffeeListRequested, (state) => {
 				ensureRequests(state);
-				state.requests.list = { status: "loading" };
+				state.requests.list = { ...state.requests.list, status: "loading", error: undefined };
 			})
 			.addCase(coffeeListFailed, (state, { payload }) => {
 				ensureRequests(state);
-				state.requests.list = { status: "error", error: payload.message };
+				state.requests.list = { ...state.requests.list, status: "error", error: payload.message };
+			})
+			.addCase(coffeeListNotModified, (state, { payload }) => {
+				ensureRequests(state);
+				state.requests.list = {
+					...state.requests.list,
+					status: "success",
+					etag: payload.etag ?? state.requests.list.etag,
+					lastSuccessfulFetch: payload.fetchedAt,
+				};
+			})
+			.addCase(coffeeListMetadataReceived, (state, { payload }) => {
+				ensureRequests(state);
+				state.requests.list = {
+					status: "success",
+					etag: payload.etag,
+					lastSuccessfulFetch: payload.fetchedAt,
+				};
+			})
+			.addCase(coffeeSearchRequested, (state) => {
+				ensureRequests(state);
+				state.requests.search = { ...state.requests.search, status: "loading", error: undefined };
+			})
+			.addCase(coffeeSearchReceived, (state, { payload }) => {
+				ensureRequests(state);
+				const ids: string[] = [];
+				for (const coffee of payload.items) {
+					const id = String(coffee.id);
+					const previous = state.byId[id];
+					if (!previous || coffee.version >= previous.version) state.byId[id] = coffee;
+					ids.push(id);
+				}
+				state.requests.search = {
+					status: "success",
+					ids,
+					nextCursor: payload.nextCursor,
+					etag: payload.etag,
+				};
+			})
+			.addCase(coffeeSearchFailed, (state, { payload }) => {
+				ensureRequests(state);
+				state.requests.search = { ...state.requests.search, status: "error", error: payload.message };
 			})
 			.addCase(readModelCacheRehydrated, (_state, { payload }) => {
 				if (!payload.coffees) return;
 				return {
 					...payload.coffees,
-					requests: payload.coffees.requests ?? { byId: {}, list: { status: "idle" } },
+					requests: {
+						byId: payload.coffees.requests?.byId ?? {},
+						list: payload.coffees.requests?.list ?? { status: "idle" },
+						search: payload.coffees.requests?.search ?? { status: "idle", ids: [] },
+					},
 				};
 			});
 	},
