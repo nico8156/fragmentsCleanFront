@@ -1,7 +1,5 @@
 import {CoffeeWlGateway} from "@/app/core-logic/contextWL/coffeeWl/gateway/coffeeWl.gateway";
 import { Coffee } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import {coffeeData} from "@/assets/data/coffeeFromOldServer";
-import {coffeeDataConverter} from "@/assets/helpers/coffeeDataConverter";
 
 export class FakeCoffeeGateway implements CoffeeWlGateway {
 
@@ -9,6 +7,7 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
     willFailSearch = false;
 
     nextItems = new Array<Coffee>();
+    listCalls = 0;
     store = new Map<string, Coffee>();
     nextCursor?: string;
 
@@ -20,8 +19,8 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
     }
     async getAllSummaries(input?: { ifNoneMatch?: string; }): Promise<{ etag?: string; items: Coffee[]; }> {
         if (this.willFailGet) throw new Error("coffee get failed");
-        this.nextItems = coffeeData.map(c => coffeeDataConverter(c))
-        return { items: this.nextItems as Coffee[]};
+        this.listCalls++;
+        return { items: [...this.nextItems] };
     }
 
     async search({ query, bbox, city, limit = 50 }: any) {

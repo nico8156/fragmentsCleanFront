@@ -26,11 +26,11 @@ export interface Address {
 // Entité Café (read model)
 export interface Coffee {
     id: CoffeeId | string;
-    googleId:string;
+    googleId?:string;
     name: string;
     location: GeoPoint;
     address: Address;
-    phoneNumber:string;
+    phoneNumber?:string;
     website?:string;
     rating?: number;     // optionnel (avg)
     tags?: string[];     // ex: ["espresso", "filter", "roaster"]
