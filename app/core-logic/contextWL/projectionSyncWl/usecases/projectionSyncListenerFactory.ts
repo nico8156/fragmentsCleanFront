@@ -40,6 +40,7 @@ type ProjectionSyncListenerDeps = {
 	gateways: DependenciesWl["gateways"];
 	sessionRef?: ProjectionSyncSessionRef;
 	syncMetaStorage?: SyncMetaStorage;
+	coffeeRefreshDebounceMs?: number;
 };
 
 const isIgnorableSyncEvent = (event: ProjectionSyncEvent) =>
@@ -55,6 +56,45 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	let lastToken: string | undefined;
 	let lastEventId: string | undefined;
 	let syncMetaLoaded = false;
+	let coffeeRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+	let pendingCoffeeRefreshEvent: ProjectionSyncEvent | undefined;
+	let coffeeRefreshInFlight = false;
+
+	const flushCoffeeRefresh = (dispatch: AppDispatchWl) => {
+		coffeeRefreshTimer = undefined;
+		if (coffeeRefreshInFlight || !pendingCoffeeRefreshEvent) return;
+		const refreshEvent = pendingCoffeeRefreshEvent;
+		pendingCoffeeRefreshEvent = undefined;
+		coffeeRefreshInFlight = true;
+		outboxTelemetry.projectionRefreshRequested({
+			projection: "coffees",
+			scope: refreshEvent.scope ?? "collection",
+			entityId: refreshEvent.entityId,
+			source: "projectionSync",
+		});
+		void Promise.allSettled([
+			dispatch(coffeeGlobalRetrieval() as any),
+			dispatch(onCfPhotoRetrieval() as any),
+			dispatch(onOpeningHourRetrieval() as any),
+		]).finally(() => {
+			coffeeRefreshInFlight = false;
+			if (pendingCoffeeRefreshEvent) {
+				coffeeRefreshTimer = setTimeout(
+					() => flushCoffeeRefresh(dispatch),
+					deps.coffeeRefreshDebounceMs ?? 300,
+				);
+			}
+		});
+	};
+
+	const scheduleCoffeeRefresh = (event: ProjectionSyncEvent, dispatch: AppDispatchWl) => {
+		pendingCoffeeRefreshEvent = event;
+		if (coffeeRefreshTimer) clearTimeout(coffeeRefreshTimer);
+		coffeeRefreshTimer = setTimeout(
+			() => flushCoffeeRefresh(dispatch),
+			deps.coffeeRefreshDebounceMs ?? 300,
+		);
+	};
 
 	const ensureSyncMetaLoaded = async () => {
 		if (syncMetaLoaded) return;
@@ -106,15 +146,7 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		}
 
 		if (event.projection === "coffees" && (event.scope === "entity" || event.scope === "collection")) {
-			outboxTelemetry.projectionRefreshRequested({
-				projection: "coffees",
-				scope: event.scope,
-				entityId: event.entityId,
-				source: "projectionSync",
-			});
-			dispatch(coffeeGlobalRetrieval() as any);
-			dispatch(onCfPhotoRetrieval() as any);
-			dispatch(onOpeningHourRetrieval() as any);
+			scheduleCoffeeRefresh(event, dispatch);
 		}
 
 		if (event.projection === "comments" && event.scope === "target" && event.entityId) {
@@ -175,6 +207,9 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 	const disconnect = (api: { dispatch: AppDispatchWl }, reason: string) => {
 		try {
+			if (coffeeRefreshTimer) clearTimeout(coffeeRefreshTimer);
+			coffeeRefreshTimer = undefined;
+			pendingCoffeeRefreshEvent = undefined;
 			getGateway()?.disconnect();
 		} finally {
 			logger.info("[ProjectionSync] disconnected", { reason, lastEventId });

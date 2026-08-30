@@ -34,6 +34,14 @@ describe("HttpCoffeeGateway", () => {
 			.resolves.toEqual({ kind: "not-modified", etag: "catalog-v1" });
 	});
 
+	it("returns a typed not-modified detail result", async () => {
+		jest.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 304 }));
+		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
+
+		await expect(gateway.get({ id: responseCoffee.id, ifNoneMatch: '"detail-v1"' }))
+			.resolves.toEqual({ kind: "not-modified", etag: '"detail-v1"' });
+	});
+
 	it("delegates search and cursor pagination to the backend", async () => {
 		jest.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify([responseCoffee]), {
 			status: 200,

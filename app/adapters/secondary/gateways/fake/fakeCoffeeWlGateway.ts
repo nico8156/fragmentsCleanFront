@@ -11,13 +11,17 @@ export class FakeCoffeeGateway implements CoffeeWlGateway {
     store = new Map<string, Coffee>();
     nextCursor?: string;
 	nextListNotModified = false;
+	nextDetailNotModified = false;
 	lastListInput?: { ifNoneMatch?: string; limit?: number };
+	lastDetailInput?: { id: string; ifNoneMatch?: string };
 
-    async get({ id }: { id: string }) {
-        if (this.willFailGet) throw new Error("coffee get failed");
-        const data = this.store.get(id);
-        if (!data) throw new Error("coffee not found");
-        return { data, etag: undefined };
+	async get({ id, ifNoneMatch }: { id: string; ifNoneMatch?: string }) {
+		this.lastDetailInput = { id, ifNoneMatch };
+		if (this.willFailGet) throw new Error("coffee get failed");
+		if (this.nextDetailNotModified) return { kind: "not-modified" as const, etag: ifNoneMatch ?? "fake-detail" };
+		const data = this.store.get(id);
+		if (!data) throw new Error("coffee not found");
+		return { kind: "updated" as const, data, etag: "fake-detail" };
     }
 	async getAllSummaries(input?: { ifNoneMatch?: string; limit?: number }) {
         if (this.willFailGet) throw new Error("coffee get failed");

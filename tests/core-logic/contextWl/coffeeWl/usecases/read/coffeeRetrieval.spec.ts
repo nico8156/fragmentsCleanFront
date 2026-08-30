@@ -113,6 +113,29 @@ describe("On Coffee retrieval (single) : ", () => {
 		});
 	});
 
+	it("moves a refreshed coffee from its previous city index", () => {
+		store.dispatch(coffeeRetrieved(coffee("moving", "Café mobile", 1, "Rennes")));
+		store.dispatch(coffeeRetrieved(coffee("moving", "Café mobile", 2, "Nantes")));
+
+		const catalogue = (store.getState() as any).cfState;
+		expect(catalogue.byCity.rennes).toBeUndefined();
+		expect(catalogue.byCity.nantes).toEqual(["moving"]);
+	});
+
+	it("keeps a cached detail successful when the backend returns not modified", async () => {
+		coffeeGateway.store.set("cached-detail", coffee("cached-detail", "Café détail", 1, "Rennes"));
+		await store.dispatch<any>(coffeeRetrieval({ id: "cached-detail" }));
+		coffeeGateway.nextDetailNotModified = true;
+
+		await store.dispatch<any>(coffeeRetrieval({ id: "cached-detail" }));
+
+		expect((store.getState() as any).cfState.requests.byId["cached-detail"]).toMatchObject({
+			status: "success", etag: "fake-detail",
+		});
+		expect((store.getState() as any).cfState.byId["cached-detail"].name).toBe("Café détail");
+		expect(coffeeGateway.lastDetailInput).toEqual({ id: "cached-detail", ifNoneMatch: "fake-detail" });
+	});
+
 	it("replaying the same projection snapshot is idempotent", async () => {
 		coffeeGateway.nextItems = [{
 			id: "coffee-replayed",
@@ -158,9 +181,9 @@ function deferred<T>() {
 	return { promise, resolve };
 }
 
-function coffee(id: string, name: string, version: number) {
+function coffee(id: string, name: string, version: number, city = "Rennes") {
 	return {
-		id, name, location: { lat: 48.11, lon: -1.67 }, address: { city: "Rennes" }, tags: [], version,
+		id, name, location: { lat: 48.11, lon: -1.67 }, address: { city }, tags: [], version,
 		updatedAt: "2026-08-29T10:00:00Z" as any,
 	};
 }
