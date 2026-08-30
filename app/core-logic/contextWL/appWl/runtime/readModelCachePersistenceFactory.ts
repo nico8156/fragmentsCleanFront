@@ -7,7 +7,7 @@ import {
 	readModelCacheRehydrated,
 } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 import { articleListReceived, articleReceived } from "@/app/core-logic/contextWL/articleWl/typeAction/article.action";
-import { coffeesHydrated, coffeeRetrieved } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
+import { coffeeCatalogueReceived, coffeesHydrated, coffeeRetrieved } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 import { photosHydrated } from "@/app/core-logic/contextWL/cfPhotosWl/typeAction/cfPhoto.action";
 import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
@@ -74,7 +74,8 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 
 	listen({
 		matcher: isAnyOf(
-			coffeesHydrated,
+				coffeesHydrated,
+				coffeeCatalogueReceived,
 			coffeeRetrieved,
 			photosHydrated,
 			hoursHydrated,

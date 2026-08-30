@@ -5,9 +5,12 @@ import {
     coffeeRetrieved,
     coffeeSetError,
     coffeeSetLoading,
-    coffeesHydrated, coffeeListRequested, coffeeListFailed
+    coffeeListRequested, coffeeListFailed, coffeeListNotModified, coffeeCatalogueReceived,
+	coffeeSearchRequested, coffeeSearchReceived, coffeeSearchFailed, coffeeSearchNotModified
 } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 
+let requestSequence = 0;
+const nextRequestId = (scope: string) => `${scope}-${Date.now()}-${++requestSequence}`;
 
 // Single coffee
 export const coffeeRetrieval =
@@ -24,14 +27,21 @@ export const coffeeRetrieval =
         };
 export const coffeeGlobalRetrieval =
     () :AppThunkWl<Promise<void>> =>
-        async (dispatch, _, coffeeWlGateway ) => {
-			dispatch(coffeeListRequested());
+		async (dispatch, getState, coffeeWlGateway ) => {
+			const requestId = nextRequestId("coffee-list");
+			dispatch(coffeeListRequested({ requestId }));
             try {
-                const { items } = await coffeeWlGateway!.coffees!.getAllSummaries();
+				const currentEtag = getState().cfState.requests.list.etag;
+				const result = await coffeeWlGateway!.coffees!.getAllSummaries({ ifNoneMatch: currentEtag });
+				const fetchedAt = new Date().toISOString();
+				if (result.kind === "not-modified") {
+					dispatch(coffeeListNotModified({ requestId, etag: result.etag, fetchedAt }));
+					return;
+				}
                 // Pas d’optimisme ici : c’est pure read
-                dispatch(coffeesHydrated(items));
+				dispatch(coffeeCatalogueReceived({ requestId, items: result.items, etag: result.etag, fetchedAt }));
 			} catch (error: any) {
-				dispatch(coffeeListFailed({ message: error?.message ?? "Error loading coffee global" }));
+				dispatch(coffeeListFailed({ requestId, message: error?.message ?? "Error loading coffee global" }));
                 throw new Error("Error loading coffee global");
 
             }
@@ -39,10 +49,22 @@ export const coffeeGlobalRetrieval =
 
 // Search (batch hydrate)
 export const coffeesSearch =
-    (input: Parameters<CoffeeWlGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
-        async (dispatch, _, coffeeWlGateway) => {
-            if(!coffeeWlGateway?.coffees)return
-            const res = await coffeeWlGateway.coffees.search(input);
-            dispatch(coffeesHydrated(res.items));
-            //return res.nextCursor;
-        };
+	(input: Parameters<CoffeeWlGateway["search"]>[0]) :AppThunkWl<Promise<void>> =>
+		async (dispatch, getState, coffeeWlGateway) => {
+			if (!coffeeWlGateway?.coffees) return;
+			const requestId = nextRequestId("coffee-search");
+			const query = input.query ?? "";
+			const currentSearch = getState().cfState.requests.search;
+			const mode = input.cursor && currentSearch.query === query ? "append" as const : "replace" as const;
+			dispatch(coffeeSearchRequested({ requestId, query, mode }));
+			try {
+				const result = await coffeeWlGateway.coffees.search(input);
+				if (result.kind === "not-modified") {
+					dispatch(coffeeSearchNotModified({ requestId, query, etag: result.etag }));
+					return;
+				}
+				dispatch(coffeeSearchReceived({ requestId, query, mode, ...result }));
+			} catch (error: any) {
+				dispatch(coffeeSearchFailed({ requestId, message: error?.message ?? "coffee search failed" }));
+			}
+		};

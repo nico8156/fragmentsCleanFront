@@ -30,14 +30,57 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		return { etag, data };
 	}
 
-	async getAllSummaries(input?: { ifNoneMatch?: string }) {
+	async getAllSummaries(input?: { ifNoneMatch?: string; limit?: number }) {
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				return await this.fetchCompleteCatalogue(input);
+			} catch (error) {
+				if (!(error instanceof CatalogueChangedDuringPaginationError) || attempt === 2) throw error;
+			}
+		}
+		throw new Error("Coffee catalogue retrieval exhausted");
+	}
+
+	private async fetchCompleteCatalogue(input?: { ifNoneMatch?: string; limit?: number }) {
+		const items = [];
+		let cursor: string | undefined;
+		let etag: string | undefined;
+		const seenCursors = new Set<string>();
+		do {
+			const page = await this.fetchCatalogue({
+				limit: input?.limit ?? 100,
+				cursor,
+				ifNoneMatch: cursor ? undefined : input?.ifNoneMatch,
+			});
+			if (page.kind === "not-modified") return page;
+			if (etag !== undefined && page.etag !== etag) throw new CatalogueChangedDuringPaginationError();
+			items.push(...page.items);
+			etag ??= page.etag;
+			cursor = page.nextCursor;
+			if (cursor && seenCursors.has(cursor)) throw new Error("Coffee catalogue cursor cycle detected");
+			if (cursor) seenCursors.add(cursor);
+		} while (cursor);
+		return { kind: "updated" as const, items, etag };
+	}
+
+	async search(input: { query?: string; limit?: number; cursor?: string; ifNoneMatch?: string }) {
+		return this.fetchCatalogue(input);
+	}
+
+	private async fetchCatalogue(input: { query?: string; limit?: number; cursor?: string; ifNoneMatch?: string }) {
 		const headers: Record<string, string> = { Accept: "application/json" };
 		if (input?.ifNoneMatch) headers["If-None-Match"] = input.ifNoneMatch;
+		const params = new URLSearchParams();
+		if (input.query) params.set("query", input.query);
+		if (input.cursor) params.set("cursor", input.cursor);
+		if (input.limit !== undefined) params.set("limit", String(input.limit));
+		const serializedParams = params.toString();
+		const suffix = serializedParams ? `?${serializedParams}` : "";
 
-		const res = await fetch(`${this.baseUrl}/api/coffees`, { headers });
+		const res = await fetch(`${this.baseUrl}/api/coffees${suffix}`, { headers });
 
 		if (res.status === 304) {
-			throw new Error("Coffee list not modified");
+			return { kind: "not-modified" as const, etag: res.headers.get("ETag") ?? input.ifNoneMatch };
 		}
 		if (!res.ok) throw new Error(`Coffee list failed: HTTP ${res.status}`);
 
@@ -46,50 +89,13 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		if (!Array.isArray(payload)) throw new Error("Invalid coffee list");
 		const items = payload.map(mapCoffeeSummaryTransport);
 
-		return { etag, items };
-	}
-
-	async search(input: {
-		query?: string;
-		bbox?: { minLat: number; minLon: number; maxLat: number; maxLon: number };
-		city?: string;
-		limit?: number;
-		cursor?: string;
-	}) {
-		// ✅ Stratégie simple initiale : client-side search (OK si <1000)
-		const { items } = await this.getAllSummaries();
-		let out = items;
-
-		if (input.query) {
-			const q = input.query.toLowerCase();
-			out = out.filter(
-				(c) =>
-					c.name.toLowerCase().includes(q) ||
-					(c.tags ?? []).some((t) => t.toLowerCase().includes(q))
-			);
-		}
-		if (input.city) {
-			const city = input.city.toLowerCase();
-			out = out.filter((c) => c.address?.city?.toLowerCase() === city);
-		}
-		if (input.bbox) {
-			const b = input.bbox;
-			out = out.filter((c) => {
-				const { lat, lon } = c.location ?? ({} as any);
-				return (
-					typeof lat === "number" &&
-					typeof lon === "number" &&
-					lat >= b.minLat &&
-					lat <= b.maxLat &&
-					lon >= b.minLon &&
-					lon <= b.maxLon
-				);
-			});
-		}
-
-		const limit = input.limit ?? 50;
-		out = out.slice(0, limit);
-
-		return { items: out, nextCursor: undefined };
+		return {
+			kind: "updated" as const,
+			etag,
+			items,
+			nextCursor: res.headers.get("X-Next-Cursor") ?? undefined,
+		};
 	}
 }
+
+class CatalogueChangedDuringPaginationError extends Error {}
