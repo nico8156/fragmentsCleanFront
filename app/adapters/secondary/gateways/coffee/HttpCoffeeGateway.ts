@@ -19,15 +19,14 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		const res = await fetch(`${this.baseUrl}/api/coffees/${encodeURIComponent(input.id)}`, { headers });
 
 		if (res.status === 304) {
-			// à toi de décider quoi faire si cache hit (souvent: throw special / return undefined)
-			throw new Error("Not modified");
+			return { kind: "not-modified" as const, etag: res.headers.get("ETag") ?? input.ifNoneMatch };
 		}
 		if (!res.ok) throw new Error(`Coffee get failed: HTTP ${res.status}`);
 
 		const etag = res.headers.get("ETag") ?? undefined;
 		const data = mapCoffeeSummaryTransport(await res.json());
 
-		return { etag, data };
+		return { kind: "updated" as const, etag, data };
 	}
 
 	async getAllSummaries(input?: { ifNoneMatch?: string; limit?: number }) {

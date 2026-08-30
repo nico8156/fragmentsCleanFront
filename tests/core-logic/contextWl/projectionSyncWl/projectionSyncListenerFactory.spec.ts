@@ -99,6 +99,7 @@ describe("projectionSyncListenerFactory", () => {
 			listeners: [projectionSyncListenerFactory({
 				gateways,
 				sessionRef: { current: { tokens: { accessToken: "mobile-token" } } as any },
+				coffeeRefreshDebounceMs: 5,
 			})],
 		});
 
@@ -108,8 +109,15 @@ describe("projectionSyncListenerFactory", () => {
 			id: "coffee-event-1", eventName: "projection.updated", schemaVersion: 1,
 			projection: "coffees", scope: "entity", entityId: "coffee-1", hints: ["published"],
 		});
-		await flush();
-		await flush();
+		projectionSync.emit({
+			id: "coffee-event-2", eventName: "projection.updated", schemaVersion: 1,
+			projection: "coffees", scope: "entity", entityId: "coffee-1", hints: ["photo-updated"],
+		});
+		projectionSync.emit({
+			id: "coffee-event-3", eventName: "projection.updated", schemaVersion: 1,
+			projection: "coffees", scope: "collection", hints: ["opening-hours-updated"],
+		});
+		await new Promise((resolve) => setTimeout(resolve, 15));
 
 		expect(coffees.listCalls).toBe(1);
 		expect(cfPhotos.calls).toBe(1);

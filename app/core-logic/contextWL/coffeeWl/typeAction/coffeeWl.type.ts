@@ -45,7 +45,7 @@ export interface CoffeeStateWl {
     // (optionnel) indexes simples
     byCity?: Record<string, string[]>; // city -> [ids]
 	requests: {
-		byId: Record<string, { status: "idle" | "loading" | "success" | "error"; error?: string }>;
+			byId: Record<string, { status: "idle" | "loading" | "success" | "error"; error?: string; etag?: string }>;
 		list: {
 			status: "idle" | "loading" | "success" | "error";
 			error?: string;

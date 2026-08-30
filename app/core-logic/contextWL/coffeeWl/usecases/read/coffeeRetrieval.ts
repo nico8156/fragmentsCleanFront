@@ -2,11 +2,11 @@ import { CoffeeWlGateway } from "../../gateway/coffeeWl.gateway";
 import { CoffeeId } from "../../typeAction/coffeeWl.type";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
 import {
-    coffeeRetrieved,
     coffeeSetError,
     coffeeSetLoading,
     coffeeListRequested, coffeeListFailed, coffeeListNotModified, coffeeCatalogueReceived,
 	coffeeSearchRequested, coffeeSearchReceived, coffeeSearchFailed, coffeeSearchNotModified
+	, coffeeDetailReceived, coffeeDetailNotModified
 } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 
 let requestSequence = 0;
@@ -14,13 +14,18 @@ const nextRequestId = (scope: string) => `${scope}-${Date.now()}-${++requestSequ
 
 // Single coffee
 export const coffeeRetrieval =
-    ({ id, ifNoneMatch }: { id: CoffeeId | string; ifNoneMatch?: string }) :AppThunkWl<Promise<void>> =>
-        async (dispatch, _, coffeeWlGateway ) => {
-            dispatch(coffeeSetLoading({ id }));
-            try {
-                const { data } = await coffeeWlGateway!.coffees!.get({ id: String(id), ifNoneMatch });
-                // Pas d’optimisme ici : c’est pure read
-                dispatch(coffeeRetrieved(data));
+	({ id, ifNoneMatch }: { id: CoffeeId | string; ifNoneMatch?: string }) :AppThunkWl<Promise<void>> =>
+		async (dispatch, getState, coffeeWlGateway ) => {
+			const cachedEtag = getState().cfState.requests.byId[String(id)]?.etag;
+			dispatch(coffeeSetLoading({ id }));
+			try {
+				const result = await coffeeWlGateway!.coffees!.get({ id: String(id), ifNoneMatch: ifNoneMatch ?? cachedEtag });
+				if (result.kind === "not-modified") {
+					dispatch(coffeeDetailNotModified({ id, etag: result.etag }));
+					return;
+				}
+				// Pas d’optimisme ici : c’est pure read
+				dispatch(coffeeDetailReceived({ coffee: result.data, etag: result.etag }));
             } catch (e: any) {
                 dispatch(coffeeSetError({ id, message: e?.message ?? "coffee retrieval failed" }));
             }
