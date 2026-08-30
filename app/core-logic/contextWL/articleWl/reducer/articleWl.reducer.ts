@@ -81,6 +81,24 @@ const upsertArticle = (state: ArticleStateWl, article: Article) => {
     delete state.errors.bySlug[slug];
 };
 
+const removeArticleIfUnreferenced = (state: ArticleStateWl, id: string, locale: Locale) => {
+    const referencedByAnotherList = Object.entries(state.listsByLocale ?? {}).some(
+        ([listLocale, list]) => listLocale !== locale && list?.ids.includes(id),
+    );
+    if (referencedByAnotherList) return;
+
+    const article = state.byId[id];
+    if (article) delete state.bySlug[String(article.slug)];
+    delete state.byId[id];
+    state.ids = state.ids.filter((candidate) => candidate !== id);
+    delete state.status.byId[id];
+    delete state.errors.byId[id];
+    if (article) {
+        delete state.status.bySlug[String(article.slug)];
+        delete state.errors.bySlug[String(article.slug)];
+    }
+};
+
 export const articleWlReducer = createReducer(
     initialState,
     (builder) => {
@@ -103,6 +121,7 @@ export const articleWlReducer = createReducer(
         .addCase(articleListReceived, (state, { payload }) => {
             const { locale, articles, nextCursor, prevCursor } = payload;
             const list = ensureListState(state, locale);
+            const previousIds = [...list.ids];
             const ids = articles.map((article) => {
                 upsertArticle(state, article);
                 return String(article.id);
@@ -112,6 +131,10 @@ export const articleWlReducer = createReducer(
             list.error = undefined;
             list.nextCursor = nextCursor;
             list.prevCursor = prevCursor;
+            const incomingIds = new Set(ids);
+            previousIds
+                .filter((id) => !incomingIds.has(id))
+                .forEach((id) => removeArticleIfUnreferenced(state, id, locale));
         })
         .addCase(articleListFailed, (state, { payload }) => {
             const list = ensureListState(state, payload.locale);
