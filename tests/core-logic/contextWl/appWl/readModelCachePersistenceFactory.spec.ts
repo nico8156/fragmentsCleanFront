@@ -54,7 +54,9 @@ describe("readModelCachePersistenceFactory", () => {
 			etag: '"catalogue-v3"', fetchedAt: "2026-08-30T10:00:01Z",
 		}));
 		await flushPersist();
-		expect(storage.saved.at(-1)?.coffees?.requests?.list).toMatchObject({ status: "success", etag: '"catalogue-v3"' });
+		expect(storage.saved.at(-1)?.coffees?.requests?.list).toEqual({
+			etag: '"catalogue-v3"', lastSuccessfulFetch: "2026-08-30T10:00:01Z",
+		});
 		expect(storage.saved.at(-1)?.coffees?.byId.coffee_etag.name).toBe("Cafe ETag");
 	});
 
@@ -216,5 +218,30 @@ describe("readModelCachePersistenceFactory", () => {
 		expect(state.lState.byTarget.coffee_1).toMatchObject({ count: 4, me: true });
 		expect(state.tState.byId.ticket_1.status).toBe("CONFIRMED");
 		expect(state.enState.byUser.user_1.confirmedTickets).toBe(5);
+	});
+
+	it("drops transient coffee request state from a legacy cached snapshot", async () => {
+		const storage = new FakeReadModelCacheStorage();
+		storage.snapshot = {
+			schemaVersion: READ_MODEL_CACHE_SCHEMA_VERSION,
+			updatedAt: "2026-08-30T10:00:00Z",
+			coffees: {
+				byId: {}, ids: [], byCity: {},
+				requests: {
+					byId: { stale: { status: "loading" } },
+					list: { status: "error", error: "offline", etag: '"catalogue-v2"', requestId: "stale-list" },
+					search: { status: "loading", ids: ["stale"], query: "Paris", requestId: "stale-search" },
+				},
+			} as any,
+		};
+		const store = initReduxStoreWl({ dependencies: { gateways: {} } });
+
+		await rehydrateReadModelCacheFactory({ storage })(store);
+
+		expect((store.getState() as any).cfState.requests).toEqual({
+			byId: {},
+			list: { status: "success", etag: '"catalogue-v2"' },
+			search: { status: "idle", ids: [] },
+		});
 	});
 });

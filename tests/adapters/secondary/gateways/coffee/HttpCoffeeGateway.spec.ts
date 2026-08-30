@@ -97,4 +97,18 @@ describe("HttpCoffeeGateway", () => {
 		if (result.kind !== "updated") throw new Error("expected updated catalogue");
 		expect(result.items.map((coffee) => coffee.name)).toEqual(["Second Café"]);
 	});
+
+	it("rejects a cyclic backend cursor instead of looping forever", async () => {
+		jest.spyOn(global, "fetch")
+			.mockResolvedValueOnce(new Response(JSON.stringify([responseCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v2"', "X-Next-Cursor": "same-page" },
+			}))
+			.mockResolvedValueOnce(new Response(JSON.stringify([responseCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v2"', "X-Next-Cursor": "same-page" },
+			}));
+		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
+
+		await expect(gateway.getAllSummaries()).rejects.toThrow("Coffee catalogue cursor cycle detected");
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+	});
 });
