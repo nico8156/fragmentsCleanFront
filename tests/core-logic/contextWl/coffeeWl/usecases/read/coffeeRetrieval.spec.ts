@@ -131,4 +131,36 @@ describe("On Coffee retrieval (single) : ", () => {
 		expect(catalogue.ids).toEqual(["coffee-replayed"]);
 		expect(catalogue.byCity.rennes).toEqual(["coffee-replayed"]);
 	});
+
+	it("ignores an older catalogue request that completes after the latest refresh", async () => {
+		const older = deferred<any>();
+		const latest = deferred<any>();
+		coffeeGateway.getAllSummaries = jest.fn()
+			.mockImplementationOnce(() => older.promise)
+			.mockImplementationOnce(() => latest.promise);
+
+		const olderDispatch = store.dispatch<any>(coffeeGlobalRetrieval());
+		const latestDispatch = store.dispatch<any>(coffeeGlobalRetrieval());
+		latest.resolve({ kind: "updated", items: [coffee("latest", "Projection récente", 2)], etag: '"v2"' });
+		await latestDispatch;
+		older.resolve({ kind: "updated", items: [coffee("older", "Projection ancienne", 1)], etag: '"v1"' });
+		await olderDispatch;
+
+		const catalogue = (store.getState() as any).cfState;
+		expect(catalogue.ids).toEqual(["latest"]);
+		expect(catalogue.byId.older).toBeUndefined();
+	});
 });
+
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((res) => { resolve = res; });
+	return { promise, resolve };
+}
+
+function coffee(id: string, name: string, version: number) {
+	return {
+		id, name, location: { lat: 48.11, lon: -1.67 }, address: { city: "Rennes" }, tags: [], version,
+		updatedAt: "2026-08-29T10:00:00Z" as any,
+	};
+}

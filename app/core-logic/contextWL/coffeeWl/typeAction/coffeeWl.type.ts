@@ -51,6 +51,7 @@ export interface CoffeeStateWl {
 			error?: string;
 			etag?: string;
 			lastSuccessfulFetch?: string;
+			requestId?: string;
 		};
 		search: {
 			status: "idle" | "loading" | "success" | "error";
@@ -58,6 +59,8 @@ export interface CoffeeStateWl {
 			ids: string[];
 			nextCursor?: string;
 			etag?: string;
+			query?: string;
+			requestId?: string;
 		};
 	};
 }

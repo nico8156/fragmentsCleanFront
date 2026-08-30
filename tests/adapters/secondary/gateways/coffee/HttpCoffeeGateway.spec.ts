@@ -75,4 +75,26 @@ describe("HttpCoffeeGateway", () => {
 		if (result.kind !== "updated") throw new Error("expected updated catalogue");
 		expect(result.items.map((coffee) => coffee.name)).toEqual(["Projection Café", "Second Café"]);
 	});
+
+	it("restarts pagination when the catalogue changes between pages", async () => {
+		const secondCoffee = { ...responseCoffee, id: "22222222-2222-2222-2222-222222222222", name: "Second Café" };
+		jest.spyOn(global, "fetch")
+			.mockResolvedValueOnce(new Response(JSON.stringify([responseCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v2"', "X-Next-Cursor": "page-2" },
+			}))
+			.mockResolvedValueOnce(new Response(JSON.stringify([secondCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v3"' },
+			}))
+			.mockResolvedValueOnce(new Response(JSON.stringify([secondCoffee]), {
+				status: 200, headers: { "Content-Type": "application/json", ETag: '"catalog-v3"' },
+			}));
+		const gateway = new HttpCoffeeGateway({ baseUrl: "https://backend.test" });
+
+		const result = await gateway.getAllSummaries();
+
+		expect(global.fetch).toHaveBeenCalledTimes(3);
+		expect(result).toMatchObject({ kind: "updated", etag: '"catalog-v3"' });
+		if (result.kind !== "updated") throw new Error("expected updated catalogue");
+		expect(result.items.map((coffee) => coffee.name)).toEqual(["Second Café"]);
+	});
 });

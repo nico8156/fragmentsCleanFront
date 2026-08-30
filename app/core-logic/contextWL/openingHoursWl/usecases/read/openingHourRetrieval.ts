@@ -1,12 +1,11 @@
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
-import { OpeningHours } from "../../typeAction/openingHours.type";
 import {hoursHydrated} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.action";
+import {logger} from "@/app/core-logic/utils/logger";
 
 export const onOpeningHourRetrieval = ():AppThunkWl<Promise<void>> =>
     async (dispatch, _, gateways) => {
-        if(!gateways?.openingHours){
-            dispatch(hoursHydrated(
-                {data: [] as OpeningHours[]}))
+		if(!gateways?.openingHours){
+			logger.warn("[OPENING_HOURS] gateway unavailable; keeping current cache")
             return
         }
         try {
@@ -14,9 +13,10 @@ export const onOpeningHourRetrieval = ():AppThunkWl<Promise<void>> =>
             dispatch(hoursHydrated({
                 data:res.data
             }))
-        }catch {
-            dispatch(hoursHydrated(
-                {data: [] as OpeningHours[]}))
+		}catch (error: any) {
+			logger.warn("[OPENING_HOURS] retrieval failed; keeping current cache", {
+				error: String(error?.message ?? error),
+			})
         }finally {
             return
         }

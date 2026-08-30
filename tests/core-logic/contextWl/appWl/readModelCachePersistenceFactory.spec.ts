@@ -7,7 +7,7 @@ import {
 	READ_MODEL_CACHE_SCHEMA_VERSION,
 } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 import { articleListReceived } from "@/app/core-logic/contextWL/articleWl/typeAction/article.action";
-import { coffeesHydrated } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
+import { coffeeCatalogueReceived, coffeeListRequested, coffeesHydrated } from "@/app/core-logic/contextWL/coffeeWl/reducer/coffeeWl.reducer";
 import { photosHydrated } from "@/app/core-logic/contextWL/cfPhotosWl/typeAction/cfPhoto.action";
 import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
@@ -38,6 +38,26 @@ class FakeReadModelCacheStorage {
 }
 
 describe("readModelCachePersistenceFactory", () => {
+	it("persists an authoritative coffee catalogue and its etag atomically", async () => {
+		const storage = new FakeReadModelCacheStorage();
+		const store = initReduxStoreWl({
+			dependencies: { gateways: {} },
+			extraMiddlewares: [readModelCachePersistenceFactory({ storage })],
+		});
+		store.dispatch(coffeeListRequested({ requestId: "catalogue-request" }));
+		store.dispatch(coffeeCatalogueReceived({
+			requestId: "catalogue-request",
+			items: [{
+				id: "coffee_etag", name: "Cafe ETag", location: { lat: 48, lon: -1 },
+				address: { city: "Rennes" }, version: 1, updatedAt: "2026-08-30T10:00:00Z",
+			} as any],
+			etag: '"catalogue-v3"', fetchedAt: "2026-08-30T10:00:01Z",
+		}));
+		await flushPersist();
+		expect(storage.saved.at(-1)?.coffees?.requests?.list).toMatchObject({ status: "success", etag: '"catalogue-v3"' });
+		expect(storage.saved.at(-1)?.coffees?.byId.coffee_etag.name).toBe("Cafe ETag");
+	});
+
 	it("persists read model slices after read hydration", async () => {
 		const storage = new FakeReadModelCacheStorage();
 		const store = initReduxStoreWl({

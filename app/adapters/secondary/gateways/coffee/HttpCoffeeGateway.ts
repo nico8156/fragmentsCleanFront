@@ -31,9 +31,21 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 	}
 
 	async getAllSummaries(input?: { ifNoneMatch?: string; limit?: number }) {
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				return await this.fetchCompleteCatalogue(input);
+			} catch (error) {
+				if (!(error instanceof CatalogueChangedDuringPaginationError) || attempt === 2) throw error;
+			}
+		}
+		throw new Error("Coffee catalogue retrieval exhausted");
+	}
+
+	private async fetchCompleteCatalogue(input?: { ifNoneMatch?: string; limit?: number }) {
 		const items = [];
 		let cursor: string | undefined;
 		let etag: string | undefined;
+		const seenCursors = new Set<string>();
 		do {
 			const page = await this.fetchCatalogue({
 				limit: input?.limit ?? 100,
@@ -41,9 +53,12 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 				ifNoneMatch: cursor ? undefined : input?.ifNoneMatch,
 			});
 			if (page.kind === "not-modified") return page;
+			if (etag !== undefined && page.etag !== etag) throw new CatalogueChangedDuringPaginationError();
 			items.push(...page.items);
 			etag ??= page.etag;
 			cursor = page.nextCursor;
+			if (cursor && seenCursors.has(cursor)) throw new Error("Coffee catalogue cursor cycle detected");
+			if (cursor) seenCursors.add(cursor);
 		} while (cursor);
 		return { kind: "updated" as const, items, etag };
 	}
@@ -82,3 +97,5 @@ export class HttpCoffeeGateway implements CoffeeWlGateway {
 		};
 	}
 }
+
+class CatalogueChangedDuringPaginationError extends Error {}
