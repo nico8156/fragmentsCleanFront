@@ -7,6 +7,7 @@ type HttpArticleWlGatewayDeps = {
 };
 
 export class HttpArticleWlGateway implements ArticleWlGateway {
+	private static readonly SNAPSHOT_PAGE_SIZE = 100;
 	private readonly baseUrl: string;
 
 	constructor(deps: HttpArticleWlGatewayDeps) {
@@ -37,6 +38,33 @@ export class HttpArticleWlGateway implements ArticleWlGateway {
 	}
 
 	async list(input: { locale: Locale; limit?: number; cursor?: string }) {
+		if (input.limit !== undefined || input.cursor) {
+			return this.fetchPage(input);
+		}
+
+		const items: Article[] = [];
+		const visitedCursors = new Set<string>();
+		let cursor: string | undefined;
+		let etag: string | undefined;
+		do {
+			const page = await this.fetchPage({
+				locale: input.locale,
+				limit: HttpArticleWlGateway.SNAPSHOT_PAGE_SIZE,
+				cursor,
+			});
+			items.push(...page.items);
+			etag ??= page.etag;
+			cursor = page.nextCursor;
+			if (cursor && visitedCursors.has(cursor)) {
+				throw new Error("Article list failed: repeated pagination cursor");
+			}
+			if (cursor) visitedCursors.add(cursor);
+		} while (cursor);
+
+		return { items, etag };
+	}
+
+	private async fetchPage(input: { locale: Locale; limit?: number; cursor?: string }) {
 		const headers: Record<string, string> = { Accept: "application/json" };
 
 		const url = new URL(`${this.baseUrl}/api/articles`);

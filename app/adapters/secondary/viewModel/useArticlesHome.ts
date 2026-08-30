@@ -32,15 +32,15 @@ export type HomeCategoryVM = {
     items: HomeCategoryItemVM[];
 };
 
-const fallbackImage: ImageRef = {
-    url: "https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=1600&q=80",
-    width: 1600,
-    height: 1067,
-    alt: "Ambiance chaleureuse dans un coffee shop.",
+const localArticlePlaceholder: ImageRef = {
+    url: require("@/assets/images/icon.png"),
+    width: 1024,
+    height: 1024,
+    alt: "Fragments",
 };
 
 const toPreview = (article: Article): ArticlePreviewVM => {
-    const cover = article.cover ?? article.blocks.find((block) => block.photo)?.photo ?? fallbackImage;
+    const cover = article.cover ?? article.blocks.find((block) => block.photo)?.photo ?? localArticlePlaceholder;
     return {
         id: String(article.id),
         slug: String(article.slug),
@@ -54,34 +54,12 @@ const toPreview = (article: Article): ArticlePreviewVM => {
 const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
     if (previews.length === 0) return [];
 
-    const groups: HomeCategoryVM[] = [
+    return [
         {
-            id: "featured",
-            title: "Cafés à la une",
-            subtitle: "Les histoires qui font vibrer la communauté",
-            items: previews.slice(0, 3).map((preview) => ({
-                id: preview.id,
-                name: preview.title,
-                slug: preview.slug,
-                image: preview.cover,
-            })),
-        },
-        {
-            id: "popular",
-            title: "Articles consultés",
-            subtitle: "Les adresses plébiscitées par les fragments",
-            items: previews.slice(1, 4).map((preview) => ({
-                id: preview.id,
-                name: preview.title,
-                slug: preview.slug,
-                image: preview.cover,
-            })),
-        },
-        {
-            id: "fresh",
-            title: "Des cafés d'exception",
-            subtitle: "Les derniers cafés à explorer sans tarder",
-            items: previews.slice(-3).map((preview) => ({
+            id: "published-articles",
+            title: "Tous les articles",
+            subtitle: "Les histoires publiées par Fragments",
+            items: previews.map((preview) => ({
                 id: preview.id,
                 name: preview.title,
                 slug: preview.slug,
@@ -89,13 +67,6 @@ const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
             })),
         },
     ];
-
-    return groups
-        .map((group) => ({
-            ...group,
-            items: group.items.filter((item, index, array) => array.findIndex((candidate) => candidate.id === item.id) === index),
-        }))
-        .filter((group) => group.items.length > 0);
 };
 
 export function useArticlesHome(locale: Locale = "fr-FR") {

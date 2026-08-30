@@ -83,6 +83,21 @@ describe("article retrieval", () => {
         expect(state.byId[String(articleB.id)].readingTimeMin).toBe(7);
     });
 
+    it("removes articles no longer present in the authoritative published snapshot", async () => {
+        const published = sampleArticle();
+        const withdrawn = sampleArticle({ id: "article-2" as any, slug: "withdrawn" as any });
+        gateway.setListResponse("fr-FR", { items: [published, withdrawn] });
+        await store.dispatch<any>(articlesListRetrieval({ locale: "fr-FR" }));
+
+        gateway.setListResponse("fr-FR", { items: [published] });
+        await store.dispatch<any>(articlesListRetrieval({ locale: "fr-FR" }));
+
+        const state = store.getState().arState as AppStateWl["articles"];
+        expect(state.listsByLocale?.["fr-FR"]?.ids).toEqual([String(published.id)]);
+        expect(state.byId[String(withdrawn.id)]).toBeUndefined();
+        expect(state.bySlug[String(withdrawn.slug)]).toBeUndefined();
+    });
+
     it("marks the list in error when listing fails", async () => {
         gateway.willFailList = true;
 

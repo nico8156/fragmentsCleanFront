@@ -14,3 +14,6 @@ sans transporter de contenu métier. Voir `docs/architecture/article-reading-flo
 ## Flux standard
 
 `articleFlow.mmd` illustre la séquence : intention UI → thunk → gateway → reducer → view model. Le diagramme récapitule également la mise à jour des caches par locale.
+- **Snapshot publié autoritaire** : une récupération sans pagination explicite suit tous les `nextCursor` du backend. Le reducer remplace la liste locale et purge les articles retirés de la projection publiée (`draft` ou `archived`) afin qu’un événement SSE converge aussi après une dépublication.
+- **Présentation** : le slider de une reste volontairement limité à cinq éléments, mais le catalogue « Tous les articles » expose l’intégralité du snapshot publié, sans tranche arbitraire côté mobile.
+- **Médias** : le mobile n'invente aucune image distante. Une couverture absente utilise uniquement l'icône locale Fragments ; le contrat éditorial serveur reste responsable des médias publiés.
