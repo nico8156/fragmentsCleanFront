@@ -147,15 +147,22 @@ export const coffeeWlReducer = createReducer(
 				if (state.requests.search.requestId !== payload.requestId) return;
 				state.requests.search = { ...state.requests.search, status: "error", error: payload.message };
 			})
-			.addCase(readModelCacheRehydrated, (_state, { payload }) => {
-				if (!payload.coffees) return;
-				return {
-					...payload.coffees,
-					requests: {
-						byId: payload.coffees.requests?.byId ?? {},
-						list: payload.coffees.requests?.list ?? { status: "idle" },
-						search: payload.coffees.requests?.search ?? { status: "idle", ids: [] },
-					},
+				.addCase(readModelCacheRehydrated, (_state, { payload }) => {
+					if (!payload.coffees) return;
+					const listMetadata = payload.coffees.requests?.list;
+					return {
+						...payload.coffees,
+						requests: {
+							byId: {},
+							list: {
+								status: "success",
+								...(listMetadata?.etag !== undefined ? { etag: listMetadata.etag } : {}),
+								...(listMetadata?.lastSuccessfulFetch !== undefined
+									? { lastSuccessfulFetch: listMetadata.lastSuccessfulFetch }
+									: {}),
+							},
+							search: { status: "idle", ids: [] },
+						},
 				};
 			});
 	},

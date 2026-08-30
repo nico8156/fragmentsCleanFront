@@ -42,10 +42,22 @@ type Deps = {
 	logger?: (message: string, payload?: unknown) => void;
 };
 
+const buildDurableCoffeeState = (state: RootStateWl) => ({
+	byId: state.cfState.byId,
+	ids: state.cfState.ids,
+	byCity: state.cfState.byCity,
+	requests: {
+		list: {
+			etag: state.cfState.requests.list.etag,
+			lastSuccessfulFetch: state.cfState.requests.list.lastSuccessfulFetch,
+		},
+	},
+});
+
 const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
 	schemaVersion: READ_MODEL_CACHE_SCHEMA_VERSION,
 	updatedAt: new Date().toISOString(),
-	coffees: state.cfState,
+	coffees: buildDurableCoffeeState(state),
 	cfPhotos: state.pState,
 	openingHours: state.ohState,
 	comments: state.cState,
