@@ -1,0 +1,20 @@
+appId: com.nico8156.fragments
+name: Cached read models survive restart without network
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: home-screen
+- tapOn: Carte
+- assertVisible:
+    id: coffee-map-screen
+- toggleAirplaneMode
+- stopApp
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: home-screen
+- tapOn: Carte
+- assertVisible:
+    id: coffee-map-screen
+- toggleAirplaneMode

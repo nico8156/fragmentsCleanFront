@@ -25,7 +25,7 @@ export const makeDemoUser = (): AppUser => ({
     createdAt: parseToISODate(new Date(2024, 0, 1).toISOString()),
     updatedAt: parseToISODate(new Date(2024, 0, 1).toISOString()),
     displayName: "Fake User",
-    avatarUrl: "https://i.pravatar.cc/150?u=fake-user",
+    avatarUrl: undefined,
     identities: [],
     roles: ["user"],
     preferences: {

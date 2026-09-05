@@ -13,7 +13,7 @@ export function LoginScreen() {
 	}, [signInWithGoogle]);
 
 	return (
-		<SafeAreaView style={styles.safe}>
+		<SafeAreaView style={styles.safe} testID="login-screen">
 			<View style={styles.container}>
 				{/* Logo / identité */}
 				<View style={styles.brandBlock}>
@@ -30,6 +30,7 @@ export function LoginScreen() {
 
 				{/* Bouton principal */}
 				<Pressable
+					testID="google-sign-in"
 					onPress={handlePress}
 					disabled={isLoading}
 					style={({ pressed }) => [
@@ -171,4 +172,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

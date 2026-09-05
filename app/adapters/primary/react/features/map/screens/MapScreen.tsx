@@ -148,7 +148,7 @@ export function MapScreen() {
 	);
 
 	return (
-		<GestureHandlerRootView style={styles.safeArea} onLayout={onLayout}>
+		<GestureHandlerRootView style={styles.safeArea} onLayout={onLayout} testID="coffee-map-screen">
 			<StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
 			<View style={styles.container}>

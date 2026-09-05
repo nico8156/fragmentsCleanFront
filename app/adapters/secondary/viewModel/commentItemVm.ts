@@ -18,8 +18,6 @@ export type BuildCommentItemVMInput = {
 	nowMs: number;
 };
 
-const normalizeAuthorId = (authorId: string) => authorId;
-
 export const formatRelativeTime = (isoDate: string, nowMs = Date.now()): string => {
 	const d = new Date(isoDate);
 	if (Number.isNaN(d.getTime())) return "Date inconnue";
@@ -58,7 +56,6 @@ export const buildCommentItemVM = ({
 	nowMs,
 }: BuildCommentItemVMInput) => {
 	const meId = effectiveUserId ? String(effectiveUserId) : undefined;
-	const normalizedAuthorId = normalizeAuthorId(comment.authorId);
 	const isCurrentUser = Boolean(meId) && String(meId) === String(comment.authorId);
 	const transportStatus = toCommentTransportStatus(outboxStatus);
 

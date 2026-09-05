@@ -1,0 +1,23 @@
+appId: com.nico8156.fragments
+name: Published read models are available on the installed app
+env:
+  CAFE_ID: ${CAFE_ID}
+  ARTICLE_SLUG: ${ARTICLE_SLUG}
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: home-screen
+- tapOn: Carte
+- assertVisible:
+    id: coffee-map-screen
+- openLink: fragments://coffee/${CAFE_ID}
+- extendedWaitUntil:
+    visible:
+      id: coffee-detail-loaded
+    timeout: 15000
+- openLink: fragments://article/${ARTICLE_SLUG}
+- extendedWaitUntil:
+    visible:
+      id: article-detail-loaded
+    timeout: 15000
