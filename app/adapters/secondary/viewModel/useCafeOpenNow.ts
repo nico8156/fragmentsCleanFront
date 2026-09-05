@@ -11,9 +11,10 @@ import {isOpenNowFromWindows} from "@/app/core-logic/utils/time/isOpeningNow";
 export function useCafeOpenNow(id: CoffeeId | null) {
     const [now, setNow] = useState(() => new Date());
 
-    const windows = useSelector((state: RootStateWl) =>
-        selectOpeningHoursForCoffeeIdDayWindow(state, id)
-    );
+    const { windows, loaded } = useSelector((state: RootStateWl) => ({
+        windows: selectOpeningHoursForCoffeeIdDayWindow(state, id),
+        loaded: id != null && state.ohState.statusByCoffeeId[id] === "ok",
+    }));
 
     useEffect(() => {
         const t = setInterval(() => setNow(new Date()), 60_000);
@@ -21,7 +22,7 @@ export function useCafeOpenNow(id: CoffeeId | null) {
     }, []);
 
     return useMemo(
-        () => isOpenNowFromWindows(windows, now),
-        [windows, now]
+        () => isOpenNowFromWindows(loaded ? windows : undefined, now),
+        [loaded, windows, now]
     );
 }
