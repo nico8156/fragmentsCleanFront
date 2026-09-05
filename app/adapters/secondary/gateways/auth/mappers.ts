@@ -4,9 +4,25 @@ import {
     toUserId,
     AuthTokens, ProviderId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import { jwtDecode } from "jwt-decode";
 
+type JwtTimingClaims = { exp?: number; iat?: number };
 
-const ACCESS_TOKEN_LIFETIME_MS = 15 * 60 * 1000; // TODO: aligner avec ton backend
+const tokenTiming = (accessToken: string, now = Date.now()) => {
+    let claims: JwtTimingClaims;
+    try {
+        claims = jwtDecode<JwtTimingClaims>(accessToken);
+    } catch {
+        throw new Error("Invalid access token: JWT payload cannot be decoded");
+    }
+    if (!Number.isFinite(claims.exp)) {
+        throw new Error("Invalid access token: exp claim is required");
+    }
+    return {
+        issuedAt: Number.isFinite(claims.iat) ? Number(claims.iat) * 1000 : now,
+        expiresAt: Number(claims.exp) * 1000,
+    };
+};
 
 export interface GoogleLoginResponseDTO {
     accessToken: string;
@@ -27,14 +43,15 @@ export interface RefreshTokenResponseDTO {
 
 export const mapGoogleLoginDtoToSession = (dto: GoogleLoginResponseDTO, provider: ProviderId, scopes: string[]): AuthSession => {
     const now = Date.now();
+    const timing = tokenTiming(dto.accessToken, now);
     return {
         userId: toUserId(dto.user.userId),
         tokens: {
             accessToken: dto.accessToken,
             refreshToken: dto.refreshToken,
             idToken: undefined,
-            issuedAt: now,
-            expiresAt: now + ACCESS_TOKEN_LIFETIME_MS,
+            issuedAt: timing.issuedAt,
+            expiresAt: timing.expiresAt,
             tokenType: "Bearer",
             scope: scopes.join(" "),
         },
@@ -67,14 +84,14 @@ export const applyRefreshToSession = (
     prev: AuthSession,
     dto: RefreshTokenResponseDTO
 ): AuthSession => {
-    const now = Date.now();
+    const timing = tokenTiming(dto.accessToken);
 
     const nextTokens: AuthTokens = {
         ...prev.tokens,
         accessToken: dto.accessToken,
         refreshToken: dto.refreshToken,
-        issuedAt: now,
-        expiresAt: now + ACCESS_TOKEN_LIFETIME_MS,
+        issuedAt: timing.issuedAt,
+        expiresAt: timing.expiresAt,
     };
 
     return {

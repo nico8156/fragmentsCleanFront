@@ -80,6 +80,3 @@ export const selectCoffeesList = createSelector(
     [allById],
     (byId): Coffee[] => Object.values(byId)
 );
-
-//TODO handle opening hours : indicator OPEN / CLOSE => domain = pure = NO CHANGE
-//TODO calculate distance coffee == user

@@ -39,7 +39,7 @@ export type CommentSyncVM = { state: CommentSyncState; untilMs: number } | null;
 export type CommentItemVM = {
 	id: string;
 	authorName: string;
-	avatarUrl: string;
+	avatarUrl?: string;
 	body: string;
 	createdAt: string;
 	relativeTime: string;

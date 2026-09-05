@@ -8,7 +8,6 @@ import {
     toProviderUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { parseToISODate } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
-import { getProfileOrDefault } from "@/app/adapters/secondary/fakeData/communityProfiles";
 
 const buildIdentity = (
     provider: ProviderId,
@@ -29,7 +28,10 @@ export class DemoUserRepo implements UserRepo {
     async getById(id: AppUser["id"]): Promise<AppUser | null> {
         if (!this.cache.has(id)) {
             const [provider, providerUserId] = id.split(":");
-            const profileSeed = getProfileOrDefault(providerUserId);
+            const profileSeed = {
+                email: "demo@fragments.local",
+                displayName: "Membre Fragments",
+            };
             const identity = buildIdentity(
                 provider as ProviderId,
                 toProviderUserId(providerUserId),
@@ -41,8 +43,8 @@ export class DemoUserRepo implements UserRepo {
                 createdAt: now,
                 updatedAt: now,
                 displayName: profileSeed.displayName,
-                avatarUrl: profileSeed.avatarUrl,
-                bio: profileSeed.bio ?? "Caféiné et prêt à explorer",
+                avatarUrl: undefined,
+                bio: undefined,
                 identities: [identity],
                 roles: ["user"],
                 flags: { beta: true },

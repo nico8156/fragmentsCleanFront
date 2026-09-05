@@ -49,4 +49,23 @@ describe("commentItemVm", () => {
 			isAuthor: true,
 		});
 	});
+
+	it("uses only a neutral local identity when the server author snapshot is absent", () => {
+		const item = buildCommentItemVM({
+			comment: {
+				id: "comment_2",
+				targetId: "coffee_1",
+				authorId: "unknown-user",
+				body: "Bonjour",
+				createdAt: "2026-07-16T11:59:40.000Z",
+				version: 1,
+				moderation: moderationTypes.PUBLISHED,
+			} as any,
+			showPendingFeedback: false,
+			nowMs: Date.parse("2026-07-16T12:00:00.000Z"),
+		});
+
+		expect(item.authorName).toBe("Membre Fragments");
+		expect(item.avatarUrl).toBeUndefined();
+	});
 });

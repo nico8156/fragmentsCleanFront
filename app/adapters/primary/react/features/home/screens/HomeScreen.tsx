@@ -89,7 +89,7 @@ export function HomeScreen() {
 	const topPad = insets.top + HEADER_BAR_HEIGHT;
 
 	return (
-		<View style={styles.container}>
+		<View style={styles.container} testID="home-screen">
 			<StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
 			{/* Scroll: HERO doit remonter tout en haut (derrière header/icônes) */}

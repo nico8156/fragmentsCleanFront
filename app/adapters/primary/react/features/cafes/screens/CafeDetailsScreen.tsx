@@ -156,7 +156,7 @@ export default function CafeDetailsScreen() {
 	};
 
 	return (
-		<SafeAreaView style={styles.safe} edges={["top"]}>
+		<SafeAreaView style={styles.safe} edges={["top"]} testID="coffee-detail-loaded">
 			<View style={styles.screen}>
 				<CafeDetailsHeader
 					title={coffee.name}

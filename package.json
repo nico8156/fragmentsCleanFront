@@ -11,6 +11,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest --clearCache && jest",
+    "test:smoke:reads": "maestro test .maestro/smoke-read-models.yaml",
+    "test:smoke:offline": "maestro test .maestro/smoke-offline-cache.yaml",
     "redux:map": "node scripts/generate-redux-action-map.js",
     "redux:map:check": "node scripts/generate-redux-action-map.js --check",
     "build:dev": "eas build --profile development",

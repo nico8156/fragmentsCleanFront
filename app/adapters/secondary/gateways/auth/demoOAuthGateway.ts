@@ -5,7 +5,12 @@ import {
     ProviderId,
     toProviderUserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import { DEFAULT_COMMUNITY_PROFILE } from "@/app/adapters/secondary/fakeData/communityProfiles";
+
+const DEMO_PROFILE = {
+    id: "demo-user",
+    email: "demo@fragments.local",
+    displayName: "Membre Fragments",
+} as const;
 
 const randomToken = () => Math.random().toString(36).slice(2);
 
@@ -17,7 +22,7 @@ export class DemoOAuthGateway implements OAuthGateway {
         authorization: ProviderAuthorizationResult;
     }> {
         await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-        const profileSeed = DEFAULT_COMMUNITY_PROFILE;
+        const profileSeed = DEMO_PROFILE;
         const providerUserId = toProviderUserId(profileSeed.id);
         const profile: OAuthProfile = {
             provider,
@@ -25,7 +30,7 @@ export class DemoOAuthGateway implements OAuthGateway {
             email: profileSeed.email,
             emailVerified: true,
             displayName: profileSeed.displayName,
-            avatarUrl: profileSeed.avatarUrl,
+            avatarUrl: undefined,
             locale: "fr",
         };
         const authorization: ProviderAuthorizationResult = {

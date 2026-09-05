@@ -6,7 +6,7 @@ import { useLikesForCafe } from "@/app/adapters/secondary/viewModel/useLikesForC
 import { CoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 type Props = {
-    isOpen: boolean;
+    isOpen?: boolean;
     showExpanded: boolean;
     selected?: boolean;
     coffeeId: CoffeeId;
@@ -25,7 +25,7 @@ export const CoffeeMarkerBubble = ({ isOpen, showExpanded, selected, coffeeId }:
                     showExpanded && styles.markerBodyExpanded,
                 ]}
             >
-                <View style={styles.iconWrapper}>
+                <View style={[styles.iconWrapper, isOpen === undefined && styles.iconWrapperUnknown]}>
                     <SymbolView
                         name={isOpen ? "cup.and.saucer.fill" : "cup.and.saucer"}
                         size={20}
@@ -74,6 +74,9 @@ const styles = StyleSheet.create({
         backgroundColor: palette.success,
         padding: 4,
         borderRadius: 999,
+    },
+    iconWrapperUnknown: {
+        backgroundColor: palette.border_70,
     },
     likes: { flexDirection: "row", gap: 8, marginLeft: 8 },
     likesText: { fontSize: 16, fontWeight: "600", color: palette.textPrimary },

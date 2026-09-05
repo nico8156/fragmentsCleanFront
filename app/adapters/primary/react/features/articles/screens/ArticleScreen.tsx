@@ -52,7 +52,7 @@ export function ArticleScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container} testID={article ? "article-detail-loaded" : "article-detail-pending"}>
             <StatusBar barStyle="dark-content" />
             <AnimatedBackButton onPress={goBack} topInset={insets.top} />
             {!article && isLoading ? (
