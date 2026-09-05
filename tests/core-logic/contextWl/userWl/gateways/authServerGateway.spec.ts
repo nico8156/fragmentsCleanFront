@@ -2,7 +2,7 @@ import { createAuthServerGateway } from "@/app/adapters/secondary/gateways/auth/
 
 describe("createAuthServerGateway", () => {
 	const originalFetch = global.fetch;
-	const jwtForUser = "eyJhbGciOiJub25lIn0.eyJzdWIiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEifQ.";
+	const jwtForUser = "eyJhbGciOiJub25lIn0.eyJzdWIiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJpYXQiOjE4OTM0NTYwMDAsImV4cCI6MTg5MzQ1NjkwMH0.";
 
 	afterEach(() => {
 		global.fetch = originalFetch;
