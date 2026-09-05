@@ -1,4 +1,3 @@
-import { getCommunityProfile } from "@/app/adapters/secondary/fakeData/communityProfiles";
 import { isOutboxPendingStatus } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import { statusTypes, type StatusType } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import type { CommentEntity } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
@@ -18,9 +17,6 @@ export type BuildCommentItemVMInput = {
 	showPendingFeedback: boolean;
 	nowMs: number;
 };
-
-const buildFallbackAvatarUrl = (id: string) =>
-	`https://i.pravatar.cc/120?u=${encodeURIComponent(id)}`;
 
 const normalizeAuthorId = (authorId: string) => authorId;
 
@@ -64,16 +60,15 @@ export const buildCommentItemVM = ({
 	const meId = effectiveUserId ? String(effectiveUserId) : undefined;
 	const normalizedAuthorId = normalizeAuthorId(comment.authorId);
 	const isCurrentUser = Boolean(meId) && String(meId) === String(comment.authorId);
-	const communityProfile = getCommunityProfile(normalizedAuthorId);
 	const transportStatus = toCommentTransportStatus(outboxStatus);
 
 	const fallbackName = isCurrentUser
 		? currentUser?.displayName ?? "Moi"
-		: communityProfile?.displayName ?? normalizedAuthorId;
+		: "Membre Fragments";
 
 	const fallbackAvatar = isCurrentUser
-		? currentUser?.avatarUrl ?? buildFallbackAvatarUrl(String(meId ?? "me"))
-		: communityProfile?.avatarUrl ?? buildFallbackAvatarUrl(normalizedAuthorId);
+		? currentUser?.avatarUrl ?? undefined
+		: undefined;
 
 	return {
 		id: comment.id,
