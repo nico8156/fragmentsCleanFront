@@ -254,7 +254,7 @@ describe("processOutboxFactory", () => {
 		expect(recorder.count("LIKE/ROLLBACK")).toBe(0);
 	});
 
-	it("LikeAdd — business rejection => rollbacks optimistic UI", async () => {
+	it("LikeAdd — business rejection => rollbacks optimistic UI and drops the terminal command", async () => {
 		const authToken = new FakeAuthTokenBridge("token", "user_test");
 
 		class BusinessFailingLikesGateway extends FakeLikesGateway {
@@ -288,6 +288,9 @@ describe("processOutboxFactory", () => {
 		await flushPromises();
 
 		expect(recorder.count("LIKE/ROLLBACK")).toBe(1);
+		expect(store.getState().oState.byId["obx_like_business"]).toBeUndefined();
+		expect(store.getState().oState.queue).toEqual([]);
+		expect(recorder.count("OUTBOX/SCHEDULE_RETRY")).toBe(0);
 	});
 
 

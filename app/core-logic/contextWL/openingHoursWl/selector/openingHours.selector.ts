@@ -5,6 +5,7 @@ import {createSelector} from "@reduxjs/toolkit";
 import {toHoursByDayVM} from "@/app/core-logic/utils/time/timeFormator";
 import {DayWindow, HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 
+const NO_DAY_WINDOWS: DayWindow[] = [];
 
 // input selector : slice opening hours
 const selectOhState = (state: RootStateWl) => state.ohState;
@@ -24,12 +25,8 @@ const selectDayWindowsForCoffee = (
 
 // DayWindow[] pour un café
 export const selectOpeningHoursForCoffeeIdDayWindow = createSelector(
-    [selectDayWindowsForCoffee],
-    (hours): DayWindow[] => {
-        if (!hours) return [];
-        // on renvoie une nouvelle référence pour éviter le warning Reselect
-        return [...hours];
-    }
+	[selectDayWindowsForCoffee],
+	(hours): DayWindow[] => hours ?? NO_DAY_WINDOWS
 );
 
 // HoursByDayVM pour un café

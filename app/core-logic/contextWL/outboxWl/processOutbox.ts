@@ -182,20 +182,31 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 						api.dispatch(dequeueCommitted({ id }));
 					}
 				} catch (e: any) {
-					logger.error("[OUTBOX] processOnce: error", {
-						id,
-						kind: item.command.kind,
-						commandId: item.command.commandId,
-						error: e?.message ?? String(e),
-					});
-
 					if (isExplicitBusinessRejection(e)) {
+						logger.warn("[OUTBOX] processOnce: business rejection, rolling back and dropping", {
+							id,
+							kind: item.command.kind,
+							commandId: item.command.commandId,
+							error: e?.message ?? String(e),
+						});
 						rollbackRejectedOutboxRecord({
 							record,
 							dispatch: api.dispatch,
 							logger,
 						});
+						api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
+						api.dispatch(dequeueCommitted({ id }));
+						api.dispatch(dropCommitted({ commandId: item.command.commandId }));
+						callback?.();
+						return;
 					}
+
+					logger.error("[OUTBOX] processOnce: transient error", {
+						id,
+						kind: item.command.kind,
+						commandId: item.command.commandId,
+						error: e?.message ?? String(e),
+					});
 
 					api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 
