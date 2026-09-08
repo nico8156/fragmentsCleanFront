@@ -1,14 +1,26 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { ReactNode } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
 interface ProfileLayoutProps {
 	children: ReactNode;
+	refreshing?: boolean;
+	onRefresh?: () => void;
 }
 
-export function ProfileLayout({ children }: ProfileLayoutProps) {
+export function ProfileLayout({ children, refreshing, onRefresh }: ProfileLayoutProps) {
 	return (
-		<ScrollView style={styles.root} contentContainerStyle={styles.content}>
+		<ScrollView
+			style={styles.root}
+			contentContainerStyle={styles.content}
+			refreshControl={onRefresh ? (
+				<RefreshControl
+					refreshing={Boolean(refreshing)}
+					onRefresh={onRefresh}
+					tintColor={palette.textPrimary}
+				/>
+			) : undefined}
+		>
 			{children}
 		</ScrollView>
 	);
@@ -25,4 +37,3 @@ const styles = StyleSheet.create({
 		gap: 16,
 	},
 });
-
