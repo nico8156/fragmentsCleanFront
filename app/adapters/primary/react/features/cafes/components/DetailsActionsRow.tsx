@@ -63,10 +63,15 @@ export function DetailsActionsRow({
 				{
 					key: "save",
 					icon: saved?.saved ? "bookmark.fill" : "bookmark",
-					label: saved?.saved ? "Enregistré" : "Enregistrer",
+					label: saved?.saved ? "Favori" : "Ajouter",
+					accessibilityLabel: saved?.pending
+						? "Mise à jour du favori en cours"
+						: saved?.saved
+							? "Retirer ce café des favoris"
+							: "Ajouter ce café aux favoris",
 					onPress: saved?.onToggle ?? (() => undefined),
 					kind: saved?.saved ? "primary" as const : "neutral" as const,
-					disabled: !saved,
+					disabled: !saved || Boolean(saved?.pending),
 				},
 				{ key: "call", icon: "phone", label: "Appeler", onPress: onPressCall, kind: "neutral" as const, disabled: !phoneNumber },
 				{ key: "share", icon: "square.and.arrow.up", label: "Partager", onPress: onPressShare, kind: "neutral" as const, disabled: false },
@@ -84,6 +89,7 @@ export function DetailsActionsRow({
 					kind={it.kind}
 					compact={compact}
 					disabled={it.disabled}
+					accessibilityLabel={"accessibilityLabel" in it ? it.accessibilityLabel : it.label}
 					pending={it.key === "save" ? saved?.pending : false}
 					onPress={it.onPress}
 				/>
@@ -98,6 +104,7 @@ function ActionItem({
 	kind,
 	compact,
 	disabled,
+	accessibilityLabel,
 	pending,
 	onPress,
 }: {
@@ -106,6 +113,7 @@ function ActionItem({
 	kind: "primary" | "neutral";
 	compact?: boolean;
 	disabled?: boolean;
+	accessibilityLabel: string;
 	pending?: boolean;
 	onPress: () => void;
 }) {
@@ -113,6 +121,8 @@ function ActionItem({
 		<Pressable
 			onPress={onPress}
 			disabled={disabled}
+			accessibilityRole="button"
+			accessibilityLabel={accessibilityLabel}
 			style={({ pressed }) => [
 				s.item,
 				compact && s.itemCompact,
@@ -127,7 +137,7 @@ function ActionItem({
 			</View>
 
 			<Text style={[s.label, compact && s.labelCompact, disabled && s.labelDisabled]} numberOfLines={1}>
-				{pending ? "Sync..." : label}
+				{pending ? "Mise à jour…" : label}
 			</Text>
 		</Pressable>
 	);
