@@ -38,12 +38,28 @@ export interface Coffee {
     updatedAt: ISODate;  // maj côté serveur
 }
 
+export type CoffeeDiscoverySort = "distance" | "relevance";
+
+/**
+ * Préférences de découverte locales. Elles ne modifient jamais le catalogue
+ * serveur : elles composent la projection publique, y compris hors ligne.
+ */
+export interface CoffeeDiscoveryState {
+    query: string;
+    onlyOpenNow: boolean;
+    onlyWithPhotos: boolean;
+    requiredTags: string[];
+    sort: CoffeeDiscoverySort;
+}
+
 // Slice state
 export interface CoffeeStateWl {
     byId: Record<string, Coffee>;
     ids: string[]; // ordre global par défaut
     // (optionnel) indexes simples
     byCity?: Record<string, string[]>; // city -> [ids]
+	/** Etat d'intention UI, séparé des entités et du cycle réseau. */
+	discovery?: CoffeeDiscoveryState;
 	requests: {
 			byId: Record<string, { status: "idle" | "loading" | "success" | "error"; error?: string; etag?: string }>;
 		list: {

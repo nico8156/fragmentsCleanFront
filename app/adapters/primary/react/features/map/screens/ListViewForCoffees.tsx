@@ -5,6 +5,8 @@ import CoffeeList from "@/app/adapters/primary/react/features/map/components/cof
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {useNavigation} from "@react-navigation/native";
 import {RootStackNavigationProp} from "@/app/adapters/primary/react/navigation/types";
+import { useCoffeeDiscovery } from "@/app/adapters/secondary/viewModel/useCoffeeDiscovery";
+import { CoffeeDiscoveryControls } from "@/app/adapters/primary/react/features/map/components/CoffeeDiscoveryControls";
 
 type Props = {
     toggleViewMode: () => void;
@@ -16,6 +18,7 @@ const {toggleViewMode} = props;
 
     const navigation = useNavigation<RootStackNavigationProp>();
     const insets = useSafeAreaInsets();
+    const discovery = useCoffeeDiscovery();
 
     const openCafeDetails = (id: string) => {
         navigation.navigate("CafeDetails", { id });
@@ -24,12 +27,13 @@ const {toggleViewMode} = props;
     return(
         <View style={[styles.listWrapper, { paddingTop: insets.top + 16 }]}>
             <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>Tous les cafés</Text>
+                <Text style={styles.listTitle}>{discovery.hasLocation ? "Cafés autour de moi" : "Découvrir les cafés"}</Text>
                 <Pressable onPress={toggleViewMode} style={styles.overlayToggle} accessibilityRole="button">
                     <SymbolView name={'map.fill'} size={22} tintColor={palette.textPrimary} />
                 </Pressable>
             </View>
-            <CoffeeList onSelectCoffee={(id) => openCafeDetails(String(id))} />
+            <CoffeeDiscoveryControls discovery={discovery} />
+            <CoffeeList coffeeIds={discovery.coffees.map((coffee) => String(coffee.id))} onSelectCoffee={(id) => openCafeDetails(String(id))} />
         </View>
     )
 }
