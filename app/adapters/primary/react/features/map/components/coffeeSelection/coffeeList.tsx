@@ -1,26 +1,23 @@
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { useSelector } from "react-redux";
-import { AppStateWl } from "@/app/store/appStateWl";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeListItem from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeListItem";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 
 type Props = {
     onSelectCoffee?: (id: CoffeeId) => void;
+    coffeeIds: string[];
 }
 
-const CoffeeList = ({onSelectCoffee}: Props) => {
-
-    const ids = useSelector((s:any)=>s.cfState.ids) as AppStateWl["coffees"]["ids"]
+const CoffeeList = ({onSelectCoffee, coffeeIds}: Props) => {
 
     return (
         <FlatList
-            data={ids}
+            data={coffeeIds}
             keyExtractor={(id) => id}
             renderItem={({item}) => (
                 <CoffeeListItem id={parseToCoffeeId(item)} onPress={onSelectCoffee}/>
             )}
-            contentContainerStyle={ids.length === 0 ? styles.emptyContent : styles.listContent}
+            contentContainerStyle={coffeeIds.length === 0 ? styles.emptyContent : styles.listContent}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
                 <View style={styles.emptyState}>

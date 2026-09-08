@@ -1,6 +1,6 @@
 import { createAction, createReducer } from "@reduxjs/toolkit";
 import { AppStateWl } from "@/app/store/appStateWl";
-import { Coffee, CoffeeId, CoffeeStateWl } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import { Coffee, CoffeeDiscoverySort, CoffeeId, CoffeeStateWl } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
 export const coffeeRetrieved = createAction<Coffee>("COFFEE/RETRIEVED");
@@ -19,15 +19,22 @@ export const coffeeSearchRequested = createAction<{ requestId: string; query: st
 export const coffeeSearchReceived = createAction<{ requestId: string; query: string; mode: CoffeeSearchMode; items: Coffee[]; nextCursor?: string; etag?: string }>("COFFEE/SEARCH_RECEIVED");
 export const coffeeSearchNotModified = createAction<{ requestId: string; query: string; etag?: string }>("COFFEE/SEARCH_NOT_MODIFIED");
 export const coffeeSearchFailed = createAction<{ requestId: string; message: string }>("COFFEE/SEARCH_FAILED");
+export const coffeeDiscoveryQueryChanged = createAction<{ query: string }>("COFFEE/DISCOVERY_QUERY_CHANGED");
+export const coffeeDiscoveryOpenNowToggled = createAction<{ enabled: boolean }>("COFFEE/DISCOVERY_OPEN_NOW_TOGGLED");
+export const coffeeDiscoveryPhotosToggled = createAction<{ enabled: boolean }>("COFFEE/DISCOVERY_PHOTOS_TOGGLED");
+export const coffeeDiscoveryTagsChanged = createAction<{ tags: string[] }>("COFFEE/DISCOVERY_TAGS_CHANGED");
+export const coffeeDiscoverySortChanged = createAction<{ sort: CoffeeDiscoverySort }>("COFFEE/DISCOVERY_SORT_CHANGED");
 
 const initialState: AppStateWl["coffees"] = {
 	byId: {},
 	ids: [],
 	byCity: {},
+	discovery: { query: "", onlyOpenNow: false, onlyWithPhotos: false, requiredTags: [], sort: "distance" },
 	requests: { byId: {}, list: { status: "idle" }, search: { status: "idle", ids: [] } },
 };
 
 function ensureRequests(state: CoffeeStateWl) {
+	state.discovery ??= { query: "", onlyOpenNow: false, onlyWithPhotos: false, requiredTags: [], sort: "distance" };
 	state.requests ??= { byId: {}, list: { status: "idle" }, search: { status: "idle", ids: [] } };
 	state.requests.search ??= { status: "idle", ids: [] };
 }
@@ -178,6 +185,26 @@ export const coffeeWlReducer = createReducer(
 				ensureRequests(state);
 				if (state.requests.search.requestId !== payload.requestId) return;
 				state.requests.search = { ...state.requests.search, status: "error", error: payload.message };
+			})
+			.addCase(coffeeDiscoveryQueryChanged, (state, { payload }) => {
+				ensureRequests(state);
+				state.discovery!.query = payload.query;
+			})
+			.addCase(coffeeDiscoveryOpenNowToggled, (state, { payload }) => {
+				ensureRequests(state);
+				state.discovery!.onlyOpenNow = payload.enabled;
+			})
+			.addCase(coffeeDiscoveryPhotosToggled, (state, { payload }) => {
+				ensureRequests(state);
+				state.discovery!.onlyWithPhotos = payload.enabled;
+			})
+			.addCase(coffeeDiscoveryTagsChanged, (state, { payload }) => {
+				ensureRequests(state);
+				state.discovery!.requiredTags = [...new Set(payload.tags.map((tag) => tag.trim()).filter(Boolean))];
+			})
+			.addCase(coffeeDiscoverySortChanged, (state, { payload }) => {
+				ensureRequests(state);
+				state.discovery!.sort = payload.sort;
 			})
 				.addCase(readModelCacheRehydrated, (_state, { payload }) => {
 					if (!payload.coffees) return;
