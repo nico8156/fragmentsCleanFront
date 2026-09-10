@@ -70,17 +70,16 @@ export function useScanTicketScreenVM() {
 		}
 	}, [recognizeText, requestCameraPermission]);
 	const onSubmit = useCallback(() => {
-		if (!imageUri) return;
+		if (!ocrText || isProcessing) return;
 
 		dispatch(
 			uiTicketSubmitRequested({
-				imageRef: imageUri,
-				ocrText: ocrText ?? undefined,
+				ocrText,
 			})
 		);
 
 		navigation.replace("ScanTicketSuccess");
-	}, [dispatch, imageUri, navigation, ocrText]);
+	}, [dispatch, isProcessing, navigation, ocrText]);
 
 	// Interprétation simple de la qualité
 	let photoStatus: PhotoStatus = "unknown";
@@ -96,7 +95,7 @@ export function useScanTicketScreenVM() {
 
 		photoStatus,
 
-		canSubmit: Boolean(imageUri),
+		canSubmit: Boolean(ocrText) && !isProcessing,
 
 		onPickImage,
 		onSubmit,

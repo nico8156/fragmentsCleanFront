@@ -10,22 +10,6 @@ type StorageDriver = {
 	clear(): Promise<void>;
 };
 
-class MemoryDriver implements StorageDriver {
-	private snapshot: string | null = null;
-
-	async load() {
-		return this.snapshot;
-	}
-
-	async save(value: string) {
-		this.snapshot = value;
-	}
-
-	async clear() {
-		this.snapshot = null;
-	}
-}
-
 const parseSnapshot = (raw: string | null): DurableReadModelCacheSnapshot | null => {
 	if (!raw) return null;
 	try {
@@ -38,30 +22,7 @@ const parseSnapshot = (raw: string | null): DurableReadModelCacheSnapshot | null
 	}
 };
 
-const createAsyncStorageDriver = (key: string): StorageDriver | null => {
-	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const AsyncStorage = require("@react-native-async-storage/async-storage");
-		const storage = AsyncStorage.default ?? AsyncStorage;
-		if (!storage) return null;
-		return {
-			async load() {
-				return storage.getItem(key);
-			},
-			async save(value) {
-				await storage.setItem(key, value);
-			},
-			async clear() {
-				await storage.removeItem(key);
-			},
-		} satisfies StorageDriver;
-	} catch (error) {
-		console.warn("[read-cache] AsyncStorage unavailable", error);
-		return null;
-	}
-};
-
-const createMmkvDriver = (key: string): StorageDriver | null => {
+const createRequiredMmkvDriver = (key: string): StorageDriver => {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const { MMKVLoader } = require("react-native-mmkv-storage");
@@ -78,18 +39,14 @@ const createMmkvDriver = (key: string): StorageDriver | null => {
 			},
 		} satisfies StorageDriver;
 	} catch (error) {
-		console.warn("[read-cache] MMKV unavailable", error);
-		return null;
+		throw new Error("[read-cache] Durable MMKV storage is required for offline read models", { cause: error });
 	}
 };
-
-const createDriverChain = (key: string): StorageDriver =>
-	createMmkvDriver(key) ?? createAsyncStorageDriver(key) ?? new MemoryDriver();
 
 export const createNativeReadModelCacheStorage = (
 	key = "app.read-model-cache",
 ): ReadModelCacheGateway => {
-	const driver = createDriverChain(key);
+	const driver = createRequiredMmkvDriver(key);
 	return {
 		async loadSnapshot() {
 			return parseSnapshot(await driver.load());

@@ -91,6 +91,15 @@ The refresh skips tickets that still have a pending local outbox command, so a
 fresh optimistic ticket is not turned into a read error before its command has
 reached the backend.
 
+### Ticket capture boundary
+
+The current server contract verifies OCR text; it does not upload a mobile
+camera file. A device-local `file://` URI must therefore never enter a durable
+outbox command or a backend projection. The scan screen enables submission only
+after native OCR succeeded, then queues the recognised text. A future image
+upload capability must first introduce a dedicated upload port, durable local
+file ownership, and a server-issued object reference.
+
 ## Required Data
 
 Each command stores:
@@ -105,3 +114,8 @@ Each command stores:
 ## Critical Rule
 
 Network failure is not business failure.
+
+Durability is also non-negotiable: native production wiring requires MMKV for
+the outbox, read-model cache, and Projection Sync cursor. It must fail fast if
+MMKV is unavailable; falling back to in-memory storage would silently lose
+offline commands after a restart.

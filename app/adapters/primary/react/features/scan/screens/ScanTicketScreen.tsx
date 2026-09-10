@@ -101,7 +101,7 @@ export function ScanTicketScreen() {
 			</Pressable>
 
 			<Text style={styles.helpText}>
-				Astuce : ticket bien à plat, photo nette et bien éclairée.
+				Astuce : ticket bien à plat, photo nette et bien éclairée. Une photo lisible est nécessaire avant l’envoi.
 			</Text>
 		</ScrollView>
 	);

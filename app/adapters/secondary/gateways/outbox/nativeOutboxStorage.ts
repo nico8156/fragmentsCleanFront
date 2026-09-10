@@ -7,22 +7,6 @@ type StorageDriver = {
     clear(): Promise<void>;
 };
 
-class MemoryDriver implements StorageDriver {
-    private snapshot: string | null = null;
-
-    async load() {
-        return this.snapshot;
-    }
-
-    async save(value: string) {
-        this.snapshot = value;
-    }
-
-    async clear() {
-        this.snapshot = null;
-    }
-}
-
 const parseSnapshot = (raw: string | null): OutboxStateWl | null => {
     if (!raw) return null;
     try {
@@ -33,32 +17,9 @@ const parseSnapshot = (raw: string | null): OutboxStateWl | null => {
     }
 };
 
-const createAsyncStorageDriver = (key: string): StorageDriver | null => {
+const createRequiredMmkvDriver = (key: string): StorageDriver => {
     try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AsyncStorage = require("@react-native-async-storage/async-storage");
-        const storage = AsyncStorage.default ?? AsyncStorage;
-        if (!storage) return null;
-        return {
-            async load() {
-                return storage.getItem(key);
-            },
-            async save(value) {
-                await storage.setItem(key, value);
-            },
-            async clear() {
-                await storage.removeItem(key);
-            },
-        } satisfies StorageDriver;
-    } catch (error) {
-        console.warn("[outbox] AsyncStorage unavailable", error);
-        return null;
-    }
-};
-
-const createMmkvDriver = (key: string): StorageDriver | null => {
-    try {
-// eslint-disable-next-line @typescript-eslint/no-require-imports
         const { MMKVLoader } = require("react-native-mmkv-storage");
         const storage = new MMKVLoader().withInstanceID(key).initialize();
         return {
@@ -73,21 +34,12 @@ const createMmkvDriver = (key: string): StorageDriver | null => {
             },
         } satisfies StorageDriver;
     } catch (error) {
-        console.warn("[outbox] MMKV unavailable", error);
-        return null;
+        throw new Error("[outbox] Durable MMKV storage is required for offline commands", { cause: error });
     }
 };
 
-const createDriverChain = (key: string): StorageDriver => {
-    const mmkv = createMmkvDriver(key);
-    if (mmkv) return mmkv;
-    const asyncStorage = createAsyncStorageDriver(key);
-    if (asyncStorage) return asyncStorage;
-    return new MemoryDriver();
-};
-
 export const createNativeOutboxStorage = (key = "app.outbox"): OutboxStorageGateway => {
-    const driver = createDriverChain(key);
+    const driver = createRequiredMmkvDriver(key);
     return {
         async loadSnapshot() {
             const raw = await driver.load();

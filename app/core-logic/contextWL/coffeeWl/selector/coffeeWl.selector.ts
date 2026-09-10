@@ -1,7 +1,5 @@
 import {
-    Address, Coffee,
-    CoffeeId,
-    GeoPoint
+    Address, Coffee, CoffeeDiscoveryState, CoffeeId, GeoPoint,
 } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import {RootStateWl} from "@/app/store/reduxStoreWl";
 import { createSelector } from "@reduxjs/toolkit";
@@ -9,9 +7,7 @@ import {selectPhotosForCoffeeId} from "@/app/core-logic/contextWL/cfPhotosWl/sel
 import {
     selectHoursByDayVM
 } from "@/app/core-logic/contextWL/openingHoursWl/selector/openingHours.selector";
-import {HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
-import { DayWindow } from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
-import { CoffeeDiscoveryState } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
+import {DayWindow, HoursByDayVM} from "@/app/core-logic/contextWL/openingHoursWl/typeAction/openingHours.type";
 import { isOpenNowFromWindows } from "@/app/core-logic/utils/time/isOpeningNow";
 import { formatDistance, haversineKm } from "@/app/core-logic/utils/geo/distance";
 

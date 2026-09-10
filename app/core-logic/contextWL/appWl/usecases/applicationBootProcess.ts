@@ -10,10 +10,6 @@ import { articlesListRetrieval } from "@/app/core-logic/contextWL/articleWl/usec
 import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/oncfPhotoRetrieval";
 import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
-import {
-	getOnceRequested,
-	requestPermission,
-} from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
 import type { OutboxStorageGateway } from "@/app/core-logic/contextWL/outboxWl/gateway/outboxStorage.gateway";
 import { rehydrateOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/runtime/rehydrateOutbox";
@@ -102,13 +98,6 @@ export const createApplicationBootProcess = ({
 				logger.warn(`[BOOT] Warmup skipped: ${label}`, String(e?.message ?? e));
 			}
 		};
-
-		try {
-			store.dispatch(requestPermission());
-			store.dispatch(getOnceRequested({ accuracy: "high" }));
-		} catch {
-			// Location warmup must not block boot.
-		}
 
 		await runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval()));
 		await runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval()));

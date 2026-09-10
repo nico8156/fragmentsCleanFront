@@ -1,4 +1,4 @@
-package com.nico8156.fragmentsCleanFront
+package com.nico8156.fragments
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

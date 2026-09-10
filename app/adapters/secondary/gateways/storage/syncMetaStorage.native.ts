@@ -5,6 +5,7 @@ import {
     SyncMetaStorage
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 
+/** Test-only driver. Production wiring always uses MMKV through createNativeSyncMetaStorage. */
 class MemoryDriver implements StorageDriver {
     private snapshot: PersistedState | null = null;
 
@@ -31,31 +32,7 @@ const parseState = (raw: string | null): PersistedState | null => {
     }
 };
 
-const createAsyncStorageDriver = (key: string): StorageDriver | null => {
-    try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const AsyncStorage = require("@react-native-async-storage/async-storage");
-        const storage = AsyncStorage.default ?? AsyncStorage;
-        if (!storage) return null;
-        return {
-            async load() {
-                const raw = await storage.getItem(key);
-                return parseState(raw);
-            },
-            async save(state) {
-                await storage.setItem(key, JSON.stringify(state));
-            },
-            async clear() {
-                await storage.removeItem(key);
-            },
-        } satisfies StorageDriver;
-    } catch (error) {
-        console.warn("[sync] AsyncStorage unavailable", error);
-        return null;
-    }
-};
-
-const createMmkvDriver = (key: string): StorageDriver | null => {
+const createRequiredMmkvDriver = (key: string): StorageDriver => {
     try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { MMKVLoader } = require("react-native-mmkv-storage");
@@ -73,17 +50,8 @@ const createMmkvDriver = (key: string): StorageDriver | null => {
             },
         } satisfies StorageDriver;
     } catch (error) {
-        console.warn("[sync] MMKV unavailable", error);
-        return null;
+        throw new Error("[sync] Durable MMKV storage is required for projection synchronization", { cause: error });
     }
-};
-
-const createDriverChain = (key: string): StorageDriver => {
-    const mmkv = createMmkvDriver(key);
-    if (mmkv) return mmkv;
-    const asyncStorage = createAsyncStorageDriver(key);
-    if (asyncStorage) return asyncStorage;
-    return new MemoryDriver();
 };
 
 const createDefaultState = (): SyncMetaState => ({
@@ -188,9 +156,8 @@ const createSyncMetaStorageFromDriver = (driver: StorageDriver): SyncMetaStorage
 };
 
 export const createNativeSyncMetaStorage = (key = "app.sync.meta"): SyncMetaStorage => {
-    return createSyncMetaStorageFromDriver(createDriverChain(key));
+    return createSyncMetaStorageFromDriver(createRequiredMmkvDriver(key));
 };
 
-export const createMemorySyncMetaStorage = (): SyncMetaStorage => {
-    return createSyncMetaStorageFromDriver(new MemoryDriver());
-};
+export const createMemorySyncMetaStorage = (): SyncMetaStorage =>
+    createSyncMetaStorageFromDriver(new MemoryDriver());

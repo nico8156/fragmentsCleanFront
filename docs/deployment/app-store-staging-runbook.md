@@ -24,7 +24,7 @@ the build environment instead of being hardcoded in gateways:
 npx eas env:create production \
   --scope project \
   --name EXPO_PUBLIC_API_BASE_URL \
-  --value https://fragments-staging.anchor-event.fr \
+  --value https://<production-api-host> \
   --visibility plaintext
 
 npx eas env:create production \
@@ -40,18 +40,39 @@ npx eas env:create production \
   --visibility plaintext
 ```
 
-Repeat the same variables in the `development` EAS environment for development
-client builds.
+Use the staging host only in the `development` or `preview` EAS environment.
+An App Store binary must target the production HTTPS host.
 
-`app.config.js` intentionally fails production builds when `EXPO_PUBLIC_API_BASE_URL`
-is missing. When the Google iOS client id is present, the config derives the
-native `iosUrlScheme` for the Google Sign-In plugin from that client id.
+`app.config.js` intentionally fails production builds when one of the API or
+Google OAuth values is missing. It is the unique Expo configuration source.
+Before a native configuration change is submitted, regenerate the checked-in
+native projects in production mode:
+
+```bash
+EAS_BUILD_PROFILE=production \
+EXPO_PUBLIC_API_BASE_URL=https://<production-api-host> \
+EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID=<google-ios-client-id>.apps.googleusercontent.com \
+EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI=<google-redirect-uri> \
+  npx expo prebuild --clean --no-install
+```
+
+The local `withPrivacyMinimum` config plugin keeps only the permissions used by
+the product: foreground location and camera ticket OCR. Do not reintroduce
+background location, microphone, Face ID, or photo-library declarations without
+an approved product and privacy change.
+
+Because the generated native projects are checked in, every release must also
+run the regression guard after prebuild:
+
+```bash
+npm run native:release:check
+```
 
 ## Local Verification
 
 ```bash
 npm test
-EXPO_PUBLIC_API_BASE_URL=https://fragments-staging.anchor-event.fr \
+EXPO_PUBLIC_API_BASE_URL=https://<production-api-host> \
 EXPO_PUBLIC_GOOGLE_MOBILE_IOS_CLIENT_ID=<google-ios-client-id>.apps.googleusercontent.com \
 EXPO_PUBLIC_GOOGLE_MOBILE_IOS_REDIRECT_URI=com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect \
   EAS_BUILD_PROFILE=production \
@@ -63,7 +84,9 @@ Confirm in the generated config:
 - `extra.apiBaseUrl` is the HTTPS AWS URL;
 - `ios.bundleIdentifier` is `com.nico8156.fragments`;
 - `extra.googleMobileIosRedirectUri` is `com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect`;
-- Android only requests foreground location;
+- `scheme` includes `fragments` and the Google redirect scheme;
+- iOS and Android both use `com.nico8156.fragments`;
+- Android only requests foreground location and camera;
 - no API secret is present in `extra`.
 
 ## iOS Build
@@ -91,6 +114,8 @@ Before submission, verify App Store Connect metadata:
 - privacy questionnaire mentions location and account/auth data accurately;
 - screenshots show the production app, not local/demo data;
 - Google Sign-In works on the production bundle identifier.
+- camera usage is declared as ticket OCR; no background location capability is
+  declared.
 
 ## Runtime Smoke Scenario
 
@@ -104,6 +129,8 @@ Use the production build against AWS and verify:
 6. polling `/commands/{commandId}` resolves the command;
 7. local outbox drops the command only after `APPLIED`;
 8. rollback only occurs on explicit business rejection.
+9. scan a ticket: submission is unavailable until OCR finishes; switch offline,
+   submit, restart the app, reconnect, and verify command reconciliation.
 
 ## Guardrails
 

@@ -1,4 +1,4 @@
-package com.nico8156.fragmentsCleanFront
+package com.nico8156.fragments
 
 import android.app.Application
 import android.content.res.Configuration

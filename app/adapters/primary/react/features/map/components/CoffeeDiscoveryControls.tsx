@@ -3,7 +3,7 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import type { CoffeeDiscoverySort } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 type DiscoveryViewModel = {
-    coffees: Array<{ tags: string[] }>;
+    coffees: { tags: string[] }[];
     preferences: { query: string; onlyOpenNow: boolean; onlyWithPhotos: boolean; requiredTags: string[]; sort: CoffeeDiscoverySort };
     hasLocation: boolean;
     isUsingCachedCatalogue?: boolean;

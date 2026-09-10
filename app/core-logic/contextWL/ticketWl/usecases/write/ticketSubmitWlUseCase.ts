@@ -9,7 +9,7 @@ import {parseToTicketId} from "@/app/core-logic/contextWL/ticketWl/typeAction/ti
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 // Action UI (déclenchée depuis le composant)
-export const uiTicketSubmitRequested = createAction<{ imageRef?: string; ocrText?: string | null }>(
+export const uiTicketSubmitRequested = createAction<{ ocrText: string }>(
     "UI/TICKET_SUBMIT_REQUESTED"
 );
 
@@ -37,8 +37,7 @@ export const ticketSubmitUseCaseFactory = (deps:DependenciesWl) => {
                     ticketId:parseToTicketId(ticketId),
                     at:parseToISODate(at),
                     status: "ANALYZING",
-                    ocrText: action.payload.ocrText ?? undefined,
-                    imageRef: action.payload.imageRef,
+                    ocrText: action.payload.ocrText,
                 })
             );
 
@@ -51,8 +50,7 @@ export const ticketSubmitUseCaseFactory = (deps:DependenciesWl) => {
                             kind: commandKinds.TicketVerify,
                             commandId: parseToCommandId(commandId),
                             ticketId,
-                            imageRef: action.payload.imageRef,
-                            ocrText: action.payload.ocrText ?? null,
+                            ocrText: action.payload.ocrText,
                             at: parseToISODate(at),
                         },
                         undo: { kind: commandKinds.TicketVerify, ticketId },

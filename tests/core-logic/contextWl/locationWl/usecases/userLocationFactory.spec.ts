@@ -7,6 +7,7 @@ import {
     requestPermission,
     startWatchRequested,
     stopWatchRequested,
+    userLocationRequested,
 } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
 import {AccuracyKey, LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
@@ -65,6 +66,22 @@ describe('userLocationListenerFactory', () => {
         expect(gateway.requestPermission).toHaveBeenCalledTimes(1);
         expect(getLocationState().permission).toBe('granted');
         expect(getLocationState().status).toBe('idle');
+    });
+
+    it('asks for permission only after an explicit location intent, then retrieves the position', async () => {
+        gateway.getPermissionStatus = jest.fn(async () => 'undetermined');
+        gateway.requestPermissionStatus = 'granted';
+        const coords: LocationCoords = { lat: 48.11, lng: -1.68, accuracy: 8, heading: null, speed: null };
+        gateway.nextCoords = coords;
+
+        store.dispatch(userLocationRequested());
+        await flush();
+        await flush();
+
+        expect(gateway.getPermissionStatus).toHaveBeenCalledTimes(1);
+        expect(gateway.requestPermission).toHaveBeenCalledTimes(1);
+        expect(gateway.getCurrentPosition).toHaveBeenCalledWith({ accuracy: 'balanced' });
+        expect(getLocationState().coords).toEqual(coords);
     });
 
     it('should expose an error when permission request fails', async () => {

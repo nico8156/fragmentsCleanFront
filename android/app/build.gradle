@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.nico8156.fragmentsCleanFront'
+    namespace 'com.nico8156.fragments'
     defaultConfig {
-        applicationId 'com.nico8156.fragmentsCleanFront'
+        applicationId 'com.nico8156.fragments'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

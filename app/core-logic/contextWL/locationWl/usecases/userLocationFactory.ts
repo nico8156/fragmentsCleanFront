@@ -6,6 +6,7 @@ import {
     locationUpdated, permissionCheckRequested,
     permissionUpdated,
     requestPermission,
+    userLocationRequested,
     startWatchRequested,
     stopWatchRequested,
     watchError,
@@ -43,6 +44,24 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
             }
         }
     })
+    listen({
+        actionCreator: userLocationRequested,
+        effect: async (_, api) => {
+            if (!deps.gateways.locations) return;
+            try {
+                let status = await deps.gateways.locations.getPermissionStatus();
+                if (status === "undetermined") {
+                    status = await deps.gateways.locations.requestPermission();
+                }
+                api.dispatch(permissionUpdated({ status }));
+                if (status === "granted") {
+                    api.dispatch(getOnceRequested({ accuracy: "balanced" }));
+                }
+            } catch (e: any) {
+                api.dispatch(watchError({ scope: "permission", message: e?.message ?? String(e) }));
+            }
+        },
+    });
     listen({
         actionCreator:getOnceRequested,
         effect:async (action,api)=>{

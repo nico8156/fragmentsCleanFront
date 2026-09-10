@@ -55,10 +55,9 @@ describe("Ticket submit listener (optimistic + enqueue)", () => {
     });
 
     it("submit: create tk aggregate (optimistic ANALYZING) + outbox enqueued", async () => {
-        store.dispatch(
-            uiTicketSubmitRequested({
-                imageRef: "file://local/photo1.jpg",
-                ocrText: null,
+		store.dispatch(
+			uiTicketSubmitRequested({
+				ocrText: "TOTAL 4,20 EUR",
             })
         );
 
@@ -84,8 +83,8 @@ describe("Ticket submit listener (optimistic + enqueue)", () => {
         expect(cmd.kind).toBe(commandKinds.TicketVerify);
         expect(cmd.commandId).toBe(COMMAND_ID);
         expect(cmd.ticketId).toBe(TICKET_ID);
-        expect(cmd.imageRef).toBe("file://local/photo1.jpg");
-        expect(cmd.ocrText).toBeNull();
+		expect(cmd.imageRef).toBeUndefined();
+		expect(cmd.ocrText).toBe("TOTAL 4,20 EUR");
         expect(cmd.at).toBe(NOW);
 
         const undo = rec.item.undo as TicketVerifyUndo;
