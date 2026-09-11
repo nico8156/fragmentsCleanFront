@@ -14,6 +14,7 @@ Read in order:
 4. [ACK and command status](ack-and-command-status.md)
 5. [Configuration and App Store](configuration-app-store.md)
 6. [Article reading flow](article-reading-flow.md)
+7. [Account isolation and legacy data](account-isolation.md)
 
 ## Redux Action Map
 

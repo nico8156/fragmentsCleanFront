@@ -40,6 +40,26 @@ const responseThatStaysOpen = (chunk: string) => {
 };
 
 describe("HttpProjectionSyncGateway", () => {
+	it("resets Last-Event-ID for a new connection and ignores a late chunk from the old stream", async () => {
+		let releaseOld!: (chunk: any) => void;
+		const oldRead = new Promise(resolve => { releaseOld = resolve; });
+		const fetcher = jest.fn()
+			.mockResolvedValueOnce({ ok: true, status: 200, body: { getReader: () => ({ read: () => oldRead, cancel: async () => undefined }) } })
+			.mockResolvedValueOnce(responseThatStaysOpen('id: B-event\nevent: sync.heartbeat\ndata: {"eventName":"sync.heartbeat","schemaVersion":1}\n\n'));
+		const gateway = new HttpProjectionSyncGateway({ baseUrl: "https://example.test", fetcher: fetcher as any });
+		const oldEvents = jest.fn();
+		gateway.connect({ token: "A", lastEventId: "A-cursor", onStatus: jest.fn(), onEvent: oldEvents });
+		await new Promise(resolve => setTimeout(resolve, 0));
+		gateway.disconnect();
+		gateway.connect({ token: "B", onStatus: jest.fn(), onEvent: jest.fn() });
+		await new Promise(resolve => setTimeout(resolve, 0));
+		releaseOld({ done: false, value: 'id: late-A\nevent: sync.heartbeat\ndata: {"eventName":"sync.heartbeat","schemaVersion":1}\n\n' });
+		await new Promise(resolve => setTimeout(resolve, 0));
+		expect(fetcher.mock.calls[1][1].headers["Last-Event-ID"]).toBeUndefined();
+		expect(gateway.getLastEventId()).toBe("B-event");
+		expect(oldEvents).not.toHaveBeenCalled();
+		gateway.disconnect();
+	});
 	it("stops reconnecting after an auth rejection", async () => {
 		const fetcher = jest.fn(async () => ({
 			ok: false,

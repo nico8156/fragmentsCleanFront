@@ -1,5 +1,6 @@
 import {DependenciesWl} from "@/app/store/appStateWl";
-import {createListenerMiddleware, TypedStartListening} from "@reduxjs/toolkit";
+import {TypedStartListening} from "@reduxjs/toolkit";
+import { createListenerMiddleware, accountGeneration } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 import {AppDispatchWl, RootStateWl} from "@/app/store/reduxStoreWl";
 import {
     getOnceRequested, locationNearbyCafeUpdated,
@@ -76,18 +77,32 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
     })
 
     let sub: { remove(): void } | null = null;
+    let watchEpoch = 0;
+
+    listen({
+        predicate: (_, current, previous) => accountGeneration(current) !== accountGeneration(previous),
+        effect: (_, api) => {
+            ++watchEpoch;
+            sub?.remove();
+            sub = null;
+            api.dispatch(watchStopped());
+        },
+    });
 
     listen({
         actionCreator:startWatchRequested,
         effect:async (action,api) => {
             if (!deps.gateways.locations) return
+            const attempt = ++watchEpoch;
             try {
                 if (sub) sub.remove();
-                sub = await deps.gateways.locations.watchPosition(
+                const nextSub = await deps.gateways.locations.watchPosition(
                     action.payload ?? { accuracy: 'balanced', distanceInterval: 50 },
                     (coords) => api.dispatch(locationUpdated({ coords, at: Date.now()})),
                     (err) => api.dispatch(watchError({ scope: 'watch', message: String(err) }))
                 );
+                if (attempt !== watchEpoch) { nextSub.remove(); return; }
+                sub = nextSub;
                 api.dispatch(watchStarted());
             } catch (e:any) {
                 api.dispatch(watchError({ scope: 'watch', message: e?.message ?? String(e) }));
@@ -97,6 +112,7 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
     listen({
         actionCreator:stopWatchRequested,
         effect:async (_,api)=>{
+            ++watchEpoch;
             try { sub?.remove(); } finally {
                 sub = null;
                 api.dispatch(watchStopped());

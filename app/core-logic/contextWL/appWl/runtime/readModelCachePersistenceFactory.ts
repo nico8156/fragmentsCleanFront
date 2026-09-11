@@ -54,7 +54,7 @@ const buildDurableCoffeeState = (state: RootStateWl) => ({
 	},
 });
 
-const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
+export const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
 	schemaVersion: READ_MODEL_CACHE_SCHEMA_VERSION,
 	updatedAt: new Date().toISOString(),
 	coffees: buildDurableCoffeeState(state),

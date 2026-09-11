@@ -92,7 +92,7 @@ export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 
 		this.params = params;
 		this.stopped = false;
-		if (params.lastEventId) this.lastEventId = params.lastEventId;
+		this.lastEventId = params.lastEventId;
 		const seq = ++this.connectSeq;
 
 		void this.run(seq);
@@ -177,6 +177,10 @@ export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 			headers,
 			signal: abortController.signal,
 		});
+		if (this.stopped || seq !== this.connectSeq) {
+			await response.body?.getReader?.().cancel?.();
+			return;
+		}
 
 		if (!response.ok) {
 			if (response.status === 401 || response.status === 403) {
@@ -196,9 +200,11 @@ export class HttpProjectionSyncGateway implements ProjectionSyncGateway {
 		try {
 			while (!this.stopped && seq === this.connectSeq) {
 				const chunk = await reader.read();
+				if (this.stopped || seq !== this.connectSeq) return;
 				if (chunk.done) return;
 
 				for (const event of parser.push(decodeChunk(chunk.value))) {
+					if (this.stopped || seq !== this.connectSeq) return;
 					if (event.id) this.lastEventId = event.id;
 					params.onEvent(event);
 				}

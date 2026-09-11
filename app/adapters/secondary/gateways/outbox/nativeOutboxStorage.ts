@@ -12,8 +12,7 @@ const parseSnapshot = (raw: string | null): OutboxStateWl | null => {
     try {
         return JSON.parse(raw) as OutboxStateWl;
     } catch (error) {
-        console.warn("[outbox] invalid persisted snapshot", error);
-        return null;
+        throw new Error("Unreadable offline command storage", { cause: error });
     }
 };
 
@@ -39,17 +38,23 @@ const createRequiredMmkvDriver = (key: string): StorageDriver => {
 };
 
 export const createNativeOutboxStorage = (key = "app.outbox"): OutboxStorageGateway => {
-    const driver = createRequiredMmkvDriver(key);
+    const drivers = new Map<string, StorageDriver>();
+    const driverFor = (userId?: string) => {
+        const scope = userId ? `${key}.account.${encodeURIComponent(userId)}` : key;
+        if (!drivers.has(scope)) drivers.set(scope, createRequiredMmkvDriver(scope));
+        return drivers.get(scope)!;
+    };
+    driverFor(); // Fail fast if durable storage is unavailable.
     return {
-        async loadSnapshot() {
-            const raw = await driver.load();
+        async loadSnapshot(userId) {
+            const raw = await driverFor(userId).load();
             return parseSnapshot(raw);
         },
-        async saveSnapshot(snapshot) {
-            await driver.save(JSON.stringify(snapshot));
+        async saveSnapshot(snapshot, userId) {
+            await driverFor(userId).save(JSON.stringify(snapshot));
         },
-        async clear() {
-            await driver.clear();
+        async clear(userId) {
+            await driverFor(userId).clear();
         },
     } satisfies OutboxStorageGateway;
 };

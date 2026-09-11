@@ -20,6 +20,7 @@ import { toSessionSnapshot } from "@/app/core-logic/contextWL/userWl/utils/sessi
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { accountGeneration } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 const MINIMUM_TOKEN_TTL_MS = 60 * 1000; // 1 minute
 const SIGN_IN_ERROR_MESSAGE = "Connexion Google impossible. Réessaie dans un instant.";
@@ -68,6 +69,12 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 		middleware.startListening as TypedStartListening<AppStateWl, AppDispatchWl>;
 
 	let activeSession: AuthSession | undefined;
+	let epoch = 0;
+	let secureWrites: Promise<unknown> = Promise.resolve();
+	const writeSecure = (operation: () => Promise<unknown>) => {
+		secureWrites = secureWrites.catch(() => undefined).then(operation);
+		return secureWrites;
+	};
 
 	const getSecureStore = () => deps.gateways?.auth?.secureStore;
 	const getOAuthGateway = () => deps.gateways?.auth?.oauth;
@@ -77,11 +84,15 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authSessionLoadRequested,
 		effect: async (_action, api) => {
+			const attempt = ++epoch;
 			try {
 				const secureStore = getSecureStore();
 				if (!secureStore) throw new Error("auth secure store unavailable");
 
+				await secureWrites.catch(() => undefined);
+				if (attempt !== epoch) return;
 				const stored = await secureStore.loadSession();
+				if (attempt !== epoch) return;
 				if (!stored) {
 					activeSession = undefined;
 					deps.onSessionChanged?.(activeSession);
@@ -96,6 +107,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				api.dispatch(authMaybeRefreshRequested());
 				api.dispatch(authUserHydrationRequested({ userId: stored.userId }));
 			} catch (error: any) {
+				if (attempt !== epoch) return;
 				activeSession = undefined;
 				deps.onSessionChanged?.(activeSession);
 				api.dispatch(
@@ -110,6 +122,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authSignInRequested,
 		effect: async (action, api) => {
+			const attempt = ++epoch;
 			const oAuthGateway = getOAuthGateway();
 			const secureStore = getSecureStore();
 			const authServerGateway = getAuthServer();
@@ -126,6 +139,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					});
 
 				const { authorizationCode, codeVerifier, redirectUri, idToken } = authorization;
+				if (attempt !== epoch) return;
 
 				if (!authorizationCode || !codeVerifier || !redirectUri) {
 					throw new Error("Incomplete authorization result from provider");
@@ -141,10 +155,11 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					scopes: action.payload.scopes ?? [],
 				});
 
-				// 3️⃣ persist
+				if (attempt !== epoch) return;
+				await writeSecure(() => secureStore.saveSession(session));
+				if (attempt !== epoch) return;
 				activeSession = session;
 				deps.onSessionChanged?.(activeSession);
-				await secureStore.saveSession(session);
 
 				// 4️⃣ store auth
 				api.dispatch(
@@ -165,7 +180,9 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 				api.dispatch(authMaybeRefreshRequested());
 			} catch {
+				if (attempt !== epoch) return;
 				activeSession = undefined;
+				deps.onSessionChanged?.(activeSession);
 				api.dispatch(
 					authSignInFailed({
 						error: SIGN_IN_ERROR_MESSAGE,
@@ -178,6 +195,8 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authMaybeRefreshRequested,
 		effect: async (_action, api) => {
+			const attempt = epoch;
+			const sessionAtStart = activeSession;
 			if (!activeSession) {
 				return;
 			}
@@ -204,10 +223,12 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 			try {
 				const refreshed = await authServer.refreshSession(activeSession);
+				if (attempt !== epoch || activeSession !== sessionAtStart) return;
+				await writeSecure(() => secureStore.saveSession(refreshed.session));
+				if (attempt !== epoch || activeSession !== sessionAtStart) return;
 
 				activeSession = refreshed.session;
 				deps.onSessionChanged?.(activeSession);
-				await secureStore.saveSession(refreshed.session);
 
 				api.dispatch(authSessionRefreshed({ session: toSessionSnapshot(refreshed.session) }));
 
@@ -215,6 +236,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					api.dispatch(authUserHydrationSucceeded({ user: refreshed.user }));
 				}
 			} catch (error: any) {
+				if (attempt !== epoch || activeSession !== sessionAtStart) return;
 				const errorMessage = error?.message ?? "Session refresh failed";
 				if (isTransientRefreshFailure(error)) {
 					api.dispatch(
@@ -227,7 +249,8 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 				activeSession = undefined;
 				deps.onSessionChanged?.(activeSession);
-				await secureStore.clearSession().catch(() => undefined);
+				await writeSecure(() => secureStore.clearSession()).catch(() => undefined);
+				if (attempt !== epoch) return;
 				api.dispatch(
 					authSessionRefreshFailed({
 						error: errorMessage,
@@ -241,11 +264,14 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authUserHydrationRequested,
 		effect: async (action, api) => {
+			const generation = accountGeneration(api.getState());
+			const current = () => generation === accountGeneration(api.getState());
 			try {
 				const repo = getUserRepo();
 				if (!repo) throw new Error("user repo unavailable");
 
 				const user = await repo.getById(action.payload.userId);
+				if (!current()) return;
 
 				// repo retourne null => 401 => session invalide
 				if (!user) {
@@ -255,6 +281,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 				api.dispatch(authUserHydrationSucceeded({ user }));
 			} catch (error: any) {
+				if (!current()) return;
 				// ✅ 404 => user pas encore provisionné côté backend => soft fail
 				if (isHttp404(error)) {
 					return;
@@ -272,6 +299,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authSignOutRequested,
 		effect: async (_action, api) => {
+			const attempt = ++epoch;
 			const oAuthGateway = getOAuthGateway();
 			const secureStore = getSecureStore();
 			const authServer = getAuthServer();
@@ -284,10 +312,10 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			deps.onSessionChanged?.(activeSession);
 
 			if (secureStore) {
-				await secureStore.clearSession().catch(() => undefined);
+				await writeSecure(() => secureStore.clearSession()).catch(() => undefined);
 			}
 
-			api.dispatch(authSignedOut());
+			if (attempt === epoch) api.dispatch(authSignedOut());
 
 			void (async () => {
 				try {
@@ -305,5 +333,15 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 		},
 	});
 
+	listen({
+		predicate: action => authSignedOut.match(action) || authSessionExpired.match(action),
+		effect: () => {
+			++epoch;
+			activeSession = undefined;
+			deps.onSessionChanged?.(undefined);
+			const storage = getSecureStore();
+			if (storage) void writeSecure(() => storage.clearSession()).catch(() => undefined);
+		},
+	});
 	return middleware.middleware;
 };

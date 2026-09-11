@@ -35,6 +35,7 @@ export const AppBootstrap = () => {
 			readModelCacheStorage,
 			logger,
 			clearOutboxOnBoot: CLEAR_OUTBOX_ON_BOOT,
+			accountStorageManaged: true,
 		});
 		void bootProcess.start();
 

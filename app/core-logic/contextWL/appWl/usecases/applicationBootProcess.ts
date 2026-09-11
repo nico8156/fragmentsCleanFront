@@ -32,6 +32,7 @@ type ApplicationBootProcessDeps = {
 	readModelCacheStorage: ReadModelCacheGateway;
 	logger: BootLogger;
 	clearOutboxOnBoot?: boolean;
+	accountStorageManaged?: boolean;
 };
 
 const selectUserIdForEntitlements = (state: any): string | undefined =>
@@ -49,8 +50,10 @@ export const createApplicationBootProcess = ({
 	readModelCacheStorage,
 	logger,
 	clearOutboxOnBoot = false,
+	accountStorageManaged = false,
 }: ApplicationBootProcessDeps) => {
 	let cancelled = false;
+	let releaseWait: (() => void) | undefined;
 	const dispatch: any = store.dispatch;
 
 	const shouldStop = () => cancelled;
@@ -60,6 +63,21 @@ export const createApplicationBootProcess = ({
 
 		await dispatch(initializeAuth());
 		if (shouldStop()) return;
+
+		if (accountStorageManaged) {
+			await new Promise<void>(resolve => {
+				const unsubscribe = store.subscribe(() => check());
+				const done = () => { unsubscribe(); releaseWait = undefined; resolve(); };
+				const check = () => {
+					const state = store.getState();
+					if (cancelled || (state.aState.status !== "loading" &&
+						(!state.aState.session || state.accountScope.ready))) done();
+				};
+				releaseWait = done;
+				check();
+			});
+			return; // Account runtime owns hydration; never read the legacy global snapshots.
+		}
 
 		if (clearOutboxOnBoot) {
 			logger.info("[BOOT] DEV: clearing outbox storage (flag enabled)");
@@ -133,6 +151,7 @@ export const createApplicationBootProcess = ({
 		start,
 		cancel: () => {
 			cancelled = true;
+			releaseWait?.();
 		},
 	};
 };

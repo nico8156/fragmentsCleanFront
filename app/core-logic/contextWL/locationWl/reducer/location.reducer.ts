@@ -20,8 +20,8 @@ export const locationReducer = createReducer(
     (builder) => {
         builder
             .addCase(permissionUpdated,(s, a) => {
-                s.permission = a.payload.status ? 'granted' : 'denied'
-                if (s.status === 'error' && a.payload.status) s.status = 'idle'
+                s.permission = a.payload.status
+                if (s.status === 'error' && a.payload.status === 'granted') s.status = 'idle'
             })
             .addCase(locationUpdated, (s, a) => {
                 s.coords = a.payload.coords
