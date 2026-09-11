@@ -35,7 +35,10 @@ const formatLineAmount = (amountCents?: number, currency?: string) => {
 
 export function TicketsScreen() {
 	const { displayName, primaryEmail, avatarUrl } = useAuthUser();
-	const { recentItems, archivedItems, archiveCount, summary, isEmpty } = useTicketsHistory();
+	const {
+		recentItems, archivedItems, archiveCount, summary, isEmpty,
+		isLoading, isRefreshing, isLoadingMore, error, hasMore, refresh, loadMore,
+	} = useTicketsHistory();
 	const [archiveExpanded, setArchiveExpanded] = useState(false);
 	const safeDisplayName = displayName ?? "Profil";
 
@@ -144,7 +147,7 @@ export function TicketsScreen() {
 	);
 
 	return (
-		<ProfileLayout>
+		<ProfileLayout refreshing={isRefreshing} onRefresh={refresh}>
 			<ProfileHero
 				avatarUrl={avatarUrl}
 				displayName={safeDisplayName}
@@ -155,17 +158,34 @@ export function TicketsScreen() {
 				title="Mes tickets"
 				subtitle={`${summary.totalCount} scan(s), ${summary.confirmedCount} validé(s), ${summary.pendingCount} en cours`}
 			>
-				{isEmpty ? (
+				{isLoading ? (
 					<View style={styles.emptyState}>
-						<Text style={styles.emptyTitle}>Aucun ticket actif</Text>
+						<Text style={styles.emptyTitle}>Chargement de l’historique…</Text>
+					</View>
+				) : isEmpty ? (
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyTitle}>Aucun ticket dans ton historique</Text>
 
 						<Text style={styles.emptySubtitle}>
-							Scanne un justificatif depuis la section « Pass » pour alimenter
-							ton historique et débloquer des récompenses.
+							Les tickets servent de preuves pour certains niveaux du Pass,
+							mais tu peux partager une expérience sans ticket.
 						</Text>
+						{error ? (
+							<Pressable onPress={refresh} accessibilityRole="button">
+								<Text style={styles.retryAction}>Réessayer</Text>
+							</Pressable>
+						) : null}
 					</View>
 				) : (
 					<View style={styles.list}>
+						{error ? (
+							<View style={styles.errorBanner}>
+								<Text style={styles.errorText}>Historique hors ligne — données enregistrées affichées.</Text>
+								<Pressable onPress={refresh} accessibilityRole="button">
+									<Text style={styles.retryAction}>Actualiser</Text>
+								</Pressable>
+							</View>
+						) : null}
 						<View style={styles.summaryRow}>
 							<Text style={styles.summaryMetric}>{summary.confirmedCount} validés</Text>
 							<Text style={styles.summaryMetric}>{summary.pendingCount} en cours</Text>
@@ -177,7 +197,7 @@ export function TicketsScreen() {
 						<Text style={styles.sectionLabel}>Derniers scans</Text>
 						{recentItems.map(renderTicketCard)}
 
-						{archiveCount > 0 ? (
+						{archiveCount > 0 || hasMore ? (
 							<View style={styles.archiveBlock}>
 								<Pressable
 									onPress={() => setArchiveExpanded((value) => !value)}
@@ -206,6 +226,18 @@ export function TicketsScreen() {
 								{archiveExpanded ? (
 									<View style={styles.archiveList}>
 										{archivedItems.map(renderArchiveRow)}
+										{hasMore ? (
+											<Pressable
+												onPress={loadMore}
+												disabled={isLoadingMore}
+												style={({ pressed }) => [styles.loadMoreButton, pressed && styles.pressed]}
+												accessibilityRole="button"
+											>
+												<Text style={styles.retryAction}>
+													{isLoadingMore ? "Chargement…" : "Charger la suite"}
+												</Text>
+											</Pressable>
+										) : null}
 									</View>
 								) : null}
 							</View>
@@ -232,6 +264,31 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		color: palette.textSecondary,
 		lineHeight: 20,
+	},
+
+	errorBanner: {
+		borderRadius: 10,
+		borderWidth: 1,
+		borderColor: "#E4B7B2",
+		backgroundColor: "#FDECEA",
+		padding: 10,
+		gap: 6,
+	},
+
+	errorText: {
+		fontSize: 13,
+		color: "#8F211A",
+	},
+
+	retryAction: {
+		fontSize: 14,
+		fontWeight: "700",
+		color: palette.textPrimary,
+	},
+
+	loadMoreButton: {
+		alignItems: "center",
+		paddingVertical: 10,
 	},
 
 	list: {

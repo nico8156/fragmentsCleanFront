@@ -1,22 +1,22 @@
 import {ISODate, TicketId, TicketStatus} from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
-import {ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
+import {ticketRemoved, ticketRetrieved, ticketSetError, ticketSetLoading} from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import {AppThunkWl} from "@/app/store/reduxStoreWl";
 import { selectOutboxStatusByTicketId, isOutboxPendingStatus } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import { selectNonTerminalTicketIds } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 
 const inflight = new Map<string, AbortController>();
 
-const toTicketStatus = (status: string, outcome?: string | null): TicketStatus => {
+export const toTicketStatus = (status: string, outcome?: string | null): TicketStatus | "DELETED" => {
     const normalizedStatus = status.toUpperCase();
     const normalizedOutcome = outcome?.toUpperCase();
 
     if (normalizedOutcome === "APPROVED" || normalizedOutcome === "CONFIRMED") return "CONFIRMED";
     if (
         normalizedOutcome === "REJECTED" ||
-        normalizedOutcome === "FAILED_FINAL" ||
         normalizedStatus === "REJECTED"
     ) return "REJECTED";
     if (normalizedStatus === "CONFIRMED") return "CONFIRMED";
+    if (normalizedStatus === "DELETED") return "DELETED";
     if (normalizedStatus === "CAPTURED") return "CAPTURED";
     return "ANALYZING";
 };
@@ -72,10 +72,16 @@ export const ticketRetrieval =
 
                 if (inflight.get(ticketId) !== controller) return;
 
+                const status = toTicketStatus(res.status, res.outcome);
+                if (status === "DELETED") {
+                    dispatch(ticketRemoved({ ticketId }));
+                    return;
+                }
+
                 dispatch(
                     ticketRetrieved({
                         ticketId: res.ticketId as TicketId,
-                        status: toTicketStatus(res.status, res.outcome),
+                        status,
                         version: res.version,
                         updatedAt: ((res.updatedAt ?? res.occurredAt ?? new Date().toISOString()) as ISODate),
                         ocrText: res.ocrText ?? undefined,

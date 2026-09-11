@@ -75,4 +75,43 @@ describe("HttpTicketsGateway", () => {
 			global.fetch = originalFetch;
 		}
 	});
+
+	it("maps a paginated ticket history without exposing transport objects", async () => {
+		const auth = new AuthTokenBridge();
+		auth.setSession({
+			userId: "user-1", provider: "google", scopes: ["openid"], establishedAt: 0,
+			tokens: { accessToken: "mobile-token", refreshToken: "refresh-token", expiresAt: Date.now() + 60_000 },
+		} as any);
+		const fetcher = jest.fn(async () => makeResponse({
+			items: [{
+				ticketId: "ticket-1", status: "CONFIRMED", outcome: "APPROVED",
+				amountCents: 1230, currency: "EUR", ticketDate: "2026-09-10T10:00:00Z",
+				merchantName: "Café Test", merchantAddress: "1 rue Test",
+				rejectionReason: null, version: 4, occurredAt: "2026-09-10T10:01:00Z",
+				extraPrivateField: "ignored",
+			}],
+			nextCursor: "opaque-cursor",
+		}));
+		const originalFetch = global.fetch;
+		(global as any).fetch = fetcher;
+		try {
+			const gateway = new HttpTicketsGateway({ baseUrl: "https://api.example.test", auth });
+			const result = await gateway.listHistory({ cursor: "previous cursor", limit: 20 });
+			expect(fetcher).toHaveBeenCalledWith(
+				"https://api.example.test/api/users/me/tickets?limit=20&cursor=previous+cursor",
+				expect.objectContaining({ method: "GET" }),
+			);
+			expect(result).toEqual({
+				items: [{
+					ticketId: "ticket-1", status: "CONFIRMED", outcome: "APPROVED",
+					amountCents: 1230, currency: "EUR", ticketDate: "2026-09-10T10:00:00Z",
+					merchantName: "Café Test", merchantAddress: "1 rue Test",
+					rejectionReason: null, version: 4, occurredAt: "2026-09-10T10:01:00Z",
+				}],
+				nextCursor: "opaque-cursor",
+			});
+		} finally {
+			global.fetch = originalFetch;
+		}
+	});
 });
