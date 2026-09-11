@@ -46,6 +46,26 @@ export interface TicketAggregate {
 // Slice tickets
 export interface TicketsStateWl {
     byId: Record<TicketId, TicketAggregate>;
+    history: {
+        ids: TicketId[];
+        nextCursor: string | null;
+        status: "idle" | "refreshing" | "loadingMore" | "success" | "error";
+        error: string | null;
+        initialized: boolean;
+    };
+}
+
+export interface TicketHistoryItemPayload {
+    ticketId: TicketId;
+    status: TicketStatus;
+    version: number;
+    occurredAt: ISODate;
+    amountCents?: number;
+    currency?: CurrencyCode;
+    ticketDate?: ISODate;
+    merchantName?: string;
+    merchantAddress?: string;
+    rejectionReason?: string;
 }
 
 // Payloads des actions principales

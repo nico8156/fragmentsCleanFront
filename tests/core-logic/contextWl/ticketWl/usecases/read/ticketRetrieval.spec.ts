@@ -133,4 +133,40 @@ describe("Ticket retrieval", () => {
         expect(tickets.getStatusCalls).toEqual([]);
         expect(store.getState().tState.byId["tk_local" as TicketId].optimistic).toBe(true);
     });
+
+    it("does not turn a technical FAILED_FINAL outcome into a business rejection", async () => {
+        const tickets = new FakeTicketsGateway();
+        tickets.nextStatusResponse = {
+            ...tickets.nextStatusResponse,
+            status: "COMPLETED",
+            outcome: "FAILED_FINAL",
+            version: 2,
+        } as any;
+        store = initReduxStoreWl({ dependencies: { gateways: { tickets } as any } });
+
+        await store.dispatch(ticketRetrieval({ ticketId: "tk_technical" }) as any);
+
+        expect(store.getState().tState.byId["tk_technical" as TicketId].status).toBe("ANALYZING");
+    });
+
+    it("removes an administratively deleted ticket from the private cache", async () => {
+        const tickets = new FakeTicketsGateway();
+        tickets.nextStatusResponse = {
+            ...tickets.nextStatusResponse,
+            status: "DELETED",
+            version: 3,
+        } as any;
+        store = initReduxStoreWl({ dependencies: { gateways: { tickets } as any } });
+        store.dispatch(ticketRetrieved({
+            ticketId: "tk_deleted" as TicketId,
+            status: "CONFIRMED",
+            version: 2,
+            updatedAt: "2026-07-14T06:00:00.000Z" as ISODate,
+            ocrText: "must disappear",
+        }));
+
+        await store.dispatch(ticketRetrieval({ ticketId: "tk_deleted" }) as any);
+
+        expect(store.getState().tState.byId["tk_deleted" as TicketId]).toBeUndefined();
+    });
 });
