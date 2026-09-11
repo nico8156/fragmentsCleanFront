@@ -14,6 +14,7 @@ Ces hooks React tiennent le rôle d'adaptateurs secondaires : ils transforment l
 | Hook | Rôle | Contexts utilisés |
 | --- | --- | --- |
 | `useArticlesHome` | Sliders + catégories pour l'écran Home | `articleWl` |
+| `homeContentViewModel` | Composition read-only du contenu sous le hero Home | `articleWl`, `coffeeWl`, `entitlementWl`, `experienceWl` |
 | `useCommentsForCafe` | Liste + actions sur les commentaires d'un café | `commentWl`, `outboxWl`, `userWl` |
 | `useCafeFull` / `useCoffeesForMarkers` | Agrégats pour fiche et carte | `coffeeWl`, `openingHoursWl`, `likeWl` |
 | `useLikesForCafe` | Comptage et statut utilisateur | `likeWl`, `userWl` |
