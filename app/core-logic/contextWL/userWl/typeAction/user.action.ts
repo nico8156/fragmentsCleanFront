@@ -3,7 +3,6 @@ import {
     AppUser,
     AuthSessionSnapshot,
     ProviderId,
-    BadgeProgress,
     UserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 
@@ -57,8 +56,4 @@ export const authSignOutRequested = createAction("auth/signOutRequested");
 export const authSignedOut = createAction("auth/signedOut");
 
 export const authErrorCleared = createAction("auth/errorCleared");
-
-export const userBadgeProgressUpdated = createAction<{ badgeProgress: BadgeProgress }>(
-    "auth/userBadgeProgressUpdated",
-);
 

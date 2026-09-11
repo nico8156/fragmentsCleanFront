@@ -14,7 +14,6 @@ import {
 	authUserHydrationFailed,
 	authUserHydrationRequested,
 	authUserHydrationSucceeded,
-	userBadgeProgressUpdated,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import {
 	AppUser,
@@ -125,15 +124,5 @@ export const authReducer = createReducer(initialState, (builder) => {
 		})
 		.addCase(authErrorCleared, (state) => {
 			state.error = undefined;
-		})
-		.addCase(userBadgeProgressUpdated, (state, { payload }) => {
-			if (!state.currentUser) return;
-			state.currentUser = {
-				...state.currentUser,
-				preferences: {
-					...state.currentUser.preferences,
-					badgeProgress: payload.badgeProgress,
-				},
-			};
 		});
 });

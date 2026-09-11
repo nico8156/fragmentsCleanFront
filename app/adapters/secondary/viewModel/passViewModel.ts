@@ -46,14 +46,15 @@ export type PassViewModel = {
 	profileImageUrl?: string;
 	userName: string;
 	currentLevel: PassLevelViewModel;
+	levels: PassLevelViewModel[];
 	rings: PassRingViewModel[];
 	currentRing?: PassRingViewModel;
 	displayRings: PassRingViewModel[];
 	completedRings: PassRingViewModel[];
 	counters: {
 		tickets: number;
-		comments: number;
-		likes: number;
+		experiences: number;
+		cafes: number;
 	};
 	nextUnlock?: {
 		label: string;
@@ -67,12 +68,6 @@ const levelLabels: Record<PassLevel, string> = {
 	[passLevels.URBAN_EXPLORER]: "Urban Explorer",
 	[passLevels.SOCIAL_BEAN]: "Social Bean",
 	[passLevels.FRAGMENTS_MASTER]: "Fragments Master",
-};
-
-const unlockLabels: Record<string, string> = {
-	SCAN: "Scan",
-	COMMENT: "Commentaires",
-	LIKE: "Likes",
 };
 
 const ringColors: Record<PassLevel, { progress: string; completed: string }> = {
@@ -102,9 +97,9 @@ const requirementSpecs: {
 	counterKey: keyof PassCounters;
 	label: string;
 }[] = [
+	{ key: "publishedExperiences", counterKey: "publishedExperiences", label: "expériences publiées" },
+	{ key: "distinctExperiencedCoffees", counterKey: "distinctExperiencedCoffees", label: "cafés découverts" },
 	{ key: "validatedTickets", counterKey: "validatedTickets", label: "tickets validés" },
-	{ key: "publishedComments", counterKey: "publishedComments", label: "commentaires publiés" },
-	{ key: "confirmedLikes", counterKey: "confirmedLikes", label: "likes confirmés" },
 ];
 
 const buildRequirements = (
@@ -114,7 +109,7 @@ const buildRequirements = (
 	requirementSpecs
 		.map((spec) => {
 			const required = requirements[spec.key];
-			if (typeof required !== "number") return null;
+			if (typeof required !== "number" || required <= 0) return null;
 			const current = counters[spec.counterKey] ?? 0;
 			return {
 				key: spec.key,
@@ -144,22 +139,8 @@ const fallbackLevels = (): PassLevelSnapshot[] =>
 	orderedLevels.map((level, index) => ({
 		level,
 		status: index === 0 ? passLevelStatuses.IN_PROGRESS : passLevelStatuses.LOCKED,
-		requirements:
-			level === passLevels.COFFEE_TASTER
-				? { validatedTickets: 3 }
-				: level === passLevels.URBAN_EXPLORER
-					? { validatedTickets: 5, publishedComments: 3 }
-					: level === passLevels.SOCIAL_BEAN
-						? { validatedTickets: 10, publishedComments: 5, confirmedLikes: 5 }
-						: {},
-		unlockedCapabilities:
-			level === passLevels.COFFEE_TASTER
-				? ["SCAN"]
-				: level === passLevels.URBAN_EXPLORER
-					? ["COMMENT"]
-					: level === passLevels.SOCIAL_BEAN
-						? ["LIKE"]
-						: [],
+		requirements: {},
+		unlockedCapabilities: [],
 	}));
 
 const selectCurrentLevel = (
@@ -179,9 +160,9 @@ export const buildPassViewModel = (
 ): PassViewModel => {
 	const pass: PassProgressSnapshot | undefined = input.entitlements?.pass;
 	const counters = pass?.counters ?? {
+		publishedExperiences: 0,
+		distinctExperiencedCoffees: 0,
 		validatedTickets: input.entitlements?.confirmedTickets ?? 0,
-		publishedComments: input.entitlements?.publishedComments ?? 0,
-		confirmedLikes: input.entitlements?.confirmedLikes ?? 0,
 	};
 	const levels = pass?.levels?.length ? pass.levels : fallbackLevels();
 	const current = selectCurrentLevel(levels, pass?.currentLevel) ?? fallbackLevels()[0];
@@ -211,8 +192,19 @@ export const buildPassViewModel = (
 		status: currentStatus,
 		progressPercent: Math.round(currentProgress * 100),
 		requirements: currentRequirements,
-		unlockedLabel: unlock ? unlockLabels[unlock] ?? unlock : undefined,
+		unlockedLabel: unlock,
 	};
+	const levelViewModels = orderedLevels.map((level) => {
+		const snapshot = levels.find((item) => item.level === level) ?? fallbackLevels().find((item) => item.level === level)!;
+		return {
+			level,
+			label: levelLabels[level],
+			status: toRingStatus(snapshot.status),
+			progressPercent: Math.round(computeProgress(snapshot, counters) * 100),
+			requirements: buildRequirements(snapshot.requirements ?? {}, counters),
+			unlockedLabel: snapshot.unlockedCapabilities?.[0],
+		};
+	});
 
 	const nextUnlock = currentLevelVm.unlockedLabel
 		? {
@@ -233,14 +225,15 @@ export const buildPassViewModel = (
 		profileImageUrl,
 		userName,
 		currentLevel: currentLevelVm,
+		levels: levelViewModels,
 		rings,
 		currentRing,
 		displayRings: currentRing ? [currentRing] : [],
 		completedRings: rings.filter((ring) => ring.status === "completed"),
 		counters: {
 			tickets: counters.validatedTickets,
-			comments: counters.publishedComments,
-			likes: counters.confirmedLikes,
+			experiences: counters.publishedExperiences,
+			cafes: counters.distinctExperiencedCoffees,
 		},
 		nextUnlock,
 		accessibilityLabel: `${currentLevelVm.label}, progression ${currentLevelVm.progressPercent} %. ${requirementText}`,

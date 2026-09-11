@@ -29,15 +29,15 @@ export const passLevelStatuses = {
 export type PassLevelStatus = typeof passLevelStatuses[keyof typeof passLevelStatuses];
 
 export type PassCounters = {
+    publishedExperiences: number;
+    distinctExperiencedCoffees: number;
     validatedTickets: number;
-    publishedComments: number;
-    confirmedLikes: number;
 };
 
 export type PassRequirements = {
+    publishedExperiences?: number;
+    distinctExperiencedCoffees?: number;
     validatedTickets?: number;
-    publishedComments?: number;
-    confirmedLikes?: number;
 };
 
 export type PassLevelSnapshot = {
@@ -51,6 +51,8 @@ export type PassProgressSnapshot = {
     currentLevel?: PassLevel;
     counters?: PassCounters;
     levels?: PassLevelSnapshot[];
+    acquiredLevels?: PassLevel[];
+    policyVersion?: number;
 };
 
 export interface UserEntitlements {
@@ -59,7 +61,7 @@ export interface UserEntitlements {
     publishedComments?: number;
     confirmedLikes?: number;
     rights: Entitlement[];
-    rightsSource?: "backend" | "thresholds";
+    rightsSource?: "backend";
     updatedAt?: ISODate;
     pass?: PassProgressSnapshot;
 }
@@ -70,12 +72,4 @@ export type UserEntitlementsSnapshot = Omit<UserEntitlements, "rights" | "rights
 
 export interface EntitlementStateWl {
     byUser: Record<string, UserEntitlements>;
-    thresholds: EntitlementsThresholds,
-}
-
-// Seuils (configurable via DI ou fichier)
-export interface EntitlementsThresholds {
-    likeAt: number;       // 1
-    commentAt: number;    // 3
-    submitCafeAt: number; // 5
 }

@@ -48,6 +48,8 @@ export class HttpEntitlementWlGateway implements EntitlementWlGateway {
 			currentLevel?: PassLevel;
 			counters?: PassCounters;
 			levels?: PassLevelSnapshot[];
+			acquiredLevels?: PassLevel[];
+			policyVersion?: number;
 			updatedAt?: string;
 		};
 
@@ -64,6 +66,8 @@ export class HttpEntitlementWlGateway implements EntitlementWlGateway {
 				currentLevel: json.currentLevel,
 				counters: json.counters,
 				levels: Array.isArray(json.levels) ? json.levels : undefined,
+				acquiredLevels: Array.isArray(json.acquiredLevels) ? json.acquiredLevels : undefined,
+				policyVersion: json.policyVersion,
 			};
 		}
 

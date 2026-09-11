@@ -477,9 +477,9 @@ describe("outboxWatchdogFactory", () => {
 			updatedAt: "2026-07-14T06:10:01.000Z" as any,
 			pass: {
 				counters: {
+					publishedExperiences: 0,
+					distinctExperiencedCoffees: 0,
 					validatedTickets: 1,
-					publishedComments: 0,
-					confirmedLikes: 0,
 				},
 			},
 		});
@@ -552,9 +552,9 @@ describe("outboxWatchdogFactory", () => {
 			updatedAt: "2026-07-14T06:11:00.000Z" as any,
 			pass: {
 				counters: {
+					publishedExperiences: 0,
+					distinctExperiencedCoffees: 0,
 					validatedTickets: 0,
-					publishedComments: 0,
-					confirmedLikes: 3,
 				},
 			},
 		});
@@ -588,7 +588,7 @@ describe("outboxWatchdogFactory", () => {
 		expect(commandStatus.calls).toEqual(["cmd_like"]);
 		expect(entitlements.calls).toEqual(["user_test"]);
 		expect(store.getState().enState.byUser.user_test.confirmedLikes).toBe(3);
-		expect(store.getState().enState.byUser.user_test.pass?.counters?.confirmedLikes).toBe(3);
+		expect(store.getState().enState.byUser.user_test.pass?.counters?.publishedExperiences).toBe(0);
 	});
 
 	it("APPLIED CommentCreate => refreshes entitlements snapshot", async () => {
@@ -607,9 +607,9 @@ describe("outboxWatchdogFactory", () => {
 			updatedAt: "2026-07-14T06:12:00.000Z" as any,
 			pass: {
 				counters: {
+					publishedExperiences: 0,
+					distinctExperiencedCoffees: 0,
 					validatedTickets: 0,
-					publishedComments: 2,
-					confirmedLikes: 0,
 				},
 			},
 		});
@@ -645,7 +645,7 @@ describe("outboxWatchdogFactory", () => {
 		expect(commandStatus.calls).toEqual(["cmd_comment"]);
 		expect(entitlements.calls).toEqual(["user_test"]);
 		expect(store.getState().enState.byUser.user_test.publishedComments).toBe(2);
-		expect(store.getState().enState.byUser.user_test.pass?.counters?.publishedComments).toBe(2);
+		expect(store.getState().enState.byUser.user_test.pass?.counters?.publishedExperiences).toBe(0);
 	});
 
 	it("PENDING => replanifies nextCheckAt = now+5s", async () => {
