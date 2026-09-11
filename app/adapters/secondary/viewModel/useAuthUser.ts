@@ -10,6 +10,8 @@ import {
 
 import {
 	authMaybeRefreshRequested,
+	profileUpdateRequested,
+	accountDeletionRequested,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import type { AppUser } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
@@ -45,10 +47,18 @@ export function useAuthUser() {
 	const avatarUrl = user?.avatarUrl;
 	const primaryEmail = selectPrimaryEmail(user);
 	const bio = user?.bio;
+	const profileMutationStatus = useSelector((state: any) => state.aState.profileMutationStatus ?? "idle");
+	const profileMutationError = useSelector((state: any) => state.aState.profileMutationError);
+	const accountDeletionStatus = useSelector((state: any) => state.aState.accountDeletionStatus ?? "idle");
+	const accountDeletionError = useSelector((state: any) => state.aState.accountDeletionError);
 
 	const signInWithGoogle = useCallback(() => {
 		if (isLoading) return;
 		dispatch(signInWithProvider({ provider: "google", scopes: [...GOOGLE_SCOPES] }));
+	}, [dispatch, isLoading]);
+	const signInWithApple = useCallback(() => {
+		if (isLoading) return;
+		dispatch(signInWithProvider({ provider: "apple", scopes: ["name", "email"] }));
 	}, [dispatch, isLoading]);
 
 	const signOutUser = useCallback(() => {
@@ -59,6 +69,11 @@ export function useAuthUser() {
 	const refreshToken = useCallback(() => {
 		dispatch(authMaybeRefreshRequested());
 	}, [dispatch]);
+
+	const updateDisplayName = useCallback((nextDisplayName: string) => {
+		dispatch(profileUpdateRequested({ displayName: nextDisplayName }));
+	}, [dispatch]);
+	const deleteAccount = useCallback(() => dispatch(accountDeletionRequested()), [dispatch]);
 
 	const authSummary = useMemo(
 		() => ({
@@ -79,6 +94,10 @@ export function useAuthUser() {
 			avatarUrl,
 			primaryEmail,
 			bio,
+			profileMutationStatus,
+			profileMutationError,
+			accountDeletionStatus,
+			accountDeletionError,
 		}),
 		[
 			user,
@@ -95,14 +114,20 @@ export function useAuthUser() {
 			avatarUrl,
 			primaryEmail,
 			bio,
+			profileMutationStatus,
+			profileMutationError,
+			accountDeletionStatus,
+			accountDeletionError,
 		],
 	);
 
 	return {
 		...authSummary,
 		signInWithGoogle,
+		signInWithApple,
 		refreshToken,
 		signOut: signOutUser,
+		updateDisplayName,
+		deleteAccount,
 	} as const;
 }
-

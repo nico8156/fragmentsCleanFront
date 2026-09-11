@@ -15,6 +15,8 @@ import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecase
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory";
+import { profileUpdateListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/profile/profileUpdateListenerFactory";
+import { accountDeletionListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/account/accountDeletionListenerFactory";
 
 import type { Helpers } from "@/app/store/appStateWl";
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
@@ -56,6 +58,8 @@ export const createWlListeners = (p: {
 
 		// Auth + projection sync
 		mwOf(authListenerFactory({ gateways, helpers: {}, onSessionChanged })),
+		mwOf(profileUpdateListenerFactory({ gateways, helpers })),
+		mwOf(accountDeletionListenerFactory({ gateways, helpers })),
 		mwOf(projectionSyncListenerFactory({ gateways, sessionRef, syncMetaStorage })),
 
 		// Watchdog

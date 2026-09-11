@@ -1,4 +1,5 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
@@ -7,10 +8,19 @@ import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/com
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 
 export function EditProfileScreen() {
-	const { displayName, avatarUrl, bio } = useAuthUser();
+	const {
+		displayName,
+		avatarUrl,
+		profileMutationStatus,
+		profileMutationError,
+		updateDisplayName,
+	} = useAuthUser();
 
 	const safeDisplayName = displayName ?? "Profil";
-	const safeBio = bio ?? "";
+	const [draftName, setDraftName] = useState(safeDisplayName);
+	useEffect(() => setDraftName(safeDisplayName), [safeDisplayName]);
+	const pending = profileMutationStatus === "pending";
+	const unchanged = draftName.trim().replace(/\s+/g, " ") === displayName;
 
 	return (
 		<ProfileLayout>
@@ -18,28 +28,44 @@ export function EditProfileScreen() {
 
 			<ProfileCard
 				title="Informations personnelles"
-				subtitle="Visualise et prépare tes prochaines modifications."
+				subtitle="Choisis le nom public visible dans Fragments."
 			>
 				<View style={styles.field}>
 					<Text style={styles.label}>Nom affiché</Text>
-					<TextInput value={safeDisplayName} editable={false} style={styles.input} />
+					<TextInput
+						testID="display-name-input"
+						value={draftName}
+						onChangeText={setDraftName}
+						editable={!pending}
+						maxLength={50}
+						autoCapitalize="words"
+						returnKeyType="done"
+						style={styles.input}
+					/>
 				</View>
 
-				{bio ? (
-					<View style={styles.field}>
-						<Text style={styles.label}>Bio</Text>
-						<TextInput
-							value={safeBio}
-							editable={false}
-							style={[styles.input, styles.inputMultiline]}
-							multiline
-						/>
-					</View>
+				<Pressable
+					testID="save-display-name"
+					disabled={pending || unchanged}
+					onPress={() => updateDisplayName(draftName)}
+					style={({ pressed }) => [
+						styles.saveButton,
+						(pending || unchanged) && styles.saveButtonDisabled,
+						pressed && styles.pressed,
+					]}
+				>
+					<Text style={styles.saveText}>{pending ? "Synchronisation…" : "Enregistrer"}</Text>
+				</Pressable>
+
+				{profileMutationError ? (
+					<Text accessibilityRole="alert" style={styles.error}>{profileMutationError}</Text>
+				) : null}
+				{profileMutationStatus === "saved" ? (
+					<Text accessibilityLiveRegion="polite" style={styles.success}>Profil mis à jour.</Text>
 				) : null}
 
 				<Text style={styles.helper}>
-					Ces informations proviennent de ton profil Fragments. Elles pourront être modifiées plus tard depuis
-					l’application.
+					La modification est conservée hors ligne et synchronisée automatiquement dès que possible.
 				</Text>
 			</ProfileCard>
 		</ProfileLayout>
@@ -63,9 +89,28 @@ const styles = StyleSheet.create({
 		color: palette.textPrimary,
 		backgroundColor: palette.bg_dark_10,
 	},
-	inputMultiline: {
-		minHeight: 80,
-		textAlignVertical: "top",
+	saveButton: {
+		alignItems: "center",
+		borderRadius: 12,
+		backgroundColor: palette.accent,
+		paddingVertical: 14,
+	},
+	saveButtonDisabled: {
+		opacity: 0.45,
+	},
+	pressed: {
+		opacity: 0.75,
+	},
+	saveText: {
+		color: palette.primary_30,
+		fontSize: 16,
+		fontWeight: "700",
+	},
+	error: {
+		color: "#ef4444",
+	},
+	success: {
+		color: palette.textSecondary,
 	},
 	helper: {
 		fontSize: 12,
@@ -74,4 +119,3 @@ const styles = StyleSheet.create({
 });
 
 export default EditProfileScreen;
-

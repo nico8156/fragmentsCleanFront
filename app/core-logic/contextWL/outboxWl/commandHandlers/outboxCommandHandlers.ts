@@ -26,6 +26,8 @@ import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/tick
 import type { TicketsWlGateway } from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
+import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { authUserHydrationRequested, profileUpdateReconciled, profileUpdateRollback } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 type CommandHandlerLogger = {
 	warn?: (message: string, payload?: unknown) => void;
@@ -37,6 +39,7 @@ export type OutboxCommandGatewayDeps = {
 	savedCoffees?: SavedCoffeeGateway;
 	tickets?: TicketsWlGateway;
 	entitlements?: EntitlementWlGateway;
+	users?: UserRepo;
 };
 
 export const getOutboxCommandGateway = (
@@ -55,6 +58,8 @@ export const getOutboxCommandGateway = (
 			return gateways?.comments;
 		case commandKinds.TicketVerify:
 			return gateways?.tickets;
+		case commandKinds.UserProfileUpdate:
+			return gateways?.users;
 		default:
 			return null;
 	}
@@ -129,6 +134,13 @@ export const sendOutboxCommand = async ({
 				imageRef: command.imageRef,
 				ocrText: command.ocrText ?? null,
 				at: command.at,
+			});
+			return "sent";
+
+		case commandKinds.UserProfileUpdate:
+			await gateway.updateProfile({
+				commandId: command.commandId,
+				displayName: command.displayName,
 			});
 			return "sent";
 
@@ -229,6 +241,17 @@ export const rollbackRejectedOutboxRecord = ({
 				coffeeId: u.coffeeId,
 				prevSaved: u.prevSaved,
 				prevItem: u.prevItem,
+			}));
+			return;
+		}
+
+		case commandKinds.UserProfileUpdate: {
+			const u = undo as { displayName?: string; version: number };
+			outboxTelemetry.rollback(record, "user profile command rejected");
+			dispatch(profileUpdateRollback({
+				displayName: u.displayName,
+				version: u.version,
+				error: "La modification du profil a été refusée.",
 			}));
 			return;
 		}
@@ -353,6 +376,12 @@ export const reconcileAppliedOutboxRecord = ({
 				dispatch(ticketRetrieval({ ticketId: command.ticketId }) as any);
 			}
 			refreshEntitlements();
+			return;
+
+		case commandKinds.UserProfileUpdate:
+			outboxTelemetry.reconcile(record, "userProfile");
+			dispatch(profileUpdateReconciled());
+			if (userId) dispatch(authUserHydrationRequested({ userId: userId as any }));
 			return;
 
 		default:

@@ -14,6 +14,13 @@ import {
 	authUserHydrationFailed,
 	authUserHydrationRequested,
 	authUserHydrationSucceeded,
+	profileUpdateOptimistic,
+	profileUpdateRejectedLocally,
+	profileUpdateReconciled,
+	profileUpdateRollback,
+	accountDeletionSubmitting,
+	accountDeletionAccepted,
+	accountDeletionFailed,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import {
 	AppUser,
@@ -53,6 +60,9 @@ export const authReducer = createReducer(initialState, (builder) => {
 		.addCase(authSignInRequested, (state) => {
 			state.status = "loading";
 			state.error = undefined;
+			state.accountDeletionStatus = "idle";
+			state.accountDeletionError = undefined;
+			state.accountDeletionCommandId = undefined;
 		})
 		.addCase(authSignInSucceeded, (state, { payload }) => {
 			state.status = "signedIn";
@@ -113,6 +123,11 @@ export const authReducer = createReducer(initialState, (builder) => {
 			state.status = "loading";
 			state.session = undefined;
 			state.currentUser = undefined;
+			state.profileMutationStatus = "idle";
+			state.profileMutationError = undefined;
+			state.accountDeletionStatus = "idle";
+			state.accountDeletionError = undefined;
+			state.accountDeletionCommandId = undefined;
 		})
 		.addCase(authSignedOut, (state) => {
 			state.status = "signedOut";
@@ -121,8 +136,50 @@ export const authReducer = createReducer(initialState, (builder) => {
 			state.error = undefined;
 			state.profileStatus = "idle";
 			state.profileError = undefined;
+			state.profileMutationStatus = "idle";
+			state.profileMutationError = undefined;
+			state.accountDeletionStatus = "idle";
+			state.accountDeletionError = undefined;
+			state.accountDeletionCommandId = undefined;
 		})
 		.addCase(authErrorCleared, (state) => {
 			state.error = undefined;
+		})
+		.addCase(profileUpdateOptimistic, (state, { payload }) => {
+			if (state.currentUser) {
+				state.currentUser.displayName = payload.displayName;
+				state.currentUser.version += 1;
+			}
+			state.profileMutationStatus = "pending";
+			state.profileMutationError = undefined;
+		})
+		.addCase(profileUpdateRejectedLocally, (state, { payload }) => {
+			state.profileMutationStatus = "error";
+			state.profileMutationError = payload.error;
+		})
+		.addCase(profileUpdateRollback, (state, { payload }) => {
+			if (state.currentUser) {
+				state.currentUser.displayName = payload.displayName;
+				state.currentUser.version = payload.version;
+			}
+			state.profileMutationStatus = "error";
+			state.profileMutationError = payload.error;
+		})
+		.addCase(profileUpdateReconciled, (state) => {
+			state.profileMutationStatus = "saved";
+			state.profileMutationError = undefined;
+		})
+		.addCase(accountDeletionSubmitting, (state, { payload }) => {
+			state.accountDeletionStatus = "submitting";
+			state.accountDeletionCommandId = payload.commandId;
+			state.accountDeletionError = undefined;
+		})
+		.addCase(accountDeletionAccepted, (state) => {
+			state.accountDeletionStatus = "accepted";
+			state.accountDeletionError = undefined;
+		})
+		.addCase(accountDeletionFailed, (state, { payload }) => {
+			state.accountDeletionStatus = "error";
+			state.accountDeletionError = payload.error;
 		});
 });

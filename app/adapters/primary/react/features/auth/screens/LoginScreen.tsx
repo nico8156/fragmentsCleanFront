@@ -1,12 +1,13 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useCallback } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 
 export function LoginScreen() {
-	const { signInWithGoogle, isLoading, error } = useAuthUser();
+	const { signInWithGoogle, signInWithApple, isLoading, error } = useAuthUser();
 
 	const handlePress = useCallback(() => {
 		signInWithGoogle();
@@ -50,6 +51,15 @@ export function LoginScreen() {
 						</View>
 					)}
 				</Pressable>
+
+				{Platform.OS === "ios" ? <AppleAuthentication.AppleAuthenticationButton
+					testID="apple-sign-in"
+					buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+					buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+					cornerRadius={12}
+					style={styles.appleButton}
+					onPress={signInWithApple}
+				/> : null}
 
 				{/* Gestion d’erreur propre */}
 				{error ? (
@@ -129,6 +139,10 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 10,
+	},
+	appleButton: {
+		width: "100%",
+		height: 50,
 	},
 
 	googleText: {

@@ -3,6 +3,10 @@ import { AppUser, toUserId } from "@/app/core-logic/contextWL/userWl/typeAction/
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 export class FakeUserRepo implements UserRepo {
+	async updateProfile(): Promise<void> {
+		return;
+	}
+	async requestAccountDeletion(): Promise<void> { return; }
     public users: Map<string, AppUser> = new Map();
 
     constructor(seed?: AppUser[]) {

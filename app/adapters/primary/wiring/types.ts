@@ -38,6 +38,7 @@ export type GatewaysWl = {
 	entitlements: EntitlementWlGateway;
 	locations: LocationWlGateway;
 	articles: ArticleWlGateway;
+	users: UserRepo;
 
 	auth: {
 		oauth: OAuthGateway;

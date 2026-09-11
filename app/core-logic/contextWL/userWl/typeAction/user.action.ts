@@ -57,3 +57,28 @@ export const authSignedOut = createAction("auth/signedOut");
 
 export const authErrorCleared = createAction("auth/errorCleared");
 
+export const profileUpdateRequested = createAction<{ displayName: string }>(
+	"profile/updateRequested",
+);
+
+export const profileUpdateOptimistic = createAction<{
+	commandId: string;
+	displayName: string;
+}>("profile/updateOptimistic");
+
+export const profileUpdateRejectedLocally = createAction<{ error: string }>(
+	"profile/updateRejectedLocally",
+);
+
+export const profileUpdateRollback = createAction<{
+	displayName?: string;
+	version: number;
+	error: string;
+}>("profile/updateRollback");
+
+export const profileUpdateReconciled = createAction("profile/updateReconciled");
+
+export const accountDeletionRequested = createAction("account/deletionRequested");
+export const accountDeletionSubmitting = createAction<{ commandId: string }>("account/deletionSubmitting");
+export const accountDeletionAccepted = createAction("account/deletionAccepted");
+export const accountDeletionFailed = createAction<{ error: string }>("account/deletionFailed");

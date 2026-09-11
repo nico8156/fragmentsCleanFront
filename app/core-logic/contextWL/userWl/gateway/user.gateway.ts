@@ -29,16 +29,18 @@ export interface AuthSecureStore {
 // Accès Read du user (depuis ton backend quand il existera)
 export interface UserRepo {
     getById(id: UserId): Promise<AppUser | null>;
-    // extension: getCurrent() si le backend déduit via token
+	updateProfile(input: { commandId: string; displayName: string }): Promise<void>;
+	requestAccountDeletion(input: { commandId: string }): Promise<void>;
 }
 
 export interface AuthServerGateway {
     signInWithProvider(input: {
         provider: ProviderId;
         authorizationCode: string;
-        codeVerifier: string;
-        redirectUri: string;
+		codeVerifier?: string;
+		redirectUri?: string;
         idToken?: string | null;
+		displayName?: string;
         scopes: string[];
     }): Promise<{
         session: AuthSession;
