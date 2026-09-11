@@ -2,6 +2,7 @@ import {
 	CommentCreateCommand, CommentCreateUndo,
 	CommentDeleteCommand, CommentDeleteUndo,
 	CommentUpdateCommand, CommentUpdateUndo
+	, CommentReportCommand, CommentReportUndo, UserBlockCommand, UserBlockUndo
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForComment.type";
 import {
 	LikeAddCommand,
@@ -22,6 +23,8 @@ export const commandKinds = {
 	CommentUpdate: "Comment.Update",
 	CommentDelete: "Comment.Delete",
 	CommentRetrieve: "Comment.Retrieve",
+	CommentReport: "Comment.Report",
+	UserBlockSet: "User.Block.Set",
 	LikeAdd: "Like.Add",
 	LikeRemove: "Like.Remove",
 	SavedCoffeeSet: "SavedCoffee.Set",
@@ -53,6 +56,8 @@ export type OutboxCommand =
 	| CommentCreateCommand
 	| CommentUpdateCommand
 	| CommentDeleteCommand
+	| CommentReportCommand
+	| UserBlockCommand
 	| SavedCoffeeSetCommand
 	| TicketVerifyCommand
 	| UserProfileUpdateCommand;
@@ -63,6 +68,8 @@ export type OutboxUndo =
 	| CommentCreateUndo
 	| CommentUpdateUndo
 	| CommentDeleteUndo
+	| CommentReportUndo
+	| UserBlockUndo
 	| SavedCoffeeSetUndo
 	| TicketVerifyUndo
 	| UserProfileUpdateUndo;

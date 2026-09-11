@@ -23,7 +23,14 @@ export type CommentsStateWl = {
     entities: EntityState<CommentEntity,CommentId>;
     // Vue par café : ordre d’affichage + pagination
     byTarget: Record<CafeId, View>
+    reportedCommentIds: Record<CommentId, true>;
+    blockedUsers: Record<UserId, BlockedUser>;
+    blockedUsersLoading: LoadingState;
+    blockedUsersError?: string;
 };
+
+export type BlockedUser = { blockId: string; userId: UserId; displayName?: string; avatarUrl?: string | null; blockedAt: ISODate; version: number };
+export type ReportReason = "HARASSMENT" | "HATE_SPEECH" | "SEXUAL_CONTENT" | "VIOLENCE" | "SPAM" | "FALSE_INFORMATION" | "OTHER";
 
 export type View = {
     ids: CommentId[];                 // ordre matérialisé pour l’UI (newest→oldest si "new")
@@ -60,6 +67,7 @@ export const moderationTypes = {
     PUBLISHED: "PUBLISHED",
     PENDING: "PENDING",
     REJECTED: "REJECTED",
+    HIDDEN: "HIDDEN",
     SOFT_DELETED: "SOFT_DELETED"
 } as const;
 

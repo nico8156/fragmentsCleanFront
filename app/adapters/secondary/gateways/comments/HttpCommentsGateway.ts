@@ -1,6 +1,6 @@
 // HttpCommentsGateway.ts
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
-import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+import type { BlockedUser, ListCommentsResult, ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type HttpCommentsGatewayDeps = {
@@ -134,6 +134,37 @@ export class HttpCommentsGateway implements CommentsWlGateway {
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
             throw await toGatewayErrorFromHttpResponse(res, `Comments delete failed with status ${res.status}`);
+        }
+    }
+
+    async report(input: { commandId:string; reportId:string; commentId:string; reason:ReportReason; details?:string; at:string }): Promise<void> {
+        await this.post(`/api/social/comments/${input.commentId}/reports`, {
+            commandId: input.commandId, reportId: input.reportId, reason: input.reason,
+            details: input.details ?? null, at: input.at,
+        }, "Comment report");
+    }
+
+    async setBlock(input: { commandId:string; blockId:string; blockedUserId:string; active:boolean; at:string }): Promise<void> {
+        await this.post("/api/social/blocks", input, "User block");
+    }
+
+    async listBlockedUsers(signal: AbortSignal): Promise<BlockedUser[]> {
+        const token = await this.getAccessToken();
+        if (!token) throw new GatewayError("auth", "Not authenticated");
+        const response = await fetch(`${this.baseUrl}/api/social/blocks`, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, signal });
+        if (!response.ok) throw await toGatewayErrorFromHttpResponse(response, `Blocked users list failed with status ${response.status}`);
+        return await response.json() as BlockedUser[];
+    }
+
+    private async post(path: string, payload: unknown, label: string): Promise<void> {
+        const token = await this.getAccessToken();
+        if (!token) throw new GatewayError("auth", "Not authenticated");
+        const response = await fetch(`${this.baseUrl}${path}`, {
+            method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok && response.status !== 202 && response.status !== 204) {
+            throw await toGatewayErrorFromHttpResponse(response, `${label} failed with status ${response.status}`);
         }
     }
 }
