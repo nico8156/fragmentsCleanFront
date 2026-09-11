@@ -28,6 +28,7 @@ import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpe
 import type { GatewaysWl } from "./types";
 import { HttpProjectionSyncGateway } from "@/app/adapters/secondary/gateways/projectionSync/HttpProjectionSyncGateway";
 import { PROJECTION_SYNC_EVENTS_PATH } from "./config";
+import { HttpExperienceGateway } from "@/app/adapters/secondary/gateways/experiences/HttpExperienceGateway";
 
 // ✅ NOTE: on ne dépend plus de API_BASE_URL ici.
 // La source de vérité devient "apiBaseUrl" passé en argument.
@@ -63,6 +64,7 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 			baseUrl,
 			getAccessToken: authToken.getAccessToken,
 		}),
+		experiences: new HttpExperienceGateway({ baseUrl, getAccessToken: authToken.getAccessToken }),
 
 		likes: new HttpLikesGateway({
 			baseUrl,

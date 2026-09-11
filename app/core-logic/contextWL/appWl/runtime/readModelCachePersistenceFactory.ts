@@ -36,6 +36,7 @@ import {
 	ticketRollBack,
 } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import type { AppDispatchWl, ReduxStoreWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import { coffeeExperiencesReceived, experienceOptimisticCreated, experienceOptimisticDeleted, experienceOptimisticReported, experienceOptimisticUpdated, experienceReconciled, experienceRollback, myExperiencesReceived } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 
 type Deps = {
 	storage: ReadModelCacheGateway;
@@ -61,6 +62,7 @@ export const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot
 	cfPhotos: state.pState,
 	openingHours: state.ohState,
 	comments: state.cState,
+	experiences: state.exState,
 	likes: state.lState,
 	savedCoffees: state.scState,
 	tickets: state.tState,
@@ -94,6 +96,14 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 			articleReceived,
 			articleListReceived,
 			commentsRetrieved,
+			coffeeExperiencesReceived,
+			myExperiencesReceived,
+			experienceOptimisticCreated,
+			experienceOptimisticUpdated,
+			experienceOptimisticDeleted,
+			experienceOptimisticReported,
+			experienceReconciled,
+			experienceRollback,
 			addOptimisticCreated,
 			updateOptimisticApplied,
 			deleteOptimisticApplied,

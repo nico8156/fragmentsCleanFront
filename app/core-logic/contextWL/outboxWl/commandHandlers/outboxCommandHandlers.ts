@@ -29,6 +29,9 @@ import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/re
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import { authUserHydrationRequested, profileUpdateReconciled, profileUpdateRollback } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
+import { experienceReconciled, experienceRollback } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 type CommandHandlerLogger = {
 	warn?: (message: string, payload?: unknown) => void;
@@ -41,6 +44,7 @@ export type OutboxCommandGatewayDeps = {
 	tickets?: TicketsWlGateway;
 	entitlements?: EntitlementWlGateway;
 	users?: UserRepo;
+	experiences?: ExperienceGateway;
 };
 
 export const getOutboxCommandGateway = (
@@ -63,6 +67,12 @@ export const getOutboxCommandGateway = (
 			return gateways?.tickets;
 		case commandKinds.UserProfileUpdate:
 			return gateways?.users;
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport:
+			return gateways?.experiences;
 		default:
 			return null;
 	}
@@ -153,6 +163,22 @@ export const sendOutboxCommand = async ({
 				commandId: command.commandId,
 				displayName: command.displayName,
 			});
+			return "sent";
+
+		case commandKinds.ExperienceCreate:
+			await gateway.create(command);
+			return "sent";
+		case commandKinds.ExperienceUpdate:
+			await gateway.update(command);
+			return "sent";
+		case commandKinds.ExperiencePublish:
+			await gateway.publish(command);
+			return "sent";
+		case commandKinds.ExperienceDelete:
+			await gateway.delete(command);
+			return "sent";
+		case commandKinds.ExperienceReport:
+			await gateway.report(command);
 			return "sent";
 
 		default:
@@ -276,6 +302,16 @@ export const rollbackRejectedOutboxRecord = ({
 				version: u.version,
 				error: "La modification du profil a été refusée.",
 			}));
+			return;
+		}
+
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport: {
+			outboxTelemetry.rollback(record, "experience command rejected");
+			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported }));
 			return;
 		}
 
@@ -410,6 +446,20 @@ export const reconcileAppliedOutboxRecord = ({
 			outboxTelemetry.reconcile(record, "userProfile");
 			dispatch(profileUpdateReconciled());
 			if (userId) dispatch(authUserHydrationRequested({ userId: userId as any }));
+			return;
+
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport:
+			outboxTelemetry.reconcile(record, "experiences");
+			dispatch(experienceReconciled({ experienceId: command.experienceId }));
+			if (gateways?.experiences) {
+				if (command.coffeeId) dispatch(coffeeExperiencesRetrieval({ coffeeId: command.coffeeId }) as any);
+				dispatch(myExperiencesRetrieval() as any);
+			}
+			refreshEntitlements();
 			return;
 
 		default:

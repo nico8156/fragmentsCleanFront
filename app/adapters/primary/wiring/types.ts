@@ -23,6 +23,7 @@ import type { CommandStatusGateway } from "@/app/core-logic/contextWL/outboxWl/g
 
 import type { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import type { ProjectionSyncGateway } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
+import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
 
 export type GatewaysWl = {
 	coffees: CoffeeWlGateway;
@@ -31,6 +32,7 @@ export type GatewaysWl = {
 	openingHours: OpeningHoursGateway;
 
 	comments: CommentsWlGateway;
+	experiences: ExperienceGateway;
 	likes: LikeWlGateway;
 	savedCoffees: SavedCoffeeGateway;
 	tickets: TicketsWlGateway;

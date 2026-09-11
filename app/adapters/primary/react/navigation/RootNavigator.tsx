@@ -28,6 +28,7 @@ import { EditProfileScreen } from "@/app/adapters/primary/react/features/profile
 import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
 import { ProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/ProfileScreen";
 import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
+import { MyExperiencesScreen } from "@/app/adapters/primary/react/features/experiences/screens/MyExperiencesScreen";
 
 import { AllBadgesScreen } from "@/app/adapters/primary/react/features/pass/screens/AllBadgesScreen";
 import { BadgeDetailScreen } from "@/app/adapters/primary/react/features/pass/screens/BadgeDetailScreen";
@@ -80,6 +81,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 							EditProfile: "edit",
 							Tickets: "tickets",
 							Favorites: "favorites",
+							Experiences: "experiences",
 							AppSettings: "settings",
 						},
 					},
@@ -126,6 +128,7 @@ function ProfileNavigator() {
 			<ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Modifier mon profil" }} />
 			<ProfileStack.Screen name="Tickets" component={TicketsScreen} options={{ title: "Mes tickets" }} />
 			<ProfileStack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "Mes favoris" }} />
+			<ProfileStack.Screen name="Experiences" component={MyExperiencesScreen} options={{ title: "Mes expériences" }} />
 			<ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} options={{ title: "Paramètres" }} />
 		</ProfileStack.Navigator>
 	);

@@ -18,6 +18,7 @@ import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/
 import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory";
 import { profileUpdateListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/profile/profileUpdateListenerFactory";
 import { accountDeletionListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/account/accountDeletionListenerFactory";
+import { experienceWriteListenerFactory } from "@/app/core-logic/contextWL/experienceWl/usecases/write/experienceWriteListenerFactory";
 
 import type { Helpers } from "@/app/store/appStateWl";
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
@@ -41,6 +42,7 @@ export const createWlListeners = (p: {
 		mwOf(commentDeleteUseCaseFactory({ gateways, helpers })),
 		mwOf(commentUpdateWlUseCase({ gateways, helpers })),
 		mwOf(commentModerationUseCaseFactory({ gateways, helpers })),
+		mwOf(experienceWriteListenerFactory({ gateways, helpers })),
 
 		// Likes
 		mwOf(likeToggleUseCaseFactory({ gateways, helpers })),
