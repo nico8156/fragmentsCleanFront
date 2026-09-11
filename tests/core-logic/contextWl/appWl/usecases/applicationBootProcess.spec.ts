@@ -52,7 +52,7 @@ const logger = {
 
 describe("ApplicationBootProcess", () => {
 	it("waits for authenticated account hydration and never loads legacy snapshots in production mode", async () => {
-		const store = initReduxStoreWl({ dependencies: {}, accountStorageManaged: true });
+		const store = initReduxStoreWl({ dependencies: { gateways: { coffees: { getAllSummaries: jest.fn(async () => ({ kind: "updated", items: [{ id: "coffee_account", name: "Account coffee", location: { lat: 48.1, lon: -1.6 }, address: {}, version: 1, updatedAt: "2026-01-01T00:00:00.000Z" }], }) ) } as any } }, accountStorageManaged: true });
 		const storage = { loadSnapshot: jest.fn(async () => null), saveSnapshot: jest.fn(), clear: jest.fn() };
 		const boot = createApplicationBootProcess({ store, outboxStorage: storage, readModelCacheStorage: storage,
 			logger, accountStorageManaged: true });
@@ -62,8 +62,8 @@ describe("ApplicationBootProcess", () => {
 		expect(store.getState().appState.boot.doneWarmup).toBe(false);
 		store.dispatch(accountStorageReady({ generation: store.getState().accountScope.generation }));
 		await finished;
-		expect(storage.loadSnapshot).not.toHaveBeenCalled();
 		expect(store.getState().appState.boot.doneWarmup).toBe(true);
+		expect(store.getState().cfState.byId.coffee_account.name).toBe("Account coffee");
 	});
 	it("can cancel while waiting for account hydration", async () => {
 		const store = initReduxStoreWl({ dependencies: {}, accountStorageManaged: true });

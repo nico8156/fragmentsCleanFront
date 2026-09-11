@@ -76,7 +76,8 @@ export const createApplicationBootProcess = ({
 				releaseWait = done;
 				check();
 			});
-			return; // Account runtime owns hydration; never read the legacy global snapshots.
+			// Account runtime owns only the private snapshot hydration. Public and
+			// server-backed read models still need the normal warmup below.
 		}
 
 		if (clearOutboxOnBoot) {

@@ -1,9 +1,14 @@
-import { buildHomeContent } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
+import { buildHomeContent, selectHomeCoffeeNames, selectHomeExperiences } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
 
 const article = (id: string) => ({ id, slug: id, title: id, intro: "intro", tags: [], cover: { url: "https://example.test/image.jpg", width: 1, height: 1, alt: id } });
 const pass: any = { currentLevel: { label: "Coffee Taster" }, nextUnlock: { label: "Urban Explorer", remainingRequirements: [{ key: "validatedTickets", label: "tickets validés", remaining: 1, current: 0, required: 1, completed: false }] } };
 
 describe("buildHomeContent", () => {
+	it("memoizes the Redux-derived inputs consumed by Home", () => {
+		const state: any = { exState: { mine: { ids: ["experience-1"] }, entities: { entities: { "experience-1": { experienceId: "experience-1" } } } }, cfState: { byId: { "coffee-1": { name: "Café" } } } };
+		expect(selectHomeExperiences(state)).toBe(selectHomeExperiences(state));
+		expect(selectHomeCoffeeNames(state)).toBe(selectHomeCoffeeNames(state));
+	});
 	it("compose des lectures existantes sans créer de contenu fictif", () => {
 		const result = buildHomeContent({ articles: [article("hero"), article("next")], sliderArticles: [article("hero")], coffees: [{ id: "coffee-1", name: "Café", location: { lat: 48.86, lon: 2.35 }, city: "Paris", tags: [], distanceKm: 1, hasPhoto: false }], hasLocation: true, pass, experiences: [{ experienceId: "visible", coffeeId: "coffee-1", userId: "u", message: "Très bon espresso", status: "PUBLISHED", moderationStatus: "VISIBLE", createdAt: "", updatedAt: "", version: 1 }, { experienceId: "hidden", coffeeId: "coffee-1", userId: "u", message: "hidden", status: "PUBLISHED", moderationStatus: "HIDDEN", createdAt: "", updatedAt: "", version: 1 }] as any, coffeeNames: { "coffee-1": "Café" } });
 		expect(result.coffeeTitle).toBe("Cafés à découvrir près de toi");
