@@ -1,7 +1,7 @@
 import {computeLikeId} from "@/app/adapters/secondary/gateways/like/helpers/likeId";
 import {LikeWlGateway} from "@/app/core-logic/contextWL/likeWl/gateway/likeWl.gateway";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
-import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type HttpLikesGatewayDeps = {
     baseUrl: string;                    // ex: "https://api.fragments.app"
@@ -68,7 +68,7 @@ export class HttpLikesGateway implements LikeWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw toGatewayErrorFromHttpStatus(res.status, `Likes add failed with status ${res.status}`);
+            throw await toGatewayErrorFromHttpResponse(res, `Likes add failed with status ${res.status}`);
         }
     }
 
@@ -90,7 +90,7 @@ export class HttpLikesGateway implements LikeWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw toGatewayErrorFromHttpStatus(res.status, `Likes remove failed with status ${res.status}`);
+            throw await toGatewayErrorFromHttpResponse(res, `Likes remove failed with status ${res.status}`);
         }
     }
 }

@@ -91,6 +91,7 @@ export const sendOutboxCommand = async ({
 				parentId: command.parentId ?? null,
 				body: command.body,
 				tempId: command.tempId,
+				at: command.at,
 			});
 			return "sent";
 

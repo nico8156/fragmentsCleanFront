@@ -1,7 +1,7 @@
 // HttpCommentsGateway.ts
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { ListCommentsResult } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
-import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type HttpCommentsGatewayDeps = {
     baseUrl: string;
@@ -55,6 +55,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         parentId?: string | null;
         body: string;
         tempId: string; // commentId côté back (stable) = tempId RN
+        at: string;
     }): Promise<void> {
         const token = await this.getAccessToken();
         if (!token) throw new GatewayError("auth", "Not authenticated");
@@ -65,7 +66,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
             targetId: input.targetId,
             parentId: input.parentId ?? null,
             body: input.body,
-            at: new Date().toISOString(),
+            at: input.at,
         };
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {
@@ -78,7 +79,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw toGatewayErrorFromHttpStatus(res.status, `Comments create failed with status ${res.status}`);
+            throw await toGatewayErrorFromHttpResponse(res, `Comments create failed with status ${res.status}`);
         }
     }
 
@@ -86,7 +87,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         commandId: string;
         commentId: string;
         body: string;
-        editedAt?: string;
+        editedAt: string;
     }): Promise<void> {
         const token = await this.getAccessToken();
         if (!token) throw new GatewayError("auth", "Not authenticated");
@@ -95,7 +96,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
             commandId: input.commandId,
             commentId: input.commentId,
             body: input.body,
-            editedAt: input.editedAt ?? new Date().toISOString(),
+            editedAt: input.editedAt,
         };
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {
@@ -108,18 +109,18 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw toGatewayErrorFromHttpStatus(res.status, `Comments update failed with status ${res.status}`);
+            throw await toGatewayErrorFromHttpResponse(res, `Comments update failed with status ${res.status}`);
         }
     }
 
-    async delete(input: { commandId: string; commentId: string; deletedAt?: string }): Promise<void> {
+    async delete(input: { commandId: string; commentId: string; deletedAt: string }): Promise<void> {
         const token = await this.getAccessToken();
         if (!token) throw new GatewayError("auth", "Not authenticated");
 
         const payload = {
             commandId: input.commandId,
             commentId: input.commentId,
-            deletedAt: input.deletedAt ?? new Date().toISOString(),
+            deletedAt: input.deletedAt,
         };
 
         const res = await fetch(`${this.baseUrl}/api/social/comments`, {
@@ -132,7 +133,7 @@ export class HttpCommentsGateway implements CommentsWlGateway {
         });
 
         if (!res.ok && res.status !== 202 && res.status !== 204) {
-            throw toGatewayErrorFromHttpStatus(res.status, `Comments delete failed with status ${res.status}`);
+            throw await toGatewayErrorFromHttpResponse(res, `Comments delete failed with status ${res.status}`);
         }
     }
 }

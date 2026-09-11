@@ -1,6 +1,6 @@
 import {TicketsWlGateway} from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
-import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 
 export class HttpTicketsGateway implements TicketsWlGateway {
@@ -72,7 +72,7 @@ export class HttpTicketsGateway implements TicketsWlGateway {
 
         // Backend exige un UUID non-null: UUID.fromString(body.ticketId())
         if (!input.ticketId) {
-            throw new GatewayError("business", "ticketId is required (backend expects a UUID string)");
+            throw new GatewayError("unknown", "ticketId is required (backend expects a UUID string)");
         }
 
         const res = await fetch(`${this.deps.baseUrl}/api/tickets/verify`, {
@@ -92,7 +92,6 @@ export class HttpTicketsGateway implements TicketsWlGateway {
 
         if (res.status === 202) return;
 
-        const text = await res.text().catch(() => "");
-        throw toGatewayErrorFromHttpStatus(res.status, `Ticket verify failed: HTTP ${res.status} ${text}`);
+        throw await toGatewayErrorFromHttpResponse(res, `Ticket verify failed: HTTP ${res.status}`);
     }
 }

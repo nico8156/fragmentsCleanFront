@@ -32,7 +32,12 @@ export class HttpCommandStatusGateway implements CommandStatusGateway {
         // attendu côté back:
         // { status: "PENDING" | "APPLIED" | "REJECTED", appliedAt?, rejectedAt?, reason? }
         if (data?.status === "APPLIED") return { status: "APPLIED", appliedAt: data.appliedAt };
-        if (data?.status === "REJECTED") return { status: "REJECTED", rejectedAt: data.rejectedAt, reason: data.reason };
+        if (data?.status === "REJECTED") return {
+            status: "REJECTED",
+            rejectedAt: data.rejectedAt,
+            rejectionCode: data.rejectionCode,
+            reason: data.reason,
+        };
         return { status: "PENDING" };
     }
 }
