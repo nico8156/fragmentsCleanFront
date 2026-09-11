@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
 	DefaultTheme,
@@ -15,6 +14,7 @@ import { accountStorageRetry } from "@/app/core-logic/contextWL/appWl/runtime/ac
 import { authSignOutRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { FragmentsTabBar } from "@/app/adapters/primary/react/navigation/FragmentsTabBar";
 
 import { ArticleScreen } from "@/app/adapters/primary/react/features/articles/screens/ArticleScreen";
 import { LoginScreen } from "@/app/adapters/primary/react/features/auth/screens/LoginScreen";
@@ -141,27 +141,12 @@ function ProfileNavigator() {
 function TabsNavigator() {
 	return (
 		<Tabs.Navigator
-			screenOptions={({ route }) => ({
+			tabBar={(props) => <FragmentsTabBar {...props} />}
+			screenOptions={{
 				headerShown: false,
-				tabBarActiveTintColor: palette.primary_90,
-				tabBarInactiveTintColor: palette.primary_50,
-				tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
-				tabBarStyle: {
-					backgroundColor: palette.bg_light_90,
-					borderTopColor: palette.bg_light_90,
-					paddingTop: 5,
-				},
-				tabBarIcon: ({ color, size }) => {
-					const iconMap: Record<keyof RootTabsParamList, keyof typeof Ionicons.glyphMap> = {
-						Home: "home",
-						Map: "map",
-						Rewards: "gift",
-						Profile: "person",
-					};
-					const iconName = iconMap[route.name] ?? "ellipse";
-					return <Ionicons name={iconName} size={size} color={color} />;
-				},
-			})}
+				tabBarHideOnKeyboard: true,
+				tabBarStyle: { position: "absolute", backgroundColor: "transparent", borderTopWidth: 0, elevation: 0 },
+			}}
 		>
 			<Tabs.Screen name="Home" component={HomeScreen} options={{ title: "Home" }} />
 			<Tabs.Screen name="Map" component={MapScreen} options={{ title: "Carte" }} />

@@ -1,4 +1,5 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { ReactNode } from "react";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
@@ -33,7 +34,8 @@ const styles = StyleSheet.create({
 	},
 	content: {
 		paddingHorizontal: 20,
-		paddingVertical: 16,
+		paddingTop: 16,
+		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
 		gap: 16,
 	},
 });

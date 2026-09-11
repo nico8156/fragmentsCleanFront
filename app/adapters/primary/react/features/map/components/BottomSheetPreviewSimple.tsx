@@ -1,6 +1,6 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import React, { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
 	name?: string;
@@ -8,6 +8,9 @@ type Props = {
 	distanceText?: string;
 	todayHoursLabel?: string; // ex: "08:30–18:00" ou "ferme à 18:00"
 	onPressDetails: () => void;
+	onPressDirections: () => void;
+	canOpenDirections: boolean;
+	isLoading?: boolean;
 };
 
 export default function BottomSheetPreviewSimple({
@@ -16,6 +19,9 @@ export default function BottomSheetPreviewSimple({
 	distanceText,
 	todayHoursLabel,
 	onPressDetails,
+	onPressDirections,
+	canOpenDirections,
+	isLoading = false,
 }: Props) {
 	const hasSelection = Boolean(name);
 
@@ -36,15 +42,6 @@ export default function BottomSheetPreviewSimple({
 		if (!hasSelection) return "—";
 		return distanceText ?? "Distance inconnue";
 	}, [hasSelection, distanceText]);
-
-	// CTA “signature” : fun léger, pas cringe
-	const ctaLabel = useMemo(() => {
-		if (!hasSelection) return "Choisis un café";
-		// si ouvert : incite à y aller maintenant
-		if (isOpen) return "Let’s go ☕️";
-		// si fermé : incite à découvrir quand même
-		return "Découvrir quand même";
-	}, [hasSelection, isOpen]);
 
 	return (
 		<View style={styles.container}>
@@ -73,19 +70,29 @@ export default function BottomSheetPreviewSimple({
 				/>
 			</View>
 
-			{/* CTA principal */}
-			<Pressable
-				onPress={onPressDetails}
-				disabled={!hasSelection}
-				style={({ pressed }) => [
-					styles.cta,
-					pressed && styles.ctaPressed,
-					!hasSelection && styles.ctaDisabled,
-				]}
-			>
-				<Text style={styles.ctaText}>{ctaLabel}</Text>
-				<Text style={styles.ctaIcon}>→</Text>
-			</Pressable>
+			{isLoading ? <View style={styles.loading}><ActivityIndicator color={palette.accent} /><Text style={styles.loadingText}>Chargement du café…</Text></View> : null}
+
+			<View style={styles.actions}>
+				<Pressable
+					onPress={onPressDetails}
+					disabled={!hasSelection || isLoading}
+					accessibilityRole="button"
+					accessibilityLabel="Voir la fiche du café"
+					style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed, (!hasSelection || isLoading) && styles.ctaDisabled]}
+				>
+					<Text style={styles.ctaText}>Voir la fiche</Text>
+					<Text style={styles.ctaIcon}>→</Text>
+				</Pressable>
+				<Pressable
+					onPress={onPressDirections}
+					disabled={!canOpenDirections || isLoading}
+					accessibilityRole="button"
+					accessibilityLabel="Ouvrir l’itinéraire"
+					style={({ pressed }) => [styles.secondaryCta, pressed && styles.ctaPressed, (!canOpenDirections || isLoading) && styles.ctaDisabled]}
+				>
+					<Text style={styles.secondaryCtaText}>Itinéraire</Text>
+				</Pressable>
+			</View>
 
 			{/* Hint minimal */}
 			<Text style={styles.hint}>Glisse pour fermer</Text>
@@ -208,7 +215,8 @@ const styles = StyleSheet.create({
 	},
 
 	cta: {
-		height: 56,
+		flex: 1,
+		height: 52,
 		borderRadius: 18,
 		backgroundColor: palette.accent,
 		alignItems: "center",
@@ -235,6 +243,11 @@ const styles = StyleSheet.create({
 	ctaDisabled: {
 		opacity: 0.45,
 	},
+	actions: { flexDirection: "row", gap: 10 },
+	secondaryCta: { height: 52, borderRadius: 18, paddingHorizontal: 16, borderWidth: 1, borderColor: palette.accent_30, alignItems: "center", justifyContent: "center", backgroundColor: palette.accentSoft },
+	secondaryCtaText: { color: palette.textPrimary, fontSize: 14, fontWeight: "900" },
+	loading: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 2 },
+	loadingText: { color: palette.textSecondary, fontSize: 13, fontWeight: "700" },
 
 	hint: {
 		textAlign: "center",
@@ -243,4 +256,3 @@ const styles = StyleSheet.create({
 		opacity: 0.9,
 	},
 });
-

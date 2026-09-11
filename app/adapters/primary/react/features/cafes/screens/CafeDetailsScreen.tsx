@@ -207,9 +207,9 @@ export default function CafeDetailsScreen() {
 					/>
 
 					<PhotosSection photos={coffee.photos ?? []} />
-					<InfoSection coffee={coffee} addressLine={addressLine} />
 					<TagsSection tags={(coffee as any).tags ?? []} />
 					<ExperiencesSection coffeeId={String(coffeeId)} />
+					<InfoSection coffee={coffee} addressLine={addressLine} />
 
 					<CommentsSection
 						coffeeId={String(coffeeId)}

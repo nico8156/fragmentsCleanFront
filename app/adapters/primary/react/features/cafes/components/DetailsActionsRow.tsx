@@ -1,7 +1,8 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { openCoffeeDirections } from "@/app/adapters/primary/react/features/cafes/coffeeDirections";
 import { SymbolView } from "expo-symbols";
 import React, { useCallback, useMemo } from "react";
-import { LayoutChangeEvent, Linking, Platform, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { LayoutChangeEvent, Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 
 export function DetailsActionsRow({
 	coffee,
@@ -24,24 +25,7 @@ export function DetailsActionsRow({
 	const website: string | undefined = (coffee as any).website;
 
 	const onPressItinerary = useCallback(async () => {
-		const lat = coffee?.location?.lat;
-		const lon = coffee?.location?.lon;
-		const label = encodeURIComponent(coffee?.name ?? "Café");
-
-		if (lat != null && lon != null) {
-			const url = Platform.select({
-				ios: `maps:0,0?q=${label}@${lat},${lon}`,
-				android: `geo:0,0?q=${lat},${lon}(${label})`,
-				default: `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`,
-			})!;
-			const can = await Linking.canOpenURL(url);
-			if (can) return Linking.openURL(url);
-			return Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`);
-		}
-
-		if (addressLine) {
-			return Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLine)}`);
-		}
+		await openCoffeeDirections({ latitude: coffee?.location?.lat, longitude: coffee?.location?.lon, label: coffee?.name, addressLine });
 	}, [coffee?.location?.lat, coffee?.location?.lon, coffee?.name, addressLine]);
 
 	const onPressCall = useCallback(async () => {

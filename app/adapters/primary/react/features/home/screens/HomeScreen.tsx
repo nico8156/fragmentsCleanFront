@@ -3,6 +3,7 @@ import { Categories } from "@/app/adapters/primary/react/features/home/component
 import { MasterHeader } from "@/app/adapters/primary/react/features/home/components/MasterHeader";
 import { WelcomeMessage } from "@/app/adapters/primary/react/features/home/components/WelcomeMessage";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
+import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { useArticlesHome } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { dataForPacks } from "@/assets/data/coffeePack";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
 	container: { flex: 1 },
 
 	scrollContent: {
-		paddingBottom: 28,
+		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
 	},
 
 	heroSection: {

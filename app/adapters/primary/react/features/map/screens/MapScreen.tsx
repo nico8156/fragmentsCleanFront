@@ -13,6 +13,7 @@ import { ClusterBubble } from "@/app/adapters/primary/react/features/map/compone
 import CoffeeMarker from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeMarker";
 import LocalisationButton from "@/app/adapters/primary/react/features/map/components/coffeeSelection/localisationButton";
 import MapCoffeePreviewSheet from "@/app/adapters/primary/react/features/map/components/MapCoffeePreviewSheet";
+import { openCoffeeDirections } from "@/app/adapters/primary/react/features/cafes/coffeeDirections";
 import ListViewForCoffees from "@/app/adapters/primary/react/features/map/screens/ListViewForCoffees";
 
 import { useCafeFull } from "@/app/adapters/secondary/viewModel/useCafeFull";
@@ -44,7 +45,7 @@ export function MapScreen() {
 
 	// --- Data
 	const { coffees } = useCafeForMarkers();
-	const { coords, refresh } = useUserLocationFromStore();
+	const { coords, refresh, permission, status } = useUserLocationFromStore();
 	const {
 		mapRef,
 		initialRegion,
@@ -84,6 +85,12 @@ export function MapScreen() {
 	const { text: distanceText } = useDistanceToPoint(
 		coffee?.location ? { lat: coffee.location.lat, lng: coffee.location.lon } : undefined,
 	);
+	const selectedMarker = coffees.find((item) => String(item.id) === String(selectedCoffeeId));
+	const isSelectedCoffeeLoading = Boolean(selectedCoffeeId && !coffee);
+	const openDirections = useCallback(() => {
+		if (!coffee?.location) return;
+		void openCoffeeDirections({ latitude: coffee.location.lat, longitude: coffee.location.lon, label: coffee.name });
+	}, [coffee]);
 
 	// --- Blur extracted
 	const isSheetOpen = bottomSheetIndex >= 0 && viewMode === "map";
@@ -184,6 +191,7 @@ export function MapScreen() {
 						)}
 
 						<ActionButtonsWrapper toggleViewMode={toggleViewMode} />
+						{permission === "denied" || status === "error" ? <View style={styles.locationNotice} accessibilityRole="alert"><Animated.Text style={styles.locationNoticeText}>Localisation indisponible — explore la carte librement.</Animated.Text></View> : null}
 
 						<LocalisationButton
 							localizeMe={localizeMe}
@@ -201,11 +209,14 @@ export function MapScreen() {
 								if (toIndex === -1) hideBlurFast();
 							}}
 							snapPoints={snapPoints}
-							name={coffee?.name}
+							name={coffee?.name ?? selectedMarker?.name}
 							isOpen={isOpen}
 							distanceText={distanceText}
-							todayHoursLabel={todayHoursLabel}
+							todayHoursLabel={isSelectedCoffeeLoading ? "Chargement…" : todayHoursLabel}
 							onPressDetails={goToDetails}
+							onPressDirections={openDirections}
+							canOpenDirections={Boolean(coffee?.location)}
+							isLoading={isSelectedCoffeeLoading}
 						/>
 					</>
 				) : (
@@ -224,6 +235,8 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
+	locationNotice: { position: "absolute", top: 122, left: 20, right: 20, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: "rgba(21,16,14,0.88)", borderWidth: StyleSheet.hairlineWidth, borderColor: palette.border },
+	locationNoticeText: { color: palette.textSecondary, textAlign: "center", fontSize: 13, fontWeight: "700" },
 });
 
 export default MapScreen;
