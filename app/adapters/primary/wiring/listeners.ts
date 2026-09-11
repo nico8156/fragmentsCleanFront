@@ -1,6 +1,7 @@
 import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commentDeleteUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { commentUpdateWlUseCase } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import { commentModerationUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
 
 import { likeToggleUseCaseFactory } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import { savedCoffeeToggleUseCaseFactory } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/write/savedCoffeeToggleUseCase";
@@ -39,6 +40,7 @@ export const createWlListeners = (p: {
 		mwOf(createCommentUseCaseFactory({ gateways, helpers })),
 		mwOf(commentDeleteUseCaseFactory({ gateways, helpers })),
 		mwOf(commentUpdateWlUseCase({ gateways, helpers })),
+		mwOf(commentModerationUseCaseFactory({ gateways, helpers })),
 
 		// Likes
 		mwOf(likeToggleUseCaseFactory({ gateways, helpers })),

@@ -14,6 +14,7 @@ const googleMobileIosRedirectUri =
   (environment === "production"
     ? undefined
     : "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect");
+const supportEmail = process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
 
 if (environment === "production" && !apiBaseUrl) {
   throw new Error("Missing EXPO_PUBLIC_API_BASE_URL for production build");
@@ -21,6 +22,9 @@ if (environment === "production" && !apiBaseUrl) {
 
 if (environment === "production" && (!googleMobileIosClientId || !googleMobileIosRedirectUri)) {
   throw new Error("Missing Google OAuth production configuration");
+}
+if (environment === "production" && !supportEmail) {
+  throw new Error("Missing EXPO_PUBLIC_SUPPORT_EMAIL for production build");
 }
 
 const plugins = [
@@ -102,6 +106,7 @@ module.exports = {
       eas: { projectId: "138089c2-0d66-415d-baa4-46495ea3a90b" },
       googleMobileIosClientId,
       googleMobileIosRedirectUri,
+      supportEmail,
     },
   },
 };

@@ -35,8 +35,10 @@ export const selectCommentsForTarget = (targetId: CafeId) =>
 		[
 			(state: RootStateWl) => selectCommentsState(state).entities.entities,
 			(state: RootStateWl) => selectCommentsState(state).byTarget[targetId],
+			(state: RootStateWl) => selectCommentsState(state).reportedCommentIds,
+			(state: RootStateWl) => selectCommentsState(state).blockedUsers,
 		],
-		(entities, view): CommentsSelectorResult => {
+		(entities, view, reportedCommentIds, blockedUsers): CommentsSelectorResult => {
 			if (!view) {
 				return {
 					comments: [],
@@ -50,7 +52,8 @@ export const selectCommentsForTarget = (targetId: CafeId) =>
 			const comments = (view.ids ?? [])
 				.map((id) => entities[id])
 				.filter((c): c is CommentEntity => Boolean(c))
-				.filter((c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED);
+				.filter((c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED && c.moderation !== moderationTypes.HIDDEN)
+				.filter((c) => !reportedCommentIds[c.id] && !blockedUsers[c.authorId]);
 
 			return {
 				comments,

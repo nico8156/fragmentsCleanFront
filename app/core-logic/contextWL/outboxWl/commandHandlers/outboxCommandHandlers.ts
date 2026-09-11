@@ -1,4 +1,5 @@
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { blockRollback, reportRollback } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
@@ -55,6 +56,8 @@ export const getOutboxCommandGateway = (
 		case commandKinds.CommentCreate:
 		case commandKinds.CommentUpdate:
 		case commandKinds.CommentDelete:
+		case commandKinds.CommentReport:
+		case commandKinds.UserBlockSet:
 			return gateways?.comments;
 		case commandKinds.TicketVerify:
 			return gateways?.tickets;
@@ -115,6 +118,14 @@ export const sendOutboxCommand = async ({
 				commentId: command.commentId,
 				deletedAt: command.at,
 			});
+			return "sent";
+
+		case commandKinds.CommentReport:
+			await gateway.report(command);
+			return "sent";
+
+		case commandKinds.UserBlockSet:
+			await gateway.setBlock(command);
 			return "sent";
 
 		case commandKinds.SavedCoffeeSet:
@@ -222,6 +233,18 @@ export const rollbackRejectedOutboxRecord = ({
 				prevVersion: u.prevVersion,
 				prevDeletedAt: u.prevDeletedAt,
 			}));
+			return;
+		}
+
+		case commandKinds.CommentReport: {
+			const u = undo as { commentId: string };
+			if (u?.commentId) dispatch(reportRollback({ commentId: u.commentId }));
+			return;
+		}
+
+		case commandKinds.UserBlockSet: {
+			const u = undo as { userId: string; previous?: any };
+			if (u?.userId) dispatch(blockRollback({ userId: u.userId, previous: u.previous }));
 			return;
 		}
 
@@ -363,6 +386,11 @@ export const reconcileAppliedOutboxRecord = ({
 			}));
 			return;
 		}
+
+		case commandKinds.CommentReport:
+		case commandKinds.UserBlockSet:
+			outboxTelemetry.reconcile(record, "moderation");
+			return;
 
 		case commandKinds.TicketVerify:
 			outboxTelemetry.reconcile(record, "tickets");

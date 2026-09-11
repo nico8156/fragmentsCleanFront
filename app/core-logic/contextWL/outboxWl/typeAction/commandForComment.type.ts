@@ -1,5 +1,6 @@
 // commandForComment.type.ts
 import { CommandId, commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import type { BlockedUser, ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 // ===== CREATE =====
 export type CommentCreateCommand = {
@@ -51,3 +52,8 @@ export type CommentDeleteUndo = {
     prevDeletedAt?: ISODate;
     prevVersion?: number;
 };
+
+export type CommentReportCommand = { kind: typeof commandKinds.CommentReport; commandId: CommandId; reportId:string; commentId:string; reason:ReportReason; details?:string; at:ISODate };
+export type CommentReportUndo = { kind: typeof commandKinds.CommentReport; commentId:string };
+export type UserBlockCommand = { kind: typeof commandKinds.UserBlockSet; commandId:CommandId; blockId:string; blockedUserId:string; active:boolean; at:ISODate };
+export type UserBlockUndo = { kind: typeof commandKinds.UserBlockSet; userId:string; previous?:BlockedUser };

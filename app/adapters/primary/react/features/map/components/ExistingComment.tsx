@@ -14,11 +14,14 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import EditModal from "@/app/adapters/primary/react/features/map/components/EditModal";
 import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
 import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
+import type { ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 type Props = {
     comment: CommentItemVM;
     onUpdateComment: (newBody: string) => void;
     onDeleteComment: () => void;
+    onReportComment: (reason: ReportReason) => void;
+    onBlockUser: () => void;
 };
 
 const STATUS_COLORS = {
@@ -33,7 +36,7 @@ const STATUS_LABELS = {
     failed: "Erreur",
 } as const;
 
-const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) => {
+const ExistingComment = ({ comment, onUpdateComment, onDeleteComment, onReportComment, onBlockUser }: Props) => {
     const pass = usePassRingsViewModel();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditingBody, setIsEditingBody] = useState(false);
@@ -74,8 +77,16 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
 
     const handleReport = () => {
         setIsModalOpen(false);
-        Alert.alert("Signalé", "Merci pour votre signalement.");
+        Alert.alert("Pourquoi le signaler ?", "Le contenu sera immédiatement masqué pour toi.", [
+            {text:"Spam",onPress:()=>onReportComment("SPAM")},
+            {text:"Harcèlement",onPress:()=>onReportComment("HARASSMENT")},
+            {text:"Autre",onPress:()=>onReportComment("OTHER")},
+        ]);
     };
+
+    const handleBlock = () => { setIsModalOpen(false); Alert.alert("Bloquer cet utilisateur ?","Ses commentaires seront masqués pour toi.",[
+        {text:"Annuler",style:"cancel"},{text:"Bloquer",style:"destructive",onPress:onBlockUser},
+    ]); };
 
     const handleCancelEdit = () => {
         setDraftBody(comment.body);
@@ -110,6 +121,7 @@ const ExistingComment = ({ comment, onUpdateComment, onDeleteComment }: Props) =
                         onDelete={handleDelete}
                         onEdit={handleSelectEdit}
                         onReport={handleReport}
+                        onBlock={handleBlock}
                     />
                 )}
             </View>
