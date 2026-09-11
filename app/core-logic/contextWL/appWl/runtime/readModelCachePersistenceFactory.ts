@@ -12,7 +12,7 @@ import { photosHydrated } from "@/app/core-logic/contextWL/cfPhotosWl/typeAction
 import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
-import { entitlementsHydrated, entitlementsSetThresholds } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
+import { entitlementsHydrated } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
 import {
 	likeOptimisticApplied,
 	likeReconciled,
@@ -118,7 +118,6 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 			ticketReconciledRejected,
 			ticketRollBack,
 			entitlementsHydrated,
-			entitlementsSetThresholds,
 		),
 		effect: async (_, api) => {
 			persistSoon(api.getState());

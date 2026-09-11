@@ -4,7 +4,7 @@ flowchart LR
     Intent[UI / Boot] --> Retrieval[entitlementsRetrieval]
     Retrieval --> Gateway[gateway.entitlements]
     Gateway --> Reducer[entitlementWl.reducer]
-    Reducer --> State[byUser + thresholds]
+    Reducer --> State[backend-owned pass snapshots by user]
     SSE[projection.updated entitlements] --> Retrieval
     State --> Selector[selectUserEntitlements]
     Selector --> UI

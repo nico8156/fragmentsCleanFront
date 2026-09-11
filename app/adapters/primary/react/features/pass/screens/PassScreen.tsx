@@ -51,7 +51,11 @@ export function PassScreen() {
 							))}
 						</View>
 					) : (
-						<Text style={styles.finalText}>Niveau final libre. Aucun nouvel objectif imposé.</Text>
+						<Text style={styles.finalText}>
+							{vm.currentLevel.status === "completed"
+								? "Niveau atteint."
+								: "Progression en attente de synchronisation."}
+						</Text>
 					)}
 				</View>
 

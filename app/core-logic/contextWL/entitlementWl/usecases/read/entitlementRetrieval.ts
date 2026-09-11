@@ -38,6 +38,7 @@ export const entitlementsRetrieval =
                     publishedComments: res.data.publishedComments,
                     confirmedLikes: res.data.confirmedLikes,
                     currentLevel: res.data.pass?.currentLevel,
+					policyVersion: res.data.pass?.policyVersion,
                 });
             }catch (e){
                 logger.warn("[ENTITLEMENTS] retrieval:failed", {
