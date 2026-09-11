@@ -20,6 +20,9 @@ type Props = {
 	distanceText?: string;
 	todayHoursLabel?: string;
 	onPressDetails: () => void;
+	onPressDirections: () => void;
+	canOpenDirections: boolean;
+	isLoading?: boolean;
 };
 
 export default function MapCoffeePreviewSheet({
@@ -33,6 +36,9 @@ export default function MapCoffeePreviewSheet({
 	distanceText,
 	todayHoursLabel,
 	onPressDetails,
+	onPressDirections,
+	canOpenDirections,
+	isLoading,
 }: Props) {
 	return (
 		<BottomSheet
@@ -55,6 +61,9 @@ export default function MapCoffeePreviewSheet({
 					distanceText={distanceText}
 					todayHoursLabel={todayHoursLabel}
 					onPressDetails={onPressDetails}
+					onPressDirections={onPressDirections}
+					canOpenDirections={canOpenDirections}
+					isLoading={isLoading}
 				/>
 			</BottomSheetView>
 		</BottomSheet>
@@ -68,4 +77,3 @@ const styles = StyleSheet.create({
 		minHeight: 200,
 	},
 });
-

@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
 import { ScanTicketFab } from "@/app/adapters/primary/react/features/scan/components/ScanTicketFab";
 import { PassRequirementViewModel, PassRingViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
 	container: {
 		paddingHorizontal: 20,
 		paddingTop: 8,
-		paddingBottom: 10,
+		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
 		alignItems: "center",
 	},
 	summary: {

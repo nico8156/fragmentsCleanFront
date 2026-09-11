@@ -1,6 +1,7 @@
-import {View, Text, StyleSheet, Linking, Pressable} from "react-native";
+import {View, Text, StyleSheet, Pressable} from "react-native";
 import {SymbolView} from "expo-symbols";
 import {palette} from "@/app/adapters/primary/react/css/colors";
+import { openCoffeeDirections } from "@/app/adapters/primary/react/features/cafes/coffeeDirections";
 
 
 type OpenRouteParams = {
@@ -10,14 +11,7 @@ type OpenRouteParams = {
 };
 
 export function openRouteInAppleMaps({ latitude, longitude, label = "Destination" }: OpenRouteParams) {
-    const encodedLabel = encodeURIComponent(label);
-
-    // Apple Maps (iOS)
-    const appleUrl = `http://maps.apple.com/?daddr=${latitude},${longitude}&q=${encodedLabel}&dirflg=w`;
-
-    Linking.openURL(appleUrl).catch((err) => {
-        console.warn("Failed to open Apple Maps", err);
-    });
+	return openCoffeeDirections({ latitude, longitude, label });
 }
 
 type Props = {

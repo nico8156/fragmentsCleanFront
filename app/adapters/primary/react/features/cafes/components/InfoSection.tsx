@@ -2,6 +2,7 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import { SymbolView } from "expo-symbols";
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Section } from "./Section";
 
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -14,6 +15,7 @@ export function InfoSection({
 	addressLine: string;
 }) {
 	return (
+		<Section title="Informations pratiques">
 		<View style={s.wrap}>
 			<InfoRow icon="mappin.and.ellipse" fallback="📍" title="Adresse" value={addressLine || "—"} />
 			{!!coffee?.phoneNumber ? (
@@ -25,6 +27,7 @@ export function InfoSection({
 
 			<OpeningHoursBlock hours={coffee?.hours} />
 		</View>
+		</Section>
 	);
 }
 
@@ -115,8 +118,8 @@ function OpeningHoursBlock({
 
 const s = StyleSheet.create({
 	wrap: {
-		paddingHorizontal: 16,
-		paddingTop: 6,
+		paddingHorizontal: 2,
+		paddingTop: 2,
 		gap: 10,
 	},
 
@@ -188,4 +191,3 @@ const s = StyleSheet.create({
 		color: palette.textMuted,
 	},
 });
-

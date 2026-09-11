@@ -1,15 +1,17 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { filterPublicCoffeeTags } from "@/app/adapters/primary/react/features/cafes/coffeePresentation";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Section } from "./Section";
 
 export function TagsSection({ tags }: { tags: string[] }) {
-	if (!tags?.length) return null;
+	const publicTags = filterPublicCoffeeTags(tags);
+	if (!publicTags.length) return null;
 
 	return (
-		<Section title="Tags">
+		<Section title="Caractéristiques">
 			<View style={s.wrap}>
-				{tags.map((t) => (
+				{publicTags.map((t) => (
 					<View key={t} style={s.tag}>
 						<Text style={s.tagText}>{t}</Text>
 					</View>
@@ -25,10 +27,9 @@ const s = StyleSheet.create({
 		paddingHorizontal: 12,
 		paddingVertical: 8,
 		borderRadius: 999,
-		backgroundColor: "white",
+		backgroundColor: palette.elevated,
 		borderWidth: 1,
-		borderColor: "rgba(0,0,0,0.08)",
+		borderColor: palette.border,
 	},
-	tagText: { fontSize: 14, fontWeight: "800", color: palette.textPrimary_1 },
+	tagText: { fontSize: 14, fontWeight: "800", color: palette.textPrimary },
 });
-
