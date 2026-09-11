@@ -50,4 +50,22 @@ describe("createAuthServerGateway", () => {
 			}),
 		);
 	});
+
+	it("posts the native Apple credential to /auth/apple/mobile", async () => {
+		const fetchMock = jest.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({ accessToken: jwtForUser, refreshToken: "app-refresh-token", user: {
+				id: "11111111-1111-4111-8111-111111111111", displayName: "Nicolas", email: "relay@privaterelay.appleid.com", avatarUrl: null,
+			} }),
+		});
+		global.fetch = fetchMock as any;
+		const gateway = createAuthServerGateway({ baseUrl: "https://api.fragments.test" });
+
+		await gateway.signInWithProvider({ provider: "apple", authorizationCode: "apple-code", idToken: "apple-identity", displayName: "Nicolas", scopes: ["name", "email"] });
+
+		expect(fetchMock).toHaveBeenCalledWith("https://api.fragments.test/auth/apple/mobile", expect.objectContaining({
+			method: "POST",
+			body: JSON.stringify({ authorizationCode: "apple-code", identityToken: "apple-identity", displayName: "Nicolas" }),
+		}));
+	});
 });

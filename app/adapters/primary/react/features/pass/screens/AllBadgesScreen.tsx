@@ -6,25 +6,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
-import { useRewardsViewModel } from "@/app/adapters/secondary/viewModel/useRewardsVM";
+import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 
 import { BadgePreviewItem } from "@/app/adapters/primary/react/features/pass/components/BadgePreviewItem";
 
 export function AllBadgesScreen() {
 	const navigation = useNavigation<RootStackNavigationProp>();
-	const { badges } = useRewardsViewModel();
+	const { levels } = usePassRingsViewModel();
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
 			<FlatList
-				data={badges}
-				keyExtractor={(b) => b.id}
+				data={levels}
+				keyExtractor={(level) => level.level}
 				contentContainerStyle={styles.container}
 				renderItem={({ item }) => (
 					<BadgePreviewItem
 						badge={item}
 						onPress={() =>
-							navigation.navigate("BadgeDetail", { badgeId: item.id })
+							navigation.navigate("BadgeDetail", { badgeId: item.level })
 						}
 					/>
 				)}

@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import Constants from "expo-constants";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
@@ -8,9 +10,21 @@ import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/com
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { useOnBoarding } from "@/app/adapters/secondary/viewModel/useOnBoarding";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import { blockedUsersRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/blockedUsersRetrieval";
+import { uiUserUnblockRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
 
 export function AppSettingsScreen() {
-	const { displayName, primaryEmail, avatarUrl, isSignedIn, signOut } =
+	const dispatch=useDispatch<any>();
+	const blockedUsers=useSelector((state:RootStateWl)=>Object.values(state.cState.blockedUsers));
+	const blockedLoading=useSelector((state:RootStateWl)=>state.cState.blockedUsersLoading);
+	const blockedUsersError=useSelector((state:RootStateWl)=>state.cState.blockedUsersError);
+	const supportEmail=Constants.expoConfig?.extra?.supportEmail as string | undefined;
+	useEffect(()=>{ dispatch(blockedUsersRetrieval()); },[dispatch]);
+	const {
+		displayName, primaryEmail, avatarUrl, isSignedIn, signOut,
+		deleteAccount, accountDeletionStatus, accountDeletionError,
+	} =
 		useAuthUser();
 
 	const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -21,6 +35,15 @@ export function AppSettingsScreen() {
 	);
 
 	const { markHasNOTCompletedOnboarding } = useOnBoarding();
+	const deleting = accountDeletionStatus === "submitting";
+	const confirmAccountDeletion = () => Alert.alert(
+		"Supprimer définitivement le compte ?",
+		"Ton profil, tes tickets, favoris et contenus partagés seront supprimés. La demande est irréversible et peut prendre quelques minutes à se propager.",
+		[
+			{ text: "Annuler", style: "cancel" },
+			{ text: "Supprimer mon compte", style: "destructive", onPress: deleteAccount },
+		],
+	);
 
 	return (
 		<ProfileLayout>
@@ -53,7 +76,21 @@ export function AppSettingsScreen() {
 				</View>
 			</ProfileCard>
 
+			<ProfileCard title="Sécurité et communauté">
+				<Text style={styles.rowSubtitle}>Les contenus haineux, violents, sexuels, trompeurs, harcelants ou assimilables à du spam ne sont pas autorisés.</Text>
+				{blockedUsers.map(user => <View key={user.userId} style={styles.row}>
+					<View><Text style={styles.rowTitle}>{user.displayName || "Utilisateur bloqué"}</Text><Text style={styles.rowSubtitle}>Ses contenus sont masqués</Text></View>
+					<Pressable accessibilityRole="button" onPress={()=>dispatch(uiUserUnblockRequested({userId:user.userId}))}><Text style={styles.link}>Débloquer</Text></Pressable>
+				</View>)}
+				{blockedUsers.length===0 ? <Text style={styles.rowSubtitle}>{blockedLoading === "PENDING" ? "Chargement…" : "Aucun utilisateur bloqué."}</Text> : null}
+				{blockedUsersError ? <Text accessibilityRole="alert" style={styles.error}>{blockedUsersError}</Text> : null}
+				{supportEmail ? <Pressable accessibilityRole="link" onPress={()=>Linking.openURL(`mailto:${supportEmail}`)} style={styles.supportLink}>
+					<Text style={styles.link}>Contacter le support</Text>
+				</Pressable> : null}
+			</ProfileCard>
+
 			<View style={styles.actions}>
+				{accountDeletionError ? <Text accessibilityRole="alert" style={styles.error}>{accountDeletionError}</Text> : null}
 				<Pressable
 					onPress={markHasNOTCompletedOnboarding}
 					style={({ pressed }) => [
@@ -81,6 +118,26 @@ export function AppSettingsScreen() {
 						Termine ta session en toute sécurité
 					</Text>
 				</Pressable>
+
+				{isSignedIn ? (
+					<Pressable
+						testID="delete-account"
+						onPress={confirmAccountDeletion}
+						disabled={deleting}
+						style={({ pressed }) => [
+							styles.actionButton,
+							styles.deleteButton,
+							(pressed || deleting) && styles.pressed,
+						]}
+					>
+						<Text style={styles.deleteText}>
+							{deleting ? "Enregistrement de la demande…" : "Supprimer mon compte"}
+						</Text>
+						<Text style={styles.logoutSubtitle}>
+							Supprime définitivement le compte et les données associées
+						</Text>
+					</Pressable>
+				) : null}
 			</View>
 		</ProfileLayout>
 	);
@@ -129,6 +186,20 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: palette.primary_50,
 	},
+	deleteButton: {
+		backgroundColor: "#3a1515",
+		borderWidth: 1,
+		borderColor: "#ef4444",
+	},
+	deleteText: {
+		fontSize: 17,
+		fontWeight: "700",
+		color: "#fca5a5",
+	},
+	error: {
+		color: "#fca5a5",
+		textAlign: "center",
+	},
 
 	pressed: {
 		opacity: 0.8,
@@ -145,6 +216,8 @@ const styles = StyleSheet.create({
 		fontWeight: "700",
 		color: palette.accent,
 	},
+	link: { color: palette.accent, fontWeight: "700" },
+	supportLink: { minHeight: 44, justifyContent: "center", marginTop: 8 },
 
 	logoutSubtitle: {
 		fontSize: 13,
@@ -153,4 +226,3 @@ const styles = StyleSheet.create({
 });
 
 export default AppSettingsScreen;
-

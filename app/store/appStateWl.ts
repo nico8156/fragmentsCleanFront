@@ -15,6 +15,7 @@ import { ohStateWl } from "@/app/core-logic/contextWL/openingHoursWl/typeAction/
 import { AuthState } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import { ISODate } from "@/assets/data/comment";
 import type { ProjectionSyncStateWl } from "@/app/core-logic/contextWL/projectionSyncWl/typeAction/projectionSync.type";
+import type { ExperienceStateWl } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
 
 
@@ -24,6 +25,7 @@ export interface AppStateWl {
 	cfPhotos: CfPhotoStateWl
 	openingHours: ohStateWl
 	comments: CommentsStateWl
+	experiences: ExperienceStateWl
 	likes: LikesStateWl
 	savedCoffees: SavedCoffeeStateWl
 	tickets: TicketsStateWl

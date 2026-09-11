@@ -12,7 +12,7 @@ import {
 } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
-import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
+import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied, reportOptimisticApplied, reportRollback, blockOptimisticApplied, unblockOptimisticApplied, blockRollback, blockedUsersPending, blockedUsersRetrieved, blockedUsersFailed } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { createReconciled, createRollback, deleteRollback, updateRollback } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.rollback.actions";
 import { readModelCacheRehydrated } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
@@ -28,6 +28,9 @@ const adapter = createEntityAdapter<CommentEntity>({
 const initialState: AppStateWl["comments"] = {
 	entities: adapter.getInitialState(),
 	byTarget: {},
+	reportedCommentIds: {},
+	blockedUsers: {},
+	blockedUsersLoading: loadingStates.IDLE,
 };
 
 // -----------------------
@@ -131,7 +134,17 @@ const applyIdsByOp = (v: View, op: string, optimisticIds: string[], incomingIds:
 
 export const commentWlReducer = createReducer(initialState, (builder) => {
 	builder
-		.addCase(readModelCacheRehydrated, (state, { payload }) => payload.comments ?? state)
+		.addCase(readModelCacheRehydrated, (state, { payload }) => {
+			const cached = payload.comments;
+			if (!cached) return state;
+			return {
+				...state,
+				...cached,
+				reportedCommentIds: cached.reportedCommentIds ?? {},
+				blockedUsers: cached.blockedUsers ?? {},
+				blockedUsersLoading: cached.blockedUsersLoading ?? loadingStates.IDLE,
+			};
+		})
 
 		// =========================
 		// OPTIMISTIC WRITE
@@ -176,6 +189,20 @@ export const commentWlReducer = createReducer(initialState, (builder) => {
 				},
 			});
 		})
+		.addCase(reportOptimisticApplied, (state, action) => { state.reportedCommentIds[action.payload.commentId] = true; })
+		.addCase(reportRollback, (state, action) => { delete state.reportedCommentIds[action.payload.commentId]; })
+		.addCase(blockOptimisticApplied, (state, action) => { state.blockedUsers[action.payload.block.userId] = action.payload.block; })
+		.addCase(unblockOptimisticApplied, (state, action) => { delete state.blockedUsers[action.payload.userId]; })
+		.addCase(blockRollback, (state, action) => {
+			if (action.payload.previous) state.blockedUsers[action.payload.userId] = action.payload.previous;
+			else delete state.blockedUsers[action.payload.userId];
+		})
+		.addCase(blockedUsersPending, (state) => { state.blockedUsersLoading = loadingStates.PENDING; state.blockedUsersError = undefined; })
+		.addCase(blockedUsersRetrieved, (state, action) => {
+			state.blockedUsers = Object.fromEntries(action.payload.items.map(item => [item.userId, item]));
+			state.blockedUsersLoading = loadingStates.SUCCESS;
+		})
+		.addCase(blockedUsersFailed, (state, action) => { state.blockedUsersLoading = loadingStates.ERROR; state.blockedUsersError = action.payload.error; })
 
 		// =========================
 		// RECONCILE (ACK / outbox)

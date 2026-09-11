@@ -1,6 +1,6 @@
 import {TicketsWlGateway} from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import {AuthTokenBridge} from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
-import { GatewayError, toGatewayErrorFromHttpStatus } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 
 export class HttpTicketsGateway implements TicketsWlGateway {
@@ -10,6 +10,55 @@ export class HttpTicketsGateway implements TicketsWlGateway {
             auth: AuthTokenBridge;
         }
     ) {}
+
+    async listHistory(input: { cursor?: string; limit: number; signal?: AbortSignal }) {
+        const token = await this.deps.auth.getAccessToken();
+        if (!token) throw new GatewayError("auth", "Not authenticated: missing access token");
+
+        const query = new URLSearchParams({ limit: String(input.limit) });
+        if (input.cursor) query.set("cursor", input.cursor);
+        const res = await fetch(`${this.deps.baseUrl}/api/users/me/tickets?${query.toString()}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            signal: input.signal,
+        });
+        if (!res.ok) throw await toGatewayErrorFromHttpResponse(res, `Ticket history failed: HTTP ${res.status}`);
+
+        const body: unknown = await res.json();
+        if (!body || typeof body !== "object" || !Array.isArray((body as { items?: unknown }).items)) {
+            throw new GatewayError("unknown", "Invalid ticket history response");
+        }
+        const page = body as { items: unknown[]; nextCursor?: unknown };
+        return {
+            items: page.items.map((candidate) => {
+                if (!candidate || typeof candidate !== "object") {
+                    throw new GatewayError("unknown", "Invalid ticket history item");
+                }
+                const item = candidate as Record<string, unknown>;
+                if (typeof item.ticketId !== "string" || typeof item.status !== "string" || typeof item.version !== "number") {
+                    throw new GatewayError("unknown", "Invalid ticket history item");
+                }
+                const optionalString = (key: string) => typeof item[key] === "string" ? item[key] as string : null;
+                return {
+                    ticketId: item.ticketId,
+                    status: item.status,
+                    outcome: optionalString("outcome"),
+                    amountCents: typeof item.amountCents === "number" ? item.amountCents : null,
+                    currency: optionalString("currency"),
+                    ticketDate: optionalString("ticketDate"),
+                    merchantName: optionalString("merchantName"),
+                    merchantAddress: optionalString("merchantAddress"),
+                    rejectionReason: optionalString("rejectionReason"),
+                    version: item.version,
+                    occurredAt: optionalString("occurredAt"),
+                };
+            }),
+            nextCursor: typeof page.nextCursor === "string" ? page.nextCursor : null,
+        };
+    }
 
     async getStatus(input: {
         ticketId: string;
@@ -72,7 +121,7 @@ export class HttpTicketsGateway implements TicketsWlGateway {
 
         // Backend exige un UUID non-null: UUID.fromString(body.ticketId())
         if (!input.ticketId) {
-            throw new GatewayError("business", "ticketId is required (backend expects a UUID string)");
+            throw new GatewayError("unknown", "ticketId is required (backend expects a UUID string)");
         }
 
         const res = await fetch(`${this.deps.baseUrl}/api/tickets/verify`, {
@@ -92,7 +141,6 @@ export class HttpTicketsGateway implements TicketsWlGateway {
 
         if (res.status === 202) return;
 
-        const text = await res.text().catch(() => "");
-        throw toGatewayErrorFromHttpStatus(res.status, `Ticket verify failed: HTTP ${res.status} ${text}`);
+        throw await toGatewayErrorFromHttpResponse(res, `Ticket verify failed: HTTP ${res.status}`);
     }
 }

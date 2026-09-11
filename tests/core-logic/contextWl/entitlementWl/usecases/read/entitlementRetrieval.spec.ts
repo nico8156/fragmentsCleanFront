@@ -27,13 +27,14 @@ describe("On Entitlements retrieval, ", () => {
         expect(ue.rights).toEqual(["LIKE", "COMMENT"]);
         expect(ue.pass?.currentLevel).toBe("URBAN_EXPLORER");
         expect(ue.pass?.levels?.[0].status).toBe("COMPLETED");
+        expect(ue.pass?.policyVersion).toBe(2);
     });
 
-    it("keeps rights published by the gateway even when thresholds would compute differently", async () => {
+    it("never invents rights when the backend publishes its policy", async () => {
         entitlementsGateway.store.set("user_backend_policy", {
             userId: "user_backend_policy",
             confirmedTickets: 0,
-            rights: ["SUBMIT_CAFE"],
+            rights: [],
             updatedAt: "2025-10-10T07:10:00.000Z" as ISODate,
         });
 
@@ -41,7 +42,7 @@ describe("On Entitlements retrieval, ", () => {
 
         const ue = store.getState().enState.byUser["user_backend_policy"];
         expect(ue.confirmedTickets).toBe(0);
-        expect(ue.rights).toEqual(["SUBMIT_CAFE"]);
+        expect(ue.rights).toEqual([]);
     });
     const entitlementForTest :UserEntitlements = {
         userId: "user_test",
@@ -53,24 +54,25 @@ describe("On Entitlements retrieval, ", () => {
         pass: {
             currentLevel: "URBAN_EXPLORER",
             counters: {
+                publishedExperiences: 3,
+                distinctExperiencedCoffees: 3,
                 validatedTickets: 4,
-                publishedComments: 2,
-                confirmedLikes: 1,
             },
             levels: [
                 {
                     level: "COFFEE_TASTER",
                     status: "COMPLETED",
-                    requirements: { validatedTickets: 3 },
-                    unlockedCapabilities: ["SCAN_TICKET"],
+                    requirements: { publishedExperiences: 1, distinctExperiencedCoffees: 1, validatedTickets: 0 },
+                    unlockedCapabilities: [],
                 },
                 {
                     level: "URBAN_EXPLORER",
                     status: "IN_PROGRESS",
-                    requirements: { validatedTickets: 5, publishedComments: 3 },
-                    unlockedCapabilities: ["COMMENT"],
+                    requirements: { publishedExperiences: 3, distinctExperiencedCoffees: 3, validatedTickets: 0 },
+                    unlockedCapabilities: [],
                 },
             ],
+            policyVersion: 2,
         },
     }
 });

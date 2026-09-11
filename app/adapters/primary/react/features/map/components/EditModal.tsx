@@ -10,9 +10,10 @@ type Props = {
     onEdit: () => void;
     onDelete: () => void;
     onReport: () => void;
+    onBlock: () => void;
 };
 
-const EditModal = ({ closeModal, isAuthor, onEdit, onDelete, onReport }: Props) => {
+const EditModal = ({ closeModal, isAuthor, onEdit, onDelete, onReport, onBlock }: Props) => {
     const stopPropagation = (event: GestureResponderEvent) => {
         event.stopPropagation();
     };
@@ -31,12 +32,16 @@ const EditModal = ({ closeModal, isAuthor, onEdit, onDelete, onReport }: Props) 
                             <Text style={[styles.buttonLabel, styles.deleteLabel]}>Supprimer</Text>
                         </Pressable>
                     </>
-                ) : (
+                ) : (<>
                     <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onReport(); }}>
                         <SymbolView name="exclamationmark.bubble" size={22} tintColor={palette.warning_70} />
                         <Text style={styles.buttonLabel}>Signaler</Text>
                     </Pressable>
-                )}
+                    <Pressable style={styles.button} onPress={(event) => { stopPropagation(event); onBlock(); }}>
+                        <SymbolView name="person.crop.circle.badge.xmark" size={22} tintColor={palette.danger} />
+                        <Text style={[styles.buttonLabel, styles.deleteLabel]}>Bloquer</Text>
+                    </Pressable>
+                </>)}
             </Pressable>
         </Pressable>
     );

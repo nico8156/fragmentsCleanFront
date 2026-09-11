@@ -22,6 +22,7 @@ const MENU_ITEMS: ProfileMenuItem<ProfileMenuDestination>[] = [
 	{ symbolName: "pencil", title: "Modifier mon profil", destination: "EditProfile" },
 	{ symbolName: "list.bullet.rectangle.portrait", title: "Mes tickets", destination: "Tickets" },
 	{ symbolName: "heart.fill", title: "Mes favoris", destination: "Favorites" },
+	{ symbolName: "cup.and.saucer.fill", title: "Mes expériences", destination: "Experiences" },
 	{ symbolName: "dial.low", title: "Paramètres", destination: "AppSettings" },
 ];
 

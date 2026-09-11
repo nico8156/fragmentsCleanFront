@@ -7,6 +7,7 @@ import { SymbolView } from "expo-symbols";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
+	Alert,
 	findNodeHandle,
 	Keyboard,
 	Pressable,
@@ -17,6 +18,7 @@ import {
 	View,
 } from "react-native";
 import { Section } from "./Section";
+import type { ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 export function CommentsSection({
 	coffeeId,
@@ -33,6 +35,8 @@ export function CommentsSection({
 		uiViaHookCreateComment: (p: { targetId: string; body: string }) => void;
 		uiViaHookUpdateComment: (p: { commentId: string; body: string }) => void;
 		uiViaHookDeleteComment: (p: { commentId: string }) => void;
+		uiViaHookReportComment: (p: { commentId: string; reason: ReportReason }) => void;
+		uiViaHookBlockUser: (p: { userId: string; displayName?: string; avatarUrl?: string }) => void;
 	};
 	onRequestScrollToComposer?: () => void;
 	onRequestEnsureVisible?: (rect: { windowY: number; height: number }) => void;
@@ -88,6 +92,8 @@ export function CommentsSection({
 							item={c}
 							onEdit={(body) => comments.uiViaHookUpdateComment({ commentId: c.id, body })}
 							onDelete={() => comments.uiViaHookDeleteComment({ commentId: c.id })}
+							onReport={(reason) => comments.uiViaHookReportComment({ commentId: c.id, reason })}
+							onBlock={() => comments.uiViaHookBlockUser({ userId: c.authorId, displayName: c.authorName, avatarUrl: c.avatarUrl })}
 							onRequestEnsureVisible={onRequestEnsureVisible}
 							earnedRings={c.isAuthor ? pass.displayRings : []}
 						/>
@@ -138,17 +144,22 @@ function CommentCard({
 	item,
 	onEdit,
 	onDelete,
+	onReport,
+	onBlock,
 	onRequestEnsureVisible,
 	earnedRings,
 }: {
 	item: CommentItemVM;
 	onEdit: (body: string) => void;
 	onDelete: () => void;
+	onReport: (reason: ReportReason) => void;
+	onBlock: () => void;
 	onRequestEnsureVisible?: (rect: { windowY: number; height: number }) => void;
 	earnedRings: PassRingViewModel[];
 }) {
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(item.body);
+	const [reporting, setReporting] = useState(false);
 
 	const cardRef = useRef<View>(null);
 	const editInputRef = useRef<TextInput>(null);
@@ -293,10 +304,38 @@ function CommentCard({
 							<Text style={[s.actionText, s.danger]}>Supprimer</Text>
 						</Pressable>
 					</View>
+				) : !editing ? (
+					<View style={s.actions}>
+						<Pressable onPress={() => setReporting(value => !value)} style={s.actionBtn} accessibilityRole="button">
+							<Text style={s.actionText}>Signaler</Text>
+						</Pressable>
+						<Pressable onPress={() => Alert.alert("Bloquer cet utilisateur ?", "Ses commentaires seront masqués pour toi.", [
+							{ text: "Annuler", style: "cancel" }, { text: "Bloquer", style: "destructive", onPress: onBlock },
+						])} style={s.actionBtn} accessibilityRole="button">
+							<Text style={[s.actionText, s.danger]}>Bloquer</Text>
+						</Pressable>
+					</View>
 				) : null}
+				{reporting ? <ReportReasons onCancel={() => setReporting(false)} onSelect={(reason) => { setReporting(false); onReport(reason); }} /> : null}
 			</View>
 		</View>
 	);
+}
+
+const REPORT_REASONS: {label:string; value:ReportReason}[] = [
+	{label:"Harcèlement",value:"HARASSMENT"},{label:"Discours haineux",value:"HATE_SPEECH"},
+	{label:"Contenu sexuel",value:"SEXUAL_CONTENT"},{label:"Violence",value:"VIOLENCE"},
+	{label:"Spam",value:"SPAM"},{label:"Information trompeuse",value:"FALSE_INFORMATION"},{label:"Autre",value:"OTHER"},
+];
+
+function ReportReasons({onSelect,onCancel}:{onSelect:(reason:ReportReason)=>void;onCancel:()=>void}) {
+	return <View style={s.reportBox} accessibilityRole="summary">
+		<Text style={s.reportTitle}>Pourquoi signales-tu ce commentaire ?</Text>
+		{REPORT_REASONS.map(reason => <Pressable key={reason.value} onPress={() => onSelect(reason.value)} style={s.reportReason}>
+			<Text style={s.actionText}>{reason.label}</Text>
+		</Pressable>)}
+		<Pressable onPress={onCancel} style={s.reportReason}><Text style={s.muted}>Annuler</Text></Pressable>
+	</View>;
 }
 
 const s = StyleSheet.create({
@@ -304,6 +343,9 @@ const s = StyleSheet.create({
 	muted: { color: palette.textMuted, fontWeight: "700" },
 
 	list: { paddingTop: 2, paddingBottom: 6 },
+	reportBox: { marginTop: 10, padding: 10, borderRadius: 12, backgroundColor: palette.bg_light_30, gap: 4 },
+	reportTitle: { color: palette.textPrimary, fontWeight: "800", marginBottom: 4 },
+	reportReason: { minHeight: 40, justifyContent: "center", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.border_muted_30 },
 
 	empty: { paddingVertical: 6 },
 	emptyTitle: { fontWeight: "800", color: palette.textPrimary, marginBottom: 4 },

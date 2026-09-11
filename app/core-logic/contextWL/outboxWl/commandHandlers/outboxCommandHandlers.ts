@@ -1,4 +1,5 @@
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
+import { blockRollback, reportRollback } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
 import type { EntitlementWlGateway } from "@/app/core-logic/contextWL/entitlementWl/gateway/entitlementWl.gateway";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
@@ -26,6 +27,11 @@ import { ticketRollBack } from "@/app/core-logic/contextWL/ticketWl/reducer/tick
 import type { TicketsWlGateway } from "@/app/core-logic/contextWL/ticketWl/gateway/ticketWl.gateway";
 import { ticketRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
+import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
+import { authUserHydrationRequested, avatarUpdateRollback, profileUpdateReconciled, profileUpdateRollback } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
+import { experienceReconciled, experienceRollback } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 type CommandHandlerLogger = {
 	warn?: (message: string, payload?: unknown) => void;
@@ -37,6 +43,8 @@ export type OutboxCommandGatewayDeps = {
 	savedCoffees?: SavedCoffeeGateway;
 	tickets?: TicketsWlGateway;
 	entitlements?: EntitlementWlGateway;
+	users?: UserRepo;
+	experiences?: ExperienceGateway;
 };
 
 export const getOutboxCommandGateway = (
@@ -52,9 +60,23 @@ export const getOutboxCommandGateway = (
 		case commandKinds.CommentCreate:
 		case commandKinds.CommentUpdate:
 		case commandKinds.CommentDelete:
+		case commandKinds.CommentReport:
+		case commandKinds.UserBlockSet:
 			return gateways?.comments;
 		case commandKinds.TicketVerify:
 			return gateways?.tickets;
+		case commandKinds.UserProfileUpdate:
+		case commandKinds.UserAvatarAttach:
+		case commandKinds.UserAvatarRemove:
+			return gateways?.users;
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport:
+		case commandKinds.ExperienceMediaAttach:
+		case commandKinds.ExperienceMediaDelete:
+			return gateways?.experiences;
 		default:
 			return null;
 	}
@@ -91,6 +113,7 @@ export const sendOutboxCommand = async ({
 				parentId: command.parentId ?? null,
 				body: command.body,
 				tempId: command.tempId,
+				at: command.at,
 			});
 			return "sent";
 
@@ -111,6 +134,14 @@ export const sendOutboxCommand = async ({
 			});
 			return "sent";
 
+		case commandKinds.CommentReport:
+			await gateway.report(command);
+			return "sent";
+
+		case commandKinds.UserBlockSet:
+			await gateway.setBlock(command);
+			return "sent";
+
 		case commandKinds.SavedCoffeeSet:
 			await gateway.set({
 				commandId: command.commandId,
@@ -129,6 +160,41 @@ export const sendOutboxCommand = async ({
 				ocrText: command.ocrText ?? null,
 				at: command.at,
 			});
+			return "sent";
+
+		case commandKinds.UserProfileUpdate:
+			await gateway.updateProfile({
+				commandId: command.commandId,
+				displayName: command.displayName,
+			});
+			return "sent";
+		case commandKinds.UserAvatarAttach:
+			await gateway.uploadAvatar(command);
+			return "sent";
+		case commandKinds.UserAvatarRemove:
+			await gateway.removeAvatar(command);
+			return "sent";
+
+		case commandKinds.ExperienceCreate:
+			await gateway.create(command);
+			return "sent";
+		case commandKinds.ExperienceUpdate:
+			await gateway.update(command);
+			return "sent";
+		case commandKinds.ExperiencePublish:
+			await gateway.publish(command);
+			return "sent";
+		case commandKinds.ExperienceDelete:
+			await gateway.delete(command);
+			return "sent";
+		case commandKinds.ExperienceReport:
+			await gateway.report(command);
+			return "sent";
+		case commandKinds.ExperienceMediaAttach:
+			await gateway.uploadMedia(command);
+			return "sent";
+		case commandKinds.ExperienceMediaDelete:
+			await gateway.deleteMedia(command);
 			return "sent";
 
 		default:
@@ -212,6 +278,18 @@ export const rollbackRejectedOutboxRecord = ({
 			return;
 		}
 
+		case commandKinds.CommentReport: {
+			const u = undo as { commentId: string };
+			if (u?.commentId) dispatch(reportRollback({ commentId: u.commentId }));
+			return;
+		}
+
+		case commandKinds.UserBlockSet: {
+			const u = undo as { userId: string; previous?: any };
+			if (u?.userId) dispatch(blockRollback({ userId: u.userId, previous: u.previous }));
+			return;
+		}
+
 		case commandKinds.TicketVerify: {
 			const u = undo as { ticketId: string };
 			if (!u?.ticketId) return;
@@ -229,6 +307,43 @@ export const rollbackRejectedOutboxRecord = ({
 				prevSaved: u.prevSaved,
 				prevItem: u.prevItem,
 			}));
+			return;
+		}
+
+		case commandKinds.UserProfileUpdate: {
+			const u = undo as { displayName?: string; version: number };
+			outboxTelemetry.rollback(record, "user profile command rejected");
+			dispatch(profileUpdateRollback({
+				displayName: u.displayName,
+				version: u.version,
+				error: "La modification du profil a été refusée.",
+			}));
+			return;
+		}
+		case commandKinds.UserAvatarAttach:
+		case commandKinds.UserAvatarRemove: {
+			const u = undo as { avatarUrl?: string; version: number };
+			dispatch(avatarUpdateRollback({
+				avatarUrl: u.avatarUrl,
+				version: u.version,
+				error: "La modification de l’avatar a été refusée.",
+			}));
+			return;
+		}
+
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport: {
+			outboxTelemetry.rollback(record, "experience command rejected");
+			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported }));
+			return;
+		}
+		case commandKinds.ExperienceMediaAttach:
+		case commandKinds.ExperienceMediaDelete: {
+			outboxTelemetry.rollback(record,"experience media command rejected");
+			dispatch(experienceRollback({experienceId:command.experienceId,previous:undo?.previous}));
 			return;
 		}
 
@@ -340,6 +455,11 @@ export const reconcileAppliedOutboxRecord = ({
 			return;
 		}
 
+		case commandKinds.CommentReport:
+		case commandKinds.UserBlockSet:
+			outboxTelemetry.reconcile(record, "moderation");
+			return;
+
 		case commandKinds.TicketVerify:
 			outboxTelemetry.reconcile(record, "tickets");
 			if (command.ticketId && gateways?.tickets) {
@@ -350,6 +470,30 @@ export const reconcileAppliedOutboxRecord = ({
 					source: "ackReconcile",
 				});
 				dispatch(ticketRetrieval({ ticketId: command.ticketId }) as any);
+			}
+			refreshEntitlements();
+			return;
+
+		case commandKinds.UserProfileUpdate:
+		case commandKinds.UserAvatarAttach:
+		case commandKinds.UserAvatarRemove:
+			outboxTelemetry.reconcile(record, "userProfile");
+			dispatch(profileUpdateReconciled());
+			if (userId) dispatch(authUserHydrationRequested({ userId: userId as any }));
+			return;
+
+		case commandKinds.ExperienceCreate:
+		case commandKinds.ExperienceUpdate:
+		case commandKinds.ExperiencePublish:
+		case commandKinds.ExperienceDelete:
+		case commandKinds.ExperienceReport:
+		case commandKinds.ExperienceMediaAttach:
+		case commandKinds.ExperienceMediaDelete:
+			outboxTelemetry.reconcile(record, "experiences");
+			dispatch(experienceReconciled({ experienceId: command.experienceId }));
+			if (gateways?.experiences) {
+				if (command.coffeeId) dispatch(coffeeExperiencesRetrieval({ coffeeId: command.coffeeId }) as any);
+				dispatch(myExperiencesRetrieval() as any);
 			}
 			refreshEntitlements();
 			return;

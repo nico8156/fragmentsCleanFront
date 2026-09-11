@@ -1,5 +1,6 @@
 import { likeSyncPending } from "@/app/core-logic/contextWL/likeWl/typeAction/likeSync.action";
-import { createAction, createListenerMiddleware, nanoid, TypedStartListening } from "@reduxjs/toolkit";
+import { createAction, nanoid, TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";

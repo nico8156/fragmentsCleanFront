@@ -1,10 +1,12 @@
-import { useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-import { selectSortedTickets } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
+import { selectTicketHistory, selectTicketHistoryRequest } from "@/app/core-logic/contextWL/ticketWl/selector/ticket.selector";
 import { TicketAggregate } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import { selectOutboxStatusByTicketId } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 import { statusTypes } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { ticketHistoryRetrieval } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketHistoryRetrieval";
+import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
 export type TicketHistoryItemVM = {
     id: string;
@@ -82,8 +84,14 @@ const toVM = (
 };
 
 export function useTicketsHistory() {
-    const tickets = useSelector(selectSortedTickets);
+    const dispatch = useDispatch<AppDispatchWl>();
+    const tickets = useSelector(selectTicketHistory);
+    const request = useSelector(selectTicketHistoryRequest);
     const outboxStatusByTicketId = useSelector(selectOutboxStatusByTicketId);
+
+    useEffect(() => {
+        void dispatch(ticketHistoryRetrieval());
+    }, [dispatch]);
 
     const items = useMemo(
         () => tickets.map((ticket) => toVM(ticket, outboxStatusByTicketId)),
@@ -109,5 +117,12 @@ export function useTicketsHistory() {
         archiveCount: archivedItems.length,
         summary,
         isEmpty: items.length === 0,
+        isLoading: request.status === "refreshing" && items.length === 0,
+        isRefreshing: request.status === "refreshing" && items.length > 0,
+        isLoadingMore: request.status === "loadingMore",
+        error: request.error,
+        hasMore: request.nextCursor !== null,
+        refresh: () => dispatch(ticketHistoryRetrieval()),
+        loadMore: () => dispatch(ticketHistoryRetrieval({ reset: false })),
     } as const;
 }

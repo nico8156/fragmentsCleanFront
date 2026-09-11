@@ -114,3 +114,13 @@ Cette passerelle permet de tester l'ensemble du flux (optimistic → outbox → 
 - Brancher un vrai gateway (REST/GraphQL) en implémentant `CommentsWlGateway`.
 - Ajouter un traitement pour les commandes `update/delete` dans la fake gateway si besoin.
 - Étendre les vues (`filters.mineOnly`, tri `top`) en enrichissant `View` et les reducers associés.
+
+## Modération et blocage
+
+`Comment.Report` et `User.Block.Set` suivent le même pipeline offline-first que
+les autres écritures : intention UI, masque optimiste, outbox persistée, HTTP,
+ACK opportuniste puis statut canonique. Une panne réseau conserve le masque et
+la commande ; seul un rejet métier explicite déclenche le rollback. Les IDs de
+commentaires signalés et les utilisateurs bloqués font partie du cache de
+lecture partitionné par compte, y compris lors de la réhydratation d'un ancien
+snapshot qui ne possédait pas encore ces champs.

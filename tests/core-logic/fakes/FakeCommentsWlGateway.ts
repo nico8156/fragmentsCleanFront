@@ -1,14 +1,18 @@
     import type { CommentsWlGateway } from "@/app/core-logic/contextWL/commentWl/gateway/commentWl.gateway";
-    import type { ListCommentsResult, Op } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
+    import type { BlockedUser, ListCommentsResult, Op, ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
     type ListArgs = { targetId: string; cursor?: string; limit?: number; signal: AbortSignal; op?: Op };
 
     export class FakeCommentsWlGateway implements CommentsWlGateway {
         // --- observabilité (assertions)
         listCalls: Array<Omit<ListArgs, "signal"> & { abortedAtCall: boolean }> = [];
-        createCalls: Array<{ commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }> = [];
+        createCalls: Array<{ commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string; at: string }> = [];
         updateCalls: Array<{ commandId: string; commentId: string; body: string; editedAt?: string }> = [];
         deleteCalls: Array<{ commandId: string; commentId: string; deletedAt: string }> = [];
+        reportCalls: Array<{ commandId:string; reportId:string; commentId:string; reason:ReportReason; details?:string; at:string }> = [];
+        blockCalls: Array<{ commandId:string; blockId:string; blockedUserId:string; active:boolean; at:string }> = [];
+        blockedUsersListCalls = 0;
+        blockedUsers: BlockedUser[] = [];
 
         // --- comportement configurable
         nextListResponse: ListCommentsResult = {
@@ -63,7 +67,7 @@
             return this.nextListResponse;
         }
 
-        async create(args: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }): Promise<void> {
+        async create(args: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string; at: string }): Promise<void> {
             this.createCalls.push(args);
             if (this.willFailCreate) throw new Error(this.failMessageCreate);
 
@@ -71,7 +75,7 @@
             // this.ackDispatch?.(someAckAction(...));
         }
 
-        async update(args: { commandId: string; commentId: string; body: string; editedAt?: string }): Promise<void> {
+        async update(args: { commandId: string; commentId: string; body: string; editedAt: string }): Promise<void> {
             this.updateCalls.push(args);
             if (this.willFailUpdate) throw new Error(this.failMessageUpdate);
         }
@@ -80,4 +84,7 @@
             this.deleteCalls.push(args);
             if (this.willFailDelete) throw new Error(this.failMessageDelete);
         }
+        async report(args: { commandId:string; reportId:string; commentId:string; reason:ReportReason; details?:string; at:string }): Promise<void> { this.reportCalls.push(args); }
+        async setBlock(args: { commandId:string; blockId:string; blockedUserId:string; active:boolean; at:string }): Promise<void> { this.blockCalls.push(args); }
+        async listBlockedUsers(_signal: AbortSignal): Promise<BlockedUser[]> { this.blockedUsersListCalls++; return this.blockedUsers; }
     }

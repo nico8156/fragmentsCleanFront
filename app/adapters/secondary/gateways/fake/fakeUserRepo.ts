@@ -1,9 +1,14 @@
 import { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import { AppUser, toUserId } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
-import { getDefaultBadgeProgress } from "@/app/core-logic/contextWL/userWl/badges/badges";
 import {parseToISODate} from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 
 export class FakeUserRepo implements UserRepo {
+	async updateProfile(): Promise<void> {
+		return;
+	}
+	async uploadAvatar(): Promise<void> { return; }
+	async removeAvatar(): Promise<void> { return; }
+	async requestAccountDeletion(): Promise<void> { return; }
     public users: Map<string, AppUser> = new Map();
 
     constructor(seed?: AppUser[]) {
@@ -28,9 +33,7 @@ export const makeDemoUser = (): AppUser => ({
     avatarUrl: undefined,
     identities: [],
     roles: ["user"],
-    preferences: {
-        badgeProgress: getDefaultBadgeProgress(),
-    },
+    preferences: {},
     likedCoffeeIds: [],
     version: 1,
 });

@@ -12,7 +12,7 @@ import { photosHydrated } from "@/app/core-logic/contextWL/cfPhotosWl/typeAction
 import { commentsRetrieved } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { addOptimisticCreated, deleteOptimisticApplied, updateOptimisticApplied } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.action";
 import { deleteReconciled, updateReconciled } from "@/app/core-logic/contextWL/commentWl/typeAction/commentAck.action";
-import { entitlementsHydrated, entitlementsSetThresholds } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
+import { entitlementsHydrated } from "@/app/core-logic/contextWL/entitlementWl/typeAction/entitlement.action";
 import {
 	likeOptimisticApplied,
 	likeReconciled,
@@ -36,6 +36,7 @@ import {
 	ticketRollBack,
 } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import type { AppDispatchWl, ReduxStoreWl, RootStateWl } from "@/app/store/reduxStoreWl";
+import { coffeeExperiencesReceived, experienceOptimisticCreated, experienceOptimisticDeleted, experienceOptimisticReported, experienceOptimisticUpdated, experienceReconciled, experienceRollback, myExperiencesReceived } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 
 type Deps = {
 	storage: ReadModelCacheGateway;
@@ -54,13 +55,14 @@ const buildDurableCoffeeState = (state: RootStateWl) => ({
 	},
 });
 
-const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
+export const buildSnapshot = (state: RootStateWl): DurableReadModelCacheSnapshot => ({
 	schemaVersion: READ_MODEL_CACHE_SCHEMA_VERSION,
 	updatedAt: new Date().toISOString(),
 	coffees: buildDurableCoffeeState(state),
 	cfPhotos: state.pState,
 	openingHours: state.ohState,
 	comments: state.cState,
+	experiences: state.exState,
 	likes: state.lState,
 	savedCoffees: state.scState,
 	tickets: state.tState,
@@ -94,6 +96,14 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 			articleReceived,
 			articleListReceived,
 			commentsRetrieved,
+			coffeeExperiencesReceived,
+			myExperiencesReceived,
+			experienceOptimisticCreated,
+			experienceOptimisticUpdated,
+			experienceOptimisticDeleted,
+			experienceOptimisticReported,
+			experienceReconciled,
+			experienceRollback,
 			addOptimisticCreated,
 			updateOptimisticApplied,
 			deleteOptimisticApplied,
@@ -118,7 +128,6 @@ export const readModelCachePersistenceFactory = (deps: Deps) => {
 			ticketReconciledRejected,
 			ticketRollBack,
 			entitlementsHydrated,
-			entitlementsSetThresholds,
 		),
 		effect: async (_, api) => {
 			persistSoon(api.getState());

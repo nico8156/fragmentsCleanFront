@@ -8,8 +8,11 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useMemo } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { useSelector } from "react-redux";
+import { ActivityIndicator, Button, Text, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import { accountStorageRetry } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
+import { authSignOutRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 
@@ -25,6 +28,7 @@ import { EditProfileScreen } from "@/app/adapters/primary/react/features/profile
 import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
 import { ProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/ProfileScreen";
 import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
+import { MyExperiencesScreen } from "@/app/adapters/primary/react/features/experiences/screens/MyExperiencesScreen";
 
 import { AllBadgesScreen } from "@/app/adapters/primary/react/features/pass/screens/AllBadgesScreen";
 import { BadgeDetailScreen } from "@/app/adapters/primary/react/features/pass/screens/BadgeDetailScreen";
@@ -77,6 +81,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 							EditProfile: "edit",
 							Tickets: "tickets",
 							Favorites: "favorites",
+							Experiences: "experiences",
 							AppSettings: "settings",
 						},
 					},
@@ -123,6 +128,7 @@ function ProfileNavigator() {
 			<ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Modifier mon profil" }} />
 			<ProfileStack.Screen name="Tickets" component={TicketsScreen} options={{ title: "Mes tickets" }} />
 			<ProfileStack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "Mes favoris" }} />
+			<ProfileStack.Screen name="Experiences" component={MyExperiencesScreen} options={{ title: "Mes expériences" }} />
 			<ProfileStack.Screen name="AppSettings" component={AppSettingsScreen} options={{ title: "Paramètres" }} />
 		</ProfileStack.Navigator>
 	);
@@ -224,6 +230,8 @@ export function RootNavigator() {
 	const status = useSelector(selectAuthStatus);
 	const session = useSelector(selectSessionSnapshot);
 	const hasSession = Boolean(session?.userId);
+	const accountScope = useSelector((state: RootStateWl) => state.accountScope);
+	const dispatch = useDispatch();
 
 	const { HasCompletedOnboarding } = useOnBoarding();
 
@@ -234,14 +242,23 @@ export function RootNavigator() {
 	);
 
 	const content = useMemo(() => {
+		if (hasSession && !accountScope.ready) return (
+			<View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+				{accountScope.error ? <>
+					<Text accessibilityRole="alert" style={{ color: palette.textPrimary, textAlign: "center" }}>{accountScope.error}</Text>
+					<Button title="Réessayer" onPress={() => dispatch(accountStorageRetry())} />
+					<Button title="Se déconnecter" onPress={() => dispatch(authSignOutRequested())} />
+				</> : <ActivityIndicator accessibilityLabel="Chargement des données du compte" />}
+			</View>
+		);
 		if (status === "loading") return <LoadingScreen />;
 		if (!HasCompletedOnboarding) return <OnboardingNavigator />;
 
 		// ✅ source de vérité : session
-		if (hasSession) return <SignedInNavigator />;
+		if (hasSession) return <SignedInNavigator key={accountScope.generation} />;
 
 		return <SignedOutNavigator />;
-	}, [status, HasCompletedOnboarding, hasSession]);
+	}, [status, HasCompletedOnboarding, hasSession, accountScope, dispatch]);
 
 	return (
 		<NavigationIndependentTree>

@@ -25,6 +25,8 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
         uiViaHookCreateComment,
         uiViaHookUpdateComment,
         uiViaHookDeleteComment,
+        uiViaHookReportComment,
+        uiViaHookBlockUser,
     } = useCommentsForCafe(coffeeId ?? undefined);
 
     const canSubmit = useMemo(() => {
@@ -67,6 +69,8 @@ const CommentsArea = ({ coffeeId, onFocusComment, onBlurComment }: CommentsAreaP
                                 uiViaHookUpdateComment({ commentId: comment.id, body })
                             }
                             onDeleteComment={() => uiViaHookDeleteComment({ commentId: comment.id })}
+                            onReportComment={(reason) => uiViaHookReportComment({commentId:comment.id,reason})}
+                            onBlockUser={() => uiViaHookBlockUser({userId:comment.authorId,displayName:comment.authorName,avatarUrl:comment.avatarUrl})}
                         />
                     ))}
                 </View>

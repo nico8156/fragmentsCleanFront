@@ -1,4 +1,5 @@
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { authSessionLoaded, authSignedOut } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import type {
 	ProjectionSyncConnectParams,
 	ProjectionSyncEvent,
@@ -27,6 +28,7 @@ class FakeProjectionSyncGateway implements ProjectionSyncGateway {
 	connect(params: ProjectionSyncConnectParams): void {
 		this.connectCalls++;
 		this.params = params;
+		this.lastEventId = params.lastEventId;
 		this.state = "connected";
 		params.onStatus({ state: "connected", lastEventId: this.lastEventId });
 	}
@@ -88,6 +90,36 @@ class FakeArticleGateway implements ArticleWlGateway {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("projectionSyncListenerFactory", () => {
+	it("partitions cursors by account and ignores events from a disconnected session", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const accounts = new Map<string, ReturnType<typeof createMemorySyncMetaStorage>>();
+		const storage = { ...createMemorySyncMetaStorage(), forAccount(userId: string) {
+			if (!accounts.has(userId)) accounts.set(userId, createMemorySyncMetaStorage());
+			return accounts.get(userId)!;
+		} };
+		const sessionRef = { current: { userId: "A", tokens: { accessToken: "A-token" } } as any };
+		const gateways = { projectionSync } as any;
+		const store = initReduxStoreWl({ dependencies: { gateways }, listeners: [
+			projectionSyncListenerFactory({ gateways, sessionRef, syncMetaStorage: storage }),
+		] });
+		store.dispatch(authSessionLoaded({ session: { userId: "A" } as any }));
+		store.dispatch(projectionSyncEnsureConnectedRequested()); await flush();
+		projectionSync.emit({ id: "cursor-A", eventName: "sync.heartbeat", schemaVersion: 1 }); await flush();
+		const oldCallback = projectionSync.params!.onEvent;
+		store.dispatch(authSignedOut());
+		sessionRef.current = { userId: "B", tokens: { accessToken: "B-token" } } as any;
+		store.dispatch(authSessionLoaded({ session: { userId: "B" } as any }));
+		store.dispatch(projectionSyncEnsureConnectedRequested()); await flush();
+		expect(projectionSync.params!.lastEventId).toBeUndefined();
+		oldCallback({ id: "late-A", eventName: "sync.heartbeat", schemaVersion: 1 }); await flush();
+		expect(storage.forAccount("B").getSnapshot().cursor).toBeUndefined();
+		expect(storage.forAccount("A").getSnapshot().cursor).toBe("cursor-A");
+		store.dispatch(authSignedOut());
+		sessionRef.current = { userId: "A", tokens: { accessToken: "A-token" } } as any;
+		store.dispatch(authSessionLoaded({ session: { userId: "A" } as any }));
+		store.dispatch(projectionSyncEnsureConnectedRequested()); await flush();
+		expect(projectionSync.params!.lastEventId).toBe("cursor-A");
+	});
 	it("routes projection.updated/coffees to the public projection GET", async () => {
 		const projectionSync = new FakeProjectionSyncGateway();
 		const coffees = new FakeCoffeeGateway();
@@ -213,6 +245,27 @@ describe("projectionSyncListenerFactory", () => {
 			op: opTypes.REFRESH,
 		});
 		expect((store.getState() as any).psState.lastEventId).toBe("2");
+	});
+
+	it("routes projection.updated/blocked-users through the authoritative blocked-users GET", async () => {
+		const projectionSync = new FakeProjectionSyncGateway();
+		const comments = new FakeCommentsWlGateway();
+		comments.blockedUsers = [{ blockId: "block-1", userId: "author-1", blockedAt: "2026-09-11T10:00:00Z", version: 1 }];
+		const gateways = { projectionSync, comments } as any;
+		const store = initReduxStoreWl({ dependencies: { gateways }, listeners: [
+			projectionSyncListenerFactory({ gateways, sessionRef: { current: { userId: "me", tokens: { accessToken: "mobile-token" } } as any } }),
+		] });
+		store.dispatch(authSessionLoaded({ session: { userId: "me" } as any }));
+		store.dispatch(projectionSyncEnsureConnectedRequested());
+		await flush();
+
+		projectionSync.emit({ id: "block-event-1", eventName: "projection.updated", schemaVersion: 1,
+			projection: "blocked-users", scope: "user", entityId: "me", hints: ["blocked"] });
+		await flush();
+		await flush();
+
+		expect(comments.blockedUsersListCalls).toBe(1);
+		expect((store.getState() as any).cState.blockedUsers["author-1"]).toMatchObject({ blockId: "block-1" });
 	});
 
 	it("routes projection.updated/likes to likes refresh GET", async () => {

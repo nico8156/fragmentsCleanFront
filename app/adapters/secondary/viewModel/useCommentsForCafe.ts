@@ -11,12 +11,14 @@ import {
 	loadingStates,
 	moderationTypes,
 	opTypes,
+	ReportReason,
 } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
 import { uiCommentCreateRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { uiCommentDeleteRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { cuAction } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import { uiCommentReportRequested, uiUserBlockRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
 
 import {
 	isOutboxPendingStatus,
@@ -38,6 +40,7 @@ export type CommentSyncVM = { state: CommentSyncState; untilMs: number } | null;
 
 export type CommentItemVM = {
 	id: string;
+	authorId: string;
 	authorName: string;
 	avatarUrl?: string;
 	body: string;
@@ -101,6 +104,15 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		[dispatch],
 	);
 
+	const uiViaHookReportComment = useCallback(
+		(payload: { commentId: string; reason: ReportReason; details?: string }) => dispatch(uiCommentReportRequested(payload)),
+		[dispatch],
+	);
+	const uiViaHookBlockUser = useCallback(
+		(payload: { userId: string; displayName?: string; avatarUrl?: string }) => dispatch(uiUserBlockRequested(payload)),
+		[dispatch],
+	);
+
 	// -------------------------
 	// selector for target
 	// -------------------------
@@ -147,7 +159,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		const nowMs = Date.now();
 
 		const visible = comments.filter(
-			(c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED,
+			(c) => !c.deletedAt && c.moderation !== moderationTypes.SOFT_DELETED && c.moderation !== moderationTypes.HIDDEN,
 		);
 
 		return visible.map((c) => {
@@ -249,5 +261,7 @@ export function useCommentsForCafe(targetId?: CafeId) {
 		uiViaHookCreateComment,
 		uiViaHookUpdateComment,
 		uiViaHookDeleteComment,
+		uiViaHookReportComment,
+		uiViaHookBlockUser,
 	} as const;
 }

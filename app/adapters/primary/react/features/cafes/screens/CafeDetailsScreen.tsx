@@ -40,6 +40,7 @@ import { InfoSection } from "../components/InfoSection";
 import { PhotosSection } from "../components/PhotosSection";
 import { TagsSection } from "../components/TagsSection";
 import { styles } from "./styles";
+import { ExperiencesSection } from "../components/ExperiencesSection";
 
 export default function CafeDetailsScreen() {
 	const navigation = useNavigation<RootStackNavigationProp>();
@@ -127,6 +128,7 @@ export default function CafeDetailsScreen() {
 
 	const onRefresh = () => {
 		likes.refresh();
+		// Les expériences sont rafraîchies à leur montage et via Projection Sync.
 		// Optionnel si tu ajoutes un refresh manuel côté comments:
 		// comments.refresh?.();
 	};
@@ -207,6 +209,7 @@ export default function CafeDetailsScreen() {
 					<PhotosSection photos={coffee.photos ?? []} />
 					<InfoSection coffee={coffee} addressLine={addressLine} />
 					<TagsSection tags={(coffee as any).tags ?? []} />
+					<ExperiencesSection coffeeId={String(coffeeId)} />
 
 					<CommentsSection
 						coffeeId={String(coffeeId)}

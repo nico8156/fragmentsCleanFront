@@ -1,7 +1,8 @@
 import { selectBootReady, selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware, accountIsReady, accountStorageReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 import {
 	appBecameActive,
@@ -33,6 +34,7 @@ import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -55,6 +57,7 @@ export const runtimeListenerFactory = () => {
 		dispatch: AppDispatchWl;
 		getState: () => RootStateWl;
 	}) => {
+		if (!accountIsReady(api.getState())) return;
 		api.dispatch(projectionSyncEnsureConnectedRequested());
 		api.dispatch(outboxProcessOnce());
 		api.dispatch(outboxWatchdogTick());
@@ -95,6 +98,7 @@ export const runtimeListenerFactory = () => {
 		getState: () => RootStateWl;
 	}) => {
 		const state = api.getState();
+		if (!accountIsReady(state)) return;
 		const userId = getSessionUserId(state);
 
 		if (userId && state.enState?.byUser?.[String(userId)]) {
@@ -113,6 +117,11 @@ export const runtimeListenerFactory = () => {
 		for (const targetId of selectKnownLikeTargetIds(state)) {
 			api.dispatch(likesRetrieval({ targetId }) as any);
 		}
+
+		for (const coffeeId of Object.keys(state.exState?.byCoffee ?? {})) {
+			api.dispatch(coffeeExperiencesRetrieval({ coffeeId }) as any);
+		}
+		if (state.exState?.mine?.ids?.length) api.dispatch(myExperiencesRetrieval() as any);
 
 		if (state.scState?.ids?.length) {
 			api.dispatch(savedCoffeesRetrieval() as any);
@@ -163,6 +172,14 @@ export const runtimeListenerFactory = () => {
 		logger.info(`[APP RUNTIME] ${source}: lifecycle pause observed`);
 	};
 
+	listen({
+		actionCreator: accountStorageReady,
+		effect: async (_, api) => {
+			if (!hasSession(api.getState()) || !selectIsOnline(api.getState())) return;
+			refreshKnownReadModels(api);
+			kickOnlineAuthed(api);
+		},
+	});
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {

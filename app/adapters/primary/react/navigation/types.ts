@@ -6,6 +6,7 @@ export type ProfileStackParamList = {
 	EditProfile: undefined;
 	Tickets: undefined;
 	Favorites: undefined;
+	Experiences: undefined;
 	AppSettings: undefined;
 };
 

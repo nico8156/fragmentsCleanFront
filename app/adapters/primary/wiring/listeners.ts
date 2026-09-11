@@ -1,6 +1,7 @@
 import { createCommentUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentCreateWlUseCase";
 import { commentDeleteUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentDeleteWlUseCase";
 import { commentUpdateWlUseCase } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentUpdateWlUseCase";
+import { commentModerationUseCaseFactory } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
 
 import { likeToggleUseCaseFactory } from "@/app/core-logic/contextWL/likeWl/usecases/write/likePressedUseCase";
 import { savedCoffeeToggleUseCaseFactory } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/write/savedCoffeeToggleUseCase";
@@ -15,6 +16,9 @@ import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecase
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { projectionSyncListenerFactory } from "@/app/core-logic/contextWL/projectionSyncWl/usecases/projectionSyncListenerFactory";
+import { profileUpdateListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/profile/profileUpdateListenerFactory";
+import { accountDeletionListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/account/accountDeletionListenerFactory";
+import { experienceWriteListenerFactory } from "@/app/core-logic/contextWL/experienceWl/usecases/write/experienceWriteListenerFactory";
 
 import type { Helpers } from "@/app/store/appStateWl";
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
@@ -37,6 +41,8 @@ export const createWlListeners = (p: {
 		mwOf(createCommentUseCaseFactory({ gateways, helpers })),
 		mwOf(commentDeleteUseCaseFactory({ gateways, helpers })),
 		mwOf(commentUpdateWlUseCase({ gateways, helpers })),
+		mwOf(commentModerationUseCaseFactory({ gateways, helpers })),
+		mwOf(experienceWriteListenerFactory({ gateways, helpers })),
 
 		// Likes
 		mwOf(likeToggleUseCaseFactory({ gateways, helpers })),
@@ -56,6 +62,8 @@ export const createWlListeners = (p: {
 
 		// Auth + projection sync
 		mwOf(authListenerFactory({ gateways, helpers: {}, onSessionChanged })),
+		mwOf(profileUpdateListenerFactory({ gateways, helpers })),
+		mwOf(accountDeletionListenerFactory({ gateways, helpers })),
 		mwOf(projectionSyncListenerFactory({ gateways, sessionRef, syncMetaStorage })),
 
 		// Watchdog

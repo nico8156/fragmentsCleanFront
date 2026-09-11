@@ -156,7 +156,15 @@ const createSyncMetaStorageFromDriver = (driver: StorageDriver): SyncMetaStorage
 };
 
 export const createNativeSyncMetaStorage = (key = "app.sync.meta"): SyncMetaStorage => {
-    return createSyncMetaStorageFromDriver(createRequiredMmkvDriver(key));
+    const accounts = new Map<string, SyncMetaStorage>();
+    return {
+        ...createSyncMetaStorageFromDriver(createRequiredMmkvDriver(key)),
+        forAccount(userId) {
+            if (!accounts.has(userId)) accounts.set(userId,
+                createSyncMetaStorageFromDriver(createRequiredMmkvDriver(`${key}.account.${encodeURIComponent(userId)}`)));
+            return accounts.get(userId)!;
+        },
+    };
 };
 
 export const createMemorySyncMetaStorage = (): SyncMetaStorage =>

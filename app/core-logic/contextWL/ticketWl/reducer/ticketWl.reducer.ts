@@ -4,7 +4,7 @@ import {
     TicketRetrievedPayload,
     TicketStatus,
     TicketsStateWl,
-    ISODate, TicketReconciledConfirmedPayload, TicketReconciledRejectedPayload
+    ISODate, TicketReconciledConfirmedPayload, TicketReconciledRejectedPayload, TicketHistoryItemPayload
 } from "@/app/core-logic/contextWL/ticketWl/typeAction/ticket.type";
 import {readModelCacheRehydrated} from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 
@@ -15,14 +15,31 @@ export const ticketSetError = createAction<{ ticketId: TicketId; message: string
 export const ticketReconciledConfirmed = createAction<TicketReconciledConfirmedPayload>('SERVER/TICKET/RECONCILED_CONFIRMED');
 export const ticketReconciledRejected = createAction<TicketReconciledRejectedPayload>('SERVER/TICKET/RECONCILED_REJECTED');
 export const ticketRollBack = createAction<{ticketId: TicketId | string}>('SERVER/TICKET/ROLLBACK_TICKET_RECONCILED_REJECTED');
+export const ticketRemoved = createAction<{ ticketId: TicketId }>('SERVER/TICKET/REMOVED');
+export const ticketHistoryRequested = createAction<{ reset: boolean }>('SERVER/TICKET_HISTORY/REQUESTED');
+export const ticketHistoryReceived = createAction<{
+    reset: boolean;
+    items: TicketHistoryItemPayload[];
+    nextCursor: string | null;
+}>('SERVER/TICKET_HISTORY/RECEIVED');
+export const ticketHistoryFailed = createAction<{ message: string }>('SERVER/TICKET_HISTORY/FAILED');
 
-const initialState: TicketsStateWl = { byId: {} };
+const emptyHistory = (): TicketsStateWl["history"] => ({
+    ids: [],
+    nextCursor: null,
+    status: "idle",
+    error: null,
+    initialized: false,
+});
+const initialState: TicketsStateWl = { byId: {}, history: emptyHistory() };
 
 export const ticketWlReducer = createReducer(
     initialState,
     (builder) => {
         builder
-            .addCase(readModelCacheRehydrated, (state, { payload }) => payload.tickets ?? state)
+            .addCase(readModelCacheRehydrated, (state, { payload }) => payload.tickets
+                ? { ...payload.tickets, history: payload.tickets.history ?? emptyHistory() }
+                : state)
             .addCase(ticketRetrieved, (state, { payload }: PayloadAction<TicketRetrievedPayload>) => {
                 const prev = state.byId[payload.ticketId];
                 state.byId[payload.ticketId] = {
@@ -118,6 +135,50 @@ export const ticketWlReducer = createReducer(
             })
             .addCase(ticketRollBack,(state, {payload}) => {
                 delete state.byId[payload.ticketId as TicketId];
+                state.history.ids = state.history.ids.filter((id) => id !== payload.ticketId);
+            })
+            .addCase(ticketRemoved, (state, { payload }) => {
+                delete state.byId[payload.ticketId];
+                state.history.ids = state.history.ids.filter((id) => id !== payload.ticketId);
+            })
+            .addCase(ticketHistoryRequested, (state, { payload }) => {
+                state.history.status = payload.reset ? "refreshing" : "loadingMore";
+                state.history.error = null;
+            })
+            .addCase(ticketHistoryReceived, (state, { payload }) => {
+                for (const item of payload.items) {
+                    const previous = state.byId[item.ticketId];
+                    if (previous?.optimistic || (previous && previous.version > item.version)) continue;
+                    state.byId[item.ticketId] = {
+                        ...previous,
+                        ticketId: item.ticketId,
+                        status: item.status,
+                        version: item.version,
+                        updatedAt: item.occurredAt,
+                        amountCents: item.amountCents ?? previous?.amountCents,
+                        currency: item.currency ?? previous?.currency,
+                        ticketDate: item.ticketDate ?? previous?.ticketDate,
+                        merchantName: item.merchantName ?? previous?.merchantName,
+                        merchantAddress: item.merchantAddress ?? previous?.merchantAddress,
+                        rejectionReason: item.rejectionReason ?? previous?.rejectionReason,
+                        optimistic: false,
+                        loading: "success",
+                        error: null,
+                    };
+                }
+                const incomingIds = payload.items.map((item) => item.ticketId);
+                state.history.ids = payload.reset
+                    ? incomingIds
+                    : [...new Set([...state.history.ids, ...incomingIds])];
+                state.history.nextCursor = payload.nextCursor;
+                state.history.status = "success";
+                state.history.error = null;
+                state.history.initialized = true;
+            })
+            .addCase(ticketHistoryFailed, (state, { payload }) => {
+                state.history.status = "error";
+                state.history.error = payload.message;
+                state.history.initialized = true;
             })
     }
 )

@@ -9,7 +9,7 @@ import { ExpoLocationGateway } from "@/app/adapters/secondary/gateways/locationG
 
 import { createAuthServerGateway } from "@/app/adapters/secondary/gateways/auth/authServerGateway";
 import { ExpoSecureAuthSessionStore } from "@/app/adapters/secondary/gateways/auth/expoSecureAuthSessionStore";
-import { googleOAuthGateway } from "@/app/adapters/secondary/gateways/auth/googleOAuthGateway";
+import { providerOAuthGateway } from "@/app/adapters/secondary/gateways/auth/providerOAuthGateway";
 
 import { HttpCommentsGateway } from "@/app/adapters/secondary/gateways/comments/HttpCommentsGateway";
 import { HttpEntitlementWlGateway } from "@/app/adapters/secondary/gateways/entitlement/HttpEntitlementWlGateway";
@@ -28,6 +28,7 @@ import { HttpOpeningHoursGateway } from "../../secondary/gateways/coffee/HttpOpe
 import type { GatewaysWl } from "./types";
 import { HttpProjectionSyncGateway } from "@/app/adapters/secondary/gateways/projectionSync/HttpProjectionSyncGateway";
 import { PROJECTION_SYNC_EVENTS_PATH } from "./config";
+import { HttpExperienceGateway } from "@/app/adapters/secondary/gateways/experiences/HttpExperienceGateway";
 
 // ✅ NOTE: on ne dépend plus de API_BASE_URL ici.
 // La source de vérité devient "apiBaseUrl" passé en argument.
@@ -47,6 +48,11 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		sessionRef.current = session;
 	};
 
+	const users = new HttpUserRepo({
+		baseUrl,
+		getAccessToken: authToken.getAccessToken,
+	});
+
 	const gateways: GatewaysWl = {
 		// ✅ aligné sur baseUrl unique
 		coffees: new HttpCoffeeGateway({ baseUrl }),
@@ -58,6 +64,7 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 			baseUrl,
 			getAccessToken: authToken.getAccessToken,
 		}),
+		experiences: new HttpExperienceGateway({ baseUrl, getAccessToken: authToken.getAccessToken }),
 
 		likes: new HttpLikesGateway({
 			baseUrl,
@@ -86,6 +93,7 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		locations: new ExpoLocationGateway(),
 
 		articles: new HttpArticleWlGateway({ baseUrl }),
+		users,
 
 		projectionSync: new HttpProjectionSyncGateway({
 			baseUrl,
@@ -95,14 +103,11 @@ export const createInfrastructure = (apiBaseUrl: string) => {
 		authToken,
 
 		auth: {
-			oauth: googleOAuthGateway,
+			oauth: providerOAuthGateway,
 			secureStore: new ExpoSecureAuthSessionStore(),
 
 			// ✅ hydrate user via le même host/port que le reste
-			userRepo: new HttpUserRepo({
-				baseUrl,
-				getAccessToken: authToken.getAccessToken,
-			}),
+			userRepo: users,
 
 			server: createAuthServerGateway({ baseUrl }),
 		},

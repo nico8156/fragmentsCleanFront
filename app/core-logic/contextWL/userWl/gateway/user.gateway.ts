@@ -6,6 +6,7 @@ import {
     ProviderId,
     UserId
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
 export interface OAuthGateway {
     // Lance le flow OAuth (web/native) et retourne le code d'autorisation provider.
@@ -29,16 +30,20 @@ export interface AuthSecureStore {
 // Accès Read du user (depuis ton backend quand il existera)
 export interface UserRepo {
     getById(id: UserId): Promise<AppUser | null>;
-    // extension: getCurrent() si le backend déduit via token
+	updateProfile(input: { commandId: string; displayName: string }): Promise<void>;
+	uploadAvatar(input: { commandId: string; mediaId: string; image: LocalImageInput; at: string }): Promise<void>;
+	removeAvatar(input: { commandId: string; at: string }): Promise<void>;
+	requestAccountDeletion(input: { commandId: string }): Promise<void>;
 }
 
 export interface AuthServerGateway {
     signInWithProvider(input: {
         provider: ProviderId;
         authorizationCode: string;
-        codeVerifier: string;
-        redirectUri: string;
+		codeVerifier?: string;
+		redirectUri?: string;
         idToken?: string | null;
+		displayName?: string;
         scopes: string[];
     }): Promise<{
         session: AuthSession;

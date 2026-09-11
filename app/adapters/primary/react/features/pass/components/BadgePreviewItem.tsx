@@ -1,38 +1,41 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
-import { DecoratedBadge } from "@/app/adapters/secondary/viewModel/useRewardsVM";
-import React, { useMemo } from "react";
+import { PassLevelViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const BADGE_ICONS: Record<string, string> = {
-	urban_explorer: "🧭",
-	coffee_taster: "☕️",
-	social_bean: "🤝",
-	fragments_master: "🏆",
+	URBAN_EXPLORER: "🧭",
+	COFFEE_TASTER: "☕️",
+	SOCIAL_BEAN: "🤝",
+	FRAGMENTS_MASTER: "🏆",
 };
 
 type Props = {
-	badge: DecoratedBadge;
+	badge: PassLevelViewModel;
 	onPress: () => void;
 };
 
 export function BadgePreviewItem({ badge, onPress }: Props) {
-	const progressPercent = useMemo(() => Math.round(badge.completion * 100), [badge.completion]);
-
-	const pill = useMemo(() => {
-		if (badge.status === "unlocked") return { text: "Débloqué", style: styles.pillUnlocked };
-		if (badge.status === "in_progress") return { text: "En cours", style: styles.pillInProgress };
+	const pill = (() => {
+		if (badge.status === "completed") return { text: "Débloqué", style: styles.pillUnlocked };
+		if (badge.status === "inProgress") return { text: "En cours", style: styles.pillInProgress };
 		return { text: "Verrouillé", style: styles.pillLocked };
-	}, [badge.status]);
+	})();
+	const currentSteps = badge.requirements.reduce((sum, requirement) => sum + Math.min(requirement.current, requirement.required), 0);
+	const totalRequired = badge.requirements.reduce((sum, requirement) => sum + requirement.required, 0);
+	const remainingSteps = badge.requirements.reduce((sum, requirement) => sum + requirement.remaining, 0);
 
 	const foot =
-		badge.status === "unlocked"
-			? "Badge débloqué 🎉"
-			: `Encore ${badge.remainingSteps} action(s)`;
+		badge.status === "completed"
+			? "Niveau débloqué 🎉"
+			: badge.requirements.length
+				? `Encore ${remainingSteps} étape(s)`
+				: "Progression en synchronisation";
 
 	return (
 		<TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.card}>
 			<View style={styles.rowTop}>
-				<Text style={styles.icon}>{BADGE_ICONS[badge.id] ?? "🎖️"}</Text>
+				<Text style={styles.icon}>{BADGE_ICONS[badge.level] ?? "🎖️"}</Text>
 				<View style={{ flex: 1 }}>
 					<Text style={styles.title}>{badge.label}</Text>
 					<Text style={styles.subtitle}>{foot}</Text>
@@ -42,13 +45,13 @@ export function BadgePreviewItem({ badge, onPress }: Props) {
 
 			<View style={styles.rowProgress}>
 				<Text style={styles.progressText}>
-					{badge.currentSteps}/{badge.totalRequired}
+					{currentSteps}/{totalRequired}
 				</Text>
-				<Text style={styles.progressTextMuted}>{progressPercent}%</Text>
+				<Text style={styles.progressTextMuted}>{badge.progressPercent}%</Text>
 			</View>
 
 			<View style={styles.progressBarBg}>
-				<View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+				<View style={[styles.progressBarFill, { width: `${badge.progressPercent}%` }]} />
 			</View>
 		</TouchableOpacity>
 	);
@@ -98,4 +101,3 @@ const styles = StyleSheet.create({
 		backgroundColor: palette.accent,
 	},
 });
-

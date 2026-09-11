@@ -69,6 +69,7 @@ export const buildCommentItemVM = ({
 
 	return {
 		id: comment.id,
+		authorId: comment.authorId,
 		authorName: comment.authorName ?? fallbackName,
 		avatarUrl: (comment.avatarUrl ?? undefined) ?? fallbackAvatar,
 		body: comment.body,

@@ -260,7 +260,7 @@ describe("processOutboxFactory", () => {
 		class BusinessFailingLikesGateway extends FakeLikesGateway {
 			override async add({ commandId, targetId, at }: any) {
 				this.addCalls.push({ commandId, targetId, at });
-				throw new GatewayError("business", "not allowed", 409);
+				throw new GatewayError("business", "not allowed", 409, "COMMAND_ID_CONFLICT", "COMMAND_ID_REUSED");
 			}
 		}
 
@@ -291,6 +291,40 @@ describe("processOutboxFactory", () => {
 		expect(store.getState().oState.byId["obx_like_business"]).toBeUndefined();
 		expect(store.getState().oState.queue).toEqual([]);
 		expect(recorder.count("OUTBOX/SCHEDULE_RETRY")).toBe(0);
+	});
+
+	it("an untyped technical error mentioning rejection stays queued", async () => {
+		const authToken = new FakeAuthTokenBridge("token", "user_test");
+		class TechnicalFailure extends FakeLikesGateway {
+			override async add(args: any) {
+				this.addCalls.push(args);
+				throw new Error("database rejected connection");
+			}
+		}
+		const recorder = createActionsRecorder({
+			filter: (a) => a.type === "LIKE/ROLLBACK" || a.type.startsWith("OUTBOX/"),
+		});
+		const deps = makeDeps({ likes: new TechnicalFailure(), authToken });
+		const store = initReduxStoreWl({
+			dependencies: deps,
+			listeners: [recorder.middleware, processOutboxFactory(deps).middleware],
+		});
+		seedSignedIn(store, { userId: "user_test" });
+		store.dispatch(enqueueCommitted({
+			id: "obx_technical_rejection_word",
+			item: {
+				command: { kind: commandKinds.LikeAdd, commandId: "cmd_technical", targetId: "cafe_A", at: "x" } as any,
+				undo: { kind: commandKinds.LikeAdd, targetId: "cafe_A", prevCount: 2, prevMe: false, prevVersion: 1 } as any,
+			},
+			enqueuedAt: "x",
+		}) as any);
+
+		store.dispatch(outboxProcessOnce());
+		await flushPromises();
+
+		expect(store.getState().oState.byId["obx_technical_rejection_word"]?.status).toBe(statusTypes.queued);
+		expect(recorder.count("LIKE/ROLLBACK")).toBe(0);
+		expect(recorder.count("OUTBOX/SCHEDULE_RETRY")).toBe(1);
 	});
 
 
@@ -343,6 +377,7 @@ describe("processOutboxFactory", () => {
 						parentId: null,
 						body: "hello",
 						tempId: "tmp_001",
+						at: "2026-09-11T10:00:00Z",
 					} as any,
 					undo: {} as any,
 				},
@@ -360,6 +395,7 @@ describe("processOutboxFactory", () => {
 			parentId: null,
 			body: "hello",
 			tempId: "tmp_001",
+			at: "2026-09-11T10:00:00Z",
 		});
 	});
 

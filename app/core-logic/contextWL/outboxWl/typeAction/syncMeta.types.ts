@@ -7,6 +7,7 @@ export type SyncMetaState = {
 };
 
 export interface SyncMetaStorage {
+    forAccount?(userId: string): SyncMetaStorage;
     loadOrDefault(): Promise<SyncMetaState>;
     getSnapshot(): SyncMetaState;
     setCursor(cursor?: string | null): Promise<void>;

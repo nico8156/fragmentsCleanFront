@@ -1,6 +1,7 @@
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware, accountGeneration, accountIsReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 import {
 	appBecameBackground,
@@ -11,6 +12,7 @@ import { onCfPhotoRetrieval } from "@/app/core-logic/contextWL/cfPhotosWl/usecas
 import { onOpeningHourRetrieval } from "@/app/core-logic/contextWL/openingHoursWl/usecases/read/openingHourRetrieval";
 import { opTypes } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 import { commentRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/commentRetrieval";
+import { blockedUsersRetrieval } from "@/app/core-logic/contextWL/commentWl/usecases/read/blockedUsersRetrieval";
 import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/usecases/read/entitlementRetrieval";
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
@@ -28,11 +30,15 @@ import {
 	authSessionRefreshed,
 	authSignedOut,
 	authSignInSucceeded,
+	authSignOutRequested,
+	authSessionExpired,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { logger } from "@/app/core-logic/utils/logger";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 export type ProjectionSyncSessionRef = { current?: AuthSession };
 
@@ -56,6 +62,8 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	let lastToken: string | undefined;
 	let lastEventId: string | undefined;
 	let syncMetaLoaded = false;
+	let activeOwner: string | undefined;
+	let activeStorage = deps.syncMetaStorage;
 	let coffeeRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 	let pendingCoffeeRefreshEvent: ProjectionSyncEvent | undefined;
 	let coffeeRefreshInFlight = false;
@@ -96,12 +104,12 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		);
 	};
 
-	const ensureSyncMetaLoaded = async () => {
+	const ensureSyncMetaLoaded = async (current: () => boolean) => {
 		if (syncMetaLoaded) return;
 		syncMetaLoaded = true;
 		try {
-			const meta = await deps.syncMetaStorage?.loadOrDefault();
-			if (!lastEventId && meta?.cursor) lastEventId = meta.cursor;
+			const meta = await activeStorage?.loadOrDefault();
+			if (current() && !lastEventId && meta?.cursor) lastEventId = meta.cursor;
 		} catch (e) {
 			logger.warn("[ProjectionSync] sync meta load failed", {
 				error: String((e as any)?.message ?? e),
@@ -112,7 +120,7 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	const persistCursor = (cursor?: string) => {
 		if (!cursor) return;
 		lastEventId = cursor;
-		void deps.syncMetaStorage?.setCursor(cursor).catch((e) => {
+		void activeStorage?.setCursor(cursor).catch((e) => {
 			logger.warn("[ProjectionSync] sync cursor persist failed", {
 				error: String((e as any)?.message ?? e),
 			});
@@ -131,7 +139,7 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		}
 	};
 
-	const routeProjectionUpdated = (event: ProjectionSyncEvent, dispatch: AppDispatchWl) => {
+	const routeProjectionUpdated = (event: ProjectionSyncEvent, dispatch: AppDispatchWl, getState: () => RootStateWl) => {
 		if (isIgnorableSyncEvent(event)) return;
 		if (event.eventName !== "projection.updated") return;
 
@@ -162,6 +170,19 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 					op: opTypes.REFRESH,
 				}) as any,
 			);
+		}
+
+		if (event.projection === "experiences" && event.scope === "coffee" && event.entityId) {
+			dispatch(coffeeExperiencesRetrieval({ coffeeId: event.entityId }) as any);
+		}
+		if (event.projection === "experiences" && event.scope === "user"
+			&& event.entityId === String(selectEffectiveUserId(getState()))) {
+			dispatch(myExperiencesRetrieval() as any);
+		}
+
+		if (event.projection === "blocked-users" && event.scope === "user"
+			&& event.entityId === String(selectEffectiveUserId(getState()))) {
+			dispatch(blockedUsersRetrieval() as any);
 		}
 
 		if (event.projection === "likes" && event.scope === "target" && event.entityId) {
@@ -220,18 +241,30 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	const ensureConnected = async (api: { dispatch: AppDispatchWl; getState: () => RootStateWl }) => {
 		const gateway = getGateway();
 		if (!gateway) return;
-
-		const currentState = gateway.getState?.();
-		if (currentState === "connected" || currentState === "reconnecting") return;
+		if (!accountIsReady(api.getState()) || api.getState().aState.status === "signedOut") return;
+		const generation = accountGeneration(api.getState());
+		const current = () => generation === accountGeneration(api.getState());
 
 		const session = await readSession();
+		if (!current()) return;
 		const token = session?.tokens?.accessToken;
 		if (!token) {
 			logger.debug("[ProjectionSync] skipped connect: no token");
 			return;
 		}
 
-		await ensureSyncMetaLoaded();
+		if (activeOwner !== session?.userId) {
+			gateway.disconnect();
+			activeOwner = session?.userId;
+			lastEventId = undefined;
+			syncMetaLoaded = false;
+			activeStorage = activeOwner && deps.syncMetaStorage?.forAccount
+				? deps.syncMetaStorage.forAccount(activeOwner) : deps.syncMetaStorage;
+		}
+		const currentState = gateway.getState?.();
+		if (currentState === "connected" || currentState === "reconnecting") return;
+		await ensureSyncMetaLoaded(current);
+		if (!current()) return;
 
 		if (lastToken && token !== lastToken) {
 			gateway.disconnect();
@@ -240,8 +273,9 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 
 		gateway.connect({
 			token,
-			lastEventId: gateway.getLastEventId?.() ?? lastEventId,
+			lastEventId,
 			onStatus: (status) => {
+				if (!current()) return;
 				persistCursor(status.lastEventId);
 				api.dispatch(projectionSyncStateChanged(status));
 				if (status.state === "failed" && /HTTP (401|403)/.test(status.error ?? "")) {
@@ -252,9 +286,10 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 				}
 			},
 			onEvent: (event) => {
+				if (!current()) return;
 				persistCursor(event.id);
 				api.dispatch(projectionSyncEventReceived({ event }));
-				routeProjectionUpdated(event, api.dispatch);
+				routeProjectionUpdated(event, api.dispatch, api.getState);
 			},
 		});
 	};
@@ -283,17 +318,21 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	});
 
 	listen({
-		actionCreator: authSignedOut,
+		predicate: action => authSignedOut.match(action) || authSignOutRequested.match(action) || authSessionExpired.match(action),
 		effect: async (_, api) => {
 			disconnect(api as any, "signed_out");
 			lastToken = undefined;
+			lastEventId = undefined;
+			syncMetaLoaded = false;
+			activeOwner = undefined;
+			activeStorage = undefined;
 		},
 	});
 
 	listen({
 		actionCreator: appBecameBackground,
 		effect: async (_, api) => {
-			void deps.syncMetaStorage?.updateLastActiveAt(Date.now()).catch((e) => {
+			void activeStorage?.updateLastActiveAt(Date.now()).catch((e) => {
 				logger.warn("[ProjectionSync] sync activity persist failed", {
 					error: String((e as any)?.message ?? e),
 				});

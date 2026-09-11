@@ -2,6 +2,8 @@ import { createApplicationBootProcess } from "@/app/core-logic/contextWL/appWl/u
 import type { DurableReadModelCacheSnapshot } from "@/app/core-logic/contextWL/appWl/typeAction/readModelCache.action";
 import type { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { accountStorageReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
+import { authSessionLoaded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 class FakeOutboxStorage {
 	snapshot: OutboxStateWl | null = {
@@ -49,6 +51,30 @@ const logger = {
 };
 
 describe("ApplicationBootProcess", () => {
+	it("waits for authenticated account hydration and never loads legacy snapshots in production mode", async () => {
+		const store = initReduxStoreWl({ dependencies: {}, accountStorageManaged: true });
+		const storage = { loadSnapshot: jest.fn(async () => null), saveSnapshot: jest.fn(), clear: jest.fn() };
+		const boot = createApplicationBootProcess({ store, outboxStorage: storage, readModelCacheStorage: storage,
+			logger, accountStorageManaged: true });
+		const finished = boot.start();
+		await new Promise(resolve => setImmediate(resolve));
+		store.dispatch(authSessionLoaded({ session: { userId: "A" } as any }));
+		expect(store.getState().appState.boot.doneWarmup).toBe(false);
+		store.dispatch(accountStorageReady({ generation: store.getState().accountScope.generation }));
+		await finished;
+		expect(storage.loadSnapshot).not.toHaveBeenCalled();
+		expect(store.getState().appState.boot.doneWarmup).toBe(true);
+	});
+	it("can cancel while waiting for account hydration", async () => {
+		const store = initReduxStoreWl({ dependencies: {}, accountStorageManaged: true });
+		const storage = { loadSnapshot: jest.fn(async () => null), saveSnapshot: jest.fn(), clear: jest.fn() };
+		const boot = createApplicationBootProcess({ store, outboxStorage: storage, readModelCacheStorage: storage,
+			logger, accountStorageManaged: true });
+		const finished = boot.start();
+		await new Promise(resolve => setImmediate(resolve));
+		boot.cancel(); await finished;
+		expect(store.getState().appState.boot.doneWarmup).toBe(false);
+	});
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
