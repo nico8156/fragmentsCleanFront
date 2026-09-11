@@ -1,14 +1,18 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
-import { Categories } from "@/app/adapters/primary/react/features/home/components/Categories";
+import { HomeContentSections } from "@/app/adapters/primary/react/features/home/components/HomeContentSections";
 import { MasterHeader } from "@/app/adapters/primary/react/features/home/components/MasterHeader";
-import { WelcomeMessage } from "@/app/adapters/primary/react/features/home/components/WelcomeMessage";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { useArticlesHome } from "@/app/adapters/secondary/viewModel/useArticlesHome";
-import { dataForPacks } from "@/assets/data/coffeePack";
+import { useCoffeeDiscovery } from "@/app/adapters/secondary/viewModel/useCoffeeDiscovery";
+import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
+import { buildHomeContent } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import type { ExperienceEntity } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import {
 	Animated,
 	NativeScrollEvent,
@@ -36,7 +40,12 @@ const HIDE_FLOATING_OVER_Y = 95;
 export function HomeScreen() {
 	const navigation = useNavigation<RootStackNavigationProp>();
 	const insets = useSafeAreaInsets();
-	const { sliderArticles, categories } = useArticlesHome();
+	const { sliderArticles, articles } = useArticlesHome();
+	const { coffees, hasLocation } = useCoffeeDiscovery();
+	const pass = usePassRingsViewModel();
+	const experiences = useSelector((state: RootStateWl) => state.exState.mine.ids.map((id) => state.exState.entities.entities[id]).filter((item): item is ExperienceEntity => Boolean(item)));
+	const coffeeNames = useSelector((state: RootStateWl) => Object.fromEntries(Object.entries(state.cfState.byId).map(([id, coffee]) => [id, coffee.name])));
+	const homeContent = useMemo(() => buildHomeContent({ articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames }), [articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames]);
 
 	const scrollY = useRef(new Animated.Value(0)).current;
 	const [showFloating, setShowFloating] = useState(true);
@@ -55,6 +64,11 @@ export function HomeScreen() {
 		},
 		[navigation],
 	);
+
+	const openMap = useCallback(() => navigation.navigate("Tabs", { screen: "Map" }), [navigation]);
+	const openCoffee = useCallback((id: string) => navigation.navigate("CafeDetails", { id }), [navigation]);
+	const openExperiences = useCallback(() => navigation.navigate("Tabs", { screen: "Profile", params: { screen: "Experiences" } }), [navigation]);
+	const openPass = useCallback(() => navigation.navigate("Tabs", { screen: "Rewards" }), [navigation]);
 
 	// 0 -> header invisible ; 1 -> header fully visible
 	const headerProgress = useMemo(() => {
@@ -106,15 +120,7 @@ export function HomeScreen() {
 				{/* Spacer: évite que les sections démarrent sous la barre */}
 				<View style={{ height: 16 }} />
 
-				<View style={styles.sectionSpacing}>
-					<Categories categories={categories} onSelect={openArticle} />
-				</View>
-
-				<View style={styles.sectionSpacing}>
-					<Categories categories={dataForPacks} onSelect={() => { }} />
-				</View>
-
-				<WelcomeMessage />
+				<HomeContentSections content={homeContent} onOpenMap={openMap} onOpenScan={openScanModal} onOpenCoffee={openCoffee} onOpenArticle={openArticle} onOpenExperiences={openExperiences} onOpenPass={openPass} />
 			</AnimatedScrollView>
 
 			{/* Header unique au-dessus du HERO */}
@@ -189,11 +195,6 @@ const styles = StyleSheet.create({
 		backgroundColor: palette.surface,
 		// pas de marginTop -> l’image peut remonter derrière le header
 		marginBottom: 28,
-	},
-
-	sectionSpacing: {
-		paddingHorizontal: 24,
-		marginBottom: 32,
 	},
 
 	// Header unique
