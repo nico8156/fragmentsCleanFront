@@ -112,6 +112,8 @@ export const authReducer = createReducer(initialState, (builder) => {
 		})
 		.addCase(authSignOutRequested, (state) => {
 			state.status = "loading";
+			state.session = undefined;
+			state.currentUser = undefined;
 		})
 		.addCase(authSignedOut, (state) => {
 			state.status = "signedOut";

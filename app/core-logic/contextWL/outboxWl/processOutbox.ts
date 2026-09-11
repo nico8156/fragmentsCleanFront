@@ -1,6 +1,7 @@
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware, accountGeneration, accountIsReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 import {
 	dequeueCommitted,
@@ -62,19 +63,21 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 	const mw = createListenerMiddleware<RootStateWl, AppDispatchWl>();
 	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
-	let inFlight = false;
+	let inFlightGeneration: number | undefined;
 
 	listen({
 		actionCreator: outboxProcessOnce,
 		effect: async (_action, api) => {
-			if (inFlight) {
+			const generation = accountGeneration(api.getState());
+			if (inFlightGeneration === generation) {
 				logger.debug("[OUTBOX] processOnce: skipped (already running)");
 				return;
 			}
 
-			inFlight = true;
+			inFlightGeneration = generation;
 			try {
 				const state = api.getState();
+				if (!accountIsReady(state)) return;
 
 				if (state.oState?.suspended) {
 					logger.debug("[OUTBOX] processOnce: skipped (suspended)");
@@ -93,6 +96,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 				}
 
 				const token = await deps.gateways?.authToken?.getAccessToken?.();
+				if (generation !== accountGeneration(api.getState()) || !accountIsReady(api.getState())) return;
 				if (!token) {
 					logger.debug("[OUTBOX] processOnce: skipped (no token)");
 					return;
@@ -224,7 +228,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 
 				callback?.();
 			} finally {
-				inFlight = false;
+				if (inFlightGeneration === generation) inFlightGeneration = undefined;
 			}
 		},
 	});

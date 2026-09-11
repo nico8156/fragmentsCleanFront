@@ -77,7 +77,7 @@ const emptyState = (): OutboxStateWl => ({
 	suspended: false,
 });
 
-const sanitizeOutboxState = (snapshot: any): OutboxStateWl => {
+export const sanitizeOutboxState = (snapshot: any): OutboxStateWl => {
 	if (!snapshot || typeof snapshot !== "object") return emptyState();
 
 	const sanitizedById: Record<string, OutboxRecord> = {};

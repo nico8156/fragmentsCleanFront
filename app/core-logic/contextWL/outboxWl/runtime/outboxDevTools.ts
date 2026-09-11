@@ -2,6 +2,7 @@ import type { OutboxStorageGateway } from "@/app/core-logic/contextWL/outboxWl/g
 import { outboxDevClearCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import type { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { accountGeneration } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 type DevToolsLogger = {
 	info: (message: string, payload?: unknown) => void;
@@ -26,7 +27,11 @@ export const clearOutboxForDev = async ({
 	outboxStorage,
 	logger,
 }: OutboxDevToolsDeps): Promise<void> => {
-	await outboxStorage.clear();
+	const generation = accountGeneration(store.getState());
+	const userId = store.getState().aState.session?.userId;
+	if (userId) await outboxStorage.clear(userId);
+	else await outboxStorage.clear();
+	if (generation !== accountGeneration(store.getState())) return;
 	store.dispatch(outboxDevClearCommitted());
 	logger.warn("[OUTBOX_DEV] local outbox cleared");
 };

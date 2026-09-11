@@ -1,6 +1,7 @@
 import type { DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
-import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit";
+import { TypedStartListening } from "@reduxjs/toolkit";
+import { createListenerMiddleware, accountGeneration, accountIsReady, accountStorageReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 import { selectBootReady, selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.selector";
 import { selectOutboxById } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
@@ -59,7 +60,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	const listen = mw.startListening as TypedStartListening<RootStateWl, AppDispatchWl>;
 
 	let timer: ReturnType<typeof setInterval> | null = null;
-	let inFlight = false;
+	let inFlightGeneration: number | undefined;
 
 	const startTimer = (dispatch: AppDispatchWl) => {
 		if (!deps.enableTimer) return;
@@ -98,9 +99,11 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		}
 
 		logger.info("[OUTBOX_WD] checking status", { id: rec.id, commandId });
+		const generation = accountGeneration(api.getState());
 		outboxTelemetry.ackCheck(rec);
 
 		const verdict = await commandStatus.getStatus(commandId);
+		if (generation !== accountGeneration(api.getState())) return;
 
 		if (verdict.status === "APPLIED") {
 			logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
@@ -139,10 +142,12 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 	};
 
 	const runOnce = async (api: { getState: () => RootStateWl; dispatch: AppDispatchWl }) => {
-		if (inFlight) return;
-		inFlight = true;
+		const generation = accountGeneration(api.getState());
+		if (inFlightGeneration === generation) return;
+		inFlightGeneration = generation;
 		try {
 			const state = api.getState();
+			if (!accountIsReady(state)) return;
 			if (!selectBootReady(state)) return;
 			if (!hasSession(state)) return;
 			if (!selectIsOnline(state)) return;
@@ -165,6 +170,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 			if (!records.length) return;
 
 			for (const rec of records) {
+				if (generation !== accountGeneration(api.getState())) return;
 				const current = (selectOutboxById(api.getState()) as Record<string, OutboxRecord>)[rec.id];
 				if (!current || current.status !== statusTypes.awaitingAck) continue;
 				await checkRecord(current, api, commandStatus);
@@ -172,11 +178,18 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		} catch (e: any) {
 			logger.error("[OUTBOX_WD] runOnce error", { error: String(e?.message ?? e) });
 		} finally {
-			inFlight = false;
+			if (inFlightGeneration === generation) inFlightGeneration = undefined;
 		}
 	};
 
 	// triggers
+	listen({
+		actionCreator: accountStorageReady,
+		effect: async (_, api) => {
+			stopTimer();
+			if (hasSession(api.getState())) { startTimer(api.dispatch); await runOnce(api); }
+		},
+	});
 	listen({
 		actionCreator: appBecameActive,
 		effect: async (_, api) => {

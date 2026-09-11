@@ -1,10 +1,10 @@
 // commentDeleteWlUseCase.ts
 import {
     createAction,
-    createListenerMiddleware,
     nanoid,
     TypedStartListening,
 } from "@reduxjs/toolkit";
+import { createListenerMiddleware } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 import { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import { AppDispatchWl } from "@/app/store/reduxStoreWl";
 import { commandKinds, ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
