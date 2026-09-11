@@ -2,6 +2,18 @@ import type { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArt
 import type { DiscoveryCoffeeVM } from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 import type { ExperienceEntity } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 import type { PassViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
+import type { RootStateWl } from "@/app/store/reduxStoreWl";
+import { createSelector } from "@reduxjs/toolkit";
+
+export const selectHomeExperiences = createSelector(
+	[(state: RootStateWl) => state.exState.mine.ids, (state: RootStateWl) => state.exState.entities.entities],
+	(ids, entities) => ids.map((id) => entities[id]).filter((item): item is ExperienceEntity => Boolean(item)),
+);
+
+export const selectHomeCoffeeNames = createSelector(
+	[(state: RootStateWl) => state.cfState.byId],
+	(coffees) => Object.fromEntries(Object.entries(coffees).map(([id, coffee]) => [id, coffee.name])),
+);
 
 export type HomePassCardVM = {
 	title: string;
