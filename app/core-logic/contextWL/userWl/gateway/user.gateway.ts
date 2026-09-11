@@ -6,6 +6,7 @@ import {
     ProviderId,
     UserId
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
 export interface OAuthGateway {
     // Lance le flow OAuth (web/native) et retourne le code d'autorisation provider.
@@ -30,6 +31,8 @@ export interface AuthSecureStore {
 export interface UserRepo {
     getById(id: UserId): Promise<AppUser | null>;
 	updateProfile(input: { commandId: string; displayName: string }): Promise<void>;
+	uploadAvatar(input: { commandId: string; mediaId: string; image: LocalImageInput; at: string }): Promise<void>;
+	removeAvatar(input: { commandId: string; at: string }): Promise<void>;
 	requestAccountDeletion(input: { commandId: string }): Promise<void>;
 }
 

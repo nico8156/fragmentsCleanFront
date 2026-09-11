@@ -10,6 +10,8 @@ import {
 
 import {
 	authMaybeRefreshRequested,
+	avatarAttachRequested,
+	avatarRemoveRequested,
 	profileUpdateRequested,
 	accountDeletionRequested,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
@@ -73,6 +75,10 @@ export function useAuthUser() {
 	const updateDisplayName = useCallback((nextDisplayName: string) => {
 		dispatch(profileUpdateRequested({ displayName: nextDisplayName }));
 	}, [dispatch]);
+	const replaceAvatar = useCallback((image: Parameters<typeof avatarAttachRequested>[0]) => {
+		dispatch(avatarAttachRequested(image));
+	}, [dispatch]);
+	const removeAvatar = useCallback(() => dispatch(avatarRemoveRequested()), [dispatch]);
 	const deleteAccount = useCallback(() => dispatch(accountDeletionRequested()), [dispatch]);
 
 	const authSummary = useMemo(
@@ -128,6 +134,8 @@ export function useAuthUser() {
 		refreshToken,
 		signOut: signOutUser,
 		updateDisplayName,
+		replaceAvatar,
+		removeAvatar,
 		deleteAccount,
 	} as const;
 }

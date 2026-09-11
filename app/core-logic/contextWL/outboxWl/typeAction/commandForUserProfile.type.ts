@@ -12,3 +12,7 @@ export type UserProfileUpdateUndo = {
 	displayName?: string;
 	version: number;
 };
+
+export type UserAvatarAttachCommand = { kind: typeof commandKinds.UserAvatarAttach; commandId: string; mediaId: string; image: { localUri: string; contentType: "image/jpeg" | "image/png"; size: number }; at: string };
+export type UserAvatarRemoveCommand = { kind: typeof commandKinds.UserAvatarRemove; commandId: string; at: string };
+export type UserAvatarUndo = { kind: typeof commandKinds.UserAvatarAttach | typeof commandKinds.UserAvatarRemove; avatarUrl?: string; version: number };

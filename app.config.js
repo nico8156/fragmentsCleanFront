@@ -52,7 +52,9 @@ const plugins = [
     "expo-image-picker",
     {
       cameraPermission:
-        "Fragments utilise l’appareil photo pour lire le texte de vos tickets.",
+        "Fragments utilise l’appareil photo pour lire tes tickets et ajouter tes photos.",
+      photosPermission:
+        "Fragments accède aux photos que tu choisis pour ton profil et tes expériences.",
     },
   ],
   "expo-web-browser",

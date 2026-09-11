@@ -1,5 +1,5 @@
 import { profileUpdateListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/profile/profileUpdateListenerFactory";
-import { profileUpdateRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { avatarAttachRequested, avatarRemoveRequested, profileUpdateRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { authUserHydrationSucceeded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { makeFixedHelpers, makeStoreWl, flush } from "@/tests/core-logic/fakes/wlTestHarness";
@@ -55,5 +55,33 @@ describe("profileUpdateListenerFactory", () => {
 		expect(store.getState().aState.currentUser?.displayName).toBe("Nicolas");
 		expect(store.getState().aState.profileMutationStatus).toBe("error");
 		expect(store.getState().oState.queue).toEqual([]);
+	});
+
+	it("updates the avatar optimistically and persists its local file in the outbox command", async () => {
+		const helpers = makeFixedHelpers({ commandIds: ["media-id", "command-id"] });
+		const listener = profileUpdateListenerFactory({ gateways: {}, helpers });
+		const store = makeStoreWl({ deps: { gateways: {}, helpers }, listeners: [listener.middleware] });
+		store.dispatch(authUserHydrationSucceeded({ user: { ...user, avatarUrl: "https://old.test/avatar.jpg" } as any }));
+		store.dispatch(avatarAttachRequested({ image: { localUri: "file:///private/avatar.jpg", contentType: "image/jpeg", size: 2048 } }));
+		await flush();
+
+		expect(store.getState().aState.currentUser?.avatarUrl).toBe("file:///private/avatar.jpg");
+		const record = Object.values(store.getState().oState.byId)[0];
+		expect(record.item.command).toMatchObject({ kind: commandKinds.UserAvatarAttach, mediaId: "command-id", image: { size: 2048 } });
+		expect(record.item.undo).toMatchObject({ avatarUrl: "https://old.test/avatar.jpg", version: 3 });
+	});
+
+	it("queues avatar removal without discarding the rollback value", async () => {
+		const helpers = makeFixedHelpers({ commandIds: ["remove-command"] });
+		const listener = profileUpdateListenerFactory({ gateways: {}, helpers });
+		const store = makeStoreWl({ deps: { gateways: {}, helpers }, listeners: [listener.middleware] });
+		store.dispatch(authUserHydrationSucceeded({ user: { ...user, avatarUrl: "https://old.test/avatar.jpg" } as any }));
+		store.dispatch(avatarRemoveRequested());
+		await flush();
+
+		expect(store.getState().aState.currentUser?.avatarUrl).toBeUndefined();
+		const record = Object.values(store.getState().oState.byId)[0];
+		expect(record.item.command).toMatchObject({ kind: commandKinds.UserAvatarRemove, commandId: "remove-command" });
+		expect(record.item.undo).toMatchObject({ avatarUrl: "https://old.test/avatar.jpg" });
 	});
 });

@@ -18,6 +18,8 @@ import {
 	profileUpdateRejectedLocally,
 	profileUpdateReconciled,
 	profileUpdateRollback,
+	avatarUpdateOptimistic,
+	avatarUpdateRollback,
 	accountDeletionSubmitting,
 	accountDeletionAccepted,
 	accountDeletionFailed,
@@ -160,6 +162,22 @@ export const authReducer = createReducer(initialState, (builder) => {
 		.addCase(profileUpdateRollback, (state, { payload }) => {
 			if (state.currentUser) {
 				state.currentUser.displayName = payload.displayName;
+				state.currentUser.version = payload.version;
+			}
+			state.profileMutationStatus = "error";
+			state.profileMutationError = payload.error;
+		})
+		.addCase(avatarUpdateOptimistic, (state, { payload }) => {
+			if (state.currentUser) {
+				state.currentUser.avatarUrl = payload.avatarUrl;
+				state.currentUser.version += 1;
+			}
+			state.profileMutationStatus = "pending";
+			state.profileMutationError = undefined;
+		})
+		.addCase(avatarUpdateRollback, (state, { payload }) => {
+			if (state.currentUser) {
+				state.currentUser.avatarUrl = payload.avatarUrl;
 				state.currentUser.version = payload.version;
 			}
 			state.profileMutationStatus = "error";

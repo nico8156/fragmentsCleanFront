@@ -4,6 +4,7 @@ import {
 	coffeeExperiencesFailed, coffeeExperiencesPending, coffeeExperiencesReceived,
 	experienceOptimisticCreated, experienceOptimisticDeleted, experienceOptimisticReported,
 	experienceOptimisticUpdated, experienceReconciled, experienceRollback,
+	experienceMediaOptimisticAdded, experienceMediaOptimisticDeleted,
 	myExperiencesFailed, myExperiencesPending, myExperiencesReceived,
 } from "../typeAction/experience.action";
 import type { ExperienceCollection, ExperienceEntity, ExperienceStateWl } from "../typeAction/experience.type";
@@ -43,6 +44,8 @@ export const experienceReducer = createReducer(initialExperienceState, builder =
 	.addCase(experienceOptimisticUpdated, (state, action) => { adapter.updateOne(state.entities, { id: action.payload.experienceId, changes: { ...(action.payload.message !== undefined ? { message: action.payload.message } : {}), ...(action.payload.status ? { status: action.payload.status, publishedAt: action.payload.at } : {}), updatedAt: action.payload.at, optimistic: true } }); })
 	.addCase(experienceOptimisticDeleted, (state, action) => { adapter.updateOne(state.entities, { id: action.payload.experienceId, changes: { status: "DELETED", updatedAt: action.payload.at, optimistic: true } }); })
 	.addCase(experienceOptimisticReported, (state, action) => { state.reportedIds[action.payload.experienceId] = true; })
+	.addCase(experienceMediaOptimisticAdded, (state, action) => { const item=state.entities.entities[action.payload.experienceId];if(item)item.media=[...(item.media ?? []).filter(media=>media.mediaId!==action.payload.media.mediaId),action.payload.media]; })
+	.addCase(experienceMediaOptimisticDeleted, (state, action) => { const item=state.entities.entities[action.payload.experienceId];if(item)item.media=(item.media ?? []).filter(media=>media.mediaId!==action.payload.mediaId); })
 	.addCase(experienceRollback, (state, action) => {
 		if (action.payload.reported) {
 			delete state.reportedIds[action.payload.experienceId];

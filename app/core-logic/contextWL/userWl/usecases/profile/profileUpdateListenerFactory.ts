@@ -2,6 +2,9 @@ import { accountGeneration, createListenerMiddleware } from "@/app/core-logic/co
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { commandKinds, type ISODate } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import {
+	avatarAttachRequested,
+	avatarRemoveRequested,
+	avatarUpdateOptimistic,
 	profileUpdateOptimistic,
 	profileUpdateRejectedLocally,
 	profileUpdateRequested,
@@ -59,6 +62,50 @@ export const profileUpdateListenerFactory = (deps: DependenciesWl) => {
 						displayName: user.displayName,
 						version: user.version,
 					},
+				},
+				enqueuedAt: at,
+			}));
+			api.dispatch(outboxProcessOnce());
+		},
+	});
+
+	listen({
+		actionCreator: avatarAttachRequested,
+		effect: async ({ payload }, api) => {
+			const user = (api.getState() as unknown as RootStateWl).aState.currentUser;
+			if (!user) {
+				api.dispatch(profileUpdateRejectedLocally({ error: "Le profil n’est pas encore disponible." }));
+				return;
+			}
+			const commandId = deps.helpers.newCommandId();
+			const mediaId = String(deps.helpers.newCommandId());
+			const at = deps.helpers.nowIso() as ISODate;
+			api.dispatch(avatarUpdateOptimistic({ avatarUrl: payload.image.localUri }));
+			api.dispatch(enqueueCommitted({
+				id: deps.helpers.getCommandIdForTests?.() ?? `obx_${nanoid()}`,
+				item: {
+					command: { kind: commandKinds.UserAvatarAttach, commandId, mediaId, image: payload.image, at },
+					undo: { kind: commandKinds.UserAvatarAttach, avatarUrl: user.avatarUrl, version: user.version },
+				},
+				enqueuedAt: at,
+			}));
+			api.dispatch(outboxProcessOnce());
+		},
+	});
+
+	listen({
+		actionCreator: avatarRemoveRequested,
+		effect: async (_action, api) => {
+			const user = (api.getState() as unknown as RootStateWl).aState.currentUser;
+			if (!user || !user.avatarUrl) return;
+			const commandId = deps.helpers.newCommandId();
+			const at = deps.helpers.nowIso() as ISODate;
+			api.dispatch(avatarUpdateOptimistic({ avatarUrl: undefined }));
+			api.dispatch(enqueueCommitted({
+				id: deps.helpers.getCommandIdForTests?.() ?? `obx_${nanoid()}`,
+				item: {
+					command: { kind: commandKinds.UserAvatarRemove, commandId, at },
+					undo: { kind: commandKinds.UserAvatarRemove, avatarUrl: user.avatarUrl, version: user.version },
 				},
 				enqueuedAt: at,
 			}));

@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
 import { selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { uiUserBlockRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
-import { uiExperienceCreateRequested, uiExperienceDeleteRequested, uiExperienceReportRequested, uiExperienceUpdateRequested } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
-import type { ExperienceReportReason } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
+import { uiExperienceCreateRequested, uiExperienceDeleteRequested, uiExperienceMediaAddRequested, uiExperienceMediaDeleteRequested, uiExperienceReportRequested, uiExperienceUpdateRequested } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
+import type { ExperienceReportReason, LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 import { coffeeExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 export function useExperiencesForCafe(coffeeId?: string) {
@@ -21,7 +21,9 @@ export function useExperiencesForCafe(coffeeId?: string) {
 		isLoading: slice?.loading === "PENDING" && !slice.ids.length,
 		error: slice?.error,
 		refresh: () => coffeeId && dispatch(coffeeExperiencesRetrieval({ coffeeId })),
-		create: (message: string, draft = false) => coffeeId && dispatch(uiExperienceCreateRequested({ coffeeId, message, draft })),
+		create: (message: string, draft = false, photo?: LocalImageInput) => coffeeId && dispatch(uiExperienceCreateRequested({ coffeeId, message, draft, photo })),
+		addPhoto: (experienceId: string, photo: LocalImageInput) => dispatch(uiExperienceMediaAddRequested({ experienceId, photo })),
+		deletePhoto: (experienceId: string, mediaId: string) => dispatch(uiExperienceMediaDeleteRequested({ experienceId, mediaId })),
 		update: (experienceId: string, message: string) => dispatch(uiExperienceUpdateRequested({ experienceId, message })),
 		remove: (experienceId: string) => dispatch(uiExperienceDeleteRequested({ experienceId })),
 		report: (experienceId: string, reason: ExperienceReportReason) => dispatch(uiExperienceReportRequested({ experienceId, reason })),

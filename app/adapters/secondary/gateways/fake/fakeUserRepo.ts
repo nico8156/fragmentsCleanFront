@@ -6,6 +6,8 @@ export class FakeUserRepo implements UserRepo {
 	async updateProfile(): Promise<void> {
 		return;
 	}
+	async uploadAvatar(): Promise<void> { return; }
+	async removeAvatar(): Promise<void> { return; }
 	async requestAccountDeletion(): Promise<void> { return; }
     public users: Map<string, AppUser> = new Map();
 

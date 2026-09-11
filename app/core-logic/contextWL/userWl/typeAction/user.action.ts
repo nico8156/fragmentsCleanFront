@@ -5,6 +5,7 @@ import {
     ProviderId,
     UserId,
 } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
 export const authSessionLoadRequested = createAction("auth/sessionLoadRequested");
 
@@ -77,6 +78,19 @@ export const profileUpdateRollback = createAction<{
 }>("profile/updateRollback");
 
 export const profileUpdateReconciled = createAction("profile/updateReconciled");
+
+export const avatarAttachRequested = createAction<{ image: LocalImageInput }>(
+	"profile/avatarAttachRequested",
+);
+export const avatarRemoveRequested = createAction("profile/avatarRemoveRequested");
+export const avatarUpdateOptimistic = createAction<{ avatarUrl?: string }>(
+	"profile/avatarUpdateOptimistic",
+);
+export const avatarUpdateRollback = createAction<{
+	avatarUrl?: string;
+	version: number;
+	error: string;
+}>("profile/avatarUpdateRollback");
 
 export const accountDeletionRequested = createAction("account/deletionRequested");
 export const accountDeletionSubmitting = createAction<{ commandId: string }>("account/deletionSubmitting");

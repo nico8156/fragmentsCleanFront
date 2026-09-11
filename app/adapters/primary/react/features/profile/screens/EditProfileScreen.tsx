@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
+import { pickDurableImage } from "@/app/adapters/secondary/gateways/media/pickDurableImage";
 
 export function EditProfileScreen() {
 	const {
@@ -14,17 +15,50 @@ export function EditProfileScreen() {
 		profileMutationStatus,
 		profileMutationError,
 		updateDisplayName,
+		replaceAvatar,
+		removeAvatar,
 	} = useAuthUser();
+	const [imageError, setImageError] = useState<string>();
 
 	const safeDisplayName = displayName ?? "Profil";
 	const [draftName, setDraftName] = useState(safeDisplayName);
 	useEffect(() => setDraftName(safeDisplayName), [safeDisplayName]);
 	const pending = profileMutationStatus === "pending";
 	const unchanged = draftName.trim().replace(/\s+/g, " ") === displayName;
+	const chooseAvatar = () => Alert.alert("Photo de profil", "Choisis une source", [
+		{ text: "Annuler", style: "cancel" },
+		{ text: "Photothèque", onPress: () => void selectAvatar("library") },
+		{ text: "Appareil photo", onPress: () => void selectAvatar("camera") },
+	]);
+	const selectAvatar = async (source: "library" | "camera") => {
+		try {
+			setImageError(undefined);
+			const image = await pickDurableImage(source);
+			if (image) replaceAvatar({ image });
+		} catch (error) {
+			setImageError(error instanceof Error ? error.message : "Impossible de préparer cette image.");
+		}
+	};
 
 	return (
 		<ProfileLayout>
 			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} />
+			<ProfileCard title="Photo de profil" subtitle="Une image carrée, JPEG ou PNG, jusqu’à 8 Mo.">
+				<Pressable
+					testID="replace-avatar"
+					disabled={pending}
+					onPress={chooseAvatar}
+					style={({ pressed }) => [styles.saveButton, pending && styles.saveButtonDisabled, pressed && styles.pressed]}
+				>
+					<Text style={styles.saveText}>{avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}</Text>
+				</Pressable>
+				{avatarUrl ? (
+					<Pressable testID="remove-avatar" disabled={pending} onPress={removeAvatar}>
+						<Text style={styles.removeText}>Supprimer la photo</Text>
+					</Pressable>
+				) : null}
+				{imageError ? <Text accessibilityRole="alert" style={styles.error}>{imageError}</Text> : null}
+			</ProfileCard>
 
 			<ProfileCard
 				title="Informations personnelles"
@@ -115,6 +149,11 @@ const styles = StyleSheet.create({
 	helper: {
 		fontSize: 12,
 		color: palette.textSecondary,
+	},
+	removeText: {
+		color: "#ef4444",
+		fontWeight: "600",
+		textAlign: "center",
 	},
 });
 

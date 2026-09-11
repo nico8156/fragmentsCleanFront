@@ -1,4 +1,4 @@
-import type { ExperiencePage, ExperienceReportReason } from "../typeAction/experience.type";
+import type { ExperiencePage, ExperienceReportReason, LocalImageInput } from "../typeAction/experience.type";
 
 export interface ExperienceGateway {
 	listCoffee(input: { coffeeId: string; cursor?: string; limit?: number; signal: AbortSignal }): Promise<ExperiencePage>;
@@ -8,4 +8,6 @@ export interface ExperienceGateway {
 	publish(input: { commandId: string; experienceId: string; at: string }): Promise<void>;
 	delete(input: { commandId: string; experienceId: string; at: string }): Promise<void>;
 	report(input: { commandId: string; reportId: string; experienceId: string; reason: ExperienceReportReason; details?: string; at: string }): Promise<void>;
+	uploadMedia(input: { commandId: string; mediaId: string; experienceId: string; image: LocalImageInput; at: string }): Promise<void>;
+	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }): Promise<void>;
 }

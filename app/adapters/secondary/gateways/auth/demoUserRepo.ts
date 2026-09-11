@@ -26,6 +26,8 @@ export class DemoUserRepo implements UserRepo {
 	async updateProfile(): Promise<void> {
 		return;
 	}
+	async uploadAvatar(): Promise<void> { return; }
+	async removeAvatar(): Promise<void> { return; }
 	async requestAccountDeletion(): Promise<void> { return; }
     private cache = new Map<string, AppUser>();
 

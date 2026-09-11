@@ -12,8 +12,8 @@ import {
 } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForLike.type";
 import { TicketVerifyCommand, TicketVerifyUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
 import { SavedCoffeeSetCommand, SavedCoffeeSetUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForSavedCoffee.type";
-import { UserProfileUpdateCommand, UserProfileUpdateUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForUserProfile.type";
-import type { ExperienceCreateCommand, ExperienceDeleteCommand, ExperiencePublishCommand, ExperienceReportCommand, ExperienceUndo, ExperienceUpdateCommand } from "./commandForExperience.type";
+import { UserAvatarAttachCommand, UserAvatarRemoveCommand, UserAvatarUndo, UserProfileUpdateCommand, UserProfileUpdateUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForUserProfile.type";
+import type { ExperienceCreateCommand, ExperienceDeleteCommand, ExperienceMediaAttachCommand, ExperienceMediaDeleteCommand, ExperiencePublishCommand, ExperienceReportCommand, ExperienceUndo, ExperienceUpdateCommand } from "./commandForExperience.type";
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };
@@ -36,6 +36,10 @@ export const commandKinds = {
 	ExperiencePublish: "Experience.Publish",
 	ExperienceDelete: "Experience.Delete",
 	ExperienceReport: "Experience.Report",
+	ExperienceMediaAttach: "Experience.Media.Attach",
+	ExperienceMediaDelete: "Experience.Media.Delete",
+	UserAvatarAttach: "User.Avatar.Attach",
+	UserAvatarRemove: "User.Avatar.Remove",
 } as const;
 
 export type CommandKind = typeof commandKinds[keyof typeof commandKinds];
@@ -71,7 +75,11 @@ export type OutboxCommand =
 	| ExperienceUpdateCommand
 	| ExperiencePublishCommand
 	| ExperienceDeleteCommand
-	| ExperienceReportCommand;
+	| ExperienceReportCommand
+	| ExperienceMediaAttachCommand
+	| ExperienceMediaDeleteCommand
+	| UserAvatarAttachCommand
+	| UserAvatarRemoveCommand;
 
 export type OutboxUndo =
 	| LikeAddUndo
@@ -84,6 +92,7 @@ export type OutboxUndo =
 	| SavedCoffeeSetUndo
 	| TicketVerifyUndo
 	| UserProfileUpdateUndo
+	| UserAvatarUndo
 	| ExperienceUndo;
 
 export type OutboxRecord = {
