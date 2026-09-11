@@ -6,7 +6,7 @@
     export class FakeCommentsWlGateway implements CommentsWlGateway {
         // --- observabilité (assertions)
         listCalls: Array<Omit<ListArgs, "signal"> & { abortedAtCall: boolean }> = [];
-        createCalls: Array<{ commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }> = [];
+        createCalls: Array<{ commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string; at: string }> = [];
         updateCalls: Array<{ commandId: string; commentId: string; body: string; editedAt?: string }> = [];
         deleteCalls: Array<{ commandId: string; commentId: string; deletedAt: string }> = [];
 
@@ -63,7 +63,7 @@
             return this.nextListResponse;
         }
 
-        async create(args: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string }): Promise<void> {
+        async create(args: { commandId: string; targetId: string; parentId?: string | null; body: string; tempId?: string; at: string }): Promise<void> {
             this.createCalls.push(args);
             if (this.willFailCreate) throw new Error(this.failMessageCreate);
 
@@ -71,7 +71,7 @@
             // this.ackDispatch?.(someAckAction(...));
         }
 
-        async update(args: { commandId: string; commentId: string; body: string; editedAt?: string }): Promise<void> {
+        async update(args: { commandId: string; commentId: string; body: string; editedAt: string }): Promise<void> {
             this.updateCalls.push(args);
             if (this.willFailUpdate) throw new Error(this.failMessageUpdate);
         }

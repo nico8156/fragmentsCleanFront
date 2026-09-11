@@ -52,11 +52,9 @@ const getNextAttemptAt = (rec: any): number | undefined => {
 };
 
 const isExplicitBusinessRejection = (e: unknown): boolean => {
-	if (isGatewayError(e)) return e.kind === "business";
-
-	const message = String((e as any)?.message ?? e ?? "").toLowerCase();
-	if (message.includes("rejected") || message.includes("business rejection")) return true;
-	return false;
+	return isGatewayError(e)
+		&& e.kind === "business"
+		&& (e.code === "COMMAND_REJECTED" || e.code === "COMMAND_ID_CONFLICT");
 };
 
 export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void) => {
