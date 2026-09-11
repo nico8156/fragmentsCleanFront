@@ -38,6 +38,7 @@ import type { AuthSession } from "@/app/core-logic/contextWL/userWl/typeAction/u
 import type { SyncMetaStorage } from "@/app/core-logic/contextWL/outboxWl/typeAction/syncMeta.types";
 import { outboxTelemetry } from "@/app/core-logic/contextWL/outboxWl/observation/outboxObservability";
 import { logger } from "@/app/core-logic/utils/logger";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 export type ProjectionSyncSessionRef = { current?: AuthSession };
 
@@ -169,6 +170,14 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 					op: opTypes.REFRESH,
 				}) as any,
 			);
+		}
+
+		if (event.projection === "experiences" && event.scope === "coffee" && event.entityId) {
+			dispatch(coffeeExperiencesRetrieval({ coffeeId: event.entityId }) as any);
+		}
+		if (event.projection === "experiences" && event.scope === "user"
+			&& event.entityId === String(selectEffectiveUserId(getState()))) {
+			dispatch(myExperiencesRetrieval() as any);
 		}
 
 		if (event.projection === "blocked-users" && event.scope === "user"

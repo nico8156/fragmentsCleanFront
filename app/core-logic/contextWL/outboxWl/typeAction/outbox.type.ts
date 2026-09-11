@@ -13,6 +13,7 @@ import {
 import { TicketVerifyCommand, TicketVerifyUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForTicket.type";
 import { SavedCoffeeSetCommand, SavedCoffeeSetUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForSavedCoffee.type";
 import { UserProfileUpdateCommand, UserProfileUpdateUndo } from "@/app/core-logic/contextWL/outboxWl/typeAction/commandForUserProfile.type";
+import type { ExperienceCreateCommand, ExperienceDeleteCommand, ExperiencePublishCommand, ExperienceReportCommand, ExperienceUndo, ExperienceUpdateCommand } from "./commandForExperience.type";
 
 export type ISODate = string & { readonly __brand: "ISODate" };
 export type CommandId = string & { readonly __brand: "CommandId" };
@@ -30,6 +31,11 @@ export const commandKinds = {
 	SavedCoffeeSet: "SavedCoffee.Set",
 	TicketVerify: "Ticket.Verify",
 	UserProfileUpdate: "User.Profile.Update",
+	ExperienceCreate: "Experience.Create",
+	ExperienceUpdate: "Experience.Update",
+	ExperiencePublish: "Experience.Publish",
+	ExperienceDelete: "Experience.Delete",
+	ExperienceReport: "Experience.Report",
 } as const;
 
 export type CommandKind = typeof commandKinds[keyof typeof commandKinds];
@@ -60,7 +66,12 @@ export type OutboxCommand =
 	| UserBlockCommand
 	| SavedCoffeeSetCommand
 	| TicketVerifyCommand
-	| UserProfileUpdateCommand;
+	| UserProfileUpdateCommand
+	| ExperienceCreateCommand
+	| ExperienceUpdateCommand
+	| ExperiencePublishCommand
+	| ExperienceDeleteCommand
+	| ExperienceReportCommand;
 
 export type OutboxUndo =
 	| LikeAddUndo
@@ -72,7 +83,8 @@ export type OutboxUndo =
 	| UserBlockUndo
 	| SavedCoffeeSetUndo
 	| TicketVerifyUndo
-	| UserProfileUpdateUndo;
+	| UserProfileUpdateUndo
+	| ExperienceUndo;
 
 export type OutboxRecord = {
 	id: string;

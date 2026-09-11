@@ -34,6 +34,7 @@ import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/
 import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/likeRetrieval";
 import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
+import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -116,6 +117,11 @@ export const runtimeListenerFactory = () => {
 		for (const targetId of selectKnownLikeTargetIds(state)) {
 			api.dispatch(likesRetrieval({ targetId }) as any);
 		}
+
+		for (const coffeeId of Object.keys(state.exState?.byCoffee ?? {})) {
+			api.dispatch(coffeeExperiencesRetrieval({ coffeeId }) as any);
+		}
+		if (state.exState?.mine?.ids?.length) api.dispatch(myExperiencesRetrieval() as any);
 
 		if (state.scState?.ids?.length) {
 			api.dispatch(savedCoffeesRetrieval() as any);

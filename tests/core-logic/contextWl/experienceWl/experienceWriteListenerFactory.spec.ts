@@ -1,0 +1,24 @@
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import { experienceReducer } from "@/app/core-logic/contextWL/experienceWl/reducer/experience.reducer";
+import { uiExperienceCreateRequested } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
+import { experienceWriteListenerFactory } from "@/app/core-logic/contextWL/experienceWl/usecases/write/experienceWriteListenerFactory";
+import { outboxWlReducer } from "@/app/core-logic/contextWL/outboxWl/reducer/outboxWl.reducer";
+
+describe("experienceWriteListenerFactory", () => {
+	it("turns a ticket-free UI intent into optimistic state and a durable command", async () => {
+		let sequence = 0;
+		const listener = experienceWriteListenerFactory({ gateways: {}, helpers: {
+			nowIso: () => "2026-09-11T10:00:00Z", currentUserId: () => "u1",
+			currentUserProfile: () => ({ displayName: "Nicolas" }),
+			newCommandId: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}` as any,
+		} });
+		const store = configureStore({ reducer: combineReducers({ exState: experienceReducer, oState: outboxWlReducer }), middleware: getDefault => getDefault({ serializableCheck: false }).prepend(listener.middleware) });
+		store.dispatch(uiExperienceCreateRequested({ coffeeId: "c1", message: "  Très belle visite  " }));
+		await new Promise(resolve => setTimeout(resolve, 0));
+		const state = store.getState(); const experience = Object.values(state.exState.entities.entities)[0]!;
+		expect(experience).toMatchObject({ coffeeId: "c1", message: "Très belle visite", status: "PUBLISHED", optimistic: true });
+		const record = Object.values(state.oState.byId)[0]!;
+		expect(record.item.command).toMatchObject({ kind: "Experience.Create", experienceId: experience.experienceId, coffeeId: "c1" });
+		expect(record.item.command).not.toHaveProperty("ticketId");
+	});
+});

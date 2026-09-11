@@ -17,6 +17,7 @@ export type DurableReadModelCacheSnapshot = {
 	cfPhotos?: AppStateWl["cfPhotos"];
 	openingHours?: AppStateWl["openingHours"];
 	comments?: AppStateWl["comments"];
+	experiences?: AppStateWl["experiences"];
 	likes?: AppStateWl["likes"];
 	savedCoffees?: AppStateWl["savedCoffees"];
 	tickets?: AppStateWl["tickets"];

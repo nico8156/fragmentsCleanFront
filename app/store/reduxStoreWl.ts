@@ -20,6 +20,7 @@ import {articleWlReducer as arState} from "@/app/core-logic/contextWL/articleWl/
 import {authReducer as aState} from "@/app/core-logic/contextWL/userWl/reducer/user.reducer";
 import {appReducer as appState} from "@/app/core-logic/contextWL/appWl/reducer/app.reducer";
 import { projectionSyncReducer as psState } from "@/app/core-logic/contextWL/projectionSyncWl/reducer/projectionSync.reducer";
+import { experienceReducer as exState } from "@/app/core-logic/contextWL/experienceWl/reducer/experience.reducer";
 
 
 export const initReduxStoreWl = (config: {
@@ -31,6 +32,7 @@ export const initReduxStoreWl = (config: {
 }) => {
     const combined = combineReducers({
             cState,
+            exState,
             oState,
             lState,
             scState,
@@ -51,7 +53,7 @@ export const initReduxStoreWl = (config: {
         let next = combined(state, action);
         if (state && state.aState.session?.userId !== next.aState.session?.userId) {
             const empty = combined(undefined, { type: "@@account/reset" });
-            next = { ...next, cState: empty.cState, lState: empty.lState, scState: empty.scState,
+            next = { ...next, cState: empty.cState, exState: empty.exState, lState: empty.lState, scState: empty.scState,
 				aState: { ...next.aState, currentUser: undefined, profileStatus: "idle", profileError: undefined },
                 tState: empty.tState, enState: empty.enState, oState: empty.oState, psState: empty.psState,
                 lcState: empty.lcState,
