@@ -23,7 +23,7 @@ import { createListenerMiddleware, TypedStartListening } from "@reduxjs/toolkit"
 import { accountGeneration } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 
 const MINIMUM_TOKEN_TTL_MS = 60 * 1000; // 1 minute
-const SIGN_IN_ERROR_MESSAGE = "Connexion Google impossible. Réessaie dans un instant.";
+const SIGN_IN_ERROR_MESSAGE = "Connexion impossible. Réessaie dans un instant.";
 
 type AuthListenerDeps = {
 	gateways: DependenciesWl["gateways"];
@@ -141,7 +141,8 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 				const { authorizationCode, codeVerifier, redirectUri, idToken } = authorization;
 				if (attempt !== epoch) return;
 
-				if (!authorizationCode || !codeVerifier || !redirectUri) {
+				if (!authorizationCode || (profile.provider === "google" && (!codeVerifier || !redirectUri))
+						|| (profile.provider === "apple" && !idToken)) {
 					throw new Error("Incomplete authorization result from provider");
 				}
 
@@ -152,6 +153,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 					codeVerifier,
 					redirectUri,
 					idToken,
+					displayName: profile.displayName,
 					scopes: action.payload.scopes ?? [],
 				});
 

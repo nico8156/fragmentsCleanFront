@@ -1,6 +1,7 @@
 // app/adapters/secondary/gateways/user/HttpUserRepo.ts
 import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import type { AppUser, ISODate } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
 
 type Deps = {
 	baseUrl: string;
@@ -8,15 +9,13 @@ type Deps = {
 };
 
 type MeResponseDto = {
-	userId: string; // UUID string
+	userId: string;
 	displayName?: string;
-	avatarUrl?: string | null; // ✅ NEW (from /auth/me)
-	issuedAt?: string;
-	expiresAt?: string;
-	serverTime?: string;
+	avatarUrl?: string | null;
+	createdAt: string;
+	updatedAt: string;
+	version: number;
 };
-
-const toISO = (s?: string): ISODate => (s ?? new Date().toISOString()) as any;
 
 export class HttpUserRepo implements UserRepo {
 	private readonly baseUrl: string;
@@ -27,12 +26,12 @@ export class HttpUserRepo implements UserRepo {
 		this.getAccessToken = deps.getAccessToken;
 	}
 
-	// NOTE: l’ID est ignoré, car l’API /auth/me dérive l’identité du JWT
+	// The backend derives identity from the JWT; the argument only belongs to the client port.
 	async getById(_id: AppUser["id"]): Promise<AppUser | null> {
 		const token = await this.getAccessToken();
-		if (!token) throw new Error("Not authenticated");
+		if (!token) throw new GatewayError("auth", "Not authenticated");
 
-		const url = `${this.baseUrl}/auth/me`;
+		const url = `${this.baseUrl}/api/users/me`;
 
 		const res = await fetch(url, {
 			method: "GET",
@@ -42,20 +41,15 @@ export class HttpUserRepo implements UserRepo {
 			},
 		});
 
-		// petit log utile (tu l'avais déjà côté app)
-		console.log("[USER REPO] GET", { status: res.status, url });
-
 		if (res.status === 401) return null;
-		if (!res.ok) throw new Error(`GET /auth/me failed (${res.status})`);
+		if (!res.ok) throw await toGatewayErrorFromHttpResponse(res, `GET /api/users/me failed (${res.status})`);
 
 		const dto = (await res.json()) as MeResponseDto;
 
-		const now = toISO(dto.serverTime);
-
 		return {
 			id: dto.userId as any,
-			createdAt: now,
-			updatedAt: now,
+			createdAt: dto.createdAt as ISODate,
+			updatedAt: dto.updatedAt as ISODate,
 			displayName: dto.displayName,
 			avatarUrl: dto.avatarUrl ?? undefined, // ✅ FIX ICI
 			bio: undefined,
@@ -64,8 +58,36 @@ export class HttpUserRepo implements UserRepo {
 			flags: {},
 			preferences: { locale: "fr-FR", theme: "system" } as any,
 			likedCoffeeIds: [],
-			version: 1,
+			version: dto.version,
 		} as AppUser;
 	}
-}
 
+	async updateProfile(input: { commandId: string; displayName: string }): Promise<void> {
+		const token = await this.getAccessToken();
+		if (!token) throw new GatewayError("auth", "Not authenticated");
+		const response = await fetch(`${this.baseUrl}/api/users/me/profile`, {
+			method: "PATCH",
+			headers: {
+				Authorization: `Bearer ${token}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(input),
+		});
+		if (!response.ok) {
+			throw await toGatewayErrorFromHttpResponse(response, `Profile update failed (${response.status})`);
+		}
+	}
+
+	async requestAccountDeletion(input: { commandId: string }): Promise<void> {
+		const token = await this.getAccessToken();
+		if (!token) throw new GatewayError("auth", "Not authenticated");
+		const response = await fetch(`${this.baseUrl}/api/users/me`, {
+			method: "DELETE",
+			headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+			body: JSON.stringify(input),
+		});
+		if (!response.ok) {
+			throw await toGatewayErrorFromHttpResponse(response, `Account deletion failed (${response.status})`);
+		}
+	}
+}

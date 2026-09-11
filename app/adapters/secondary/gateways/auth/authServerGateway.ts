@@ -20,19 +20,22 @@ export const createAuthServerGateway = ({ baseUrl }: AuthServerGatewayDeps): Aut
 		async signInWithProvider(input: {
 			provider: ProviderId;
 			authorizationCode: string;
-			codeVerifier: string;
-			redirectUri: string;
+			codeVerifier?: string;
+			redirectUri?: string;
 			idToken?: string | null;
+			displayName?: string;
 			scopes: string[];
 		}): Promise<{ session: AuthSession; user?: AppUser }> {
-			const { provider, authorizationCode, codeVerifier, redirectUri, scopes } = input;
+			const { provider, authorizationCode, codeVerifier, redirectUri, idToken, displayName, scopes } = input;
 
-			if (provider !== "google") throw new Error(`Unsupported provider: ${provider}`);
-
-			const response = await fetch(`${normalizedBaseUrl}/auth/google/mobile`, {
+			const endpoint = provider === "apple" ? "/auth/apple/mobile" : "/auth/google/mobile";
+			const body = provider === "apple"
+				? { authorizationCode, identityToken: idToken, displayName }
+				: { authorizationCode, codeVerifier, redirectUri };
+			const response = await fetch(`${normalizedBaseUrl}${endpoint}`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ authorizationCode, codeVerifier, redirectUri }),
+				body: JSON.stringify(body),
 			});
 
 			if (!response.ok) {

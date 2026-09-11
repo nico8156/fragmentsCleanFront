@@ -24,7 +24,7 @@ export class FakeAuthServerGateway {
 		return {
 			session: {
 				userId: user.id,
-				provider: "google",
+				provider: input.provider,
 				scopes: ["openid"],
 				establishedAt: Date.now(),
 				tokens: {

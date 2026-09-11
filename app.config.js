@@ -52,6 +52,7 @@ const plugins = [
     },
   ],
   "expo-web-browser",
+  "expo-apple-authentication",
 ];
 
 if (environment !== "production") {
@@ -74,6 +75,7 @@ module.exports = {
     ios: {
       supportsTablet: false,
       bundleIdentifier: "com.nico8156.fragments",
+      usesAppleSignIn: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },

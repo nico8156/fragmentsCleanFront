@@ -2,7 +2,7 @@
 export type UserId = string & { readonly __brand: "UserId" };
 export type IdentityId = string & { readonly __brand: "IdentityId" };
 export type ProviderUserId = string & { readonly __brand: "ProviderUserId" }; // sub Google
-export type ProviderId = "google"; // extensible: "apple" | "github" | ...
+export type ProviderId = "google" | "apple";
 
 // Dates & misc (réutilise tes ISODate)
 export type ISODate = string & { readonly __brand: "ISODate" };
@@ -79,8 +79,8 @@ export interface AuthTokens {
 
 export interface ProviderAuthorizationResult {
     authorizationCode: string;
-    codeVerifier: string;
-    redirectUri: string;
+	codeVerifier?: string;
+	redirectUri?: string;
     idToken?: string;
 }
 
@@ -107,6 +107,11 @@ export interface AuthState {
     error?: string;
     profileStatus?: "idle" | "loading" | "loaded" | "error";
     profileError?: string;
+	profileMutationStatus?: "idle" | "pending" | "saved" | "error";
+	profileMutationError?: string;
+	accountDeletionStatus?: "idle" | "submitting" | "accepted" | "error";
+	accountDeletionError?: string;
+	accountDeletionCommandId?: string;
 }
 
 // Ce que ton serveur renverra (exemples)
