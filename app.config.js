@@ -15,6 +15,17 @@ const googleMobileIosRedirectUri =
     ? undefined
     : "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe:/oauthredirect");
 const supportEmail = process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
+const privacyPolicyUrl = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
+const termsUrl = process.env.EXPO_PUBLIC_TERMS_URL;
+
+const isPublicHttpsUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password && url.hostname !== "localhost";
+  } catch {
+    return false;
+  }
+};
 
 if (environment === "production" && !apiBaseUrl) {
   throw new Error("Missing EXPO_PUBLIC_API_BASE_URL for production build");
@@ -25,6 +36,9 @@ if (environment === "production" && (!googleMobileIosClientId || !googleMobileIo
 }
 if (environment === "production" && !supportEmail) {
   throw new Error("Missing EXPO_PUBLIC_SUPPORT_EMAIL for production build");
+}
+if (environment === "production" && (!isPublicHttpsUrl(privacyPolicyUrl) || !isPublicHttpsUrl(termsUrl))) {
+  throw new Error("Production requires HTTPS EXPO_PUBLIC_PRIVACY_POLICY_URL and EXPO_PUBLIC_TERMS_URL");
 }
 
 const plugins = [
@@ -109,6 +123,8 @@ module.exports = {
       googleMobileIosClientId,
       googleMobileIosRedirectUri,
       supportEmail,
+      privacyPolicyUrl,
+      termsUrl,
     },
   },
 };

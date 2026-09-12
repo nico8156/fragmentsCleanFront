@@ -5,6 +5,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
+import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/ReleaseLegalLinks";
 
 export function LoginScreen() {
 	const { signInWithGoogle, signInWithApple, isLoading, error } = useAuthUser();
@@ -68,17 +69,11 @@ export function LoginScreen() {
 					</Text>
 				) : null}
 
-				{/* Alternative optionnelle */}
-				<Pressable style={styles.skipButton}>
-					<Text style={styles.skipText}>
-						Continuer sans compte
-					</Text>
-				</Pressable>
-
 				{/* Mentions discrètes */}
 				<Text style={styles.legal}>
 					En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité.
 				</Text>
+				<ReleaseLegalLinks color="#d4d4d4" />
 			</View>
 		</SafeAreaView>
 	);

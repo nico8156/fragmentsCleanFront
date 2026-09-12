@@ -5,7 +5,6 @@ const forbiddenIosKeys = [
   "NSLocationAlwaysAndWhenInUseUsageDescription",
   "NSLocationAlwaysUsageDescription",
   "NSMicrophoneUsageDescription",
-  "NSPhotoLibraryUsageDescription",
   "UIBackgroundModes",
 ];
 

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { useEffect, useMemo } from "react";
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import Constants from "expo-constants";
 
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
+import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/ReleaseLegalLinks";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
@@ -27,7 +28,6 @@ export function AppSettingsScreen() {
 	} =
 		useAuthUser();
 
-	const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
 	const statusLabel = useMemo(
 		() => (isSignedIn ? "Connecté" : "Hors connexion"),
@@ -56,20 +56,6 @@ export function AppSettingsScreen() {
 			<ProfileCard title="Préférences">
 				<View style={styles.row}>
 					<View>
-						<Text style={styles.rowTitle}>Notifications</Text>
-						<Text style={styles.rowSubtitle}>
-							Reste informé des nouvelles offres
-						</Text>
-					</View>
-
-					<Switch
-						value={notificationsEnabled}
-						onValueChange={setNotificationsEnabled}
-					/>
-				</View>
-
-				<View style={styles.row}>
-					<View>
 						<Text style={styles.rowTitle}>Statut</Text>
 						<Text style={styles.rowSubtitle}>{statusLabel}</Text>
 					</View>
@@ -87,6 +73,7 @@ export function AppSettingsScreen() {
 				{supportEmail ? <Pressable accessibilityRole="link" onPress={()=>Linking.openURL(`mailto:${supportEmail}`)} style={styles.supportLink}>
 					<Text style={styles.link}>Contacter le support</Text>
 				</Pressable> : null}
+				<ReleaseLegalLinks />
 			</ProfileCard>
 
 			<View style={styles.actions}>
