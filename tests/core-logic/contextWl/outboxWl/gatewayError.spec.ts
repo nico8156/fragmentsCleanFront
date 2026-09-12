@@ -42,6 +42,18 @@ describe("gatewayError command rejection contract", () => {
 		expect(error).toMatchObject({ kind: "server", status: 500 });
 	});
 
+	it("keeps a release rate limit retryable instead of rolling back the intention", async () => {
+		const response = {
+			status: 429,
+			json: async () => ({ error: "RATE_LIMITED", reason: "Too many requests" }),
+		} as Response;
+
+		await expect(toGatewayErrorFromHttpResponse(response, "Réessaie plus tard")).resolves.toMatchObject({
+			kind: "server",
+			status: 429,
+		});
+	});
+
 	it("does not trust an untyped 422 payload", async () => {
 		const response = {
 			status: 422,
