@@ -14,6 +14,7 @@
     "test:smoke:reads": "maestro test .maestro/smoke-read-models.yaml",
     "test:smoke:offline": "maestro test .maestro/smoke-offline-cache.yaml",
     "native:release:check": "node scripts/check-native-release-config.mjs",
+    "test:release:config": "node --test scripts/check-native-release-config.test.mjs scripts/release-public-config.test.cjs",
     "redux:map": "node scripts/generate-redux-action-map.js",
     "redux:map:check": "node scripts/generate-redux-action-map.js --check",
     "build:dev": "eas build --profile development",

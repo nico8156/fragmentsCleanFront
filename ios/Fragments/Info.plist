@@ -55,7 +55,9 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Fragments utilise l’appareil photo pour lire le texte de vos tickets.</string>
+    <string>Fragments utilise l’appareil photo pour lire tes tickets et ajouter tes photos.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Fragments accède aux photos que tu choisis pour ton profil et tes expériences.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Fragments utilise votre position uniquement lorsque vous explorez les cafés autour de vous.</string>
     <key>NSUserActivityTypes</key>
