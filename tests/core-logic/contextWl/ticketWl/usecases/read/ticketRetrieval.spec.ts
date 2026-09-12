@@ -146,7 +146,7 @@ describe("Ticket retrieval", () => {
 
         await store.dispatch(ticketRetrieval({ ticketId: "tk_technical" }) as any);
 
-        expect(store.getState().tState.byId["tk_technical" as TicketId].status).toBe("ANALYZING");
+        expect(store.getState().tState.byId["tk_technical" as TicketId].status).toBe("FAILED");
     });
 
     it("removes an administratively deleted ticket from the private cache", async () => {

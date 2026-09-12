@@ -10,7 +10,7 @@ export type CommandId = string & { readonly __brand: "CommandId" };
 export type CurrencyCode = "EUR" | "USD" | "GBP" | "CHF" | string;
 
 // Statuts côté client (miroir du serveur)
-export type TicketStatus = "CAPTURED" | "ANALYZING" | "CONFIRMED" | "REJECTED";
+export type TicketStatus = "CAPTURED" | "ANALYZING" | "FAILED" | "CONFIRMED" | "REJECTED";
 
 export interface TicketLineItem {
     label: string;

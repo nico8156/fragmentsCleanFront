@@ -115,7 +115,7 @@ export function TicketsScreen() {
 
 			{ticket.rejectionReason && (
 				<Text style={styles.rejection}>
-					Raison : {ticket.rejectionReason}
+					{ticket.status === "FAILED" ? "Détail technique" : "Raison"} : {ticket.rejectionReason}
 				</Text>
 			)}
 		</View>
@@ -191,6 +191,9 @@ export function TicketsScreen() {
 							<Text style={styles.summaryMetric}>{summary.pendingCount} en cours</Text>
 							{summary.rejectedCount > 0 ? (
 								<Text style={styles.summaryMetric}>{summary.rejectedCount} refusés</Text>
+							) : null}
+							{summary.failedCount > 0 ? (
+								<Text style={styles.summaryMetric}>{summary.failedCount} à relancer</Text>
 							) : null}
 						</View>
 
