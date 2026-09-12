@@ -18,12 +18,12 @@ const ActionButtonsWrapper = (props:Props) => {
     };
   return(
       <View style={styles.buttonContainer}>
-          <Pressable onPress={toggleViewMode}>
+          <Pressable onPress={toggleViewMode} accessibilityRole="button" accessibilityLabel="Afficher la liste des cafés">
               <View style={styles.buttonAppearance}>
                 <SymbolView name={'list.bullet.rectangle'} size={28} tintColor={palette.accent} />
               </View>
           </Pressable>
-          <Pressable onPress={openScanModal}>
+          <Pressable onPress={openScanModal} accessibilityRole="button" accessibilityLabel="Scanner un ticket">
               <View style={styles.buttonAppearance}>
                 <SymbolView name={'barcode.viewfinder'} size={28} tintColor={palette.accent} />
               </View>

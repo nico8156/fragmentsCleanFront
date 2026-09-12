@@ -47,13 +47,15 @@ export function EditProfileScreen() {
 				<Pressable
 					testID="replace-avatar"
 					disabled={pending}
+					accessibilityRole="button"
+					accessibilityState={{ disabled: pending, busy: pending }}
 					onPress={chooseAvatar}
 					style={({ pressed }) => [styles.saveButton, pending && styles.saveButtonDisabled, pressed && styles.pressed]}
 				>
 					<Text style={styles.saveText}>{avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}</Text>
 				</Pressable>
 				{avatarUrl ? (
-					<Pressable testID="remove-avatar" disabled={pending} onPress={removeAvatar}>
+					<Pressable testID="remove-avatar" disabled={pending} onPress={removeAvatar} accessibilityRole="button" accessibilityState={{ disabled: pending }}>
 						<Text style={styles.removeText}>Supprimer la photo</Text>
 					</Pressable>
 				) : null}
@@ -74,6 +76,7 @@ export function EditProfileScreen() {
 						maxLength={50}
 						autoCapitalize="words"
 						returnKeyType="done"
+						accessibilityLabel="Nom affiché"
 						style={styles.input}
 					/>
 				</View>
@@ -81,6 +84,8 @@ export function EditProfileScreen() {
 				<Pressable
 					testID="save-display-name"
 					disabled={pending || unchanged}
+					accessibilityRole="button"
+					accessibilityState={{ disabled: pending || unchanged, busy: pending }}
 					onPress={() => updateDisplayName(draftName)}
 					style={({ pressed }) => [
 						styles.saveButton,

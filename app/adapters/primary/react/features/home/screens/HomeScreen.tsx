@@ -132,8 +132,9 @@ export function HomeScreen() {
 							<Animated.View
 								style={[styles.iconLayer, { opacity: headerProgress }]}
 								pointerEvents={showFloating ? "none" : "auto"}
+								accessibilityElementsHidden={showFloating}
 							>
-								<Pressable onPress={openSearch} style={styles.headerIcon} accessibilityRole="button">
+								<Pressable onPress={openSearch} style={styles.headerIcon} accessibilityRole="button" accessibilityLabel="Rechercher">
 									<Ionicons name="search" size={21} color={palette.textPrimary} />
 								</Pressable>
 							</Animated.View>
@@ -141,8 +142,9 @@ export function HomeScreen() {
 							<Animated.View
 								style={[styles.iconLayer, { opacity: floatingOpacity }]}
 								pointerEvents={showFloating ? "auto" : "none"}
+								accessibilityElementsHidden={!showFloating}
 							>
-								<Pressable onPress={openSearch} style={styles.roundButton} accessibilityRole="button">
+								<Pressable onPress={openSearch} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Rechercher">
 									<Ionicons name="search" size={22} color={palette.textPrimary} />
 								</Pressable>
 							</Animated.View>
@@ -158,8 +160,9 @@ export function HomeScreen() {
 							<Animated.View
 								style={[styles.iconLayer, { opacity: headerProgress }]}
 								pointerEvents={showFloating ? "none" : "auto"}
+								accessibilityElementsHidden={showFloating}
 							>
-								<Pressable onPress={openScanModal} style={styles.headerIcon} accessibilityRole="button">
+								<Pressable onPress={openScanModal} style={styles.headerIcon} accessibilityRole="button" accessibilityLabel="Scanner un ticket">
 									<MaterialIcons name="document-scanner" size={21} color={palette.textPrimary} />
 								</Pressable>
 							</Animated.View>
@@ -167,8 +170,9 @@ export function HomeScreen() {
 							<Animated.View
 								style={[styles.iconLayer, { opacity: floatingOpacity }]}
 								pointerEvents={showFloating ? "auto" : "none"}
+								accessibilityElementsHidden={!showFloating}
 							>
-								<Pressable onPress={openScanModal} style={styles.roundButton} accessibilityRole="button">
+								<Pressable onPress={openScanModal} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Scanner un ticket">
 									<MaterialIcons name="document-scanner" size={22} color={palette.textPrimary} />
 								</Pressable>
 							</Animated.View>

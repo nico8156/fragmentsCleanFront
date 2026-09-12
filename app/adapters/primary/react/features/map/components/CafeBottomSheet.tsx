@@ -145,7 +145,7 @@ function CafeSheetContent({ coffeeId, onRequestClose }: ContentProps) {
                         <Text style={styles.subtitleMuted}>{coffee.address.city}</Text>
                     ) : null}
                 </View>
-                <Pressable onPress={onRequestClose} style={styles.closeButton} accessibilityRole="button">
+                <Pressable onPress={onRequestClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Fermer la fiche du café">
                     <SymbolView name="xmark.circle.fill" size={24} tintColor="rgba(255,255,255,0.28)" />
                 </Pressable>
             </View>

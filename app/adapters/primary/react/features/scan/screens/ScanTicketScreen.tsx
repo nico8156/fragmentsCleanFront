@@ -38,6 +38,8 @@ export function ScanTicketScreen() {
 			<View style={styles.card}>
 				<Pressable
 					onPress={onPickImage}
+					accessibilityRole="button"
+					accessibilityLabel={hasImage ? "Reprendre la photo du ticket" : "Prendre une photo du ticket"}
 					style={({ pressed }) => [
 						styles.captureButton,
 						pressed && styles.pressed,
@@ -49,7 +51,7 @@ export function ScanTicketScreen() {
 				</Pressable>
 
 				{isProcessing && (
-					<View style={styles.processing}>
+					<View style={styles.processing} accessibilityLiveRegion="polite">
 						<ActivityIndicator size="small" color={palette.accent_1} />
 						<Text style={styles.processingText}>
 							Vérification de la photo…
@@ -57,11 +59,11 @@ export function ScanTicketScreen() {
 					</View>
 				)}
 
-				{error && <Text style={styles.error}>{error}</Text>}
+				{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
 
 				{imageUri && (
 					<View style={styles.previewBlock}>
-						<Image source={{ uri: imageUri }} style={styles.preview} />
+						<Image source={{ uri: imageUri }} style={styles.preview} accessibilityLabel="Aperçu du ticket" />
 
 						{!isProcessing && (
 							<View style={styles.statusRow}>
@@ -91,6 +93,9 @@ export function ScanTicketScreen() {
 			<Pressable
 				onPress={onSubmit}
 				disabled={!canSubmit}
+				accessibilityRole="button"
+				accessibilityState={{ disabled: !canSubmit, busy: isProcessing }}
+				accessibilityLabel="Envoyer le ticket"
 				style={({ pressed }) => [
 					styles.submitButton,
 					!canSubmit && styles.submitButtonDisabled,

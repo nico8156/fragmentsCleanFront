@@ -16,7 +16,13 @@ const LocalisationButton = (props:Props) => {
 
     return (
         <View style={[styles.container, isFollowing ? styles.following : styles.idle]}>
-            <Pressable onPress={localizeMe} hitSlop={8}>
+            <Pressable
+                onPress={localizeMe}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={isFollowing ? "Recentrer sur ma position, suivi actif" : "Recentrer sur ma position"}
+                accessibilityState={{ selected: Boolean(isFollowing) }}
+            >
                 <SymbolView name={name} size={size} tintColor={color}/>
             </Pressable>
         </View>
