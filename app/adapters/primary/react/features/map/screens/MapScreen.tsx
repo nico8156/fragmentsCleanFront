@@ -130,6 +130,7 @@ export function MapScreen() {
 					<Marker
 						key={`cluster-${item.properties.cluster_id}`}
 						coordinate={{ latitude: lat, longitude: lng }}
+						title={`${count} cafés dans cette zone`}
 						onPress={handleClusterPress}
 					>
 						<ClusterBubble count={count} />
@@ -164,6 +165,7 @@ export function MapScreen() {
 						<MapView
 							ref={mapRef}
 							style={StyleSheet.absoluteFill}
+							accessibilityLabel="Carte des cafés"
 							showsMyLocationButton={false}
 							initialRegion={initialRegion}
 							showsUserLocation

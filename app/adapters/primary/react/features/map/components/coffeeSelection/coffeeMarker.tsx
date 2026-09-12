@@ -28,6 +28,8 @@ function CoffeeMarker(props: Props) {
     return (
         <Marker
             coordinate={coordinate}
+            title={coffee?.name ?? "Café"}
+            description={isOpen === undefined ? "Statut inconnu" : isOpen ? "Ouvert" : "Fermé"}
             anchor={{ x: 0.5, y: 1 }}
             tracksViewChanges={false}
             onPress={handlePress}
