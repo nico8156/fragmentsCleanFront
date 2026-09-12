@@ -29,6 +29,7 @@ import { useBlurOverlay } from "@/app/adapters/primary/react/features/map/hook/u
 import { useClusteredCoffeeMap } from "@/app/adapters/primary/react/features/map/hook/useClusteredCoffeeMap";
 import { useCoffeePreviewSheet } from "@/app/adapters/primary/react/features/map/hook/useCoffeePreviewSheet";
 import { useFollowUserOnMap } from "@/app/adapters/primary/react/features/map/hook/useFollowUserOnMap";
+import { indexCoffeeMarkers } from "@/app/adapters/primary/react/features/map/coffeeMarkerIndex";
 
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -45,6 +46,7 @@ export function MapScreen() {
 
 	// --- Data
 	const { coffees } = useCafeForMarkers();
+	const coffeesById = useMemo(() => indexCoffeeMarkers(coffees), [coffees]);
 	const { coords, refresh, permission, status } = useUserLocationFromStore();
 	const {
 		mapRef,
@@ -85,7 +87,7 @@ export function MapScreen() {
 	const { text: distanceText } = useDistanceToPoint(
 		coffee?.location ? { lat: coffee.location.lat, lng: coffee.location.lon } : undefined,
 	);
-	const selectedMarker = coffees.find((item) => String(item.id) === String(selectedCoffeeId));
+	const selectedMarker = selectedCoffeeId ? coffeesById.get(String(selectedCoffeeId)) : undefined;
 	const isSelectedCoffeeLoading = Boolean(selectedCoffeeId && !coffee);
 	const openDirections = useCallback(() => {
 		if (!coffee?.location) return;
@@ -139,7 +141,7 @@ export function MapScreen() {
 			}
 
 			const coffeeId = item.properties.id as string;
-			const coffeeItem = coffees.find((c) => c.id === coffeeId);
+			const coffeeItem = coffeesById.get(coffeeId);
 			if (!coffeeItem) return null;
 
 			return (
@@ -152,7 +154,7 @@ export function MapScreen() {
 				/>
 			);
 		},
-		[coffees, zoomLevel, openCoffeePreview, mapRef],
+		[coffeesById, zoomLevel, openCoffeePreview, mapRef],
 	);
 
 	return (
