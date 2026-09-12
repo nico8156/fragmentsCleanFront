@@ -5,6 +5,7 @@ import { authSessionLoaded, authSignedOut } from "@/app/core-logic/contextWL/use
 import { ticketOptimisticCreated, ticketRetrieved } from "@/app/core-logic/contextWL/ticketWl/reducer/ticketWl.reducer";
 import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
+import { coffeeExperiencesReceived, experienceOptimisticReported } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 import { createAction } from "@reduxjs/toolkit";
 
 const flush = () => new Promise<void>(resolve => setImmediate(resolve));
@@ -64,6 +65,29 @@ describe("durable per-account state", () => {
     login(store, "B"); await flush();
     expect(store.getState().oState.byId).toEqual({});
     expect(outbox.values.get("legacy")).toEqual({ byId: { old: { secret: true } } });
+  });
+
+  it("restores cached experience visibility and personal reports only for their owner", async () => {
+    const { store, outbox, cache } = setup();
+    login(store, "A"); await flush();
+    store.dispatch(coffeeExperiencesReceived({ coffeeId: "coffee-1", page: { items: [{
+      experienceId: "experience-1", userId: "author-1", coffeeId: "coffee-1",
+      authorName: "Auteur", message: "Expérience en cache", status: "PUBLISHED",
+      moderationStatus: "VISIBLE", createdAt: "2026-09-12T08:00:00Z",
+      updatedAt: "2026-09-12T08:00:00Z", version: 1,
+    }], nextCursor: null } }));
+    store.dispatch(experienceOptimisticReported({ experienceId: "experience-1" }));
+    await flush();
+
+    const restartedA = setup(outbox, cache).store;
+    login(restartedA, "A"); await flush();
+    expect(restartedA.getState().exState.entities.entities["experience-1"]?.message).toBe("Expérience en cache");
+    expect(restartedA.getState().exState.reportedIds["experience-1"]).toBe(true);
+
+    const restartedB = setup(outbox, cache).store;
+    login(restartedB, "B"); await flush();
+    expect(restartedB.getState().exState.entities.entities["experience-1"]).toBeUndefined();
+    expect(restartedB.getState().exState.reportedIds).toEqual({});
   });
 
   it("ignores a late A hydration after B has loaded", async () => {

@@ -14,7 +14,7 @@ import { authSessionLoaded, authSignedOut } from "@/app/core-logic/contextWL/use
 export const accountStorageMiddleware = (deps: {
   outbox: OutboxStorageGateway;
   cache: ReadModelCacheGateway;
-}): Middleware<{}, RootStateWl> => api => {
+}): Middleware<object, RootStateWl> => api => {
   const writes = new Map<string, Promise<void>>();
   const retained = new Map<string, RootStateWl>();
   let restoreAttempt = 0;
@@ -66,7 +66,7 @@ export const accountStorageMiddleware = (deps: {
     }
   };
   const changed = (before: RootStateWl, after: RootStateWl) =>
-    (["oState", "tState", "cState", "lState", "scState", "enState", "cfState", "pState", "ohState", "arState"] as const)
+    (["oState", "tState", "cState", "exState", "lState", "scState", "enState", "cfState", "pState", "ohState", "arState"] as const)
       .some(key => before[key] !== after[key]);
   return next => action => {
     const before = api.getState();
