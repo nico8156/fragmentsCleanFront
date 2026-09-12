@@ -10,6 +10,7 @@ import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
 export type TicketHistoryItemVM = {
     id: string;
+    status: TicketAggregate["status"];
     merchantName: string;
     amountLabel?: string;
     dateLabel: string;
@@ -27,11 +28,13 @@ export type TicketHistorySummaryVM = {
     confirmedCount: number;
     pendingCount: number;
     rejectedCount: number;
+    failedCount: number;
 };
 
 const statusCopy: Record<TicketAggregate["status"], { label: string; tone: TicketHistoryItemVM["statusTone"] }> = {
     CAPTURED: { label: "Capturé", tone: "pending" },
     ANALYZING: { label: "Analyse en cours", tone: "pending" },
+    FAILED: { label: "Analyse interrompue", tone: "error" },
     CONFIRMED: { label: "Validé", tone: "success" },
     REJECTED: { label: "Refusé", tone: "error" },
 };
@@ -59,7 +62,7 @@ const formatOptionalDate = (iso?: string) => {
     return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-const toVM = (
+export const toTicketHistoryItemVM = (
     ticket: TicketAggregate,
     outboxStatusByTicketId: Record<string, (typeof statusTypes)[keyof typeof statusTypes]>,
 ): TicketHistoryItemVM => {
@@ -71,6 +74,7 @@ const toVM = (
         : "success";
     return {
         id: ticket.ticketId,
+        status: ticket.status,
         merchantName: ticket.merchantName ?? "Ticket scanné",
         amountLabel: formatAmount(ticket.amountCents, ticket.currency),
         dateLabel: formatOptionalDate(ticket.ticketDate) ?? formatOptionalDate(ticket.updatedAt) ?? "Date inconnue",
@@ -83,6 +87,14 @@ const toVM = (
     };
 };
 
+export const summarizeTicketHistory = (items: TicketHistoryItemVM[]): TicketHistorySummaryVM => ({
+    totalCount: items.length,
+    confirmedCount: items.filter((item) => item.statusTone === "success").length,
+    pendingCount: items.filter((item) => item.statusTone === "pending").length,
+    rejectedCount: items.filter((item) => item.status === "REJECTED").length,
+    failedCount: items.filter((item) => item.status === "FAILED").length,
+});
+
 export function useTicketsHistory() {
     const dispatch = useDispatch<AppDispatchWl>();
     const tickets = useSelector(selectTicketHistory);
@@ -94,21 +106,13 @@ export function useTicketsHistory() {
     }, [dispatch]);
 
     const items = useMemo(
-        () => tickets.map((ticket) => toVM(ticket, outboxStatusByTicketId)),
+        () => tickets.map((ticket) => toTicketHistoryItemVM(ticket, outboxStatusByTicketId)),
         [tickets, outboxStatusByTicketId],
     );
 
     const recentItems = useMemo(() => items.slice(0, 3), [items]);
     const archivedItems = useMemo(() => items.slice(3), [items]);
-    const summary = useMemo<TicketHistorySummaryVM>(
-        () => ({
-            totalCount: items.length,
-            confirmedCount: items.filter((item) => item.statusTone === "success").length,
-            pendingCount: items.filter((item) => item.statusTone === "pending").length,
-            rejectedCount: items.filter((item) => item.statusTone === "error").length,
-        }),
-        [items],
-    );
+    const summary = useMemo(() => summarizeTicketHistory(items), [items]);
 
     return {
         items,

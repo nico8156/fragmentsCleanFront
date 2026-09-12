@@ -11,6 +11,7 @@ export const toTicketStatus = (status: string, outcome?: string | null): TicketS
     const normalizedOutcome = outcome?.toUpperCase();
 
     if (normalizedOutcome === "APPROVED" || normalizedOutcome === "CONFIRMED") return "CONFIRMED";
+    if (normalizedOutcome === "FAILED_FINAL" || normalizedStatus === "FAILED") return "FAILED";
     if (
         normalizedOutcome === "REJECTED" ||
         normalizedStatus === "REJECTED"
