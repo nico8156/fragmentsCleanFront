@@ -6,15 +6,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/ReleaseLegalLinks";
+import { hasAppleButtonView } from "../appleButtonAvailability";
 
 export function LoginScreen() {
 	const { signInWithGoogle, signInWithApple, isLoading, error } = useAuthUser();
 	const [appleAvailable, setAppleAvailable] = useState(false);
 	useEffect(() => {
 		let mounted = true;
-		// Match Expo SDK 54's view registration: OS support alone is insufficient
-		// in an older development binary that does not export the native button.
-		const registered = NativeModules.NativeUnimoduleProxy?.viewManagersMetadata?.ExpoAppleAuthentication;
+		const expoRuntime = (globalThis as unknown as { expo?: { getViewConfig?: (name: string) => unknown } }).expo;
+		const registered = hasAppleButtonView({
+			getViewConfig: expoRuntime?.getViewConfig?.bind(expoRuntime),
+			legacyView: NativeModules.NativeUnimoduleProxy?.viewManagersMetadata?.ExpoAppleAuthentication,
+		});
 		if (Platform.OS === "ios" && registered) {
 			void AppleAuthentication.isAvailableAsync().then(available => {
 				if (mounted) setAppleAvailable(available);

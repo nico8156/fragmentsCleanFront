@@ -1,6 +1,11 @@
 import { buildMyExperienceCardViewModel } from "@/app/adapters/secondary/viewModel/myExperienceCardViewModel";
 
 describe("myExperienceCardViewModel", () => {
+	it("does not announce a fully synchronized publication while its photo is pending", () => {
+		const view = buildMyExperienceCardViewModel({ status: "PUBLISHED", optimistic: false, media: [{ mediaId: "m", localUri: "file:///photo.jpg", uploadStatus: "QUEUED" }] } as any);
+		expect(view.statusTone).toBe("pending");
+		expect(view.statusLabel).toBe("Synchronisation…");
+	});
 	it("keeps a long coffee name independent from its synchronization badge", () => {
 		const result = buildMyExperienceCardViewModel({
 			experienceId: "experience-1",

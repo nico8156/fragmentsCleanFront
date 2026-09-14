@@ -119,3 +119,21 @@ Durability is also non-negotiable: native production wiring requires MMKV for
 the outbox, read-model cache, and Projection Sync cursor. It must fail fast if
 MMKV is unavailable; falling back to in-memory storage would silently lose
 offline commands after a restart.
+# Experience ordering and deletion (2026-09-14)
+
+Commands for one experience are sent in durable enqueue order. A queued retry or
+an awaiting-ACK predecessor blocks later commands for that experience until its
+canonical verdict; unrelated experiences remain eligible. Exception: after the
+create is confirmed, a requested delete takes priority over edits and media.
+Only after the delete is canonically APPLIED are obsolete edits, uploads and
+publications removed, without rollback. A failed upload cannot prevent deletion.
+This is supersession by an explicit terminal user intent, not rejection on a
+network error. Local files are not purged by this queue operation.
+Equal enqueue times
+retain the persisted record insertion order. The watchdog also wakes eligible
+queued records on its existing runtime tick, even without an awaiting ACK.
+
+An optimistic DELETED experience is a local tombstone. Read snapshots and ACKs
+for earlier commands cannot resurrect it. Only an explicit rejection of the
+delete restores its undo snapshot; earlier command rollbacks preserve deletion.
+Network errors continue to retain both optimistic state and durable commands.

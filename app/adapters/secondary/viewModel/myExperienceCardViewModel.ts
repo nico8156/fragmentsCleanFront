@@ -17,7 +17,7 @@ export const buildMyExperienceCardViewModel = (
 	if (item.moderationStatus === "HIDDEN") {
 		statusLabel = "Masquée";
 		statusTone = "hidden";
-	} else if (item.optimistic) {
+	} else if (item.optimistic || item.media?.some(media => media.uploadStatus)) {
 		statusLabel = "Synchronisation…";
 		statusTone = "pending";
 	} else if (item.status === "DRAFT") {

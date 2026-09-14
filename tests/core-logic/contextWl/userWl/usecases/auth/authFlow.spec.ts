@@ -21,13 +21,16 @@ const createTestStore = (deps: any) => {
 };
 
 describe("auth flow", () => {
-	it("reloads the product avatar after sign-in even when OAuth supplies an older profile", async () => {
+	it.each(["google", "apple"] as const)("reloads the product avatar after %s sign-in even when OAuth supplies an older profile", async provider => {
 		const user = { ...makeDemoUser(), avatarUrl: "https://images.test/latest.jpg", version: 5 };
 		const server = new FakeAuthServerGateway();
-		server.refreshedUser = { ...user, avatarUrl: "https://images.test/oauth.jpg", version: 0 };
-		const deps = { gateways: { auth: { oauth: new FakeOAuthGateway(), secureStore: new FakeAuthSecureStore(), userRepo: new FakeUserRepo([user]), server } }, helpers: {} };
+		server.refreshedUser = { ...user, avatarUrl: provider === "apple" ? undefined : "https://images.test/oauth.jpg", version: 0 };
+		const oauth = new FakeOAuthGateway();
+		oauth.profile.provider = provider;
+		oauth.authorization.idToken = "provider-identity-token";
+		const deps = { gateways: { auth: { oauth, secureStore: new FakeAuthSecureStore(), userRepo: new FakeUserRepo([user]), server } }, helpers: {} };
 		const store = createTestStore(deps);
-		store.dispatch<any>(signInWithProvider({ provider: "google" }));
+		store.dispatch<any>(signInWithProvider({ provider }));
 		await flush();
 		expect(store.getState().aState.currentUser?.avatarUrl).toBe(user.avatarUrl);
 	});

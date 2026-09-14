@@ -272,3 +272,79 @@ Validation : suite complète finale de 86 suites / 322 tests verte. TypeScript, 
 carte Redux vérifiés. Recette iPhone restante : reconnexion → dernier avatar,
 reprise des commandes conservées → photo confirmée, réouverture d'un article
 après expiration des liens, bouton Apple sur nouveau client natif et TestFlight.
+
+## Suppression pendant synchronisation — captures de 14:28 à 14:30
+
+Les captures montrent un badge tronqué, une expérience « Publiée » avec photo
+encore en attente, un aperçu vide dans la fiche café et une barre d'actions
+blanche sur fond sombre. La consultation filtrée des logs staging sur 90 minutes
+n'a montré que des déconnexions SSE (`Broken pipe`), sans preuve de rejet de
+suppression. Il ne faut pas attribuer ces déconnexions à un refus métier.
+
+Trois problèmes mobiles sont corrigés et reproduits par tests :
+
+- Une suppression locale pouvait être écrasée par une projection arrivée en
+  retard, notamment après l'ACK d'une commande antérieure. Le marqueur DELETED
+  persiste ; seul le rollback explicite de la suppression peut restaurer l'objet.
+  Le rejet d'une ancienne modification ou d'un upload ne le restaure pas.
+- Une commande reprogrammée après erreur réseau ne recevait pas de réveil à son
+  échéance s'il n'y avait aucun ACK à vérifier. Le watchdog existant relance aussi
+  les commandes queued éligibles, sous ses gardes session/connexion/boot.
+- L'upload, la publication ou la suppression pouvaient dépasser la création
+  reprogrammée. Les commandes d'une même expérience respectent désormais leur
+  ordre d'enregistrement jusqu'au verdict canonique du prédécesseur. Une autre
+  expérience peut continuer indépendamment.
+
+Les tests verticaux fake-first couvrent création avec photo → erreur réseau →
+reprise par ticks runtime → suppression → ACKs canoniques → outbox vide, sans
+socket ni nouvelle action utilisateur. Deux cas sont couverts : suppression
+avant la création confirmée et après échec d'upload. Après confirmation de la
+création, la suppression passe avant les médias/éditions. Seul son statut APPLIED
+permet de retirer les commandes devenues obsolètes, sans rollback ni purge des
+fichiers locaux. Un upload impossible ne bloque donc plus la suppression. Cela ne
+remplace pas la recette du binaire et du backend sur appareil.
+
+Présentation : badge sous le nom du café, texte non tronqué ; tonalité pending
+tant qu'un média attend ; aperçu photo partagé entre profil et fiche café,
+hauteur de 176 points, message explicite en cas d'échec de lecture ; barre
+d'actions accordée au thème sombre. Le placeholder ne répare pas un fichier
+local réellement absent : cet éventuel cas reste à diagnostiquer sur appareil.
+
+Validation finale : 87 suites / 325 tests verts, TypeScript et ESLint ciblé verts.
+Carte Redux régénérée sans différence. FlowAtlas retrouve le listener depuis
+`uiExperienceDeleteRequested` ; contexte borné explicitement incomplet à
+3 000 octets, complété par lecture du reducer, de l'outbox et du watchdog.
+Aucune suppression manuelle de données, aucun déploiement backend/AWS.
+Correctif JavaScript uniquement : recharger le client de développement suffit.
+
+Recette restante : supprimer une expérience synchronisée puis une expérience
+avec photo encore en attente ; parcourir accueil/profil/café pendant les ACKs ;
+vérifier qu'elle ne réapparaît pas, puis redémarrer l'app. Tester également une
+perte/reprise réseau et contrôler le rendu des badges et aperçus sur petit écran.
+
+### Complément Apple pendant cette passe
+
+Le premier garde-fou du bouton dépendait uniquement des métadonnées natives
+legacy et pouvait donc masquer une vue disponible. Il utilise maintenant en
+priorité `expo.getViewConfig`, comme l'adaptateur natif Expo SDK 54 installé,
+avec repli legacy uniquement si cette API est absente. Trois tests couvrent vue
+JSI présente sans legacy, vue absente malgré ancien metadata et fallback legacy.
+Si le binaire ne contient réellement pas le composant, un build reste nécessaire.
+L'identité exacte du client utilisé par l'utilisateur reste à confirmer.
+
+Avatar Apple : parcours identique à Google après authentification. Vérification
+de `useAuthUser.replaceAvatar`, `profileUpdateListenerFactory`, `HttpUserRepo`,
+`WriteAvatarController` et `ConfirmAvatarCommandHandler`. Le backend autorise par
+JWT Fragments et propriété du média, sans condition sur le fournisseur OAuth.
+`CompleteAppleLogin` retrouve l'identité par fournisseur + identifiant Apple et
+renvoie un avatar null ; la relecture `/api/users/me` récupère l'avatar applicatif.
+`AuthUserCreatedEventHandler` ne recrée pas un profil existant. L'événement
+`app.user.profile_updated` alimente les projections Social et Experience.
+Les tests de connexion/récupération d'avatar et d'enqueue/confirmation de photo
+sont maintenant paramétrés Google + Apple. Ce sont des preuves locales ; le
+parcours Apple natif sur appareil reste à valider. Aucun rapprochement automatique
+des comptes Google/Apple n'est introduit.
+
+Après les compléments Apple et suppression prioritaire : **88 suites / 331 tests
+verts**, TypeScript et lint ciblé verts. Aucun test natif sur iPhone exécuté par
+l'agent ; la validation visuelle et le login Apple réel restent à effectuer.

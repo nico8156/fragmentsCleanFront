@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { ExperiencePhoto } from "../components/ExperiencePhoto";
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -100,7 +100,7 @@ function MineCard({ item, coffeeName, onUpdate, onPublish, onDelete, onAddPhoto,
 			<View style={s.cardHeader}>
 				<Text numberOfLines={2} style={s.coffeeName}>{view.coffeeName}</Text>
 				<View style={[s.statusBadge, s[`status_${view.statusTone}`]]}>
-					<Text numberOfLines={1} style={s.statusText}>{view.statusLabel}</Text>
+					<Text style={s.statusText}>{view.statusLabel}</Text>
 				</View>
 			</View>
 
@@ -119,7 +119,7 @@ function MineCard({ item, coffeeName, onUpdate, onPublish, onDelete, onAddPhoto,
 
 			{view.mediaUri ? (
 				<View style={s.mediaBlock}>
-					<Image source={{ uri: view.mediaUri }} style={s.media} contentFit="cover" accessibilityLabel="Photo de mon expérience" />
+					<ExperiencePhoto uri={view.mediaUri} label="Photo de mon expérience" />
 					{view.mediaPending ? <Text accessibilityLiveRegion="polite" style={s.muted}>Photo en attente de synchronisation…</Text> : null}
 					<ActionButton label="Supprimer la photo" danger onPress={confirmPhotoDelete} />
 				</View>
@@ -179,9 +179,9 @@ const s = StyleSheet.create({
 	empty: { padding: 20, gap: 6, borderWidth: 1, borderColor: palette.border, borderRadius: 18, backgroundColor: palette.bg_dark_30 },
 	emptyTitle: { color: palette.textPrimary, fontSize: 17, fontWeight: "800" },
 	card: { padding: 16, borderWidth: 1, borderColor: palette.border, borderRadius: 18, gap: 14, backgroundColor: palette.bg_dark_30, overflow: "hidden" },
-	cardHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-	coffeeName: { flex: 1, minWidth: 0, color: palette.textPrimary, fontSize: 17, lineHeight: 22, fontWeight: "800" },
-	statusBadge: { flexShrink: 0, maxWidth: 112, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: palette.overlay },
+	cardHeader: { alignItems: "flex-start", gap: 8 },
+	coffeeName: { width: "100%", color: palette.textPrimary, fontSize: 17, lineHeight: 22, fontWeight: "800" },
+	statusBadge: { maxWidth: "100%", borderRadius: 14, paddingHorizontal: 9, paddingVertical: 5, backgroundColor: palette.overlay },
 	status_draft: { backgroundColor: palette.overlay },
 	status_pending: { backgroundColor: palette.accentSoft },
 	status_published: { backgroundColor: palette.success_30 },

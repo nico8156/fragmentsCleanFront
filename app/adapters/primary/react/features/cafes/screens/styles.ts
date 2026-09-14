@@ -14,9 +14,9 @@ export const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		paddingBottom: Platform.OS === "ios" ? 18 : 12,
 		paddingTop: 10,
-		backgroundColor: "rgba(255,255,255,0.92)",
+		backgroundColor: palette.background_1,
 		borderTopWidth: 1,
-		borderTopColor: "rgba(0,0,0,0.08)",
+		borderTopColor: palette.border,
 	},
 	bottomBarInner: {
 		flexDirection: "row",
@@ -26,4 +26,3 @@ export const styles = StyleSheet.create({
 	},
 
 });
-

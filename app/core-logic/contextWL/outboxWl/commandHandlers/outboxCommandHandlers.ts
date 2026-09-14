@@ -344,13 +344,13 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.ExperienceDelete:
 		case commandKinds.ExperienceReport: {
 			outboxTelemetry.rollback(record, "experience command rejected");
-			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported }));
+			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported, preserveDeletion: command.kind !== commandKinds.ExperienceDelete }));
 			return;
 		}
 		case commandKinds.ExperienceMediaAttach:
 		case commandKinds.ExperienceMediaDelete: {
 			outboxTelemetry.rollback(record,"experience media command rejected");
-			dispatch(experienceRollback({experienceId:command.experienceId,previous:undo?.previous}));
+			dispatch(experienceRollback({experienceId:command.experienceId,previous:undo?.previous,preserveDeletion:true}));
 			if (command.kind === commandKinds.ExperienceMediaAttach && command.image?.localUri) {
 				gateways?.localPrivateMedia?.discard(command.image.localUri);
 			}
