@@ -4,6 +4,7 @@ import {LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/l
 
 export const getLocationSuccess = createAction<{ coordinates: GeoPoint }>('PHONE/LOCATION/SUCCESS');
 export const userLocationRequested = createAction('PHONE/LOCATION/REQUESTED');
+export const locationBootstrapRequested = createAction('PHONE/LOCATION/BOOTSTRAP_REQUESTED');
 
 
 // revision du slice totale !!

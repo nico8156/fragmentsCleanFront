@@ -2,6 +2,7 @@ import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import BottomSheet from "@gorhom/bottom-sheet";
 import React, { useCallback, useState } from "react";
+import { closeCoffeePreviewSheet } from "@/app/adapters/primary/react/features/map/mapPreviewPresentation";
 
 export function useCoffeePreviewSheet(params: {
 	navigation: RootStackNavigationProp;
@@ -28,8 +29,8 @@ export function useCoffeePreviewSheet(params: {
 	);
 
 	const closePreview = useCallback(() => {
-		setBottomSheetIndex(-1);
-	}, [setBottomSheetIndex]);
+		closeCoffeePreviewSheet(bottomSheetRef, setBottomSheetIndex);
+	}, [bottomSheetRef, setBottomSheetIndex]);
 
 	const goToDetails = useCallback(() => {
 		if (!selectedCoffeeId) return;
@@ -43,4 +44,3 @@ export function useCoffeePreviewSheet(params: {
 		goToDetails,
 	};
 }
-

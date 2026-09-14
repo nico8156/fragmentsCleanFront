@@ -4,6 +4,7 @@ import type { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeActi
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { accountStorageReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 import { authSessionLoaded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { locationBootstrapRequested } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 
 class FakeOutboxStorage {
 	snapshot: OutboxStateWl | null = {
@@ -139,6 +140,7 @@ describe("ApplicationBootProcess", () => {
 			readModelCacheStorage,
 			logger,
 		});
+		const dispatchSpy = jest.spyOn(store, "dispatch");
 
 		await process.start();
 
@@ -150,6 +152,7 @@ describe("ApplicationBootProcess", () => {
 		expect(state.pState.byCoffeeId.coffee_1).toEqual(["https://cdn.example/cafe.jpg"]);
 		expect(state.ohState.byCoffeeIdDayWindow.coffee_1.length).toBeGreaterThan(0);
 		expect(state.arState.byId.article_1.title).toBe("Boot");
+		expect(dispatchSpy).toHaveBeenCalledWith(locationBootstrapRequested());
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 });

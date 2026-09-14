@@ -15,15 +15,19 @@ export const CoffeeMarkerLabel = ({ name }: Props) => (
 
 const styles = StyleSheet.create({
     textCard: {
+		alignSelf: "center",
         justifyContent: "center",
         alignItems: "center",
-        padding: 5,
+		paddingHorizontal: 8,
+		paddingVertical: 5,
+		maxWidth: 176,
         borderRadius: 6,
         backgroundColor: "rgba(244, 237, 230, 0.5)",
         marginTop: 6,
     },
     label: {
-        maxWidth: 160,
+		maxWidth: 160,
+		alignSelf: "center",
         fontSize: 14,
         fontWeight: "600",
         color: palette.elevated,

@@ -4,6 +4,7 @@ import { Platform, StyleSheet } from "react-native";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import BottomSheetPreviewSimple from "@/app/adapters/primary/react/features/map/components/BottomSheetPreviewSimple";
+import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 
 type Props = {
 	bottomSheetRef: React.RefObject<BottomSheet | null>;
@@ -73,7 +74,7 @@ export default function MapCoffeePreviewSheet({
 const styles = StyleSheet.create({
 	sheetContent: {
 		backgroundColor: palette.textPrimary_1,
-		paddingBottom: 12,
+		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
 		minHeight: 200,
 	},
 });

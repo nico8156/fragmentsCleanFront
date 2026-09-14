@@ -9,6 +9,7 @@ AppBootstrap
 -> mount NetInfo/AppState adapters
 -> appHydrationDone
 -> initializeAuth
+-> locationBootstrapRequested
 -> rehydrateOutbox
 -> rehydrateReadModelCache
 -> outboxProcessOnce if signed in and online
@@ -19,6 +20,13 @@ AppBootstrap
 ## Rules
 
 - Auth must initialize before outbox processing.
+- Startup checks the existing foreground-location authorization. If it is
+  already granted, one current position is requested; startup never opens the
+  permission prompt. An explicit user action remains required to ask for an
+  undetermined authorization.
+- Account isolation resets location state along with the private snapshot. A
+  sign-in/sign-out after boot therefore triggers the same non-prompting location
+  bootstrap; the initial auth transition does not duplicate the boot request.
 - Outbox must rehydrate before retry.
 - Durable read models must rehydrate before non-critical warmup reads.
 - Warmup reads must not block command recovery.

@@ -1,3 +1,4 @@
+import { StyleSheet, View } from "react-native";
 import { Marker } from "react-native-maps";
 
 import { parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
@@ -34,15 +35,21 @@ function CoffeeMarker(props: Props) {
             tracksViewChanges={false}
             onPress={handlePress}
         >
-            <CoffeeMarkerBubble
-                coffeeId={coffeeId}
-                isOpen={isOpen}
-                showExpanded={showExpanded}
-                selected={selected}
-            />
-            <CoffeeMarkerLabel name={coffee?.name ?? "Café"} />
+            <View style={styles.content}>
+                <CoffeeMarkerBubble
+                    coffeeId={coffeeId}
+                    isOpen={isOpen}
+                    showExpanded={showExpanded}
+                    selected={selected}
+                />
+                <CoffeeMarkerLabel name={coffee?.name ?? "Café"} />
+            </View>
         </Marker>
     );
 }
 
 export default CoffeeMarker;
+
+const styles = StyleSheet.create({
+    content: { alignItems: "center" },
+});

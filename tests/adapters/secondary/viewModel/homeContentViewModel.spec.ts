@@ -22,4 +22,20 @@ describe("buildHomeContent", () => {
 		expect(result.coffeeTitle).toBe("Cafés à découvrir");
 		expect(result.pass.action).toBe("map");
 	});
+
+	it("borne les carrousels et choisit les articles suivants dans l'ordre éditorial", () => {
+		const result = buildHomeContent({
+			articles: Array.from({ length: 10 }, (_, index) => article(`article-${index + 1}`)),
+			sliderArticles: [article("article-1"), article("article-2")],
+			coffees: Array.from({ length: 8 }, (_, index) => ({ id: `coffee-${index}`, name: `Café ${index}`, location: { lat: 48.1, lon: -1.6 }, city: "Rennes", tags: [], distanceKm: index, hasPhoto: false })),
+			pass,
+			hasLocation: true,
+			experiences: Array.from({ length: 6 }, (_, index) => ({ experienceId: `experience-${index}`, coffeeId: `coffee-${index}`, userId: "u", message: `Visite ${index}`, status: "PUBLISHED", moderationStatus: "VISIBLE", createdAt: "", updatedAt: "", version: 1 })) as any,
+			coffeeNames: {},
+		});
+
+		expect(result.coffees).toHaveLength(5);
+		expect(result.experiences).toHaveLength(3);
+		expect(result.articles.map((item) => item.id)).toEqual(["article-3", "article-4", "article-5"]);
+	});
 });
