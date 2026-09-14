@@ -186,3 +186,38 @@ garde native et carte Redux à jour ; ESLint sans erreur (16 avertissements
 préexistants). La preuve fonctionnelle restante est une nouvelle tentative sur
 iPhone, dont l'objet S3 doit avoir une taille strictement positive avant
 confirmation.
+
+## Clavier — nom affiché et expériences
+
+Retour complémentaire : le clavier masquait le nom affiché dans l'édition du
+profil et la saisie des expériences. Correction de présentation uniquement :
+`ProfileLayout` et la fiche café activent `automaticallyAdjustKeyboardInsets`.
+L'implémentation iOS de React Native 0.81.5 installée ajuste les insets et le
+défilement jusqu'au champ actif à partir du cadre réel du clavier. Le padding
+clavier manuel de la fiche café est retiré sur iOS pour éviter le double espace.
+Les boutons traitent le premier tap avec le clavier ouvert ; le glissement
+permet sa fermeture interactive. L'édition d'une expérience donne le focus au
+champ, dont la hauteur est bornée à 160 points avec défilement interne du texte.
+Cela couvre « Mes expériences » et la création/modification depuis un café.
+
+Les commandes, view models, ports et règles de synchronisation sont inchangés.
+FlowAtlas n'est pas sollicité pour cette correction de layout sans parcours
+Redux modifié. Aucun module natif supplémentaire n'est nécessaire.
+
+Validation : TypeScript et ESLint ciblé verts ; 4 suites / 10 tests existants
+verts (navigation profil, présentation des expériences et commandes profil /
+expériences). Ces tests couvrent les régressions de parcours et de commandes,
+pas la visibilité physique du champ au-dessus du clavier.
+
+Recette iPhone à effectuer (géométrie du clavier non validable par Jest) :
+
+- Profil → Modifier mon profil → Nom affiché : le champ remonte au-dessus du
+  clavier ; faire défiler jusqu'à Enregistrer et vérifier qu'un seul tap agit.
+- Mes expériences : modifier une carte en bas de liste, saisir un texte long,
+  déplacer le curseur, puis enregistrer ou annuler sans être bloqué.
+- Fiche café : créer puis modifier une expérience, avec et sans photo ; vérifier
+  le champ actif et l'accès aux actions en faisant défiler la page.
+- Fermer et rouvrir le clavier, revenir à l'écran précédent ; vérifier l'absence
+  d'espace vide résiduel et le retour de la tab bar/actions flottantes.
+- Refaire sur petit iPhone et avec grande taille de texte. Le simulateur iOS
+  (`simctl`) n'est pas disponible dans l'environnement de cette intervention.

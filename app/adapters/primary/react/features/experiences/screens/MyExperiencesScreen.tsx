@@ -106,6 +106,8 @@ function MineCard({ item, coffeeName, onUpdate, onPublish, onDelete, onAddPhoto,
 
 			{editing ? (
 				<TextInput
+					autoFocus
+					textAlignVertical="top"
 					value={draft}
 					onChangeText={setDraft}
 					multiline
@@ -187,7 +189,7 @@ const s = StyleSheet.create({
 	statusText: { color: palette.textPrimary, fontSize: 11, lineHeight: 14, fontWeight: "700" },
 	muted: { color: palette.textMuted, fontSize: 13, lineHeight: 18 },
 	body: { color: palette.textPrimary, fontSize: 16, lineHeight: 22 },
-	input: { borderWidth: 1, borderColor: palette.border, borderRadius: 12, padding: 12, minHeight: 96, color: palette.textPrimary, backgroundColor: palette.background },
+	input: { borderWidth: 1, borderColor: palette.border, borderRadius: 12, padding: 12, minHeight: 96, maxHeight: 160, color: palette.textPrimary, backgroundColor: palette.background },
 	mediaBlock: { gap: 9 },
 	media: { width: "100%", height: 176, borderRadius: 14, backgroundColor: palette.elevated },
 	actions: { flexDirection: "row", gap: 8, flexWrap: "wrap", paddingTop: 2 },

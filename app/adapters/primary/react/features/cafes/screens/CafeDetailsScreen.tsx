@@ -79,7 +79,6 @@ export default function CafeDetailsScreen() {
 	const currentScrollYRef = useRef(0);
 	const scrollY = useSharedValue(0);
 	const actionsThreshold = useSharedValue(180);
-	const dragStartY = useSharedValue(0);
 
 	const updateCurrentScrollY = (y: number) => {
 		currentScrollYRef.current = y;
@@ -179,21 +178,13 @@ export default function CafeDetailsScreen() {
 					ref={scrollRef}
 					onScroll={onScroll}
 					scrollEventThrottle={16}
-					keyboardDismissMode="none"
+					automaticallyAdjustKeyboardInsets
+					keyboardDismissMode="interactive"
 					keyboardShouldPersistTaps="handled"
 					refreshControl={
 						<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textMuted} />
 					}
-					onScrollBeginDrag={() => {
-						dragStartY.value = scrollY.value;
-					}}
-					onScrollEndDrag={() => {
-						const delta = Math.abs(scrollY.value - dragStartY.value);
-						if (keyboardHeight > 0 && delta > 30) {
-							Keyboard.dismiss();
-						}
-					}}
-					contentContainerStyle={[styles.content, { paddingBottom: 120 + keyboardHeight }]}
+					contentContainerStyle={[styles.content, { paddingBottom: 120 + (Platform.OS === "ios" ? 0 : keyboardHeight) }]}
 				>
 					<DetailsActionsRow
 						coffee={coffee}
