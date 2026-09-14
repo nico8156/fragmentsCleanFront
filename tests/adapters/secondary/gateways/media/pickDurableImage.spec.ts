@@ -5,6 +5,7 @@ const mockSave = jest.fn();
 const mockCopy = jest.fn();
 const mockDelete = jest.fn();
 const mockRequestLibraryPermission = jest.fn();
+const mockManipulate = jest.fn();
 
 jest.mock("expo-image-picker", () => ({
 	launchImageLibraryAsync: (...args: unknown[]) => mockLaunchLibrary(...args),
@@ -16,10 +17,7 @@ jest.mock("expo-image-picker", () => ({
 
 jest.mock("expo-image-manipulator", () => ({
 	ImageManipulator: {
-		manipulate: jest.fn(() => ({
-			resize: mockResize.mockReturnThis(),
-			renderAsync: mockRender,
-		})),
+		manipulate: (...args: unknown[]) => mockManipulate(...args),
 	},
 	SaveFormat: { JPEG: "jpeg" },
 }));
@@ -35,12 +33,27 @@ jest.mock("expo-file-system", () => {
 		constructor(first: string | Directory, second?: string) {
 			this.uri = typeof first === "string" ? first : `${first.uri}/${second}`;
 		}
+		get type() {
+			if (this.uri.endsWith(".jpg") || this.uri.endsWith(".jpeg")) return "image/jpeg";
+			if (this.uri.endsWith(".png")) return "image/png";
+			if (this.uri.endsWith(".heic")) return "image/heic";
+			return "";
+		}
 		copy(destination: File) { mockCopy(this.uri, destination.uri); }
 		delete() { mockDelete(this.uri); }
 		info() { return { size: 1_500_000 }; }
 	}
 	return { Directory, File, Paths: { document: "file:///documents" } };
 });
+
+/*
+	The following helper is installed as the default mock implementation in each
+	test so individual cases can simulate an older native binary.
+*/
+const installManipulator = () => mockManipulate.mockImplementation(() => ({
+	resize: mockResize.mockReturnThis(),
+	renderAsync: mockRender,
+}));
 
 // The import must follow native-module mock registration in this adapter test.
 // eslint-disable-next-line import/first
@@ -49,12 +62,33 @@ import { pickDurableImage } from "@/app/adapters/secondary/gateways/media/pickDu
 describe("pickDurableImage", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		installManipulator();
 		mockLaunchLibrary.mockResolvedValue({
 			canceled: false,
 			assets: [{ uri: "file:///iphone.heic", mimeType: "image/heic", width: 4032, height: 3024 }],
 		});
 		mockRender.mockResolvedValue({ saveAsync: mockSave });
 		mockSave.mockResolvedValue({ uri: "file:///cache/normalized.jpg", width: 1600, height: 1200 });
+	});
+
+	it("keeps an older native binary boot-safe and accepts its compatible JPEG picker result", async () => {
+		mockManipulate.mockImplementationOnce(() => { throw new Error("Cannot find native module 'ExpoImageManipulator'"); });
+		mockLaunchLibrary.mockResolvedValueOnce({
+			canceled: false,
+			assets: [{ uri: "file:///cache/compatible.jpg", mimeType: "image/heic", width: 1200, height: 900 }],
+		});
+
+		const result = await pickDurableImage("library");
+
+		expect(result?.contentType).toBe("image/jpeg");
+		expect(mockCopy).toHaveBeenCalledWith("file:///cache/compatible.jpg", expect.stringMatching(/pending-private-media\/.*\.jpg$/));
+		expect(mockDelete).not.toHaveBeenCalledWith("file:///cache/compatible.jpg");
+	});
+
+	it("explains that a raw HEIC needs the rebuilt binary instead of crashing the app", async () => {
+		mockManipulate.mockImplementationOnce(() => { throw new Error("Cannot find native module 'ExpoImageManipulator'"); });
+
+		await expect(pickDurableImage("library")).rejects.toThrow("nouveau build de Fragments");
 	});
 
 	it("normalizes an iPhone HEIC asset to a durable bounded JPEG", async () => {

@@ -1,6 +1,5 @@
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
-import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
 import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
@@ -9,6 +8,14 @@ const MAX_IMAGE_BYTES = 8_000_000;
 const MAX_IMAGE_DIMENSION = 1600;
 
 type Source = "camera" | "library";
+type SupportedContentType = LocalImageInput["contentType"];
+type PreparedImage = {
+	uri: string;
+	width: number;
+	height: number;
+	contentType: SupportedContentType;
+	temporary: boolean;
+};
 
 const launch = async (source: Source) => {
 	if (source === "camera") {
@@ -25,27 +32,55 @@ const launch = async (source: Source) => {
 };
 
 const normalizeToJpeg = async (uri: string, width: number, height: number) => {
+	// Loaded only when a photo is selected: an older development/TestFlight binary
+	// must still be able to boot before the native module is rebuilt into the app.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const { ImageManipulator, SaveFormat } = require("expo-image-manipulator") as typeof import("expo-image-manipulator");
 	const context = ImageManipulator.manipulate(uri);
 	if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
 		if (width >= height) context.resize({ width: MAX_IMAGE_DIMENSION, height: null });
 		else context.resize({ width: null, height: MAX_IMAGE_DIMENSION });
 	}
 	const rendered = await context.renderAsync();
-	return rendered.saveAsync({ compress: 0.82, format: SaveFormat.JPEG });
+	const normalized = await rendered.saveAsync({ compress: 0.82, format: SaveFormat.JPEG });
+	return { ...normalized, contentType: "image/jpeg" as const, temporary: true };
+};
+
+const sourceFallback = (asset: ImagePicker.ImagePickerAsset): PreparedImage => {
+	const fileType = new File(asset.uri).type.toLowerCase();
+	const declaredType = asset.mimeType?.toLowerCase();
+	const type = fileType || declaredType;
+	const contentType: SupportedContentType | undefined = type === "image/png"
+		? "image/png"
+		: type === "image/jpeg" || type === "image/jpg" ? "image/jpeg" : undefined;
+	if (!contentType) {
+		throw new Error("La préparation de cette photo nécessite le nouveau build de Fragments.");
+	}
+	return { uri: asset.uri, width: asset.width, height: asset.height, contentType, temporary: false };
+};
+
+const prepareImage = async (asset: ImagePicker.ImagePickerAsset): Promise<PreparedImage> => {
+	try {
+		return await normalizeToJpeg(asset.uri, asset.width, asset.height);
+	} catch (error) {
+		if (!String(error).includes("ExpoImageManipulator")) throw error;
+		return sourceFallback(asset);
+	}
 };
 
 export const pickDurableImage = async (source: Source): Promise<LocalImageInput | undefined> => {
 	const result = await launch(source);
 	if (result.canceled || !result.assets[0]) return undefined;
 	const asset = result.assets[0];
-	const normalized = await normalizeToJpeg(asset.uri, asset.width, asset.height);
+	const prepared = await prepareImage(asset);
 
 	const pendingDirectory = new Directory(Paths.document, "pending-private-media");
 	pendingDirectory.create({ intermediates: true, idempotent: true });
-	const destination = new File(pendingDirectory, `${Crypto.randomUUID()}.jpg`);
-	const normalizedFile = new File(normalized.uri);
-	normalizedFile.copy(destination);
-	if (normalizedFile.exists) normalizedFile.delete();
+	const extension = prepared.contentType === "image/png" ? ".png" : ".jpg";
+	const destination = new File(pendingDirectory, `${Crypto.randomUUID()}${extension}`);
+	const preparedFile = new File(prepared.uri);
+	preparedFile.copy(destination);
+	if (prepared.temporary && preparedFile.exists) preparedFile.delete();
 	const size = destination.info().size ?? 0;
 	if (size <= 0 || size > MAX_IMAGE_BYTES) {
 		if (destination.exists) destination.delete();
@@ -53,10 +88,10 @@ export const pickDurableImage = async (source: Source): Promise<LocalImageInput 
 	}
 	return {
 		localUri: destination.uri,
-		contentType: "image/jpeg",
+		contentType: prepared.contentType,
 		size,
-		width: normalized.width,
-		height: normalized.height,
+		width: prepared.width,
+		height: prepared.height,
 	};
 };
 

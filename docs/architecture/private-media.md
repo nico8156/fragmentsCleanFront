@@ -26,6 +26,13 @@ it as JPEG, bounds its longest edge to 1600 pixels and enforces the backend's
 decimal 8,000,000-byte limit.
 
 Reference: [Expo SDK 54 ImagePicker](https://docs.expo.dev/versions/v54.0.0/sdk/imagepicker/).
+
+`expo-image-manipulator` is loaded only when an image is selected. This prevents
+a JavaScript reload from crashing an older native development/TestFlight binary
+that does not contain the newly added module. Such a binary may still persist a
+JPEG/PNG already returned in a compatible representation; a raw HEIC instead
+produces an explicit rebuild message. Full normalization is guaranteed only in
+the rebuilt binary.
 The normalized copy is stored under the application's document directory before
 the Redux intent is emitted. A cache URI must never be persisted in the outbox.
 

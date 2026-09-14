@@ -135,7 +135,7 @@ sur iPhone.
   présentation des expériences, statuts de carte, HEIC vers JPEG durable et
   garde de navigation ;
 - résultat ciblé : 5 suites / 12 tests verts ;
-- résultat complet final : **83 suites / 305 tests Jest verts** en 16,73 secondes ;
+- résultat complet final : **83 suites / 307 tests Jest verts** ;
   TypeScript vert ; dépendances Expo compatibles ; 8 contrôles de configuration
   release verts ; garde native et carte Redux à jour ;
 - ESLint sans cache : 0 erreur, 18 avertissements préexistants. Le nouvel
@@ -146,6 +146,13 @@ sur iPhone.
   couvrant notamment upload, remplacement, lecture et suppression d'avatar ;
 - `expo-image-manipulator ~14.0.8` est ajouté comme adaptateur natif compatible
   Expo SDK 54 ;
+- correctif de compatibilité après essai sur l'ancien binaire : le module natif
+  est chargé à la sélection et non au démarrage. Une recharge JavaScript ne fait
+  donc plus planter toute l'application ; JPEG/PNG compatibles restent
+  utilisables, tandis qu'un HEIC brut demande explicitement le nouveau build ;
+- preuve dédiée du correctif de compatibilité : 1 suite / 3 tests verts (ancien
+  binaire avec JPEG compatible, ancien binaire avec HEIC brut, nouveau binaire
+  avec normalisation) ;
 - la validation caméra/photothèque, la propagation entre deux comptes et le
   rendu final restent des critères de recette sur le prochain build signé, pas
   des preuves acquises sur le build `1.0.0 (3)`.
