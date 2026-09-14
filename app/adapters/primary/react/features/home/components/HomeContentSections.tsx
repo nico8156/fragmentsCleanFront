@@ -3,6 +3,7 @@ import type { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArt
 import type { HomeContentVM } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
 import type { DiscoveryCoffeeVM } from "@/app/core-logic/contextWL/coffeeWl/selector/coffeeWl.selector";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ExperiencePhoto } from "../../experiences/components/ExperiencePhoto";
 
 export function HomeContentSections({ content, onOpenMap, onOpenScan, onOpenCoffee, onOpenArticle, onOpenExperiences, onOpenPass }: {
 	content: HomeContentVM;
@@ -23,7 +24,7 @@ export function HomeContentSections({ content, onOpenMap, onOpenScan, onOpenCoff
 			</Pressable>
 		</Section>
 		<Section title="Tes expériences" action="Tout voir" onAction={onOpenExperiences}>
-			{content.experiences.length ? <HorizontalRail label="Tes expériences">{content.experiences.map((experience) => <View key={experience.id} style={styles.experienceCard}>{experience.imageUrl ? <Image source={{ uri: experience.imageUrl }} style={styles.experienceImage} /> : <View style={styles.experiencePlaceholder}><Text style={styles.experiencePlaceholderMark}>Fragments</Text></View>}<View style={styles.experienceBody}><Text style={styles.coffeeName} numberOfLines={1}>{experience.coffeeName}</Text><Text numberOfLines={2} style={styles.experienceText}>{experience.message}</Text></View></View>)}</HorizontalRail> : <Empty text="Raconte une visite depuis la fiche d’un café, avec ou sans ticket." action="Trouver un café" onAction={onOpenMap} />}
+			{content.experiences.length ? <HorizontalRail label="Tes expériences">{content.experiences.map((experience) => <View key={experience.id} style={styles.experienceCard}>{experience.imageUrl ? <ExperiencePhoto uri={experience.imageUrl} mediaId={experience.imageMediaId} label="Photo de mon expérience" compact /> : <View style={styles.experiencePlaceholder}><Text style={styles.experiencePlaceholderMark}>Fragments</Text></View>}<View style={styles.experienceBody}><Text style={styles.coffeeName} numberOfLines={1}>{experience.coffeeName}</Text><Text numberOfLines={2} style={styles.experienceText}>{experience.message}</Text></View></View>)}</HorizontalRail> : <Empty text="Raconte une visite depuis la fiche d’un café, avec ou sans ticket." action="Trouver un café" onAction={onOpenMap} />}
 		</Section>
 		{content.articles.length ? <Section title="À lire ensuite"><View style={styles.list}>{content.articles.map((article) => <ArticleCard key={article.id} article={article} onPress={() => onOpenArticle(article.slug)} />)}</View></Section> : null}
 	</View>;

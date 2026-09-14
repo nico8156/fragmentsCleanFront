@@ -4,6 +4,16 @@ const article = (id: string) => ({ id, slug: id, title: id, intro: "intro", tags
 const pass: any = { currentLevel: { label: "Coffee Taster" }, nextUnlock: { label: "Urban Explorer", remainingRequirements: [{ key: "validatedTickets", label: "tickets validés", remaining: 1, current: 0, required: 1, completed: false }] } };
 
 describe("buildHomeContent", () => {
+	it("keeps the media identity for both recent local photos and older remote photos", () => {
+		const experiences = [
+			{ experienceId: "recent", media: [{ mediaId: "local-media", localUri: "file:///photo.jpg" }] },
+			{ experienceId: "older", media: [{ mediaId: "remote-media", url: "https://images.test/signed.jpg" }] },
+		].map(item => ({ ...item, status: "PUBLISHED", moderationStatus: "VISIBLE", message: "Visite", coffeeId: "c" }));
+		const result = buildHomeContent({ articles: [], sliderArticles: [], coffees: [], hasLocation: false, pass, experiences: experiences as any, coffeeNames: {} });
+		expect(result.experiences.map(item => [item.imageMediaId, item.imageUrl])).toEqual([
+			["local-media", "file:///photo.jpg"], ["remote-media", "https://images.test/signed.jpg"],
+		]);
+	});
 	it("memoizes the Redux-derived inputs consumed by Home", () => {
 		const state: any = { exState: { mine: { ids: ["experience-1"] }, entities: { entities: { "experience-1": { experienceId: "experience-1" } } } }, cfState: { byId: { "coffee-1": { name: "Café" } } } };
 		expect(selectHomeExperiences(state)).toBe(selectHomeExperiences(state));

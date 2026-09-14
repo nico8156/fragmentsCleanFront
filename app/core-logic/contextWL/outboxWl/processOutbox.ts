@@ -219,6 +219,7 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 							dispatch: api.dispatch,
 							logger,
 							gateways: deps.gateways,
+							rejectionCode: e.reason,
 						});
 						api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 						api.dispatch(dequeueCommitted({ id }));

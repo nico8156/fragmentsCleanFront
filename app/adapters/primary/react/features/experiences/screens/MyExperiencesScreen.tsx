@@ -119,7 +119,7 @@ function MineCard({ item, coffeeName, onUpdate, onPublish, onDelete, onAddPhoto,
 
 			{view.mediaUri ? (
 				<View style={s.mediaBlock}>
-					<ExperiencePhoto uri={view.mediaUri} label="Photo de mon expérience" />
+					<ExperiencePhoto uri={view.mediaUri} mediaId={media?.mediaId} label="Photo de mon expérience" />
 					{view.mediaPending ? <Text accessibilityLiveRegion="polite" style={s.muted}>Photo en attente de synchronisation…</Text> : null}
 					<ActionButton label="Supprimer la photo" danger onPress={confirmPhotoDelete} />
 				</View>

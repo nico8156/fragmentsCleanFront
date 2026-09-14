@@ -348,3 +348,55 @@ des comptes Google/Apple n'est introduit.
 Après les compléments Apple et suppression prioritaire : **88 suites / 331 tests
 verts**, TypeScript et lint ciblé verts. Aucun test natif sur iPhone exécuté par
 l'agent ; la validation visuelle et le login Apple réel restent à effectuer.
+
+## Suppression qui réapparaît, photos anciennes sur Home et tags éditoriaux
+
+Cette nouvelle investigation apporte une preuve absente de la passe précédente :
+lecture seule des reçus `command_status`, derniers deletes à 12:34, 12:58 et
+13:02 UTC le 14 septembre, statut REJECTED et code `EXPERIENCE_NOT_FOUND`.
+La recherche initiale par `Experience` n'avait rien trouvé car les types sont
+en minuscules (`experience.delete.v1`). La comparaison des identifiants et
+statuts entre `experience_views` et `experiences` montre deux expériences
+publiées, présentes des deux côtés. Aucun contenu ni fichier photo consulté.
+Le flash observé est compatible avec le rollback d'une suppression explicitement
+refusée pour absence, qui restaurait son ancien snapshot local.
+
+Correction : transmettre le code métier structuré au rollback, depuis le HTTP
+422 comme depuis `/commands/{commandId}`. Pour un delete explicitement refusé
+avec `EXPERIENCE_NOT_FOUND`, supprimer la représentation locale obsolète au lieu
+de la restaurer. Le reçu reste REJECTED, aucune réussite serveur inventée.
+Les autres refus conservent leur rollback, et aucune erreur de transport ne
+justifie cette suppression locale. Les tests verticaux couvrent les deux chemins,
+avec un contrôle négatif de refus de propriété. Aucun changement backend requis.
+
+Photos : Home utilisait encore `Image` React Native alors que le profil utilisait
+`expo-image`, donc des caches distincts. Les expériences utilisent désormais
+`ExperiencePhoto` sur les trois surfaces (Home, profil et café), et une clé de
+cache distante stable par mediaId. Les URLs S3 restent privées et temporaires,
+renouvelées par les lectures existantes ; changer la signature ne crée plus une
+nouvelle identité de cache. Les previews locales ne partagent pas cette clé
+distante. Le format Home reste compact (108 points), les fiches à 176 points.
+Un test vérifie le transport de l'URI et de l'identifiant pour photo locale récente
+et photo distante ancienne. La différence de cache est établie dans le code ;
+la cause de chaque photo manquante sur appareil n'est pas prouvée. Un fichier
+local absent ou un objet distant manquant n'est pas réparé par ce correctif.
+
+Tags du grand visuel Home : Origines/Qualité/Terroir jade ; Bien-être/Nutrition/
+Science lavande ; Culture/Durabilité/Producteurs ocre ; Maison/Recettes/Équipement
+corail ; Découverte/Torréfacteurs/Communauté bleu doux. Les autres tags reçoivent
+une couleur stable de la même palette, indépendante de leur position. Casse et
+accents normalisés pour le choix de couleur. Texte brun très sombre, contraste
+calculé minimum 7,32:1 sur les cinq fonds opaques. Grand visuel, géométrie et effet
+du bandeau au scroll inchangés.
+
+FlowAtlas : contexte `experienceRollback` retourne le lien vers le reducer mais
+pas les appelants du helper `rollbackRejectedOutboxRecord`. `complete: true`
+décrit ici le graphe connu, pas l'exhaustivité du chemin métier ; lecture ciblée
+du processor et du watchdog nécessaire pour transmettre le motif de rejet.
+
+Validation : suite complète 88 suites / 334 tests verte, puis deux contrôles
+négatifs supplémentaires validés dans la suite verticale ciblée. TypeScript,
+lint ciblé et carte Redux vérifiés. Vérification iPhone restante : supprimer un
+ancien élément absent du serveur, comparer une même photo ancienne entre profil
+et Home après rechargement, puis apprécier les couleurs de tags sur les photos.
+Correctifs JavaScript uniquement ; aucun déploiement ni purge distante effectués.

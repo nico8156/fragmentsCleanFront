@@ -137,3 +137,11 @@ An optimistic DELETED experience is a local tombstone. Read snapshots and ACKs
 for earlier commands cannot resurrect it. Only an explicit rejection of the
 delete restores its undo snapshot; earlier command rollbacks preserve deletion.
 Network errors continue to retain both optimistic state and durable commands.
+
+When a delete is explicitly REJECTED with `EXPERIENCE_NOT_FOUND`, rollback
+reconciles to the server-confirmed absence by removing the stale local entity,
+instead of restoring its obsolete undo snapshot. The receipt remains REJECTED;
+this is not a fabricated APPLIED result. Both immediate HTTP rejections and
+canonical polling carry the structured rejection code to this handler. Other
+rejections (including ownership) retain normal rollback behavior. Never infer
+absence from a timeout, generic HTTP 404, or network error.

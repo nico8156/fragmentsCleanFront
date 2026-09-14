@@ -217,12 +217,14 @@ export const rollbackRejectedOutboxRecord = ({
 	logger,
 	markLikeSyncFailed = false,
 	gateways,
+	rejectionCode,
 }: {
 	record: OutboxRecord;
 	dispatch: AppDispatchWl;
 	logger?: CommandHandlerLogger;
 	markLikeSyncFailed?: boolean;
 	gateways?: OutboxCommandGatewayDeps;
+	rejectionCode?: string;
 }) => {
 	const item = record.item as any;
 	const command = item?.command;
@@ -344,6 +346,12 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.ExperienceDelete:
 		case commandKinds.ExperienceReport: {
 			outboxTelemetry.rollback(record, "experience command rejected");
+			if (command.kind === commandKinds.ExperienceDelete && rejectionCode === "EXPERIENCE_NOT_FOUND") {
+				// The server explicitly confirms absence: remove the stale local entry
+				// instead of restoring an undo snapshot of a nonexistent experience.
+				dispatch(experienceRollback({ experienceId: command.experienceId }));
+				return;
+			}
 			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported, preserveDeletion: command.kind !== commandKinds.ExperienceDelete }));
 			return;
 		}

@@ -3,6 +3,7 @@ import { Dimensions, FlatList, Pressable, StyleSheet, Text, View, ViewToken } fr
 import { Image } from "expo-image";
 import { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { articleTagColors } from "../articleTagColors";
 
 const { width } = Dimensions.get("window");
 
@@ -61,8 +62,8 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                                 {item.title}
                             </Text>
                             {item.tags.length > 0 ? (
-                                <View style={styles.tag}>
-                                    <Text style={styles.tagText}>{item.tags[0]}</Text>
+                                <View style={[styles.tag, { backgroundColor: articleTagColors(item.tags[0]).backgroundColor }]}>
+                                    <Text style={[styles.tagText, { color: articleTagColors(item.tags[0]).color }]}>{item.tags[0]}</Text>
                                 </View>
                             ) : null}
                             <Text style={styles.subtitle} numberOfLines={2}>

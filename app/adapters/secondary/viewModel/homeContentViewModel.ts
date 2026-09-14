@@ -28,6 +28,7 @@ export type HomeExperienceVM = {
 	coffeeName: string;
 	message: string;
 	imageUrl?: string;
+	imageMediaId?: string;
 };
 
 export type HomeContentVM = {
@@ -76,6 +77,7 @@ export function buildHomeContent(input: {
 				coffeeName: input.coffeeNames[experience.coffeeId] ?? "Café visité",
 				message: experience.message,
 				imageUrl: experience.media?.find((media) => media.url ?? media.localUri)?.url ?? experience.media?.find((media) => media.localUri)?.localUri,
+				imageMediaId: experience.media?.find(media => media.url || media.localUri)?.mediaId,
 			})),
 		articles: input.articles.filter((article) => !input.sliderArticles.some((slider) => slider.id === article.id)).slice(0, 3),
 	};

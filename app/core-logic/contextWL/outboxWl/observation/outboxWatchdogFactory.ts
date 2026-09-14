@@ -142,6 +142,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 				dispatch: api.dispatch,
 				logger,
 				markLikeSyncFailed: true,
+				rejectionCode: verdict.rejectionCode,
 				gateways: deps.gateways,
 			});
 
