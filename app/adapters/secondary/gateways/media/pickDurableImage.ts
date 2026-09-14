@@ -1,6 +1,7 @@
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
+import { requireOptionalNativeModule } from "expo-modules-core";
 
 import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
@@ -60,12 +61,9 @@ const sourceFallback = (asset: ImagePicker.ImagePickerAsset): PreparedImage => {
 };
 
 const prepareImage = async (asset: ImagePicker.ImagePickerAsset): Promise<PreparedImage> => {
-	try {
-		return await normalizeToJpeg(asset.uri, asset.width, asset.height);
-	} catch (error) {
-		if (!String(error).includes("ExpoImageManipulator")) throw error;
-		return sourceFallback(asset);
-	}
+	const nativeManipulator = requireOptionalNativeModule("ExpoImageManipulator");
+	if (!nativeManipulator) return sourceFallback(asset);
+	return normalizeToJpeg(asset.uri, asset.width, asset.height);
 };
 
 export const pickDurableImage = async (source: Source): Promise<LocalImageInput | undefined> => {

@@ -6,6 +6,13 @@ const mockCopy = jest.fn();
 const mockDelete = jest.fn();
 const mockRequestLibraryPermission = jest.fn();
 const mockManipulate = jest.fn();
+const mockRequireOptionalNativeModule = jest.fn();
+
+jest.mock("expo-crypto", () => ({ randomUUID: () => "11111111-1111-4111-8111-111111111111" }));
+
+jest.mock("expo-modules-core", () => ({
+	requireOptionalNativeModule: (...args: unknown[]) => mockRequireOptionalNativeModule(...args),
+}));
 
 jest.mock("expo-image-picker", () => ({
 	launchImageLibraryAsync: (...args: unknown[]) => mockLaunchLibrary(...args),
@@ -62,6 +69,7 @@ import { pickDurableImage } from "@/app/adapters/secondary/gateways/media/pickDu
 describe("pickDurableImage", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockRequireOptionalNativeModule.mockReturnValue({});
 		installManipulator();
 		mockLaunchLibrary.mockResolvedValue({
 			canceled: false,
@@ -72,7 +80,7 @@ describe("pickDurableImage", () => {
 	});
 
 	it("keeps an older native binary boot-safe and accepts its compatible JPEG picker result", async () => {
-		mockManipulate.mockImplementationOnce(() => { throw new Error("Cannot find native module 'ExpoImageManipulator'"); });
+		mockRequireOptionalNativeModule.mockReturnValueOnce(null);
 		mockLaunchLibrary.mockResolvedValueOnce({
 			canceled: false,
 			assets: [{ uri: "file:///cache/compatible.jpg", mimeType: "image/heic", width: 1200, height: 900 }],
@@ -81,14 +89,17 @@ describe("pickDurableImage", () => {
 		const result = await pickDurableImage("library");
 
 		expect(result?.contentType).toBe("image/jpeg");
+		expect(mockRequireOptionalNativeModule).toHaveBeenCalledWith("ExpoImageManipulator");
+		expect(mockManipulate).not.toHaveBeenCalled();
 		expect(mockCopy).toHaveBeenCalledWith("file:///cache/compatible.jpg", expect.stringMatching(/pending-private-media\/.*\.jpg$/));
 		expect(mockDelete).not.toHaveBeenCalledWith("file:///cache/compatible.jpg");
 	});
 
 	it("explains that a raw HEIC needs the rebuilt binary instead of crashing the app", async () => {
-		mockManipulate.mockImplementationOnce(() => { throw new Error("Cannot find native module 'ExpoImageManipulator'"); });
+		mockRequireOptionalNativeModule.mockReturnValueOnce(null);
 
 		await expect(pickDurableImage("library")).rejects.toThrow("nouveau build de Fragments");
+		expect(mockManipulate).not.toHaveBeenCalled();
 	});
 
 	it("normalizes an iPhone HEIC asset to a durable bounded JPEG", async () => {

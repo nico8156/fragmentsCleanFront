@@ -147,9 +147,11 @@ sur iPhone.
 - `expo-image-manipulator ~14.0.8` est ajouté comme adaptateur natif compatible
   Expo SDK 54 ;
 - correctif de compatibilité après essai sur l'ancien binaire : le module natif
-  est chargé à la sélection et non au démarrage. Une recharge JavaScript ne fait
-  donc plus planter toute l'application ; JPEG/PNG compatibles restent
-  utilisables, tandis qu'un HEIC brut demande explicitement le nouveau build ;
+  est sondé via l'API optionnelle d'Expo puis chargé à la sélection uniquement
+  s'il existe dans le binaire. Une recharge JavaScript ne fait donc plus planter
+  toute l'application et la sélection ne tente plus de charger un module absent ;
+  JPEG/PNG compatibles restent utilisables, tandis qu'un HEIC brut demande
+  explicitement le nouveau build ;
 - preuve dédiée du correctif de compatibilité : 1 suite / 3 tests verts (ancien
   binaire avec JPEG compatible, ancien binaire avec HEIC brut, nouveau binaire
   avec normalisation) ;
