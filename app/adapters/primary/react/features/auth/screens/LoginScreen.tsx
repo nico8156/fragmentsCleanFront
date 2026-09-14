@@ -1,6 +1,6 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useCallback } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, NativeModules, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,6 +9,19 @@ import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/Relea
 
 export function LoginScreen() {
 	const { signInWithGoogle, signInWithApple, isLoading, error } = useAuthUser();
+	const [appleAvailable, setAppleAvailable] = useState(false);
+	useEffect(() => {
+		let mounted = true;
+		// Match Expo SDK 54's view registration: OS support alone is insufficient
+		// in an older development binary that does not export the native button.
+		const registered = NativeModules.NativeUnimoduleProxy?.viewManagersMetadata?.ExpoAppleAuthentication;
+		if (Platform.OS === "ios" && registered) {
+			void AppleAuthentication.isAvailableAsync().then(available => {
+				if (mounted) setAppleAvailable(available);
+			}).catch(() => { if (mounted) setAppleAvailable(false); });
+		}
+		return () => { mounted = false; };
+	}, []);
 
 	const handlePress = useCallback(() => {
 		signInWithGoogle();
@@ -53,13 +66,13 @@ export function LoginScreen() {
 					)}
 				</Pressable>
 
-				{Platform.OS === "ios" ? <AppleAuthentication.AppleAuthenticationButton
+				{appleAvailable ? <AppleAuthentication.AppleAuthenticationButton
 					testID="apple-sign-in"
 					buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
 					buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
 					cornerRadius={12}
 					style={styles.appleButton}
-					onPress={signInWithApple}
+					onPress={() => { if (!isLoading) signInWithApple(); }}
 				/> : null}
 
 				{/* Gestion d’erreur propre */}
@@ -125,6 +138,7 @@ const styles = StyleSheet.create({
 	},
 
 	googleButton: {
+		justifyContent: "center",
 		width: "100%",
 		height: 50,
 		borderRadius: 12,

@@ -30,11 +30,11 @@ export class HttpExperienceGateway implements ExperienceGateway {
 		const response = await fetch(`${this.baseUrl}${path}`, { method, headers: { Authorization: `Bearer ${await this.token()}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
 		if (!response.ok && response.status !== 202 && response.status !== 204) throw await toGatewayErrorFromHttpResponse(response, `Experience command failed with status ${response.status}`);
 	}
-	create(input: { commandId: string; experienceId: string; coffeeId: string; message: string; publicationStatus: "DRAFT" | "PUBLISHED"; at: string }) { return this.send("/api/experiences", "POST", input); }
-	update(input: { commandId: string; experienceId: string; message: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}`, "PATCH", body); }
-	publish(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}/publish`, "POST", body); }
-	delete(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}`, "DELETE", body); }
-	report(input: { commandId: string; reportId: string; experienceId: string; reason: ExperienceReportReason; details?: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}/reports`, "POST", body); }
+	create(input: { commandId: string; experienceId: string; coffeeId: string; message: string; publicationStatus: "DRAFT" | "PUBLISHED"; at: string }) { const { commandId, experienceId, coffeeId, message, publicationStatus, at } = input; return this.send("/api/experiences", "POST", { commandId, experienceId, coffeeId, message, publicationStatus, at }); }
+	update(input: { commandId: string; experienceId: string; message: string; at: string }) { const { experienceId, commandId, message, at } = input; return this.send(`/api/experiences/${experienceId}`, "PATCH", { commandId, message, at }); }
+	publish(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, commandId, at } = input; return this.send(`/api/experiences/${experienceId}/publish`, "POST", { commandId, at }); }
+	delete(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, commandId, at } = input; return this.send(`/api/experiences/${experienceId}`, "DELETE", { commandId, at }); }
+	report(input: { commandId: string; reportId: string; experienceId: string; reason: ExperienceReportReason; details?: string; at: string }) { const { experienceId, commandId, reportId, reason, details, at } = input; return this.send(`/api/experiences/${experienceId}/reports`, "POST", { commandId, reportId, reason, details, at }); }
 	async uploadMedia(input: { commandId: string; mediaId: string; experienceId: string; image: import("@/app/core-logic/contextWL/experienceWl/typeAction/experience.type").LocalImageInput; at: string }) {
 		const token = await this.token();
 		const intent = await fetch(`${this.baseUrl}/api/experiences/${input.experienceId}/media/upload-intents`, {
@@ -61,5 +61,5 @@ export class HttpExperienceGateway implements ExperienceGateway {
 		}
 		// Keep the durable optimistic file until the remote projection replaces it.
 	}
-	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }) { const { experienceId, mediaId, ...body }=input;return this.send(`/api/experiences/${experienceId}/media/${mediaId}`,"DELETE",body); }
+	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }) { const { experienceId, mediaId, commandId, at }=input;return this.send(`/api/experiences/${experienceId}/media/${mediaId}`,"DELETE",{ commandId, at }); }
 }

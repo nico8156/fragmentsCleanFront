@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import {
     selectArticleBySlug,
@@ -13,12 +14,11 @@ export function useArticle(slug: string, locale: Locale = "fr-FR") {
     const article = useSelector(selectArticleBySlug(slug));
     const status = useSelector(selectArticleStatusBySlug(slug));
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         if (!slug) return;
-        if (!article && status !== articleLoadingStates.PENDING) {
-            dispatch(articleRetrievalBySlug({ slug, locale }) as any);
-        }
-    }, [dispatch, slug, locale, article, status]);
+        // Keep cached content visible while renewing expiring media URLs.
+        dispatch(articleRetrievalBySlug({ slug, locale }));
+    }, [dispatch, slug, locale]));
 
     return {
         article,

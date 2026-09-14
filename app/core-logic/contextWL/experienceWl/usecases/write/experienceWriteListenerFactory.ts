@@ -76,6 +76,9 @@ export const experienceWriteListenerFactory = (deps: DependenciesWl) => {
 				if (!local.localUri) continue;
 				const remote = serverItem.media?.find(item => item.mediaId === local.mediaId);
 				if (!remote?.url || isLocalPrivateMediaReferenced(after, local.localUri)) continue;
+				// A stale snapshot may have been ignored by the reducer.
+				const retained = after.exState.entities.entities[serverItem.experienceId]?.media;
+				if (retained?.some(item => item.localUri === local.localUri)) continue;
 				deps.gateways.localPrivateMedia?.discard(local.localUri);
 			}
 		}

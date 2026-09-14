@@ -21,11 +21,22 @@ const createTestStore = (deps: any) => {
 };
 
 describe("auth flow", () => {
+	it("reloads the product avatar after sign-in even when OAuth supplies an older profile", async () => {
+		const user = { ...makeDemoUser(), avatarUrl: "https://images.test/latest.jpg", version: 5 };
+		const server = new FakeAuthServerGateway();
+		server.refreshedUser = { ...user, avatarUrl: "https://images.test/oauth.jpg", version: 0 };
+		const deps = { gateways: { auth: { oauth: new FakeOAuthGateway(), secureStore: new FakeAuthSecureStore(), userRepo: new FakeUserRepo([user]), server } }, helpers: {} };
+		const store = createTestStore(deps);
+		store.dispatch<any>(signInWithProvider({ provider: "google" }));
+		await flush();
+		expect(store.getState().aState.currentUser?.avatarUrl).toBe(user.avatarUrl);
+	});
 	it("signs in through OAuth gateway and hydrates user", async () => {
 		const oauth = new FakeOAuthGateway();
 		const secureStore = new FakeAuthSecureStore();
 		const userRepo = new FakeUserRepo([makeDemoUser()]);
 		const authServer = new FakeAuthServerGateway();
+		authServer.refreshedUser = makeDemoUser();
 
 		const deps = {
 			gateways: {

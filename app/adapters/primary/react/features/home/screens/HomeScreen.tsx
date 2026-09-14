@@ -6,7 +6,8 @@ import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigat
 import { useArticlesHome } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { useCoffeeDiscovery } from "@/app/adapters/secondary/viewModel/useCoffeeDiscovery";
 import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
-import { buildHomeContent, selectHomeCoffeeNames, selectHomeExperiences } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
+import { buildHomeContent, selectHomeCoffeeNames } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
+import { useHomeExperiences } from "@/app/adapters/secondary/viewModel/useHomeExperiences";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -41,7 +42,7 @@ export function HomeScreen() {
 	const { sliderArticles, articles } = useArticlesHome();
 	const { coffees, hasLocation } = useCoffeeDiscovery();
 	const pass = usePassRingsViewModel();
-	const experiences = useSelector(selectHomeExperiences);
+	const experiences = useHomeExperiences();
 	const coffeeNames = useSelector(selectHomeCoffeeNames);
 	const homeContent = useMemo(() => buildHomeContent({ articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames }), [articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames]);
 

@@ -189,6 +189,7 @@ confirmation.
 
 ## Clavier — nom affiché et expériences
 
+
 Retour complémentaire : le clavier masquait le nom affiché dans l'édition du
 profil et la saisie des expériences. Correction de présentation uniquement :
 `ProfileLayout` et la fiche café activent `automaticallyAdjustKeyboardInsets`.
@@ -221,3 +222,53 @@ Recette iPhone à effectuer (géométrie du clavier non validable par Jest) :
   d'espace vide résiduel et le retour de la tab bar/actions flottantes.
 - Refaire sur petit iPhone et avec grande taille de texte. Le simulateur iOS
   (`simctl`) n'est pas disponible dans l'environnement de cette intervention.
+
+## Reconnexion, photos et contrat Experience — deuxième retour du 14 septembre
+
+Diagnostic staging en lecture seule via SSM : les logs du conteneur Fragments
+montrent plusieurs `HttpMessageNotReadableException` le 14 septembre entre
+09:34 et 10:36 UTC. La cause est `Unrecognized field "kind"` sur
+`CreateExperienceRequest` et `ExperienceCommandRequest`. Le champ interne de
+l'outbox fuyait dans le JSON par sérialisation directe de la commande.
+Le HTTP 400 précède donc l'exécution métier ; il ne justifie aucun rollback.
+Les adaptateurs Experience construisent maintenant explicitement chaque corps
+HTTP (création, édition, publication, suppression, signalement, suppression de
+média). Les commandes existantes conservent leurs identifiants et peuvent être
+réessayées. Aucun objet S3 ni commande locale n'a été purgé.
+
+Après OAuth, le profil provisoire ne suffisait pas : le mobile relit désormais
+le profil applicatif, même lorsque l'authentification fournit un résumé.
+Un test fake-first reproduit l'avatar OAuth ancien puis vérifie son remplacement
+par le dernier avatar du profil sans action supplémentaire de l'utilisateur.
+
+Deux tests reproduisaient la disparition des photos : le snapshot de création
+remplaçait une photo encore en cours d'upload ; une réponse plus ancienne pouvait
+écraser une projection plus récente. Le merge conserve les médias locaux en
+attente jusqu'à leur confirmation et ignore les versions antérieures. Le
+nettoyage local vérifie aussi que le reducer a réellement remplacé le fichier.
+
+Les URL privées S3 expirent indépendamment de la version du contenu. L'accueil
+relit les expériences à chaque retour au premier plan de navigation ; l'article
+relit son détail à chaque ouverture, même en présence du cache. Le contenu en
+cache reste affiché pendant la requête et sur erreur réseau. Un test confirme
+le renouvellement des URL d'article à version identique, puis leur conservation
+si une lecture suivante échoue hors ligne. Cela ne garantit pas le téléchargement
+hors ligne d'une image qui n'a jamais été mise en cache sur l'appareil.
+
+Le bouton Google est centré verticalement dans ses 50 points. Le bouton Apple
+n'est monté qu'après vérification de `isAvailableAsync` et de l'enregistrement
+de sa vue native (métadonnées utilisées par Expo SDK 54). Ce dernier garde-fou
+est dépendant de l'adaptateur Expo installé et devra être revu à sa mise à niveau.
+Un ancien binaire de développement dépourvu de la vue exige un nouveau build de
+développement pour utiliser Apple ; recharger Metro ne peut pas ajouter la vue
+native. Le bouton officiel est conservé dans les binaires compatibles.
+
+FlowAtlas a retrouvé `authSignInRequested` puis `authListenerFactory`. Le contexte
+borné à 6 500 octets était explicitement incomplet (`maxBytes`) ; lecture ciblée
+du listener nécessaire pour vérifier la branche qui sautait la récupération du
+profil. Aucun scan Java générique lancé. Aucun changement backend ou AWS déployé.
+
+Validation : suite complète finale de 86 suites / 322 tests verte. TypeScript, lint ciblé et
+carte Redux vérifiés. Recette iPhone restante : reconnexion → dernier avatar,
+reprise des commandes conservées → photo confirmée, réouverture d'un article
+après expiration des liens, bouton Apple sur nouveau client natif et TestFlight.

@@ -69,6 +69,19 @@ describe("article retrieval", () => {
         expect(state.errors.bySlug[String(article.slug)]).toBe("article get failed");
     });
 
+    it("renews image links at the same article version and retains them when the next refresh is offline", async () => {
+        const article = sampleArticle({ blocks: [{ heading: "Origine", paragraph: "Le café", photo: { url: "https://images.test/old-signature", width: 640, height: 480 } }] });
+        gateway.store.set(article.id, article);
+        await store.dispatch(articleRetrievalBySlug({ slug: article.slug, locale: article.locale }));
+        const renewed = { ...article, blocks: [{ ...article.blocks[0], photo: { url: "https://images.test/new-signature", width: 640, height: 480 } }] };
+        gateway.store.set(article.id, renewed);
+        await store.dispatch(articleRetrievalBySlug({ slug: article.slug, locale: article.locale }));
+        expect(store.getState().arState.byId[String(article.id)].blocks[0].photo?.url).toBe("https://images.test/new-signature");
+        gateway.willFailGet = true;
+        await store.dispatch(articleRetrievalBySlug({ slug: article.slug, locale: article.locale }));
+        expect(store.getState().arState.byId[String(article.id)].blocks[0].photo?.url).toBe("https://images.test/new-signature");
+    });
+
     it("hydrates the list for a locale", async () => {
         const articleA = sampleArticle();
         const articleB = sampleArticle({ id: "article-2" as any, slug: "guide" as any, readingTimeMin: 7 });

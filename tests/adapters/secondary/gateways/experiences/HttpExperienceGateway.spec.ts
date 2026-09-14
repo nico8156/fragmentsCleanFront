@@ -6,6 +6,15 @@ jest.mock("@/app/adapters/secondary/gateways/media/uploadPrivateFile", () => ({
 }));
 
 describe("HttpExperienceGateway", () => {
+	it.each(["create", "update", "publish", "delete", "report", "deleteMedia"] as const)("maps %s outbox commands without leaking the internal discriminator", async method => {
+		const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 202 }));
+		const gateway = new HttpExperienceGateway({ baseUrl: "https://api.test", getAccessToken: async () => "token" });
+		const command = { kind: "Experience.Internal", commandId: "cmd", experienceId: "e", coffeeId: "c", message: "Visite", publicationStatus: "PUBLISHED" as const, at: "2026-09-11T10:00:00Z", reportId: "r", reason: "SPAM" as const, mediaId: "m" };
+		await gateway[method](command);
+		const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+		expect(body).not.toHaveProperty("kind");
+		expect(body.commandId).toBe("cmd");
+	});
 	afterEach(() => { mockUploadPrivateFile.mockReset(); jest.restoreAllMocks(); });
 	it("maps the transport read model explicitly", async () => {
 		jest.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify({ items: [{ experienceId: "e", coffeeId: "c", authorId: "u", authorName: "Nicolas", message: "Visite", publicationStatus: "PUBLISHED", moderationStatus: "VISIBLE", createdAt: "2026-09-11T10:00:00Z", updatedAt: "2026-09-11T10:00:00Z", version: 2 }], nextCursor: null }), { status: 200 }));
