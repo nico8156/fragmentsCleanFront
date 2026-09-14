@@ -2,8 +2,8 @@
 import type { UserRepo } from "@/app/core-logic/contextWL/userWl/gateway/user.gateway";
 import type { AppUser, ISODate } from "@/app/core-logic/contextWL/userWl/typeAction/user.type";
 import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
-import { GatewayError, isGatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
-import { File } from "expo-file-system";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { uploadPrivateFile } from "@/app/adapters/secondary/gateways/media/uploadPrivateFile";
 
 type Deps = {
 	baseUrl: string;
@@ -90,18 +90,16 @@ export class HttpUserRepo implements UserRepo {
 			body: JSON.stringify({ mediaId: input.mediaId, contentType: input.image.contentType, size: input.image.size }),
 		});
 		if (!intentResponse.ok) {
-			const error = await toGatewayErrorFromHttpResponse(intentResponse, `Avatar upload intent failed (${intentResponse.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(intentResponse, `Avatar upload intent failed (${intentResponse.status})`);
 		}
 		const target = await intentResponse.json() as { uploadRequired: boolean; uploadUrl?: string; method?: string; headers?: Record<string, string> };
 		if (target.uploadRequired) {
 			if (!target.uploadUrl) throw new GatewayError("server", "Avatar upload target is missing");
-			const file = new File(input.image.localUri);
-			const uploaded = await fetch(target.uploadUrl, {
-				method: target.method ?? "PUT",
-				headers: target.headers ?? {},
-				body: file as any,
+			const uploaded = await uploadPrivateFile({
+				url: target.uploadUrl,
+				method: target.method,
+				headers: target.headers,
+				localUri: input.image.localUri,
 			});
 			if (!uploaded.ok) throw new GatewayError("server", `Avatar upload failed (${uploaded.status})`, uploaded.status);
 		}
@@ -111,25 +109,10 @@ export class HttpUserRepo implements UserRepo {
 			body: JSON.stringify({ commandId: input.commandId, at: input.at }),
 		});
 		if (!confirmation.ok) {
-			const error = await toGatewayErrorFromHttpResponse(confirmation, `Avatar confirmation failed (${confirmation.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(confirmation, `Avatar confirmation failed (${confirmation.status})`);
 		}
-		try {
-			const file = new File(input.image.localUri);
-			if (file.exists) file.delete();
-		} catch {
-			// The durable command has been accepted. Local cleanup can be retried by the OS.
-		}
-	}
-
-	private discardLocalImage(uri: string) {
-		try {
-			const file = new File(uri);
-			if (file.exists) file.delete();
-		} catch {
-			// App-owned private storage: cleanup remains best effort.
-		}
+		// The local file remains the optimistic read model until command status and
+		// the user projection have both reconciled it with a remote avatar URL.
 	}
 
 	async removeAvatar(input: { commandId: string; at: string }): Promise<void> {

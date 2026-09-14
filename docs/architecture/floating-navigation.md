@@ -11,6 +11,12 @@ is visible and switches from blur to an opaque surface when Reduce Transparency
 is enabled. Root scroll surfaces reserve `FLOATING_TAB_BAR_CLEARANCE`; the map
 remains intentionally underneath the bar while its location control clears it.
 
+The TestFlight refinement keeps the same dimensions and destinations, while
+raising blur, adding a thin light rim and a restrained accent shadow. This
+reuses the translucent separation perceived on native profile back controls;
+it is a presentation-only change and preserves the opaque accessibility
+fallback.
+
 The coffee selection flow remains:
 
 ```text

@@ -1,13 +1,16 @@
 import { HttpUserRepo } from "@/app/adapters/secondary/gateways/user/HttpUserRepo";
 
-const mockDeleteLocalFile = jest.fn();
-jest.mock("expo-file-system", () => ({ File: jest.fn().mockImplementation((mockUri) => ({ exists: true, delete: () => mockDeleteLocalFile(mockUri) })) }));
+const mockUploadPrivateFile = jest.fn();
+jest.mock("@/app/adapters/secondary/gateways/media/uploadPrivateFile", () => ({
+	uploadPrivateFile: (...args: unknown[]) => mockUploadPrivateFile(...args),
+}));
 
 describe("HttpUserRepo", () => {
 	const originalFetch = global.fetch;
 
 	afterEach(() => {
 		global.fetch = originalFetch;
+		mockUploadPrivateFile.mockReset();
 		jest.restoreAllMocks();
 	});
 
@@ -56,17 +59,21 @@ describe("HttpUserRepo", () => {
 	it("uploads an avatar to private storage then confirms the command", async () => {
 		global.fetch = jest.fn()
 			.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ uploadRequired: true, uploadUrl: "https://s3.test/avatar", method: "PUT", headers: { "Content-Type": "image/png" } }) })
-			.mockResolvedValueOnce({ ok: true, status: 200 })
 			.mockResolvedValueOnce({ ok: true, status: 202 }) as any;
+		mockUploadPrivateFile.mockResolvedValueOnce({ ok: true, status: 200 });
 		const gateway = new HttpUserRepo({ baseUrl: "https://api.fragments.test", getAccessToken: async () => "jwt" });
 
 		await gateway.uploadAvatar({ commandId: "cmd", mediaId: "media", image: { localUri: "file:///private/avatar.png", contentType: "image/png", size: 128 }, at: "2026-09-11T10:00:00Z" });
 
 		expect((global.fetch as jest.Mock).mock.calls.map(call => call[0])).toEqual([
 			"https://api.fragments.test/api/users/me/avatar/upload-intents",
-			"https://s3.test/avatar",
 			"https://api.fragments.test/api/users/me/avatar/media/confirm",
 		]);
-		expect(mockDeleteLocalFile).toHaveBeenCalledWith("file:///private/avatar.png");
+		expect(mockUploadPrivateFile).toHaveBeenCalledWith({
+			url: "https://s3.test/avatar",
+			method: "PUT",
+			headers: { "Content-Type": "image/png" },
+			localUri: "file:///private/avatar.png",
+		});
 	});
 });

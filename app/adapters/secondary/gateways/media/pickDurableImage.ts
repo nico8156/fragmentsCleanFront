@@ -3,6 +3,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { requireOptionalNativeModule } from "expo-modules-core";
 
+import { expoLocalPrivateMediaGateway } from "@/app/adapters/secondary/gateways/media/ExpoLocalPrivateMediaGateway";
 import type { LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 
 const MAX_IMAGE_BYTES = 8_000_000;
@@ -95,10 +96,5 @@ export const pickDurableImage = async (source: Source): Promise<LocalImageInput 
 
 export const discardDurableImage = (image: LocalImageInput | undefined) => {
 	if (!image) return;
-	try {
-		const file = new File(image.localUri);
-		if (file.exists) file.delete();
-	} catch {
-		// Best effort: app-owned document storage remains private and can be cleaned later.
-	}
+	expoLocalPrivateMediaGateway.discard(image.localUri);
 };

@@ -1,7 +1,7 @@
 import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
 import type { ExperiencePage, ExperienceReportReason } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
-import { GatewayError, isGatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
-import { File } from "expo-file-system";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { uploadPrivateFile } from "@/app/adapters/secondary/gateways/media/uploadPrivateFile";
 
 export class HttpExperienceGateway implements ExperienceGateway {
 	private readonly baseUrl: string;
@@ -43,15 +43,12 @@ export class HttpExperienceGateway implements ExperienceGateway {
 			body: JSON.stringify({ mediaId: input.mediaId, contentType: input.image.contentType, size: input.image.size }),
 		});
 		if (!intent.ok) {
-			const error = await toGatewayErrorFromHttpResponse(intent, `Experience media intent failed (${intent.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(intent, `Experience media intent failed (${intent.status})`);
 		}
 		const target = await intent.json() as { uploadRequired: boolean; uploadUrl?: string; method?: string; headers?: Record<string, string> };
 		if (target.uploadRequired) {
 			if (!target.uploadUrl) throw new GatewayError("server", "Experience media upload target is missing");
-			const file = new File(input.image.localUri);
-			const uploaded = await fetch(target.uploadUrl, { method: target.method ?? "PUT", headers: target.headers ?? {}, body: file as any });
+			const uploaded = await uploadPrivateFile({ url: target.uploadUrl, method: target.method, headers: target.headers, localUri: input.image.localUri });
 			if (!uploaded.ok) throw new GatewayError("server", `Media upload failed (${uploaded.status})`, uploaded.status);
 		}
 		const confirmed = await fetch(`${this.baseUrl}/api/experiences/${input.experienceId}/media/${input.mediaId}/confirm`, {
@@ -60,17 +57,9 @@ export class HttpExperienceGateway implements ExperienceGateway {
 			body: JSON.stringify({ commandId: input.commandId, at: input.at }),
 		});
 		if (!confirmed.ok) {
-			const error = await toGatewayErrorFromHttpResponse(confirmed, `Experience media confirmation failed (${confirmed.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(confirmed, `Experience media confirmation failed (${confirmed.status})`);
 		}
-		try {
-			const file = new File(input.image.localUri);
-			if (file.exists) file.delete();
-		} catch {
-			// The server accepted the command; local cleanup is best effort.
-		}
+		// Keep the durable optimistic file until the remote projection replaces it.
 	}
-	private discardLocalImage(uri: string) { try { const file = new File(uri); if (file.exists) file.delete(); } catch { /* best effort */ } }
 	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }) { const { experienceId, mediaId, ...body }=input;return this.send(`/api/experiences/${experienceId}/media/${mediaId}`,"DELETE",body); }
 }

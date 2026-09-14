@@ -129,6 +129,7 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 				dispatch: api.dispatch,
 				logger,
 				markLikeSyncFailed: true,
+				gateways: deps.gateways,
 			});
 
 			api.dispatch(markFailed({ id: rec.id, error: reason }));

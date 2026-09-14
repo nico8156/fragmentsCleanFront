@@ -38,6 +38,20 @@ binary.
 The normalized copy is stored under the application's document directory before
 the Redux intent is emitted. A cache URI must never be persisted in the outbox.
 
+Signed object uploads use `expo/fetch`, not React Native's global `fetch`.
+Expo SDK 54's `File` is a supported binary request body on that transport. The
+global transport was observed creating zero-byte S3 objects on a real iPhone and
+must not be reintroduced for private file PUTs.
+
+Reference: [Expo SDK 54 FileSystem — uploading files using expo/fetch](https://docs.expo.dev/versions/v54.0.0/sdk/filesystem/#uploading-files-using-expofetch).
+
+The gateway does not delete the durable local file when the confirmation HTTP
+request merely returns successfully. The file remains the optimistic read model
+while `/commands/{commandId}` and the backend projection reconcile. It is
+discarded through the injected local-media technical port only after a user or
+experience read model contains the remote replacement, or after an explicit
+terminal rejection. This keeps transport success distinct from business state.
+
 Client normalization is a compatibility and bandwidth step, not a security
 boundary. The backend independently inspects, decodes, strips metadata,
 normalizes and authorizes every private object. Technical failure keeps the

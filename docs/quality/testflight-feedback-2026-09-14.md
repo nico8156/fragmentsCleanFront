@@ -158,3 +158,31 @@ sur iPhone.
 - la validation caméra/photothèque, la propagation entre deux comptes et le
   rendu final restent des critères de recette sur le prochain build signé, pas
   des preuves acquises sur le build `1.0.0 (3)`.
+
+## Correctif média après recette appareil
+
+La recette du 14 septembre a établi une cause commune aux avatars et photos
+d'expérience : les objets avatar présents sous le préfixe S3 staging avaient
+une taille de **0 octet**, et aucun objet d'expérience valide n'avait atteint
+son préfixe. Le `File` Expo était envoyé par le `fetch` React Native global.
+
+Le PUT signé passe désormais par `expo/fetch`, transport documenté par Expo SDK
+54 pour envoyer directement un `File`. Le fichier durable local n'est plus
+supprimé sur le seul succès HTTP de confirmation : il reste visible et
+réessayable jusqu'au statut canonique de commande puis au remplacement par une
+URL issue du read model serveur. La suppression locale passe par un port
+technique injecté et borné au répertoire privé de l'application.
+
+Les objets S3 vides observés n'ont pas été supprimés manuellement : le mécanisme
+de nettoyage différé du backend reste propriétaire de leur cycle de vie.
+
+La floating tab bar conserve sa géométrie et ses quatre destinations. Son blur,
+son liseré lumineux et son ombre d'accent sont renforcés pour reprendre le relief
+des contrôles de retour iOS sans modifier la navigation.
+
+Validation source : 8 suites / 19 tests ciblés verts ; résultat complet final
+**86 suites / 312 tests verts** ; TypeScript vert ; bundle Metro iOS généré ;
+garde native et carte Redux à jour ; ESLint sans erreur (16 avertissements
+préexistants). La preuve fonctionnelle restante est une nouvelle tentative sur
+iPhone, dont l'objet S3 doit avoir une taille strictement positive avant
+confirmation.

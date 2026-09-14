@@ -5,6 +5,7 @@ import {
 	avatarAttachRequested,
 	avatarRemoveRequested,
 	avatarUpdateOptimistic,
+	authUserHydrationSucceeded,
 	profileUpdateOptimistic,
 	profileUpdateRejectedLocally,
 	profileUpdateRequested,
@@ -12,6 +13,7 @@ import {
 import type { AppStateWl, DependenciesWl } from "@/app/store/appStateWl";
 import type { AppDispatchWl, RootStateWl } from "@/app/store/reduxStoreWl";
 import { nanoid, type TypedStartListening } from "@reduxjs/toolkit";
+import { isLocalPrivateMediaReferenced } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 
 const normalizeDisplayName = (value: string): string => value.trim().replace(/\s+/g, " ");
 
@@ -110,6 +112,19 @@ export const profileUpdateListenerFactory = (deps: DependenciesWl) => {
 				enqueuedAt: at,
 			}));
 			api.dispatch(outboxProcessOnce());
+		},
+	});
+
+	listen({
+		actionCreator: authUserHydrationSucceeded,
+		effect: (action, api) => {
+			const previousUrl = (api.getOriginalState() as unknown as RootStateWl).aState.currentUser?.avatarUrl;
+			if (!previousUrl?.startsWith("file:")) return;
+			const state = api.getState() as unknown as RootStateWl;
+			if (state.aState.currentUser?.avatarUrl === previousUrl) return;
+			if (isLocalPrivateMediaReferenced(state, previousUrl)) return;
+			if (action.payload.user.avatarUrl === previousUrl) return;
+			deps.gateways.localPrivateMedia?.discard(previousUrl);
 		},
 	});
 

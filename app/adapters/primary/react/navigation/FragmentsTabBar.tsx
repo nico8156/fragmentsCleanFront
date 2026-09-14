@@ -1,4 +1,4 @@
-import { floatingTabPresentation } from "@/app/adapters/primary/react/navigation/floatingTabBar";
+import { floatingTabGlassPresentation, floatingTabPresentation } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -31,7 +31,9 @@ export function FragmentsTabBar({ state, descriptors, navigation }: BottomTabBar
 
 	return (
 		<View style={[styles.shell, { bottom: Math.max(insets.bottom, 10) + 10 }]}>
-			{reduceTransparency ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.opaque]} /> : <BlurView pointerEvents="none" intensity={42} tint="dark" style={StyleSheet.absoluteFill} />}
+			{reduceTransparency ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.opaque]} /> : <BlurView pointerEvents="none" intensity={floatingTabGlassPresentation.blurIntensity} tint="dark" style={StyleSheet.absoluteFill} />}
+			<View pointerEvents="none" style={styles.glassTint} />
+			<View pointerEvents="none" style={styles.glassHighlight} />
 			<View style={styles.row} accessibilityRole="tablist">
 				{state.routes.map((route, index) => {
 					const selected = state.index === index;
@@ -87,13 +89,15 @@ function FragmentsTabItem({ label, icon, selected, onPress, onLongPress }: {
 }
 
 const styles = StyleSheet.create({
-	shell: { position: "absolute", left: 16, right: 16, height: 70, borderRadius: 24, overflow: "hidden", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(255,255,255,0.16)", shadowColor: "#000", shadowOpacity: 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10 },
+	shell: { position: "absolute", left: 16, right: 16, height: 70, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: floatingTabGlassPresentation.borderColor, shadowColor: palette.accent, shadowOpacity: 0.2, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 13 },
 	opaque: { backgroundColor: palette.surface },
-	row: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 6, backgroundColor: "rgba(21,16,14,0.54)" },
+	glassTint: { ...StyleSheet.absoluteFillObject, backgroundColor: floatingTabGlassPresentation.surfaceColor },
+	glassHighlight: { position: "absolute", top: 0, left: 22, right: 22, height: 1, borderRadius: 99, backgroundColor: floatingTabGlassPresentation.highlightColor },
+	row: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 6 },
 	item: { flex: 1, height: "100%", alignItems: "center", justifyContent: "center", gap: 3, borderRadius: 18 },
 	pressed: { opacity: 0.74 },
 	iconWrap: { width: 30, height: 28, alignItems: "center", justifyContent: "center", borderRadius: 12 },
-	iconWrapSelected: { backgroundColor: palette.accentSoft },
+	iconWrapSelected: { backgroundColor: "rgba(200,106,58,0.28)", borderWidth: StyleSheet.hairlineWidth, borderColor: "rgba(244,237,230,0.26)" },
 	label: { color: palette.textSecondary, fontSize: 11, fontWeight: "700" },
 	labelSelected: { color: palette.textPrimary, fontWeight: "900" },
 	indicator: { width: 18, height: 3, borderRadius: 99, backgroundColor: palette.accent, marginTop: 1 },

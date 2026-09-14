@@ -18,6 +18,11 @@ export const selectOutboxQueue = (s: RootStateWl): OutboxStateWl["queue"] =>
 export const selectOutboxById = (s: RootStateWl): OutboxStateWl["byId"] =>
     selectOutbox(s).byId;
 
+export const isLocalPrivateMediaReferenced = (s: RootStateWl, localUri: string): boolean =>
+    Object.values(selectOutboxById(s)).some((record) =>
+        (record.item.command as { image?: { localUri?: string } }).image?.localUri === localUri,
+    );
+
 const pendingStatuses = new Set<string>([
     statusTypes.queued,
     statusTypes.processing,
