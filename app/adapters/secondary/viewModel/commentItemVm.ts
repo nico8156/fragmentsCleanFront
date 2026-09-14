@@ -59,19 +59,18 @@ export const buildCommentItemVM = ({
 	const isCurrentUser = Boolean(meId) && String(meId) === String(comment.authorId);
 	const transportStatus = toCommentTransportStatus(outboxStatus);
 
-	const fallbackName = isCurrentUser
-		? currentUser?.displayName ?? "Moi"
-		: "Membre Fragments";
-
-	const fallbackAvatar = isCurrentUser
-		? currentUser?.avatarUrl ?? undefined
-		: undefined;
+	const authorName = isCurrentUser
+		? currentUser?.displayName ?? comment.authorName ?? "Moi"
+		: comment.authorName ?? "Membre Fragments";
+	const avatarUrl = isCurrentUser && currentUser
+		? currentUser.avatarUrl ?? undefined
+		: comment.avatarUrl ?? undefined;
 
 	return {
 		id: comment.id,
 		authorId: comment.authorId,
-		authorName: comment.authorName ?? fallbackName,
-		avatarUrl: (comment.avatarUrl ?? undefined) ?? fallbackAvatar,
+		authorName,
+		avatarUrl,
 		body: comment.body,
 		createdAt: comment.createdAt,
 		relativeTime: formatRelativeTime(comment.createdAt, nowMs),

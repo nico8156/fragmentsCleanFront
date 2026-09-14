@@ -120,7 +120,7 @@ function ProfileNavigator() {
 				headerStyle: { backgroundColor: palette.primary_30 },
 				headerTitleStyle: { color: palette.accent_1, fontWeight: "700" },
 				headerTintColor: palette.accent_1,
-				headerBackVisible: false,
+				headerBackVisible: true,
 				contentStyle: { backgroundColor: palette.bg_light_90 },
 			}}
 		>

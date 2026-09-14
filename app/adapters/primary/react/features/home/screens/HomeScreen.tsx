@@ -65,7 +65,7 @@ export function HomeScreen() {
 
 	const openMap = useCallback(() => navigation.navigate("Tabs", { screen: "Map" }), [navigation]);
 	const openCoffee = useCallback((id: string) => navigation.navigate("CafeDetails", { id }), [navigation]);
-	const openExperiences = useCallback(() => navigation.navigate("Tabs", { screen: "Profile", params: { screen: "Experiences" } }), [navigation]);
+	const openExperiences = useCallback(() => navigation.navigate("Tabs", { screen: "Profile", params: { screen: "Experiences", initial: false } }), [navigation]);
 	const openPass = useCallback(() => navigation.navigate("Tabs", { screen: "Rewards" }), [navigation]);
 
 	// 0 -> header invisible ; 1 -> header fully visible
