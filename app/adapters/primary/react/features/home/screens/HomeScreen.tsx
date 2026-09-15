@@ -8,6 +8,7 @@ import { useCoffeeDiscovery } from "@/app/adapters/secondary/viewModel/useCoffee
 import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 import { buildHomeContent, selectHomeCoffeeNames } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
 import { useHomeExperiences } from "@/app/adapters/secondary/viewModel/useHomeExperiences";
+import { useHomeRefresh } from "@/app/adapters/secondary/viewModel/useHomeRefresh";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -17,6 +18,7 @@ import {
 	NativeScrollEvent,
 	NativeSyntheticEvent,
 	Pressable,
+	RefreshControl,
 	ScrollView,
 	StatusBar,
 	StyleSheet,
@@ -43,6 +45,7 @@ export function HomeScreen() {
 	const { coffees, hasLocation } = useCoffeeDiscovery();
 	const pass = usePassRingsViewModel();
 	const experiences = useHomeExperiences();
+	const { refreshing, refresh } = useHomeRefresh();
 	const coffeeNames = useSelector(selectHomeCoffeeNames);
 	const homeContent = useMemo(() => buildHomeContent({ articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames }), [articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames]);
 
@@ -63,6 +66,7 @@ export function HomeScreen() {
 		},
 		[navigation],
 	);
+	const openArticleCatalogue = useCallback(() => navigation.navigate("ArticleCatalogue"), [navigation]);
 
 	const openMap = useCallback(() => navigation.navigate("Tabs", { screen: "Map" }), [navigation]);
 	const openCoffee = useCallback((id: string) => navigation.navigate("CafeDetails", { id }), [navigation]);
@@ -111,6 +115,7 @@ export function HomeScreen() {
 				onScroll={handleScroll}
 				scrollEventThrottle={16}
 				contentContainerStyle={styles.scrollContent}
+				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={palette.textPrimary} progressViewOffset={topPad} />}
 			>
 				<View style={styles.heroSection}>
 					<MasterHeader articles={sliderArticles} onArticlePress={openArticle} />
@@ -119,7 +124,7 @@ export function HomeScreen() {
 				{/* Spacer: évite que les sections démarrent sous la barre */}
 				<View style={{ height: 16 }} />
 
-				<HomeContentSections content={homeContent} onOpenMap={openMap} onOpenScan={openScanModal} onOpenCoffee={openCoffee} onOpenArticle={openArticle} onOpenExperiences={openExperiences} onOpenPass={openPass} />
+				<HomeContentSections content={homeContent} onOpenMap={openMap} onOpenScan={openScanModal} onOpenCoffee={openCoffee} onOpenArticle={openArticle} onOpenArticleCatalogue={openArticleCatalogue} onOpenExperiences={openExperiences} onOpenPass={openPass} />
 			</AnimatedScrollView>
 
 			{/* Header unique au-dessus du HERO */}

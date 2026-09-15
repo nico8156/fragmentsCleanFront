@@ -16,16 +16,23 @@ lectures Redux déjà possédées par `articleWl`, `coffeeWl`, `entitlementWl` e
 - les expériences affichées sont celles de l'utilisateur, publiées et visibles ;
 - les trois premières expériences visibles sont présentées dans un second rail
   horizontal ; « Tout voir » reste la destination exhaustive ;
-- « À lire ensuite » conserve une liste verticale. Les cinq premiers articles
-  de l'ordre éditorial renvoyé par le backend alimentent le hero ; les trois
-  premiers articles suivants, après exclusion de ces identifiants, alimentent
-  cette rubrique. Il n'existe pas encore de recommandation personnalisée ou
-  algorithmique ;
+- le hero prend les articles publiés classés « à la une » dans Studio, par rang
+  de 1 à 5. Tant qu'aucun rang n'est attribué, le plus récent reste le seul
+  grand visuel provisoire : le rendu du grand visuel et du bandeau au scroll
+  demeure intact ;
+- « À lire ensuite » conserve une liste verticale : les trois articles publiés
+  non mis à la une les plus récents, hors article déjà visible dans le hero.
+  C'est une sélection déterministe, sans recommandation algorithmique ;
+- « Tous les articles » ouvre un catalogue distinct contenant tous les articles
+  publiés, même ceux à la une, du plus récent au plus ancien ;
 - aucune donnée fictive ne remplace une lecture absente : l'UI montre un état
   vide avec une destination explicite.
 
 Cette composition reste read-only. Toute écriture conserve le flux écran →
 view model → use case Redux → outbox.
 
-Le grand visuel `MasterHeader` et l'apparition du bandeau au scroll ne sont pas
-modifiés par les rails horizontaux.
+Le Home peut être tiré vers le bas pour recharger les projections publiques et,
+si connecté, les expériences personnelles et le Pass. Au retour au premier
+plan ou après une reconnexion, les projections publiques sont aussi relues ;
+Projection Sync SSE reste un simple signal pour effectuer un GET. Le grand
+visuel `MasterHeader` et l'apparition du bandeau au scroll ne sont pas modifiés.

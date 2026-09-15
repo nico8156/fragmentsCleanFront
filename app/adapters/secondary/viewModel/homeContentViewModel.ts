@@ -37,6 +37,7 @@ export type HomeContentVM = {
 	pass: HomePassCardVM;
 	experiences: HomeExperienceVM[];
 	articles: ArticlePreviewVM[];
+	publishedArticleCount: number;
 };
 
 export function buildHomeContent(input: {
@@ -79,6 +80,7 @@ export function buildHomeContent(input: {
 				imageUrl: experience.media?.find((media) => media.url ?? media.localUri)?.url ?? experience.media?.find((media) => media.localUri)?.localUri,
 				imageMediaId: experience.media?.find(media => media.url || media.localUri)?.mediaId,
 			})),
-		articles: input.articles.filter((article) => !input.sliderArticles.some((slider) => slider.id === article.id)).slice(0, 3),
+		articles: input.articles.filter((article) => article.featuredRank === null && !input.sliderArticles.some((slider) => slider.id === article.id)).slice(0, 3),
+		publishedArticleCount: input.articles.length,
 	};
 }

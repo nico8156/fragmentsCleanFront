@@ -17,6 +17,7 @@ import { palette } from "@/app/adapters/primary/react/css/colors";
 import { FragmentsTabBar } from "@/app/adapters/primary/react/navigation/FragmentsTabBar";
 
 import { ArticleScreen } from "@/app/adapters/primary/react/features/articles/screens/ArticleScreen";
+import { ArticleCatalogueScreen } from "@/app/adapters/primary/react/features/articles/screens/ArticleCatalogueScreen";
 import { LoginScreen } from "@/app/adapters/primary/react/features/auth/screens/LoginScreen";
 import CafeDetailsScreen from "@/app/adapters/primary/react/features/cafes/screens/CafeDetailsScreen";
 import { HomeScreen } from "@/app/adapters/primary/react/features/home/screens/HomeScreen";
@@ -66,6 +67,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 			Onboarding: "onboarding",
 			CafeDetails: "coffee/:id",
 			Article: "article/:slug",
+			ArticleCatalogue: "articles",
 			Login: "login",
 			BadgeDetail: "badge/:badgeId",
 			AllBadges: "badges",
@@ -166,6 +168,7 @@ function SignedInNavigator() {
 			<Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
 			<Stack.Screen name="CafeDetails" component={CafeDetailsScreen} options={{ headerShown: false }} />
 			<Stack.Screen name="Article" component={ArticleScreen} options={{ headerShown: false }} />
+			<Stack.Screen name="ArticleCatalogue" component={ArticleCatalogueScreen} options={{ headerShown: false }} />
 			<Stack.Screen name="BadgeDetail" component={BadgeDetailScreen} options={{ title: "Badge" }} />
 			<Stack.Screen name="AllBadges" component={AllBadgesScreen} options={{ title: "Tous les badges" }} />
 			<Stack.Screen

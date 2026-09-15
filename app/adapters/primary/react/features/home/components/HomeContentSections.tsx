@@ -5,12 +5,13 @@ import type { DiscoveryCoffeeVM } from "@/app/core-logic/contextWL/coffeeWl/sele
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ExperiencePhoto } from "../../experiences/components/ExperiencePhoto";
 
-export function HomeContentSections({ content, onOpenMap, onOpenScan, onOpenCoffee, onOpenArticle, onOpenExperiences, onOpenPass }: {
+export function HomeContentSections({ content, onOpenMap, onOpenScan, onOpenCoffee, onOpenArticle, onOpenArticleCatalogue, onOpenExperiences, onOpenPass }: {
 	content: HomeContentVM;
 	onOpenMap: () => void;
 	onOpenScan: () => void;
 	onOpenCoffee: (id: string) => void;
 	onOpenArticle: (slug: string) => void;
+	onOpenArticleCatalogue: () => void;
 	onOpenExperiences: () => void;
 	onOpenPass: () => void;
 }) {
@@ -26,7 +27,7 @@ export function HomeContentSections({ content, onOpenMap, onOpenScan, onOpenCoff
 		<Section title="Tes expériences" action="Tout voir" onAction={onOpenExperiences}>
 			{content.experiences.length ? <HorizontalRail label="Tes expériences">{content.experiences.map((experience) => <View key={experience.id} style={styles.experienceCard}>{experience.imageUrl ? <ExperiencePhoto uri={experience.imageUrl} mediaId={experience.imageMediaId} label="Photo de mon expérience" compact /> : <View style={styles.experiencePlaceholder}><Text style={styles.experiencePlaceholderMark}>Fragments</Text></View>}<View style={styles.experienceBody}><Text style={styles.coffeeName} numberOfLines={1}>{experience.coffeeName}</Text><Text numberOfLines={2} style={styles.experienceText}>{experience.message}</Text></View></View>)}</HorizontalRail> : <Empty text="Raconte une visite depuis la fiche d’un café, avec ou sans ticket." action="Trouver un café" onAction={onOpenMap} />}
 		</Section>
-		{content.articles.length ? <Section title="À lire ensuite"><View style={styles.list}>{content.articles.map((article) => <ArticleCard key={article.id} article={article} onPress={() => onOpenArticle(article.slug)} />)}</View></Section> : null}
+		{content.publishedArticleCount ? <Section title="À lire ensuite" action="Tous les articles" onAction={onOpenArticleCatalogue}>{content.articles.length ? <View style={styles.list}>{content.articles.map((article) => <ArticleCard key={article.id} article={article} onPress={() => onOpenArticle(article.slug)} />)}</View> : <Text style={styles.muted}>Retrouve toutes les histoires publiées dans le catalogue.</Text>}</Section> : null}
 	</View>;
 }
 

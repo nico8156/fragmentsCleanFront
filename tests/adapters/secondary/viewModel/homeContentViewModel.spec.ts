@@ -1,6 +1,7 @@
 import { buildHomeContent, selectHomeCoffeeNames, selectHomeExperiences } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
+import { selectHomeHeroArticles } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 
-const article = (id: string) => ({ id, slug: id, title: id, intro: "intro", tags: [], cover: { url: "https://example.test/image.jpg", width: 1, height: 1, alt: id } });
+const article = (id: string, featuredRank: number | null = null) => ({ id, slug: id, title: id, intro: "intro", tags: [], featuredRank, cover: { url: "https://example.test/image.jpg", width: 1, height: 1, alt: id } });
 const pass: any = { currentLevel: { label: "Coffee Taster" }, nextUnlock: { label: "Urban Explorer", remainingRequirements: [{ key: "validatedTickets", label: "tickets validés", remaining: 1, current: 0, required: 1, completed: false }] } };
 
 describe("buildHomeContent", () => {
@@ -25,6 +26,7 @@ describe("buildHomeContent", () => {
 		expect(result.pass.action).toBe("scan");
 		expect(result.experiences).toEqual([expect.objectContaining({ id: "visible", coffeeName: "Café" })]);
 		expect(result.articles.map((item) => item.id)).toEqual(["next"]);
+		expect(result.publishedArticleCount).toBe(2);
 	});
 
 	it("oriente vers la carte lorsqu'une étape ne requiert pas de ticket", () => {
@@ -47,5 +49,19 @@ describe("buildHomeContent", () => {
 		expect(result.coffees).toHaveLength(5);
 		expect(result.experiences).toHaveLength(3);
 		expect(result.articles.map((item) => item.id)).toEqual(["article-3", "article-4", "article-5"]);
+	});
+	it("uses Studio ranks for the hero and recent non-featured publications for À lire ensuite", () => {
+		const published = [article("newest"), article("rank-3", 3), article("second"), article("rank-1", 1), article("third")];
+		const hero = selectHomeHeroArticles(published);
+		expect(hero.map(item => item.id)).toEqual(["rank-1", "rank-3"]);
+		const content = buildHomeContent({ articles: published, sliderArticles: hero, coffees: [], hasLocation: false, pass, experiences: [], coffeeNames: {} });
+		expect(content.articles.map(item => item.id)).toEqual(["newest", "second", "third"]);
+	});
+	it("preserves a single editorial hero until Studio has curated the first featured article", () => {
+		const published = [article("newest"), article("next")];
+		const hero = selectHomeHeroArticles(published);
+		expect(hero.map(item => item.id)).toEqual(["newest"]);
+		const content = buildHomeContent({ articles: published, sliderArticles: hero, coffees: [], hasLocation: false, pass, experiences: [], coffeeNames: {} });
+		expect(content.articles.map(item => item.id)).toEqual(["next"]);
 	});
 });

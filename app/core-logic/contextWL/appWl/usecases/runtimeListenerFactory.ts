@@ -35,6 +35,7 @@ import { likesRetrieval } from "@/app/core-logic/contextWL/likeWl/usecases/read/
 import { selectKnownLikeTargetIds } from "@/app/core-logic/contextWL/likeWl/selector/likeWl.selector";
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
+import { refreshHomeReadModels } from "@/app/core-logic/contextWL/appWl/usecases/refreshHomeReadModels";
 
 import {
 	projectionSyncDisconnectRequested,
@@ -150,7 +151,8 @@ export const runtimeListenerFactory = () => {
 
 		if (!bootReady) return;
 		if (online) {
-			refreshExpiringPublicReadModels(api);
+			if (source === "appBecameForeground") void refreshHomeReadModels(api.dispatch);
+			else refreshExpiringPublicReadModels(api);
 		}
 		if (!authed) return;
 
@@ -213,6 +215,7 @@ export const runtimeListenerFactory = () => {
 			api.dispatch(outboxResumeRequested());
 
 			if (!bootReady) return;
+			void refreshHomeReadModels(api.dispatch);
 
 			// ✅ Même si WS/outbox, on hydrate aussi (re-sync après offline)
 			if (authed) {
