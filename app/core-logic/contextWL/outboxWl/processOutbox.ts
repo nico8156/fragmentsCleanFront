@@ -100,19 +100,42 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 					return;
 				}
 
-				const queue: OutboxStateWl["queue"] = selectOutboxQueue(state);
+				const readyState = api.getState();
+				const queue: OutboxStateWl["queue"] = selectOutboxQueue(readyState);
 				if (!queue.length) {
 					logger.debug("[OUTBOX] processOnce: skipped (queue empty)");
 					return;
 				}
 
-				const byId: OutboxStateWl["byId"] = selectOutboxById(state);
+				const byId: OutboxStateWl["byId"] = selectOutboxById(readyState);
+				// Preserve intent order for an experience, including predecessors
+				// awaiting canonical ACK or requeued after a transport failure.
+				// Stable sorting retains persisted insertion order for equal timestamps.
+				const firstByExperience = new Map<string, string>();
+				for (const record of Object.values(byId).sort((a, b) => a.enqueuedAt.localeCompare(b.enqueuedAt))) {
+					const command = record.item.command;
+					if (command.kind.startsWith("Experience.") && "experienceId" in command
+						&& !firstByExperience.has(command.experienceId)) firstByExperience.set(command.experienceId, record.id);
+				}
+				// Once creation is confirmed, deletion supersedes pending edits/media.
+				// It must not wait forever for an upload whose local file is unavailable.
+				for (const record of Object.values(byId)) {
+					const command = record.item.command;
+					if (command.kind !== "Experience.Delete") continue;
+					const first = byId[firstByExperience.get(command.experienceId) ?? ""];
+					if (first && first.item.command.kind !== "Experience.Create" && first.item.command.kind !== "Experience.Delete") {
+						firstByExperience.set(command.experienceId, record.id);
+					}
+				}
 				const nowMs = Date.now();
 
 				const eligibleId = queue.find((qid) => {
 					const rec = byId[qid];
 					if (!rec) return false;
 					if (rec.status !== statusTypes.queued) return false;
+					const command = rec.item.command;
+					if (command.kind.startsWith("Experience.") && "experienceId" in command
+						&& firstByExperience.get(command.experienceId) !== qid) return false;
 
 					const nextAttemptAt = getNextAttemptAt(rec as any);
 					if (nextAttemptAt && nextAttemptAt > nowMs) return false;
@@ -195,6 +218,8 @@ export const processOutboxFactory = (deps: DependenciesWl, callback?: () => void
 							record,
 							dispatch: api.dispatch,
 							logger,
+							gateways: deps.gateways,
+							rejectionCode: e.reason,
 						});
 						api.dispatch(markFailed({ id, error: String(e?.message ?? e) }));
 						api.dispatch(dequeueCommitted({ id }));

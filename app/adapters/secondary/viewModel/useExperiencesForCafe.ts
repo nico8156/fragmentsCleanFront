@@ -1,21 +1,27 @@
 import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootStateWl } from "@/app/store/reduxStoreWl";
-import { selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
+import { selectCurrentUser, selectEffectiveUserId } from "@/app/core-logic/contextWL/userWl/selector/user.selector";
 import { uiUserBlockRequested } from "@/app/core-logic/contextWL/commentWl/usecases/write/commentModerationWlUseCase";
 import { uiExperienceCreateRequested, uiExperienceDeleteRequested, uiExperienceMediaAddRequested, uiExperienceMediaDeleteRequested, uiExperienceReportRequested, uiExperienceUpdateRequested } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 import type { ExperienceReportReason, LocalImageInput } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
 import { coffeeExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
+import { withCurrentUserExperienceIdentity } from "@/app/adapters/secondary/viewModel/experienceIdentityViewModel";
 
 export function useExperiencesForCafe(coffeeId?: string) {
 	const dispatch = useDispatch<any>();
 	const me = useSelector(selectEffectiveUserId);
+	const currentUser = useSelector(selectCurrentUser);
 	const slice = useSelector((state: RootStateWl) => coffeeId ? state.exState.byCoffee[coffeeId] : undefined);
 	const entities = useSelector((state: RootStateWl) => state.exState.entities.entities);
 	const reported = useSelector((state: RootStateWl) => state.exState.reportedIds);
 	const blockedUsers = useSelector((state: RootStateWl) => state.cState.blockedUsers);
 	useEffect(() => { if (coffeeId) dispatch(coffeeExperiencesRetrieval({ coffeeId })); }, [coffeeId, dispatch]);
-	const experiences = useMemo(() => (slice?.ids ?? []).map(id => entities[id]).filter(item => item && item.status === "PUBLISHED" && item.moderationStatus === "VISIBLE" && !reported[item.experienceId] && !blockedUsers[item.userId]).map(item => ({ ...item, isAuthor: String(item.userId) === String(me) })), [slice?.ids, entities, reported, blockedUsers, me]);
+	const experiences = useMemo(() => (slice?.ids ?? [])
+		.map(id => entities[id])
+		.filter(item => item && item.status === "PUBLISHED" && item.moderationStatus === "VISIBLE" && !reported[item.experienceId] && !blockedUsers[item.userId])
+		.map(item => ({ ...withCurrentUserExperienceIdentity(item, me, currentUser), isAuthor: String(item.userId) === String(me) })),
+	[slice?.ids, entities, reported, blockedUsers, me, currentUser]);
 	return {
 		experiences,
 		isLoading: slice?.loading === "PENDING" && !slice.ids.length,

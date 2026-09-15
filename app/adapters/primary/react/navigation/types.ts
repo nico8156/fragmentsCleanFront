@@ -26,6 +26,7 @@ export type RootStackParamList = {
 
 	CafeDetails: { id: string };
 	Article: { slug: string };
+	ArticleCatalogue: undefined;
 
 	// Existing
 	ScanTicketModal: undefined;

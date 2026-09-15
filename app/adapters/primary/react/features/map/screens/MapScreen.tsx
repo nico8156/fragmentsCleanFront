@@ -30,6 +30,7 @@ import { useClusteredCoffeeMap } from "@/app/adapters/primary/react/features/map
 import { useCoffeePreviewSheet } from "@/app/adapters/primary/react/features/map/hook/useCoffeePreviewSheet";
 import { useFollowUserOnMap } from "@/app/adapters/primary/react/features/map/hook/useFollowUserOnMap";
 import { indexCoffeeMarkers } from "@/app/adapters/primary/react/features/map/coffeeMarkerIndex";
+import { MAP_PREVIEW_SNAP_POINTS } from "@/app/adapters/primary/react/features/map/mapPreviewPresentation";
 
 type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -39,7 +40,7 @@ export function MapScreen() {
 	// --- BottomSheet state
 	const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
 	const bottomSheetRef = useRef<BottomSheet | null>(null);
-	const snapPoints = useMemo(() => ["40%"], []);
+	const snapPoints = useMemo(() => [...MAP_PREVIEW_SNAP_POINTS], []);
 
 	// --- UI state
 	const [viewMode, setViewMode] = useState<"map" | "list">("map");
@@ -67,7 +68,6 @@ export function MapScreen() {
 		mapRef,
 		coords: coords ? { lat: coords.lat, lng: coords.lng } : undefined,
 		refresh,
-		initialRegion,
 	});
 
 	// --- Coffee preview extracted (selection + open/close + navigate details)

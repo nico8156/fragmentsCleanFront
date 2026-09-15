@@ -139,12 +139,16 @@ describe("runtimeListenerFactory (appWl)", () => {
 		expect(types.filter((type) => type === projectionSyncEnsureConnectedRequested.type)).toHaveLength(1);
 	});
 
-	it("appBecameForeground refreshes coffee photos to renew signed URLs", async () => {
+	it("appBecameForeground refreshes published articles, coffee catalogue and signed photos", async () => {
 		const cfPhotos = new FakeCfPhotoWlGateway();
+		let articleCalls = 0;
+		let coffeeCalls = 0;
 		const localStore = initReduxStoreWl({
 			dependencies: {
 				gateways: {
 					cfPhotos,
+					articles: { list: async () => { articleCalls += 1; return { items: [] }; } },
+					coffees: { getAllSummaries: async () => { coffeeCalls += 1; return { kind: "updated", items: [] }; } },
 				} as any,
 				helpers: {} as any,
 			},
@@ -159,6 +163,8 @@ describe("runtimeListenerFactory (appWl)", () => {
 		await flush();
 
 		expect(cfPhotos.getCalls).toBe(1);
+		expect(articleCalls).toBe(1);
+		expect(coffeeCalls).toBe(1);
 	});
 
 	// ─────────────────────────────────────────────────────────────

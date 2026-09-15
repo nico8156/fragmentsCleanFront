@@ -18,6 +18,7 @@ import { selectIsOnline } from "@/app/core-logic/contextWL/appWl/selector/appWl.
 import { savedCoffeesRetrieval } from "@/app/core-logic/contextWL/savedCoffeeWl/usecases/read/savedCoffeeRetrieval";
 import { refreshNonTerminalTickets } from "@/app/core-logic/contextWL/ticketWl/usecases/read/ticketRetrieval";
 import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
+import { locationBootstrapRequested } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
 
 type BootLogger = {
@@ -63,6 +64,7 @@ export const createApplicationBootProcess = ({
 
 		await dispatch(initializeAuth());
 		if (shouldStop()) return;
+		store.dispatch(locationBootstrapRequested());
 
 		if (accountStorageManaged) {
 			await new Promise<void>(resolve => {

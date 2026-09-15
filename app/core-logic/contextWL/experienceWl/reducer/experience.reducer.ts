@@ -17,8 +17,13 @@ const mergeServerPage = (state: ExperienceStateWl, current: ExperienceCollection
 	const optimistic = current.ids.filter(id => state.entities.entities[id]?.optimistic);
 	for (const item of items) {
 		const local = state.entities.entities[item.experienceId];
-		if (local?.optimistic && local.version >= item.version) continue;
-		adapter.upsertOne(state.entities, { ...item, optimistic: false });
+		// Deletion is terminal; only an explicit rejected delete may restore it.
+		if (local?.status === "DELETED") continue;
+		if (local && (local.version > item.version || (local.optimistic && local.version === item.version))) continue;
+		// A create snapshot can precede the independently queued media attachment.
+		const pendingMedia = (local?.media ?? []).filter(media => media.localUri && media.uploadStatus
+			&& !(item.media ?? []).some(remote => remote.mediaId === media.mediaId && remote.url));
+		adapter.upsertOne(state.entities, { ...item, media: [...(item.media ?? []), ...pendingMedia], optimistic: false });
 	}
 	current.ids = [...new Set([...optimistic, ...items.map(item => item.experienceId)])];
 	current.nextCursor = nextCursor;
@@ -47,6 +52,7 @@ export const experienceReducer = createReducer(initialExperienceState, builder =
 	.addCase(experienceMediaOptimisticAdded, (state, action) => { const item=state.entities.entities[action.payload.experienceId];if(item)item.media=[...(item.media ?? []).filter(media=>media.mediaId!==action.payload.media.mediaId),action.payload.media]; })
 	.addCase(experienceMediaOptimisticDeleted, (state, action) => { const item=state.entities.entities[action.payload.experienceId];if(item)item.media=(item.media ?? []).filter(media=>media.mediaId!==action.payload.mediaId); })
 	.addCase(experienceRollback, (state, action) => {
+		if (action.payload.preserveDeletion && state.entities.entities[action.payload.experienceId]?.status === "DELETED") return;
 		if (action.payload.reported) {
 			delete state.reportedIds[action.payload.experienceId];
 			return;

@@ -24,6 +24,7 @@ import type { CommandStatusGateway } from "@/app/core-logic/contextWL/outboxWl/g
 import type { AuthTokenBridge } from "@/app/adapters/secondary/gateways/auth/AuthTokenBridge";
 import type { ProjectionSyncGateway } from "@/app/core-logic/contextWL/projectionSyncWl/gateway/projectionSync.gateway";
 import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
+import type { LocalPrivateMediaGateway } from "@/app/core-logic/contextWL/outboxWl/gateway/localPrivateMedia.gateway";
 
 export type GatewaysWl = {
 	coffees: CoffeeWlGateway;
@@ -52,4 +53,5 @@ export type GatewaysWl = {
 	projectionSync: ProjectionSyncGateway;
 	authToken: AuthTokenBridge;
 	commandStatus: CommandStatusGateway;
+	localPrivateMedia: LocalPrivateMediaGateway;
 };

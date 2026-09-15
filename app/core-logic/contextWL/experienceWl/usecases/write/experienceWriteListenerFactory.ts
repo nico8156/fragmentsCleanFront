@@ -10,8 +10,10 @@ import {
 	uiExperiencePublishRequested, uiExperienceReportRequested, uiExperienceUpdateRequested,
 	experienceMediaOptimisticAdded, experienceMediaOptimisticDeleted,
 	uiExperienceMediaAddRequested, uiExperienceMediaDeleteRequested,
+	coffeeExperiencesReceived, myExperiencesReceived,
 } from "../../typeAction/experience.action";
 import type { ExperienceEntity } from "../../typeAction/experience.type";
+import { isLocalPrivateMediaReferenced } from "@/app/core-logic/contextWL/outboxWl/selector/outboxSelectors";
 
 const outboxId = () => `obx_${nanoid()}`;
 
@@ -64,6 +66,26 @@ export const experienceWriteListenerFactory = (deps: DependenciesWl) => {
 	listen({actionCreator:uiExperienceMediaAddRequested,effect:async(action,api)=>{const previous=api.getState().exState.entities.entities[action.payload.experienceId];if(!previous||(previous.media?.length ?? 0)>0)return;const at=deps.helpers.nowIso();const mediaId=String(deps.helpers.newCommandId());api.dispatch(experienceMediaOptimisticAdded({experienceId:action.payload.experienceId,media:{mediaId,localUri:action.payload.photo.localUri,width:action.payload.photo.width,height:action.payload.photo.height,position:0,uploadStatus:"QUEUED"}}));enqueue(api,{kind:commandKinds.ExperienceMediaAttach,commandId:deps.helpers.newCommandId(),experienceId:action.payload.experienceId,mediaId,image:action.payload.photo,at},{kind:commandKinds.ExperienceMediaAttach,experienceId:action.payload.experienceId,previous},at);}});
 
 	listen({actionCreator:uiExperienceMediaDeleteRequested,effect:async(action,api)=>{const previous=api.getState().exState.entities.entities[action.payload.experienceId];if(!previous)return;const at=deps.helpers.nowIso();api.dispatch(experienceMediaOptimisticDeleted(action.payload));enqueue(api,{kind:commandKinds.ExperienceMediaDelete,commandId:deps.helpers.newCommandId(),experienceId:action.payload.experienceId,mediaId:action.payload.mediaId,at},{kind:commandKinds.ExperienceMediaDelete,experienceId:action.payload.experienceId,previous},at);}});
+
+	const discardReconciledMedia = (items: ExperienceEntity[], api: { getOriginalState: () => RootStateWl; getState: () => RootStateWl }) => {
+		const before = api.getOriginalState();
+		const after = api.getState();
+		for (const serverItem of items) {
+			const localMedia = before.exState.entities.entities[serverItem.experienceId]?.media ?? [];
+			for (const local of localMedia) {
+				if (!local.localUri) continue;
+				const remote = serverItem.media?.find(item => item.mediaId === local.mediaId);
+				if (!remote?.url || isLocalPrivateMediaReferenced(after, local.localUri)) continue;
+				// A stale snapshot may have been ignored by the reducer.
+				const retained = after.exState.entities.entities[serverItem.experienceId]?.media;
+				if (retained?.some(item => item.localUri === local.localUri)) continue;
+				deps.gateways.localPrivateMedia?.discard(local.localUri);
+			}
+		}
+	};
+
+	listen({ actionCreator: myExperiencesReceived, effect: (action, api) => discardReconciledMedia(action.payload.items, api) });
+	listen({ actionCreator: coffeeExperiencesReceived, effect: (action, api) => discardReconciledMedia(action.payload.page.items, api) });
 
 	return middleware;
 };

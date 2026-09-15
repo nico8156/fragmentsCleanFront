@@ -22,6 +22,7 @@ export function mapArticleTransport(input: unknown): Article {
         updatedAt: string(article.updatedAt, "article.updatedAt") as Article["updatedAt"],
         version: positiveNumber(article.version, "article.version"),
         status: status(article.status),
+        featuredRank: featuredRank(article.featuredRank),
         coffeeIds: article.coffeeIds == null ? [] : array(article.coffeeIds, "article.coffeeIds").map((id) => string(id, "article.coffeeIds[]") as CoffeeId),
     };
 }
@@ -57,6 +58,11 @@ function optionalString(value: unknown): string | undefined {
 }
 function positiveNumber(value: unknown, path: string): number {
     if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) throw new Error(`Invalid ${path}`);
+    return value;
+}
+function featuredRank(value: unknown): number | null {
+    if (value == null) return null;
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 5) throw new Error("Invalid article.featuredRank");
     return value;
 }
 function locale(value: unknown): Article["locale"] {

@@ -16,6 +16,7 @@ Read in order:
 6. [Article reading flow](article-reading-flow.md)
 7. [Account isolation and legacy data](account-isolation.md)
 8. [Floating navigation and coffee discovery](floating-navigation.md)
+9. [Private photos and profile projection](private-media.md)
 
 ## Redux Action Map
 

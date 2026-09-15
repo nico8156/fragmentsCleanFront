@@ -4,6 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 
 export const FLOATING_TAB_BAR_CLEARANCE = 116;
 
+export const floatingTabGlassPresentation = {
+	blurIntensity: 68,
+	surfaceColor: "rgba(21,16,14,0.32)",
+	borderColor: "rgba(244,237,230,0.28)",
+	highlightColor: "rgba(255,255,255,0.34)",
+} as const;
+
 export type FloatingTabPresentation = {
 	label: string;
 	icon: ComponentProps<typeof Ionicons>["name"];

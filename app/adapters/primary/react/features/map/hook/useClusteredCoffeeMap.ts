@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { coordsToGeoJSONFeature } from "react-native-clusterer";
 import MapView, { Region } from "react-native-maps";
+import { resolveInitialMapCenter } from "@/app/adapters/primary/react/features/map/mapInitialRegion";
 
 type LatLng = { lat: number; lng: number };
 
@@ -31,15 +32,20 @@ export function useClusteredCoffeeMap(params: {
 	const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
 	const clusterUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const initialCenter = resolveInitialMapCenter({
+		userCoords,
+		firstCoffee: coffees[0]?.location,
+		fallback: initialFallback,
+	});
 
 	const initialRegion = useMemo<Region>(
 		() => ({
-			latitude: userCoords?.lat ?? initialFallback.lat,
-			longitude: userCoords?.lng ?? initialFallback.lng,
+			latitude: initialCenter.lat,
+			longitude: initialCenter.lng,
 			latitudeDelta: 0.035,
 			longitudeDelta: 0.035,
 		}),
-		[userCoords?.lat, userCoords?.lng, initialFallback.lat, initialFallback.lng],
+		[initialCenter.lat, initialCenter.lng],
 	);
 
 	const effectiveClusterRegion = clusterRegion ?? initialRegion;
@@ -88,4 +94,3 @@ export function useClusteredCoffeeMap(params: {
 		clusterData,
 	};
 }
-

@@ -176,9 +176,9 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 				if (user) {
 					api.dispatch(authUserHydrationSucceeded({ user }));
-				} else {
-					api.dispatch(authUserHydrationRequested({ userId: session.userId }));
 				}
+				// OAuth identity is only a provisional summary; the application profile owns the avatar.
+				api.dispatch(authUserHydrationRequested({ userId: session.userId }));
 
 				api.dispatch(authMaybeRefreshRequested());
 			} catch {

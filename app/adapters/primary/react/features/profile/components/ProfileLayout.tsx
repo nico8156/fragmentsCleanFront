@@ -12,6 +12,9 @@ interface ProfileLayoutProps {
 export function ProfileLayout({ children, refreshing, onRefresh }: ProfileLayoutProps) {
 	return (
 		<ScrollView
+			automaticallyAdjustKeyboardInsets
+			keyboardShouldPersistTaps="handled"
+			keyboardDismissMode="interactive"
 			style={styles.root}
 			contentContainerStyle={styles.content}
 			refreshControl={onRefresh ? (

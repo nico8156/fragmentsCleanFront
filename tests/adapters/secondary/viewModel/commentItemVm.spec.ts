@@ -50,6 +50,29 @@ describe("commentItemVm", () => {
 		});
 	});
 
+	it("immediately overlays the current profile on an older authored comment snapshot", () => {
+		const item = buildCommentItemVM({
+			comment: {
+				id: "comment_1",
+				targetId: "coffee_1",
+				authorId: "user_1",
+				authorName: "Ancien nom",
+				avatarUrl: "https://old.test/avatar.jpg",
+				body: "Bonjour",
+				createdAt: "2026-07-16T11:59:40.000Z",
+				version: 1,
+				moderation: moderationTypes.PUBLISHED,
+			} as any,
+			currentUser: { displayName: "Nouveau nom", avatarUrl: null },
+			effectiveUserId: "user_1",
+			showPendingFeedback: false,
+			nowMs: Date.parse("2026-07-16T12:00:00.000Z"),
+		});
+
+		expect(item.authorName).toBe("Nouveau nom");
+		expect(item.avatarUrl).toBeUndefined();
+	});
+
 	it("uses only a neutral local identity when the server author snapshot is absent", () => {
 		const item = buildCommentItemVM({
 			comment: {

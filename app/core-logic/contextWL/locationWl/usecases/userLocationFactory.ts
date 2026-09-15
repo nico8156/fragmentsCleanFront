@@ -3,7 +3,7 @@ import {TypedStartListening} from "@reduxjs/toolkit";
 import { createListenerMiddleware, accountGeneration } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
 import {AppDispatchWl, RootStateWl} from "@/app/store/reduxStoreWl";
 import {
-    getOnceRequested, locationNearbyCafeUpdated,
+    getOnceRequested, locationBootstrapRequested, locationNearbyCafeUpdated,
     locationUpdated, permissionCheckRequested,
     permissionUpdated,
     requestPermission,
@@ -46,6 +46,21 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
         }
     })
     listen({
+        actionCreator: locationBootstrapRequested,
+        effect: async (_, api) => {
+            if (!deps.gateways.locations) return;
+            try {
+                const status = await deps.gateways.locations.getPermissionStatus();
+                api.dispatch(permissionUpdated({ status }));
+                if (status === "granted") {
+                    api.dispatch(getOnceRequested({ accuracy: "balanced" }));
+                }
+            } catch (e: any) {
+                api.dispatch(watchError({ scope: "permission", message: e?.message ?? String(e) }));
+            }
+        },
+    });
+    listen({
         actionCreator: userLocationRequested,
         effect: async (_, api) => {
             if (!deps.gateways.locations) return;
@@ -86,6 +101,9 @@ export const userLocationListenerFactory = (deps:DependenciesWl) => {
             sub?.remove();
             sub = null;
             api.dispatch(watchStopped());
+            if (api.getState().appState.phase === "ready") {
+                api.dispatch(locationBootstrapRequested());
+            }
         },
     });
 

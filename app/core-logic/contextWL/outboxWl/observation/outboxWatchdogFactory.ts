@@ -106,6 +106,19 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 		if (generation !== accountGeneration(api.getState())) return;
 
 		if (verdict.status === "APPLIED") {
+			const applied = rec.item.command;
+			if (applied.kind === "Experience.Delete") {
+				// The successful terminal intent makes earlier edits/uploads obsolete.
+				// Do not roll them back: their undo snapshots would resurrect the item.
+				for (const pending of Object.values(selectOutboxById(api.getState()))) {
+					const command = pending.item.command;
+					if ("experienceId" in command && command.experienceId === applied.experienceId
+						&& command.kind !== "Experience.Report" && command.kind !== "Experience.Create"
+						&& command.commandId !== applied.commandId) {
+						api.dispatch(dropCommitted({ commandId: command.commandId }));
+					}
+				}
+			}
 			logger.info("[OUTBOX_WD] applied => drop + kick", { commandId, appliedAt: verdict.appliedAt });
 			outboxTelemetry.ackVerdict(rec, "APPLIED", { appliedAt: verdict.appliedAt });
 			reconcileAppliedOutboxRecord({
@@ -129,6 +142,8 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 				dispatch: api.dispatch,
 				logger,
 				markLikeSyncFailed: true,
+				rejectionCode: verdict.rejectionCode,
+				gateways: deps.gateways,
 			});
 
 			api.dispatch(markFailed({ id: rec.id, error: reason }));
@@ -165,6 +180,11 @@ export const outboxWatchdogFactory = (deps: WatchdogDeps) => {
 
 			const byId = selectOutboxById(state) as Record<string, OutboxRecord>;
 			const now = Date.now();
+			// Retry deadlines need a runtime trigger even when no ACK is pending.
+			if (Object.values(byId).some(rec => rec.status === statusTypes.queued
+				&& (!rec.nextAttemptAt || rec.nextAttemptAt <= now))) {
+				api.dispatch(outboxProcessOnce());
+			}
 
 			const records = pickExpiredAwaitingAcks(byId, now);
 			if (!records.length) return;

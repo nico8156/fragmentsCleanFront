@@ -16,6 +16,7 @@ export type ArticlePreviewVM = {
     intro: string;
     tags: string[];
     cover: ImageRef;
+    featuredRank: number | null;
 };
 
 export type HomeCategoryItemVM = {
@@ -48,8 +49,16 @@ const toPreview = (article: Article): ArticlePreviewVM => {
         intro: article.intro,
         tags: article.tags,
         cover,
+        featuredRank: article.featuredRank ?? null,
     };
 };
+
+export function selectHomeHeroArticles(previews: ArticlePreviewVM[]): ArticlePreviewVM[] {
+    const featured = previews.filter((article) => article.featuredRank !== null)
+        .sort((left, right) => (left.featuredRank ?? 0) - (right.featuredRank ?? 0));
+    // Keep the established large visual until Studio curates its first feature.
+    return featured.length ? featured.slice(0, 5) : previews.slice(0, 1);
+}
 
 const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
     if (previews.length === 0) return [];
@@ -81,7 +90,7 @@ export function useArticlesHome(locale: Locale = "fr-FR") {
     }, [dispatch, status, locale]);
 
     const previews = useMemo(() => articles.map(toPreview), [articles]);
-    const sliderArticles = useMemo(() => previews.slice(0, 5), [previews]);
+    const sliderArticles = useMemo(() => selectHomeHeroArticles(previews), [previews]);
     const categories = useMemo(() => buildCategories(previews), [previews]);
 
     return {

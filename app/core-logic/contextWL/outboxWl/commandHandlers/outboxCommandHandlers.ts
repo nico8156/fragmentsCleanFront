@@ -32,6 +32,7 @@ import { authUserHydrationRequested, avatarUpdateRollback, profileUpdateReconcil
 import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
 import { experienceReconciled, experienceRollback } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 import { coffeeExperiencesRetrieval, myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
+import type { LocalPrivateMediaGateway } from "@/app/core-logic/contextWL/outboxWl/gateway/localPrivateMedia.gateway";
 
 type CommandHandlerLogger = {
 	warn?: (message: string, payload?: unknown) => void;
@@ -45,6 +46,7 @@ export type OutboxCommandGatewayDeps = {
 	entitlements?: EntitlementWlGateway;
 	users?: UserRepo;
 	experiences?: ExperienceGateway;
+	localPrivateMedia?: LocalPrivateMediaGateway;
 };
 
 export const getOutboxCommandGateway = (
@@ -214,11 +216,15 @@ export const rollbackRejectedOutboxRecord = ({
 	dispatch,
 	logger,
 	markLikeSyncFailed = false,
+	gateways,
+	rejectionCode,
 }: {
 	record: OutboxRecord;
 	dispatch: AppDispatchWl;
 	logger?: CommandHandlerLogger;
 	markLikeSyncFailed?: boolean;
+	gateways?: OutboxCommandGatewayDeps;
+	rejectionCode?: string;
 }) => {
 	const item = record.item as any;
 	const command = item?.command;
@@ -328,6 +334,9 @@ export const rollbackRejectedOutboxRecord = ({
 				version: u.version,
 				error: "La modification de l’avatar a été refusée.",
 			}));
+			if (command.kind === commandKinds.UserAvatarAttach && command.image?.localUri) {
+				gateways?.localPrivateMedia?.discard(command.image.localUri);
+			}
 			return;
 		}
 
@@ -337,13 +346,22 @@ export const rollbackRejectedOutboxRecord = ({
 		case commandKinds.ExperienceDelete:
 		case commandKinds.ExperienceReport: {
 			outboxTelemetry.rollback(record, "experience command rejected");
-			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported }));
+			if (command.kind === commandKinds.ExperienceDelete && rejectionCode === "EXPERIENCE_NOT_FOUND") {
+				// The server explicitly confirms absence: remove the stale local entry
+				// instead of restoring an undo snapshot of a nonexistent experience.
+				dispatch(experienceRollback({ experienceId: command.experienceId }));
+				return;
+			}
+			dispatch(experienceRollback({ experienceId: command.experienceId, previous: undo?.previous, reported: undo?.reported, preserveDeletion: command.kind !== commandKinds.ExperienceDelete }));
 			return;
 		}
 		case commandKinds.ExperienceMediaAttach:
 		case commandKinds.ExperienceMediaDelete: {
 			outboxTelemetry.rollback(record,"experience media command rejected");
-			dispatch(experienceRollback({experienceId:command.experienceId,previous:undo?.previous}));
+			dispatch(experienceRollback({experienceId:command.experienceId,previous:undo?.previous,preserveDeletion:true}));
+			if (command.kind === commandKinds.ExperienceMediaAttach && command.image?.localUri) {
+				gateways?.localPrivateMedia?.discard(command.image.localUri);
+			}
 			return;
 		}
 

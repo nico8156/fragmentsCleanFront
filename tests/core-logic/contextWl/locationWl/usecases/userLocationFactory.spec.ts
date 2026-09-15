@@ -3,16 +3,18 @@ import {DependenciesWl} from "@/app/store/appStateWl";
 
 import {
     getOnceRequested,
+    locationBootstrapRequested,
     permissionCheckRequested,
     requestPermission,
     startWatchRequested,
     stopWatchRequested,
     userLocationRequested,
 } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
-import {LocationWlGateway} from "@/app/core-logic/contextWL/locationWl/gateway/location.gateway";
-import {AccuracyKey, LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
+import {LocationCoords} from "@/app/core-logic/contextWL/locationWl/typeAction/location.type";
 import {FakeLocationGateway} from "@/app/adapters/secondary/gateways/fake/fakeLocationWlGateway";
 import {userLocationListenerFactory} from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
+import { appBootSucceeded } from "@/app/core-logic/contextWL/appWl/typeAction/appWl.action";
+import { authSessionLoaded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -82,6 +84,45 @@ describe('userLocationListenerFactory', () => {
         expect(gateway.requestPermission).toHaveBeenCalledTimes(1);
         expect(gateway.getCurrentPosition).toHaveBeenCalledWith({ accuracy: 'balanced' });
         expect(getLocationState().coords).toEqual(coords);
+    });
+
+    it('retrieves the current position at bootstrap when permission is already granted', async () => {
+        gateway.permissionStatus = 'granted';
+        gateway.nextCoords = { lat: 48.1173, lng: -1.6778, accuracy: 8, heading: null, speed: null };
+
+        store.dispatch(locationBootstrapRequested());
+        await flush();
+        await flush();
+
+        expect(gateway.getPermissionStatus).toHaveBeenCalledTimes(1);
+        expect(gateway.requestPermission).not.toHaveBeenCalled();
+        expect(gateway.getCurrentPosition).toHaveBeenCalledWith({ accuracy: 'balanced' });
+        expect(getLocationState().coords).toEqual(gateway.nextCoords);
+    });
+
+    it('does not prompt for location permission during bootstrap', async () => {
+        gateway.permissionStatus = 'undetermined';
+
+        store.dispatch(locationBootstrapRequested());
+        await flush();
+
+        expect(gateway.getPermissionStatus).toHaveBeenCalledTimes(1);
+        expect(gateway.requestPermission).not.toHaveBeenCalled();
+        expect(gateway.getCurrentPosition).not.toHaveBeenCalled();
+    });
+
+    it('refreshes an already-authorized location after signing in once boot is ready', async () => {
+        gateway.permissionStatus = 'granted';
+        gateway.nextCoords = { lat: 48.1173, lng: -1.6778, accuracy: 8, heading: null, speed: null };
+        store.dispatch(appBootSucceeded());
+
+        store.dispatch(authSessionLoaded({ session: { userId: 'rennes-user' } as any }));
+        await flush();
+        await flush();
+
+        expect(gateway.requestPermission).not.toHaveBeenCalled();
+        expect(gateway.getCurrentPosition).toHaveBeenCalledWith({ accuracy: 'balanced' });
+        expect(getLocationState().coords).toEqual(gateway.nextCoords);
     });
 
     it('should expose an error when permission request fails', async () => {

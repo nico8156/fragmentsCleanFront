@@ -22,5 +22,5 @@ export const experienceOptimisticDeleted = createAction<{ experienceId: string; 
 export const experienceOptimisticReported = createAction<{ experienceId: string }>("EXPERIENCE/OPTIMISTIC/REPORTED");
 export const experienceMediaOptimisticAdded = createAction<{ experienceId: string; media: ExperienceMediaItem }>("EXPERIENCE/MEDIA/OPTIMISTIC_ADDED");
 export const experienceMediaOptimisticDeleted = createAction<{ experienceId: string; mediaId: string }>("EXPERIENCE/MEDIA/OPTIMISTIC_DELETED");
-export const experienceRollback = createAction<{ previous?: ExperienceEntity; experienceId: string; reported?: boolean }>("EXPERIENCE/ROLLBACK");
+export const experienceRollback = createAction<{ previous?: ExperienceEntity; experienceId: string; reported?: boolean; preserveDeletion?: boolean }>("EXPERIENCE/ROLLBACK");
 export const experienceReconciled = createAction<{ experienceId: string }>("EXPERIENCE/RECONCILED");

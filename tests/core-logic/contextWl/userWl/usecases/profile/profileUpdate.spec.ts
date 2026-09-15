@@ -1,8 +1,9 @@
 import { profileUpdateListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/profile/profileUpdateListenerFactory";
-import { avatarAttachRequested, avatarRemoveRequested, profileUpdateRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
-import { authUserHydrationSucceeded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { authUserHydrationSucceeded, avatarAttachRequested, avatarRemoveRequested, profileUpdateRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { commandKinds } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
+import { dropCommitted } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.actions";
 import { makeFixedHelpers, makeStoreWl, flush } from "@/tests/core-logic/fakes/wlTestHarness";
+import { seedSignedIn } from "@/tests/core-logic/fakes/wlSeeds";
 
 const user = {
 	id: "11111111-1111-4111-8111-111111111111" as any,
@@ -57,10 +58,13 @@ describe("profileUpdateListenerFactory", () => {
 		expect(store.getState().oState.queue).toEqual([]);
 	});
 
-	it("updates the avatar optimistically and persists its local file in the outbox command", async () => {
+	it.each(["google", "apple"])("updates the avatar of a %s account through the same durable command", async provider => {
 		const helpers = makeFixedHelpers({ commandIds: ["media-id", "command-id"] });
-		const listener = profileUpdateListenerFactory({ gateways: {}, helpers });
-		const store = makeStoreWl({ deps: { gateways: {}, helpers }, listeners: [listener.middleware] });
+		const discard = jest.fn();
+		const gateways = { localPrivateMedia: { discard } };
+		const listener = profileUpdateListenerFactory({ gateways, helpers });
+		const store = makeStoreWl({ deps: { gateways, helpers }, listeners: [listener.middleware] });
+		seedSignedIn(store, { userId: user.id, provider });
 		store.dispatch(authUserHydrationSucceeded({ user: { ...user, avatarUrl: "https://old.test/avatar.jpg" } as any }));
 		store.dispatch(avatarAttachRequested({ image: { localUri: "file:///private/avatar.jpg", contentType: "image/jpeg", size: 2048 } }));
 		await flush();
@@ -69,6 +73,15 @@ describe("profileUpdateListenerFactory", () => {
 		const record = Object.values(store.getState().oState.byId)[0];
 		expect(record.item.command).toMatchObject({ kind: commandKinds.UserAvatarAttach, mediaId: "command-id", image: { size: 2048 } });
 		expect(record.item.undo).toMatchObject({ avatarUrl: "https://old.test/avatar.jpg", version: 3 });
+
+		store.dispatch(authUserHydrationSucceeded({ user: { ...user, avatarUrl: "https://old.test/avatar.jpg", version: 3 } as any }));
+		await flush();
+		expect(discard).not.toHaveBeenCalled();
+
+		store.dispatch(dropCommitted({ commandId: "media-id" }));
+		store.dispatch(authUserHydrationSucceeded({ user: { ...user, avatarUrl: "https://cdn.test/avatar.jpg", version: 4 } as any }));
+		await flush();
+		expect(discard).toHaveBeenCalledWith("file:///private/avatar.jpg");
 	});
 
 	it("queues avatar removal without discarding the rollback value", async () => {

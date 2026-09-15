@@ -1,14 +1,30 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useCallback } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, NativeModules, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/ReleaseLegalLinks";
+import { hasAppleButtonView } from "../appleButtonAvailability";
 
 export function LoginScreen() {
 	const { signInWithGoogle, signInWithApple, isLoading, error } = useAuthUser();
+	const [appleAvailable, setAppleAvailable] = useState(false);
+	useEffect(() => {
+		let mounted = true;
+		const expoRuntime = (globalThis as unknown as { expo?: { getViewConfig?: (name: string) => unknown } }).expo;
+		const registered = hasAppleButtonView({
+			getViewConfig: expoRuntime?.getViewConfig?.bind(expoRuntime),
+			legacyView: NativeModules.NativeUnimoduleProxy?.viewManagersMetadata?.ExpoAppleAuthentication,
+		});
+		if (Platform.OS === "ios" && registered) {
+			void AppleAuthentication.isAvailableAsync().then(available => {
+				if (mounted) setAppleAvailable(available);
+			}).catch(() => { if (mounted) setAppleAvailable(false); });
+		}
+		return () => { mounted = false; };
+	}, []);
 
 	const handlePress = useCallback(() => {
 		signInWithGoogle();
@@ -53,13 +69,13 @@ export function LoginScreen() {
 					)}
 				</Pressable>
 
-				{Platform.OS === "ios" ? <AppleAuthentication.AppleAuthenticationButton
+				{appleAvailable ? <AppleAuthentication.AppleAuthenticationButton
 					testID="apple-sign-in"
 					buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
 					buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
 					cornerRadius={12}
 					style={styles.appleButton}
-					onPress={signInWithApple}
+					onPress={() => { if (!isLoading) signInWithApple(); }}
 				/> : null}
 
 				{/* Gestion d’erreur propre */}
@@ -70,10 +86,12 @@ export function LoginScreen() {
 				) : null}
 
 				{/* Mentions discrètes */}
-				<Text style={styles.legal}>
-					En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité.
-				</Text>
-				<ReleaseLegalLinks color="#d4d4d4" />
+				<View style={styles.legalBlock}>
+					<Text style={styles.legal}>
+						En continuant, tu acceptes les conditions d’utilisation et la politique de confidentialité.
+					</Text>
+					<ReleaseLegalLinks color="#d4d4d4" />
+				</View>
 			</View>
 		</SafeAreaView>
 	);
@@ -123,8 +141,9 @@ const styles = StyleSheet.create({
 	},
 
 	googleButton: {
+		justifyContent: "center",
 		width: "100%",
-		paddingVertical: 14,
+		height: 50,
 		borderRadius: 12,
 		backgroundColor: "#ffffff",
 		alignItems: "center",
@@ -142,7 +161,7 @@ const styles = StyleSheet.create({
 
 	googleText: {
 		fontSize: 16,
-		fontWeight: "700",
+		fontWeight: "600",
 		color: "#111111",
 	},
 
@@ -171,12 +190,17 @@ const styles = StyleSheet.create({
 	},
 
 	legal: {
-		position: "absolute",
-		bottom: 20,
 		fontSize: 12,
 		color: "#6b7280",
 		textAlign: "center",
 		paddingHorizontal: 16,
+	},
+	legalBlock: {
+		position: "absolute",
+		bottom: 8,
+		left: 24,
+		right: 24,
+		alignItems: "center",
 	},
 });
 

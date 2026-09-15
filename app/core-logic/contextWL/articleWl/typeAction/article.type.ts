@@ -63,6 +63,7 @@ export interface Article {
 
     version: number;             // contrôle d’idempotence/actualité
     status: "draft" | "published" | "archived";
+    featuredRank?: number | null;
     coffeeIds?: CoffeeId[];      // liens éventuels vers cafés
 }
 

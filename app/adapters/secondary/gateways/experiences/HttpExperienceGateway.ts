@@ -1,7 +1,7 @@
 import type { ExperienceGateway } from "@/app/core-logic/contextWL/experienceWl/gateway/experience.gateway";
 import type { ExperiencePage, ExperienceReportReason } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.type";
-import { GatewayError, isGatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
-import { File } from "expo-file-system";
+import { GatewayError, toGatewayErrorFromHttpResponse } from "@/app/core-logic/contextWL/outboxWl/gateway/gatewayError";
+import { uploadPrivateFile } from "@/app/adapters/secondary/gateways/media/uploadPrivateFile";
 
 export class HttpExperienceGateway implements ExperienceGateway {
 	private readonly baseUrl: string;
@@ -30,11 +30,11 @@ export class HttpExperienceGateway implements ExperienceGateway {
 		const response = await fetch(`${this.baseUrl}${path}`, { method, headers: { Authorization: `Bearer ${await this.token()}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
 		if (!response.ok && response.status !== 202 && response.status !== 204) throw await toGatewayErrorFromHttpResponse(response, `Experience command failed with status ${response.status}`);
 	}
-	create(input: { commandId: string; experienceId: string; coffeeId: string; message: string; publicationStatus: "DRAFT" | "PUBLISHED"; at: string }) { return this.send("/api/experiences", "POST", input); }
-	update(input: { commandId: string; experienceId: string; message: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}`, "PATCH", body); }
-	publish(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}/publish`, "POST", body); }
-	delete(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}`, "DELETE", body); }
-	report(input: { commandId: string; reportId: string; experienceId: string; reason: ExperienceReportReason; details?: string; at: string }) { const { experienceId, ...body } = input; return this.send(`/api/experiences/${experienceId}/reports`, "POST", body); }
+	create(input: { commandId: string; experienceId: string; coffeeId: string; message: string; publicationStatus: "DRAFT" | "PUBLISHED"; at: string }) { const { commandId, experienceId, coffeeId, message, publicationStatus, at } = input; return this.send("/api/experiences", "POST", { commandId, experienceId, coffeeId, message, publicationStatus, at }); }
+	update(input: { commandId: string; experienceId: string; message: string; at: string }) { const { experienceId, commandId, message, at } = input; return this.send(`/api/experiences/${experienceId}`, "PATCH", { commandId, message, at }); }
+	publish(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, commandId, at } = input; return this.send(`/api/experiences/${experienceId}/publish`, "POST", { commandId, at }); }
+	delete(input: { commandId: string; experienceId: string; at: string }) { const { experienceId, commandId, at } = input; return this.send(`/api/experiences/${experienceId}`, "DELETE", { commandId, at }); }
+	report(input: { commandId: string; reportId: string; experienceId: string; reason: ExperienceReportReason; details?: string; at: string }) { const { experienceId, commandId, reportId, reason, details, at } = input; return this.send(`/api/experiences/${experienceId}/reports`, "POST", { commandId, reportId, reason, details, at }); }
 	async uploadMedia(input: { commandId: string; mediaId: string; experienceId: string; image: import("@/app/core-logic/contextWL/experienceWl/typeAction/experience.type").LocalImageInput; at: string }) {
 		const token = await this.token();
 		const intent = await fetch(`${this.baseUrl}/api/experiences/${input.experienceId}/media/upload-intents`, {
@@ -43,15 +43,12 @@ export class HttpExperienceGateway implements ExperienceGateway {
 			body: JSON.stringify({ mediaId: input.mediaId, contentType: input.image.contentType, size: input.image.size }),
 		});
 		if (!intent.ok) {
-			const error = await toGatewayErrorFromHttpResponse(intent, `Experience media intent failed (${intent.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(intent, `Experience media intent failed (${intent.status})`);
 		}
 		const target = await intent.json() as { uploadRequired: boolean; uploadUrl?: string; method?: string; headers?: Record<string, string> };
 		if (target.uploadRequired) {
 			if (!target.uploadUrl) throw new GatewayError("server", "Experience media upload target is missing");
-			const file = new File(input.image.localUri);
-			const uploaded = await fetch(target.uploadUrl, { method: target.method ?? "PUT", headers: target.headers ?? {}, body: file as any });
+			const uploaded = await uploadPrivateFile({ url: target.uploadUrl, method: target.method, headers: target.headers, localUri: input.image.localUri });
 			if (!uploaded.ok) throw new GatewayError("server", `Media upload failed (${uploaded.status})`, uploaded.status);
 		}
 		const confirmed = await fetch(`${this.baseUrl}/api/experiences/${input.experienceId}/media/${input.mediaId}/confirm`, {
@@ -60,17 +57,9 @@ export class HttpExperienceGateway implements ExperienceGateway {
 			body: JSON.stringify({ commandId: input.commandId, at: input.at }),
 		});
 		if (!confirmed.ok) {
-			const error = await toGatewayErrorFromHttpResponse(confirmed, `Experience media confirmation failed (${confirmed.status})`);
-			if (isGatewayError(error) && error.kind === "business") this.discardLocalImage(input.image.localUri);
-			throw error;
+			throw await toGatewayErrorFromHttpResponse(confirmed, `Experience media confirmation failed (${confirmed.status})`);
 		}
-		try {
-			const file = new File(input.image.localUri);
-			if (file.exists) file.delete();
-		} catch {
-			// The server accepted the command; local cleanup is best effort.
-		}
+		// Keep the durable optimistic file until the remote projection replaces it.
 	}
-	private discardLocalImage(uri: string) { try { const file = new File(uri); if (file.exists) file.delete(); } catch { /* best effort */ } }
-	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }) { const { experienceId, mediaId, ...body }=input;return this.send(`/api/experiences/${experienceId}/media/${mediaId}`,"DELETE",body); }
+	deleteMedia(input: { commandId: string; mediaId: string; experienceId: string; at: string }) { const { experienceId, mediaId, commandId, at }=input;return this.send(`/api/experiences/${experienceId}/media/${mediaId}`,"DELETE",{ commandId, at }); }
 }

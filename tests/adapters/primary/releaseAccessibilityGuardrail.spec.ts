@@ -16,6 +16,14 @@ describe("release accessibility guardrails", () => {
 		expect(location).toContain('accessibilityLabel={isFollowing ? "Recentrer sur ma position, suivi actif"');
 	});
 
+	it("centers legal links and aligns the login button typography", () => {
+		const login = source("app/adapters/primary/react/features/auth/screens/LoginScreen.tsx");
+		const links = source("app/adapters/primary/react/components/ReleaseLegalLinks.tsx");
+		expect(links).toContain('alignItems: "center"');
+		expect(links).toContain('textAlign: "center"');
+		expect(login).toContain('fontWeight: "600"');
+	});
+
 	it("keeps ticket, profile and experience mutations exposed as accessible controls", () => {
 		const scan = source("app/adapters/primary/react/features/scan/screens/ScanTicketScreen.tsx");
 		const profile = source("app/adapters/primary/react/features/profile/screens/EditProfileScreen.tsx");
