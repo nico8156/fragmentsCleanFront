@@ -36,3 +36,34 @@ si connecté, les expériences personnelles et le Pass. Au retour au premier
 plan ou après une reconnexion, les projections publiques sont aussi relues ;
 Projection Sync SSE reste un simple signal pour effectuer un GET. Le grand
 visuel `MasterHeader` et l'apparition du bandeau au scroll ne sont pas modifiés.
+
+## Durcissement du 16 septembre 2026
+
+Les lectures publiques et privées indépendantes démarrent en parallèle après
+initialisation auth et restauration du compte. Le cache géré du compte ne doit pas
+être recouvert par une restauration legacy non propriétaire. Une connexion pendant
+le warmup relance les lectures dans la nouvelle génération ; une connexion après
+le boot actualise aussi le Home.
+
+Le catalogue reste global, y compris Paris/Lorient depuis Rennes. Le Home montre
+cinq cafés triés, la liste « Tous les cafés » reste exhaustive. « Cafés près de toi »
+et un espace réservé à l'action évitent le débordement de « Voir la carte ».
+
+`selectHomeImagePlan` prépare uniquement les couvertures et premières photos utiles
+au Home (pas les images du corps des articles). Le port image est exécuté par un
+listener, avec quatre chargements simultanés maximum dans l'adaptateur Expo et les
+mêmes clés stables que les photos d'expérience. Le plan est isolé par génération
+de compte. Un échec reste réessayable lors d'un prochain changement pertinent.
+La préparation visuelle est limitée à 1,5 seconde ; hors ligne, le cache est rendu
+immédiatement. Les téléchargements peuvent continuer sans bloquer la navigation.
+
+Le rafraîchissement expose un résultat explicite (à jour, incomplet, hors ligne),
+avec un indicateur visible au-dessus du contenu. Les thunks de lecture signalent
+leurs échecs traités au coordinateur, sans modifier les stores depuis les signaux
+SSE. Les vignettes « À lire ensuite » passent leur URL explicite à expo-image.
+
+Validation locale : 92 suites / 350 tests Jest, TypeScript et carte Redux à jour.
+Recette iPhone restant à faire : petit écran/grande police, pull depuis le hero,
+réseau lent, offline, anciennes photos après connexion et sélection éditoriale.
+Aucun nouveau module natif ni modification des règles à la une. Aucun déploiement
+ni build TestFlight dans cette tranche ; conservation/restauration toujours en pause.

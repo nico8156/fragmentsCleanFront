@@ -43,7 +43,7 @@ export const articlesListRetrieval = ({
     locale: Locale;
     limit?: number;
     cursor?: string;
-}): AppThunkWl<Promise<void>> =>
+}): AppThunkWl<Promise<boolean>> =>
     async (dispatch, _getState, gateways) => {
         dispatch(articleListRequested({ locale }));
         try {
@@ -58,6 +58,7 @@ export const articlesListRetrieval = ({
                     prevCursor,
                 }),
             );
+            return true;
         } catch (error: any) {
             dispatch(
                 articleListFailed({
@@ -65,5 +66,6 @@ export const articlesListRetrieval = ({
                     error: error?.message ?? "articles list retrieval failed",
                 }),
             );
+            return false;
         }
     };

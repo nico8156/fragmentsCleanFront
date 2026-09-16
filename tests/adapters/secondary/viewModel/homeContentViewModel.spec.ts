@@ -22,7 +22,7 @@ describe("buildHomeContent", () => {
 	});
 	it("compose des lectures existantes sans créer de contenu fictif", () => {
 		const result = buildHomeContent({ articles: [article("hero"), article("next")], sliderArticles: [article("hero")], coffees: [{ id: "coffee-1", name: "Café", location: { lat: 48.86, lon: 2.35 }, city: "Paris", tags: [], distanceKm: 1, hasPhoto: false }], hasLocation: true, pass, experiences: [{ experienceId: "visible", coffeeId: "coffee-1", userId: "u", message: "Très bon espresso", status: "PUBLISHED", moderationStatus: "VISIBLE", createdAt: "", updatedAt: "", version: 1 }, { experienceId: "hidden", coffeeId: "coffee-1", userId: "u", message: "hidden", status: "PUBLISHED", moderationStatus: "HIDDEN", createdAt: "", updatedAt: "", version: 1 }] as any, coffeeNames: { "coffee-1": "Café" } });
-		expect(result.coffeeTitle).toBe("Cafés à découvrir près de toi");
+		expect(result.coffeeTitle).toBe("Cafés près de toi");
 		expect(result.pass.action).toBe("scan");
 		expect(result.experiences).toEqual([expect.objectContaining({ id: "visible", coffeeName: "Café" })]);
 		expect(result.articles.map((item) => item.id)).toEqual(["next"]);

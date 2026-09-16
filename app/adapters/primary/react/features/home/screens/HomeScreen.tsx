@@ -9,12 +9,15 @@ import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePas
 import { buildHomeContent, selectHomeCoffeeNames } from "@/app/adapters/secondary/viewModel/homeContentViewModel";
 import { useHomeExperiences } from "@/app/adapters/secondary/viewModel/useHomeExperiences";
 import { useHomeRefresh } from "@/app/adapters/secondary/viewModel/useHomeRefresh";
+import { useHomeReadiness } from "@/app/adapters/secondary/viewModel/useHomeReadiness";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
 	Animated,
+	ActivityIndicator,
+	Text,
 	NativeScrollEvent,
 	NativeSyntheticEvent,
 	Pressable,
@@ -45,7 +48,8 @@ export function HomeScreen() {
 	const { coffees, hasLocation } = useCoffeeDiscovery();
 	const pass = usePassRingsViewModel();
 	const experiences = useHomeExperiences();
-	const { refreshing, refresh } = useHomeRefresh();
+	const { refreshing, refresh, message } = useHomeRefresh();
+	const { preparing, catalogueLoading } = useHomeReadiness();
 	const coffeeNames = useSelector(selectHomeCoffeeNames);
 	const homeContent = useMemo(() => buildHomeContent({ articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames }), [articles, sliderArticles, coffees, hasLocation, pass, experiences, coffeeNames]);
 
@@ -112,6 +116,7 @@ export function HomeScreen() {
 
 			{/* Scroll: HERO doit remonter tout en haut (derrière header/icônes) */}
 			<AnimatedScrollView
+				alwaysBounceVertical
 				onScroll={handleScroll}
 				scrollEventThrottle={16}
 				contentContainerStyle={styles.scrollContent}
@@ -186,6 +191,13 @@ export function HomeScreen() {
 					</View>
 				</View>
 			</View>
+			{!preparing && (refreshing || message || catalogueLoading) ? (
+				<View pointerEvents="none" style={[styles.refreshNotice, { top: topPad + 8 }]} accessibilityLiveRegion="polite">
+					{refreshing || catalogueLoading ? <ActivityIndicator size="small" color={palette.textPrimary} /> : null}
+					<Text style={styles.refreshText}>{refreshing ? "Actualisation…" : message ?? "Actualisation des cafés…"}</Text>
+				</View>
+			) : null}
+			{preparing ? <View style={styles.preparing} accessibilityLiveRegion="polite"><ActivityIndicator color={palette.accent} /><Text style={styles.refreshText}>Préparation de ton accueil…</Text></View> : null}
 		</View>
 	);
 }
@@ -194,6 +206,9 @@ const SLOT_SIZE = 56;
 
 const styles = StyleSheet.create({
 	container: { flex: 1 },
+	preparing: { ...StyleSheet.absoluteFillObject, zIndex: 700, backgroundColor: palette.background, justifyContent: "center", alignItems: "center", gap: 12 },
+	refreshNotice: { position: "absolute", zIndex: 650, alignSelf: "center", maxWidth: "90%", flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.accentMuted },
+	refreshText: { color: palette.textPrimary, fontSize: 13, flexShrink: 1 },
 
 	scrollContent: {
 		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,

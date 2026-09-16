@@ -20,6 +20,8 @@ import { refreshNonTerminalTickets } from "@/app/core-logic/contextWL/ticketWl/u
 import { initializeAuth } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
 import { locationBootstrapRequested } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 import type { ReduxStoreWl } from "@/app/store/reduxStoreWl";
+import { myExperiencesRetrieval } from "@/app/core-logic/contextWL/experienceWl/usecases/read/experienceRetrieval";
+import { accountGeneration } from "../runtime/accountScope";
 
 type BootLogger = {
 	info: (message: string, payload?: unknown) => void;
@@ -78,8 +80,9 @@ export const createApplicationBootProcess = ({
 				releaseWait = done;
 				check();
 			});
-			// Account runtime owns only the private snapshot hydration. Public and
-			// server-backed read models still need the normal warmup below.
+			// The account snapshot already contains both public and private reads.
+			// Never replay the legacy, unowned cache or outbox on top of it.
+			return;
 		}
 
 		if (clearOutboxOnBoot) {
@@ -120,17 +123,21 @@ export const createApplicationBootProcess = ({
 			}
 		};
 
-		await runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval()));
-		await runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval()));
-		await runWarmupStep("opening hours", () => dispatch(onOpeningHourRetrieval()));
-		await runWarmupStep("articles", () => dispatch(articlesListRetrieval({ locale: "fr-FR" })));
-
+		if (!selectIsOnline(store.getState())) return;
+		const reads = [
+			runWarmupStep("coffees", () => dispatch(coffeeGlobalRetrieval())),
+			runWarmupStep("coffee photos", () => dispatch(onCfPhotoRetrieval())),
+			runWarmupStep("opening hours", () => dispatch(onOpeningHourRetrieval())),
+			runWarmupStep("articles", () => dispatch(articlesListRetrieval({ locale: "fr-FR" }))),
+		];
 		const uid = selectUserIdForEntitlements(store.getState());
 		if (uid) {
-			await runWarmupStep("entitlements", () => dispatch(entitlementsRetrieval({ userId: uid })));
-			await runWarmupStep("saved coffees", () => dispatch(savedCoffeesRetrieval()));
-			await runWarmupStep("tickets in progress", () => dispatch(refreshNonTerminalTickets()));
+			reads.push(runWarmupStep("entitlements", () => dispatch(entitlementsRetrieval({ userId: uid }))));
+			reads.push(runWarmupStep("saved coffees", () => dispatch(savedCoffeesRetrieval())));
+			reads.push(runWarmupStep("experiences", () => dispatch(myExperiencesRetrieval())));
+			reads.push(runWarmupStep("tickets in progress", () => dispatch(refreshNonTerminalTickets())));
 		}
+		await Promise.all(reads);
 	};
 
 	const start = async () => {
@@ -138,7 +145,22 @@ export const createApplicationBootProcess = ({
 			await bootRuntime();
 			if (shouldStop()) return;
 
-			await warmupData();
+			let generation: number;
+			do {
+				generation = accountGeneration(store.getState());
+				await warmupData();
+				if (shouldStop()) return;
+				// A login during public warmup invalidates the former generation's responses.
+				// Refresh again after the new account cache has been restored.
+				if (generation !== accountGeneration(store.getState()) && !store.getState().accountScope.ready) {
+					await new Promise<void>(resolve => {
+						const done = () => { unsubscribe(); releaseWait = undefined; resolve(); };
+						const unsubscribe = store.subscribe(() => { if (cancelled || store.getState().accountScope.ready) done(); });
+						releaseWait = done;
+						if (cancelled || store.getState().accountScope.ready) done();
+					});
+				}
+			} while (!shouldStop() && generation !== accountGeneration(store.getState()));
 			if (shouldStop()) return;
 
 			store.dispatch(appWarmupDone({ message: "Warmup OK" }));

@@ -11,7 +11,7 @@ import { ticketSubmitUseCaseFactory } from "@/app/core-logic/contextWL/ticketWl/
 import { outboxWatchdogFactory } from "@/app/core-logic/contextWL/outboxWl/observation/outboxWatchdogFactory";
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 
-import { cfPhotoCacheListenerFactory } from "@/app/core-logic/contextWL/cfPhotosWl/usecases/read/cfPhotoCacheListenerFactory";
+import { homeImageWarmupListener } from "@/app/core-logic/contextWL/appWl/usecases/homeImageWarmupListener";
 import { runtimeListenerFactory } from "@/app/core-logic/contextWL/appWl/usecases/runtimeListenerFactory";
 import { userLocationListenerFactory } from "@/app/core-logic/contextWL/locationWl/usecases/userLocationFactory";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
@@ -55,7 +55,7 @@ export const createWlListeners = (p: {
 		mwOf(ticketSubmitUseCaseFactory({ gateways, helpers })),
 
 		// Coffee photos
-		mwOf(cfPhotoCacheListenerFactory({ imageCache: gateways.imageCache })),
+		mwOf(homeImageWarmupListener(gateways.imageCache)),
 
 		// Runtime
 		mwOf(runtimeListenerFactory()),

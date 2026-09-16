@@ -7,6 +7,7 @@ import { enqueueCommitted, outboxProcessOnce } from "@/app/core-logic/contextWL/
 import { processOutboxFactory } from "@/app/core-logic/contextWL/outboxWl/processOutbox";
 import { coffeeExperiencesReceived, experienceOptimisticReported } from "@/app/core-logic/contextWL/experienceWl/typeAction/experience.action";
 import { createAction } from "@reduxjs/toolkit";
+import { coffeeGlobalRetrieval } from "@/app/core-logic/contextWL/coffeeWl/usecases/read/coffeeRetrieval";
 
 const flush = () => new Promise<void>(resolve => setImmediate(resolve));
 const deferred = <T,>() => {
@@ -42,6 +43,17 @@ const setup = (outbox = new AccountStorage(), cache = new AccountStorage()) => (
 });
 
 describe("durable per-account state", () => {
+  it("persists the complete multi-city catalogue and restores it on the next offline session", async () => {
+    const outbox = new AccountStorage(); const cache = new AccountStorage();
+    const items = ["Rennes", "Paris", "Lorient"].map(city => ({ id: city, name: city, address: { city }, location: { lat: 48, lon: 0 }, version: 1 }));
+    const store = initReduxStoreWl({ dependencies: { gateways: { coffees: { getAllSummaries: async () => ({ kind: "updated", items, etag: "all-cities" }) } as any } }, accountStorageManaged: true, extraMiddlewares: [accountStorageMiddleware({ outbox, cache })] });
+    login(store, "A"); await flush();
+    await store.dispatch(coffeeGlobalRetrieval()); await flush();
+    const restarted = setup(outbox, cache).store;
+    login(restarted, "A"); await flush();
+    expect(restarted.getState().cfState.ids).toEqual(["Rennes", "Paris", "Lorient"]);
+    expect(restarted.getState().cfState.requests.list.etag).toBe("all-cities");
+  });
   it("A -> B -> A preserves A's offline ticket and command without exposing them to B", async () => {
     const { store, outbox, cache } = setup();
     login(store, "A"); await flush();

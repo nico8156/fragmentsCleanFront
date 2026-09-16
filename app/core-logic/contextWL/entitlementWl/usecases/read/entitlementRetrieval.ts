@@ -5,7 +5,7 @@ import {entitlementsHydrated} from "@/app/core-logic/contextWL/entitlementWl/typ
 import { logger } from "@/app/core-logic/utils/logger";
 
 export const entitlementsRetrieval =
-    (input: { userId: string }) :  AppThunkWl<Promise<void>> =>
+    (input: { userId: string }) :  AppThunkWl<Promise<boolean>> =>
         async (dispatch, _, gateways) => {
             if(!gateways?.entitlements){
                 logger.warn("[ENTITLEMENTS] retrieval:fallback_no_gateway", { userId: input.userId });
@@ -16,7 +16,7 @@ export const entitlementsRetrieval =
                         updatedAt: new Date().toISOString() as ISODate,
                     })
                 );
-                return;
+                return false;
             }
             try{
                 logger.info("[ENTITLEMENTS] retrieval:start", { userId: input.userId });
@@ -40,12 +40,12 @@ export const entitlementsRetrieval =
                     currentLevel: res.data.pass?.currentLevel,
 					policyVersion: res.data.pass?.policyVersion,
                 });
+                return true;
             }catch (e){
                 logger.warn("[ENTITLEMENTS] retrieval:failed", {
                     userId: input.userId,
                     error: String((e as any)?.message ?? e),
                 });
-            }finally {
-                return;
+                return false;
             }
         };

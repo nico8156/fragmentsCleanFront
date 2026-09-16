@@ -3,7 +3,7 @@ import type { DurableReadModelCacheSnapshot } from "@/app/core-logic/contextWL/a
 import type { OutboxStateWl } from "@/app/core-logic/contextWL/outboxWl/typeAction/outbox.type";
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { accountStorageReady } from "@/app/core-logic/contextWL/appWl/runtime/accountScope";
-import { authSessionLoaded } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import { authSessionLoaded, authSignedOut } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { locationBootstrapRequested } from "@/app/core-logic/contextWL/locationWl/typeAction/location.action";
 
 class FakeOutboxStorage {
@@ -52,6 +52,25 @@ const logger = {
 };
 
 describe("ApplicationBootProcess", () => {
+	it("restarts public warmup after a login invalidates an in-flight signed-out request", async () => {
+		let release!: (value: any) => void;
+		let calls = 0;
+		const store = initReduxStoreWl({ accountStorageManaged: true, dependencies: { gateways: {
+			coffees: { getAllSummaries: () => ++calls === 1 ? new Promise(resolve => { release = resolve; }) : Promise.resolve({ kind: "updated", items: [{ id: "Paris", name: "Paris", address: { city: "Paris" }, location: { lat: 48, lon: 2 }, version: 1 }] }) } as any,
+		} } });
+		const boot = createApplicationBootProcess({ store, outboxStorage: new FakeOutboxStorage(), readModelCacheStorage: new FakeReadModelCacheStorage(), logger, accountStorageManaged: true });
+		const finished = boot.start();
+		await new Promise(resolve => setImmediate(resolve));
+		store.dispatch(authSignedOut());
+		await new Promise(resolve => setImmediate(resolve));
+		expect(calls).toBe(1);
+		store.dispatch(authSessionLoaded({ session: { userId: "A" } as any }));
+		store.dispatch(accountStorageReady({ generation: store.getState().accountScope.generation }));
+		release({ kind: "updated", items: [] });
+		await finished;
+		expect(calls).toBe(2);
+		expect(store.getState().cfState.ids).toEqual(["Paris"]);
+	});
 	it("waits for authenticated account hydration and never loads legacy snapshots in production mode", async () => {
 		const store = initReduxStoreWl({ dependencies: { gateways: { coffees: { getAllSummaries: jest.fn(async () => ({ kind: "updated", items: [{ id: "coffee_account", name: "Account coffee", location: { lat: 48.1, lon: -1.6 }, address: {}, version: 1, updatedAt: "2026-01-01T00:00:00.000Z" }], }) ) } as any } }, accountStorageManaged: true });
 		const storage = { loadSnapshot: jest.fn(async () => null), saveSnapshot: jest.fn(), clear: jest.fn() };
@@ -65,6 +84,23 @@ describe("ApplicationBootProcess", () => {
 		await finished;
 		expect(store.getState().appState.boot.doneWarmup).toBe(true);
 		expect(store.getState().cfState.byId.coffee_account.name).toBe("Account coffee");
+		expect(storage.loadSnapshot).not.toHaveBeenCalled();
+	});
+	it("starts independent public reads together even while the coffee request is slow", async () => {
+		let release!: (value: any) => void;
+		const calls: string[] = [];
+		const store = initReduxStoreWl({ dependencies: { gateways: {
+			coffees: { getAllSummaries: () => { calls.push("coffees"); return new Promise(resolve => { release = resolve; }); } } as any,
+			cfPhotos: { getAllphotos: async () => { calls.push("photos"); return { data: [] }; } },
+			openingHours: { getAllOpeningHours: async () => { calls.push("hours"); return { data: [] }; } },
+			articles: { list: async () => { calls.push("articles"); return { items: [] }; } } as any,
+		} } });
+		const boot = createApplicationBootProcess({ store, outboxStorage: new FakeOutboxStorage(), readModelCacheStorage: new FakeReadModelCacheStorage(), logger });
+		const finished = boot.start();
+		await new Promise(resolve => setImmediate(resolve));
+		expect(calls).toEqual(expect.arrayContaining(["coffees", "photos", "hours", "articles"]));
+		release({ kind: "updated", items: [] });
+		await finished;
 	});
 	it("can cancel while waiting for account hydration", async () => {
 		const store = initReduxStoreWl({ dependencies: {}, accountStorageManaged: true });

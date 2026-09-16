@@ -21,6 +21,7 @@ import {authReducer as aState} from "@/app/core-logic/contextWL/userWl/reducer/u
 import {appReducer as appState} from "@/app/core-logic/contextWL/appWl/reducer/app.reducer";
 import { projectionSyncReducer as psState } from "@/app/core-logic/contextWL/projectionSyncWl/reducer/projectionSync.reducer";
 import { experienceReducer as exState } from "@/app/core-logic/contextWL/experienceWl/reducer/experience.reducer";
+import { homeImagesReducer as homeImages } from "@/app/core-logic/contextWL/appWl/reducer/homeWarmup.reducer";
 
 
 export const initReduxStoreWl = (config: {
@@ -46,6 +47,7 @@ export const initReduxStoreWl = (config: {
             aState,
             appState,
             psState,
+            homeImages,
             accountScope: (state = { generation: 0, ready: !config.accountStorageManaged, error: undefined as string | undefined }) => state,
             ...(config.extraReducers ?? {})
         });
@@ -56,7 +58,7 @@ export const initReduxStoreWl = (config: {
             next = { ...next, cState: empty.cState, exState: empty.exState, lState: empty.lState, scState: empty.scState,
 				aState: { ...next.aState, currentUser: undefined, profileStatus: "idle", profileError: undefined },
                 tState: empty.tState, enState: empty.enState, oState: empty.oState, psState: empty.psState,
-                lcState: empty.lcState,
+                lcState: empty.lcState, homeImages: empty.homeImages,
                 accountScope: { generation: state.accountScope.generation + 1, ready: !config.accountStorageManaged, error: undefined } };
         }
         if (accountStorageReady.match(action) && action.payload.generation === next.accountScope.generation) {

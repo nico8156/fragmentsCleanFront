@@ -27,7 +27,7 @@ const {toggleViewMode} = props;
     return(
         <View style={[styles.listWrapper, { paddingTop: insets.top + 16 }]}>
             <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>{discovery.hasLocation ? "Cafés autour de moi" : "Découvrir les cafés"}</Text>
+                <Text style={[styles.listTitle, { flex: 1, minWidth: 0 }]}>Tous les cafés</Text>
                 <Pressable onPress={toggleViewMode} style={styles.overlayToggle} accessibilityRole="button">
                     <SymbolView name={'map.fill'} size={22} tintColor={palette.textPrimary} />
                 </Pressable>

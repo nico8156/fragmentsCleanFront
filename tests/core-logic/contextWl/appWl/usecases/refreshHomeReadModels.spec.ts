@@ -1,6 +1,17 @@
 import { refreshHomeReadModels } from "@/app/core-logic/contextWL/appWl/usecases/refreshHomeReadModels";
 
 describe("refreshHomeReadModels", () => {
+	it("reports an incomplete refresh when a read handles its failure internally", async () => {
+		const gateways: any = {
+			coffees: { getAllSummaries: async () => ({ kind: "updated", items: [] }) },
+			cfPhotos: { getAllphotos: async () => { throw new Error("offline"); } },
+			openingHours: { getAllOpeningHours: async () => ({ data: [] }) },
+			articles: { list: async () => ({ items: [] }) },
+		};
+		const state: any = { cfState: { requests: { list: {} } } };
+		const dispatch: any = (action: any): any => typeof action === "function" ? action(dispatch, () => state, gateways) : action;
+		expect(await refreshHomeReadModels(dispatch)).toBe(false);
+	});
 	it("retrieves authoritative public snapshots without needing an SSE event", async () => {
 		const calls: string[] = [];
 		const gateways: any = {

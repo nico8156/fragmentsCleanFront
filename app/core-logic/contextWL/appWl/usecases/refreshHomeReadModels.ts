@@ -7,7 +7,7 @@ import { entitlementsRetrieval } from "@/app/core-logic/contextWL/entitlementWl/
 import type { AppDispatchWl } from "@/app/store/reduxStoreWl";
 
 /** Refresh public projections through their owning read use cases, never from SSE bodies. */
-export async function refreshHomeReadModels(dispatch: AppDispatchWl, userId?: string): Promise<void> {
+export async function refreshHomeReadModels(dispatch: AppDispatchWl, userId?: string): Promise<boolean> {
     const reads = [
 		Promise.resolve(dispatch(coffeeGlobalRetrieval() as any)),
 		Promise.resolve(dispatch(onCfPhotoRetrieval() as any)),
@@ -18,5 +18,6 @@ export async function refreshHomeReadModels(dispatch: AppDispatchWl, userId?: st
         reads.push(Promise.resolve(dispatch(myExperiencesRetrieval() as any)));
         reads.push(Promise.resolve(dispatch(entitlementsRetrieval({ userId }) as any)));
     }
-    await Promise.allSettled(reads);
+    const results = await Promise.allSettled(reads);
+    return results.every(result => result.status === "fulfilled" && result.value !== false);
 }

@@ -8,6 +8,8 @@ import {
     Locale,
 } from "@/app/core-logic/contextWL/articleWl/typeAction/article.type";
 import {articlesListRetrieval} from "@/app/core-logic/contextWL/articleWl/usecases/read/articleRetrieval";
+import { selectHomeHeroArticles } from "@/app/core-logic/contextWL/articleWl/selector/homeEditorialSelection";
+export { selectHomeHeroArticles } from "@/app/core-logic/contextWL/articleWl/selector/homeEditorialSelection";
 
 export type ArticlePreviewVM = {
     id: string;
@@ -52,13 +54,6 @@ const toPreview = (article: Article): ArticlePreviewVM => {
         featuredRank: article.featuredRank ?? null,
     };
 };
-
-export function selectHomeHeroArticles(previews: ArticlePreviewVM[]): ArticlePreviewVM[] {
-    const featured = previews.filter((article) => article.featuredRank !== null)
-        .sort((left, right) => (left.featuredRank ?? 0) - (right.featuredRank ?? 0));
-    // Keep the established large visual until Studio curates its first feature.
-    return featured.length ? featured.slice(0, 5) : previews.slice(0, 1);
-}
 
 const buildCategories = (previews: ArticlePreviewVM[]): HomeCategoryVM[] => {
     if (previews.length === 0) return [];

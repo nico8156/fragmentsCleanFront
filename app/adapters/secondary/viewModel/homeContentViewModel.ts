@@ -66,7 +66,7 @@ export function buildHomeContent(input: {
 		};
 
 	return {
-		coffeeTitle: input.hasLocation ? "Cafés à découvrir près de toi" : "Cafés à découvrir",
+		coffeeTitle: input.hasLocation ? "Cafés près de toi" : "Cafés à découvrir",
 		coffees: input.coffees.slice(0, 5),
 		pass,
 		experiences: input.experiences

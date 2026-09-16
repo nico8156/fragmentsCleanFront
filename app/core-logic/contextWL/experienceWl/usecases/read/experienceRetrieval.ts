@@ -12,10 +12,10 @@ export const coffeeExperiencesRetrieval = (input: { coffeeId: string; cursor?: s
 	finally { if (inFlight.get(key) === controller) inFlight.delete(key); }
 };
 
-export const myExperiencesRetrieval = (input: { cursor?: string; limit?: number } = {}): AppThunkWl<Promise<void>> => async (dispatch, _state, gateways) => {
-	if (!gateways?.experiences) { dispatch(myExperiencesFailed({ error: "experience gateway not configured" })); return; }
+export const myExperiencesRetrieval = (input: { cursor?: string; limit?: number } = {}): AppThunkWl<Promise<boolean>> => async (dispatch, _state, gateways) => {
+	if (!gateways?.experiences) { dispatch(myExperiencesFailed({ error: "experience gateway not configured" })); return false; }
 	const key = "mine"; const controller = replace(key); dispatch(myExperiencesPending());
-	try { const page = await gateways.experiences.listMine({ ...input, signal: controller.signal }); if (inFlight.get(key) === controller) dispatch(myExperiencesReceived(page)); }
-	catch (error: any) { if (error?.name !== "AbortError") dispatch(myExperiencesFailed({ error: String(error?.message ?? error) })); }
+	try { const page = await gateways.experiences.listMine({ ...input, signal: controller.signal }); if (inFlight.get(key) !== controller) return false; dispatch(myExperiencesReceived(page)); return true; }
+	catch (error: any) { if (error?.name !== "AbortError") dispatch(myExperiencesFailed({ error: String(error?.message ?? error) })); return false; }
 	finally { if (inFlight.get(key) === controller) inFlight.delete(key); }
 };

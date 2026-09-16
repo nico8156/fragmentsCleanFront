@@ -178,6 +178,8 @@ export const runtimeListenerFactory = () => {
 		actionCreator: accountStorageReady,
 		effect: async (_, api) => {
 			if (!hasSession(api.getState()) || !selectIsOnline(api.getState())) return;
+			// Login can restore an older account snapshot over the public warmup.
+			if (selectBootReady(api.getState())) void refreshHomeReadModels(api.dispatch, getSessionUserId(api.getState()));
 			refreshKnownReadModels(api);
 			kickOnlineAuthed(api);
 		},
