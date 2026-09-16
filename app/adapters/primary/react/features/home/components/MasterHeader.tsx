@@ -1,15 +1,9 @@
-import { useCallback, useRef, useState } from "react";
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, View, ViewToken } from "react-native";
+import { useCallback, useState } from "react";
+import { useWindowDimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { articleTagColors } from "../articleTagColors";
-
-const { width } = Dimensions.get("window");
-
-const CARD_WIDTH = width;
-const CARD_HEIGHT = Math.round(width * 1.4);
-
 
 type Props = {
     articles: ArticlePreviewVM[];
@@ -17,15 +11,16 @@ type Props = {
 };
 
 export function MasterHeader({ articles, onArticlePress }: Props) {
-    const [index, setIndex] = useState(0);
-    const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 });
+    const { width } = useWindowDimensions();
+    if (!articles.length) return null;
+    // An editorial reorder/removal or viewport resize starts a coherent new pager.
+    return <ArticleCarousel key={JSON.stringify([width, articles.map(item => item.id)])}
+        articles={articles} onArticlePress={onArticlePress} width={width} />;
+}
 
-    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-        if (viewableItems.length > 0) {
-            const newIndex = viewableItems[0].index ?? 0;
-            setIndex((previous) => (previous === newIndex ? previous : newIndex));
-        }
-    });
+function ArticleCarousel({ articles, onArticlePress, width }: Props & { width: number }) {
+    const [index, setIndex] = useState(0);
+    const size = { width, height: Math.round(width * 1.4) };
 
     const handlePress = useCallback(
         (slug: string) => {
@@ -39,15 +34,20 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
     }
 
     return (
-        <View style={styles.container}>
+        <View style={size}>
             <FlatList
+                testID="home-hero-carousel"
                 data={articles}
+                style={size}
                 horizontal
                 pagingEnabled
+                directionalLockEnabled
+                scrollEnabled={articles.length > 1}
+                getItemLayout={(_, itemIndex) => ({ length: width, offset: width * itemIndex, index: itemIndex })}
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <Pressable style={styles.card} onPress={() => handlePress(item.slug)}>
+                    <Pressable style={[styles.card, size]} onPress={() => handlePress(item.slug)} accessibilityRole="button" accessibilityLabel={item.title}>
                         <View style={styles.imageWrapper}>
                             <Image
                                 source={item.cover.url}
@@ -72,30 +72,25 @@ export function MasterHeader({ articles, onArticlePress }: Props) {
                         </View>
                     </Pressable>
                 )}
-                onViewableItemsChanged={onViewableItemsChanged.current}
-                viewabilityConfig={viewabilityConfig.current}
+                onMomentumScrollEnd={event => setIndex(Math.max(0, Math.min(articles.length - 1,
+                    Math.round(event.nativeEvent.contentOffset.x / width))))}
             />
-            <View style={styles.pagination}>
+            {articles.length > 1 ? <View testID="hero-pagination" style={styles.pagination} pointerEvents="none"
+                accessible accessibilityLabel={`Article ${index + 1} sur ${articles.length}`}>
                 {articles.map((item, itemIndex) => (
                     <View
                         key={item.id}
                         style={[styles.dot, index === itemIndex ? styles.dotActive : undefined]}
                     />
                 ))}
-            </View>
+            </View> : null}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-    },
     card: {
-        backgroundColor: "red",
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
+        backgroundColor: palette.surface,
         paddingHorizontal: 24,
         justifyContent: "flex-end",
     },
@@ -151,7 +146,9 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 0,
         flexDirection: "row",
-        left: width / 2 - 37,
+        left: 0,
+        right: 0,
+        justifyContent: "center",
         gap: 6,
         marginBottom: 18,
     },

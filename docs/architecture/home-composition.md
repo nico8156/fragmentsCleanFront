@@ -67,3 +67,18 @@ Recette iPhone restant à faire : petit écran/grande police, pull depuis le her
 réseau lent, offline, anciennes photos après connexion et sélection éditoriale.
 Aucun nouveau module natif ni modification des règles à la une. Aucun déploiement
 ni build TestFlight dans cette tranche ; conservation/restauration toujours en pause.
+
+## Carrousel — correction du 16 septembre après TestFlight
+
+Le backend distinguait à tort les anciennes locales `fr` et `fr-FR` : seul le rang
+3 figurait dans la réponse mobile, les quatre autres étant en `fr`. La correction
+serveur rapproche explicitement ces alias et garde le contrat canonique ; aucune
+requête supplémentaire par langue ni contournement de statut côté mobile.
+
+`MasterHeader` calcule les dimensions réactivement, fournit des pages à largeur
+explicite et réinitialise la pagination si la liste éditoriale ou la largeur change.
+Les points utilisent le centrage du layout, sont non interceptants et disparaissent
+pour une seule carte. Le hero et le bandeau au scroll conservent leur présentation.
+Tests de composant et vertical Redux : cinq rangs, changement de page, nouvelle
+sélection et passage de cache ancien à snapshot complet. Recette gestuelle iPhone
+restante, aucun déploiement mobile effectué par cette correction.

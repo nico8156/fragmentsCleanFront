@@ -1,5 +1,7 @@
 import {initReduxStoreWl, ReduxStoreWl} from "@/app/store/reduxStoreWl";
 import {AppStateWl} from "@/app/store/appStateWl";
+import {selectArticlesForLocale} from "@/app/core-logic/contextWL/articleWl/selector/articleWl.selector";
+import {selectHomeHeroArticles} from "@/app/core-logic/contextWL/articleWl/selector/homeEditorialSelection";
 import {FakeArticleWlGateway, flush} from "@/app/adapters/secondary/gateways/fake/fakeArticleWlGateway";
 import {
     Article,
@@ -43,6 +45,17 @@ describe("article retrieval", () => {
                 },
             },
         });
+    });
+
+    it("replaces a stale single-rank snapshot with all five featured articles while retaining ordinary publications", async () => {
+        const featured = [3, 5, 1, 4, 2].map(rank => sampleArticle({ id: `rank-${rank}` as any, slug: `rank-${rank}` as any, featuredRank: rank }));
+        gateway.setListResponse("fr-FR", { items: [featured[0]] });
+        await store.dispatch(articlesListRetrieval({ locale: "fr-FR" }));
+        gateway.setListResponse("fr-FR", { items: [...featured, sampleArticle()] });
+        await store.dispatch(articlesListRetrieval({ locale: "fr-FR" }));
+        const { articles } = selectArticlesForLocale("fr-FR")(store.getState());
+        expect(articles).toHaveLength(6);
+        expect(selectHomeHeroArticles(articles).map(article => article.featuredRank)).toEqual([1, 2, 3, 4, 5]);
     });
 
     it("stores the article when retrieval succeeds", async () => {
