@@ -88,15 +88,12 @@ export const createAuthServerGateway = ({ baseUrl }: AuthServerGatewayDeps): Aut
 			const refreshToken = session.tokens.refreshToken;
 			if (!refreshToken) return;
 
-			try {
-				await fetch(`${normalizedBaseUrl}/auth/logout`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ refreshToken }),
-				});
-			} catch (e) {
-				console.warn("[LOGOUT] backend logout failed", e);
-			}
+			const response = await fetch(`${normalizedBaseUrl}/auth/logout`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ refreshToken }),
+			});
+			if (!response.ok) throw new Error(`Logout failed: ${response.status}`);
 		},
 	};
 };

@@ -8,3 +8,9 @@ Encapsule l'état d'authentification (session OAuth, utilisateur courant, erreur
 - Les thunks `initializeAuth`, `signInWithProvider`, `refreshUser`, `signOut` dispatchent les intentions UI de manière explicite et testable.【F:app/core-logic/contextWL/userWl/usecases/auth/authUsecases.ts†L1-L26】
 
 `userFlow.mmd` met en avant la boucle session ↔ gateways ↔ reducer.
+
+## Déconnexion
+
+La déconnexion efface d'abord la session locale et libère immédiatement la navigation. En parallèle, le client présente le refresh token à `POST /auth/logout` afin que le backend révoque toute sa famille de rotation, puis ferme la session du fournisseur OAuth. Les deux opérations distantes sont indépendantes : l'échec de l'une ne bloque pas l'autre.
+
+Une déconnexion sans réseau ne peut pas promettre une révocation distante immédiate : le secret local est volontairement détruit plutôt que conservé pour un retry. Le refresh token reste alors utilisable jusqu'à sa révocation ou son expiration côté serveur, et un access token déjà émis reste valide jusqu'à son expiration courte.

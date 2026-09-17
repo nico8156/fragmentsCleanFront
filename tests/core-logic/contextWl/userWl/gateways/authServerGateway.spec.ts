@@ -68,4 +68,25 @@ describe("createAuthServerGateway", () => {
 			body: JSON.stringify({ authorizationCode: "apple-code", identityToken: "apple-identity", displayName: "Nicolas" }),
 		}));
 	});
+
+	it("posts the refresh bearer for logout and surfaces a failed revocation", async () => {
+		const fetchMock = jest.fn().mockResolvedValue({ ok: false, status: 503 });
+		global.fetch = fetchMock as any;
+		const gateway = createAuthServerGateway({ baseUrl: "https://api.fragments.test" });
+		const session = {
+			provider: "google",
+			userId: "11111111-1111-4111-8111-111111111111",
+			tokens: { accessToken: jwtForUser, refreshToken: "refresh-to-revoke", expiresAt: 0 },
+		} as any;
+
+		await expect(gateway.logout(session)).rejects.toThrow("Logout failed: 503");
+		expect(fetchMock).toHaveBeenCalledWith(
+			"https://api.fragments.test/auth/logout",
+			expect.objectContaining({
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ refreshToken: "refresh-to-revoke" }),
+			}),
+		);
+	});
 });

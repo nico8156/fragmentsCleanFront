@@ -272,4 +272,40 @@ describe("auth flow", () => {
 		expect(state.status).toBe("signedOut");
 		expect(secureStore.snapshot()).toBeUndefined();
 	});
+
+	it("still signs out from the OAuth provider when backend revocation fails", async () => {
+		const oauth = new FakeOAuthGateway();
+		const secureStore = new FakeAuthSecureStore();
+		const userRepo = new FakeUserRepo([makeDemoUser()]);
+		const authServer = Object.assign(new FakeAuthServerGateway(), {
+			logout: jest.fn().mockRejectedValue(new Error("backend unavailable")),
+		});
+		const store = createTestStore({
+			gateways: { auth: { oauth, secureStore, userRepo, server: authServer } },
+			helpers: {},
+		});
+		await secureStore.saveSession({
+			userId: makeDemoUser().id,
+			provider: "google",
+			scopes: ["openid"],
+			establishedAt: Date.now(),
+			tokens: {
+				accessToken: "access-token",
+				refreshToken: "refresh-token",
+				expiresAt: Date.now() + 60 * 60 * 1000,
+				tokenType: "Bearer",
+			},
+		});
+
+		store.dispatch<any>(initializeAuth());
+		await flush();
+		await flush();
+		store.dispatch<any>(signOut());
+		await flush();
+		await flush();
+
+		expect(store.getState().aState.status).toBe("signedOut");
+		expect(secureStore.snapshot()).toBeUndefined();
+		expect(oauth.signOutProvider).toBe("google");
+	});
 });

@@ -320,17 +320,16 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			if (attempt === epoch) api.dispatch(authSignedOut());
 
 			void (async () => {
-				try {
-					if (session && authServer) {
-						await authServer.logout(session);
+				if (!session) return;
+				const remoteOperations: Promise<void>[] = [];
+				if (authServer) remoteOperations.push(authServer.logout(session));
+				if (oAuthGateway) remoteOperations.push(oAuthGateway.signOut(session.provider));
+				const results = await Promise.allSettled(remoteOperations);
+				results.forEach(result => {
+					if (result.status === "rejected") {
+						console.warn("[LOGOUT] remote revocation failed", result.reason);
 					}
-
-					if (session && oAuthGateway) {
-						await oAuthGateway.signOut(session.provider);
-					}
-				} catch (e) {
-					console.warn("[LOGOUT] error during remote logout", e);
-				}
+				});
 			})();
 		},
 	});
