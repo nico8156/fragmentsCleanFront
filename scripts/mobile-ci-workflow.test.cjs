@@ -11,4 +11,8 @@ test("pull requests and main run the complete mobile source gate", () => {
 	assert.match(workflow, /node-version: ['"]22['"]/);
 	assert.match(workflow, /npm ci/);
 	assert.match(workflow, /npm run verify:ci/);
+	assert.doesNotMatch(workflow, /uses:\s+[^\s]+@v\d+/);
+	for (const reference of workflow.matchAll(/uses:\s+([^\s#]+)/g)) {
+		assert.match(reference[1], /@[0-9a-f]{40}$/);
+	}
 });
