@@ -1,7 +1,11 @@
 import { initReduxStoreWl } from "@/app/store/reduxStoreWl";
 import { authListenerFactory } from "@/app/core-logic/contextWL/userWl/usecases/auth/authListenersFactory";
 import { initializeAuth, signOut } from "@/app/core-logic/contextWL/userWl/usecases/auth/authUsecases";
-import { authSessionLoaded, authUserHydrationRequested } from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
+import {
+  authMaybeRefreshRequested,
+  authSessionLoaded,
+  authUserHydrationRequested,
+} from "@/app/core-logic/contextWL/userWl/typeAction/user.action";
 import { FakeAuthSecureStore } from "@/app/adapters/secondary/gateways/fake/fakeAuthSecureStore";
 import { makeDemoUser } from "@/app/adapters/secondary/gateways/fake/fakeUserRepo";
 
@@ -51,6 +55,32 @@ it("a refresh finishing after logout cannot restore tokens or identity", async (
   expect(store.getState().aState.currentUser).toBeUndefined();
   expect(secureStore.snapshot()).toBeUndefined();
   expect(onSessionChanged).toHaveBeenLastCalledWith(undefined);
+});
+
+it("coalesces concurrent refresh requests into one server rotation", async () => {
+  const refreshed = deferred<any>();
+  const secureStore = new FakeAuthSecureStore();
+  const expired = session();
+  expired.tokens.expiresAt = 0;
+  expired.tokens.refreshToken = "refresh-A";
+  await secureStore.saveSession(expired);
+  const refreshSession = jest.fn(() => refreshed.promise);
+  const { store } = setup({
+    secureStore,
+    userRepo: { getById: async () => ({ ...makeDemoUser(), id: "A" }) },
+    server: { refreshSession, logout: async () => undefined },
+  });
+
+  store.dispatch(initializeAuth());
+  await flush();
+  store.dispatch(authMaybeRefreshRequested());
+  store.dispatch(authMaybeRefreshRequested());
+  await flush();
+
+  expect(refreshSession).toHaveBeenCalledTimes(1);
+  refreshed.resolve({ session: session(), user: { ...makeDemoUser(), id: "A" } });
+  await flush();
+  expect(store.getState().aState.status).toBe("signedIn");
 });
 
 it("a late profile A cannot populate B even if its version is higher", async () => {

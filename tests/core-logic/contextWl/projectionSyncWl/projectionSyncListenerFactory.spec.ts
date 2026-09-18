@@ -258,6 +258,10 @@ describe("projectionSyncListenerFactory", () => {
 		store.dispatch(authSessionLoaded({ session: { userId: "me" } as any }));
 		store.dispatch(projectionSyncEnsureConnectedRequested());
 		await flush();
+		projectionSync.emit({ id: "foreign-block-event", eventName: "projection.updated", schemaVersion: 1,
+			projection: "blocked-users", scope: "user", entityId: "another-user", hints: ["blocked"] });
+		await flush();
+		expect(comments.blockedUsersListCalls).toBe(0);
 
 		projectionSync.emit({ id: "block-event-1", eventName: "projection.updated", schemaVersion: 1,
 			projection: "blocked-users", scope: "user", entityId: "me", hints: ["blocked"] });
@@ -417,6 +421,7 @@ describe("projectionSyncListenerFactory", () => {
 					} as any,
 					sessionRef: {
 						current: {
+							userId: "user-42",
 							tokens: {
 								accessToken: "mobile-token",
 							},
@@ -428,6 +433,12 @@ describe("projectionSyncListenerFactory", () => {
 
 		store.dispatch(projectionSyncEnsureConnectedRequested());
 		await flush();
+		projectionSync.emit({
+			id: "foreign-entitlements", eventName: "projection.updated", schemaVersion: 1,
+			projection: "entitlements", scope: "user", entityId: "user-other",
+		});
+		await flush();
+		expect((store.getState() as any).enState.byUser["user-other"]).toBeUndefined();
 
 		projectionSync.emit({
 			id: "5",
@@ -469,6 +480,7 @@ describe("projectionSyncListenerFactory", () => {
 					} as any,
 					sessionRef: {
 						current: {
+							userId: "user-42",
 							tokens: {
 								accessToken: "mobile-token",
 							},
@@ -480,6 +492,12 @@ describe("projectionSyncListenerFactory", () => {
 
 		store.dispatch(projectionSyncEnsureConnectedRequested());
 		await flush();
+		projectionSync.emit({
+			id: "foreign-saved-coffees", eventName: "projection.updated", schemaVersion: 1,
+			projection: "savedCoffees", scope: "user", entityId: "user-other",
+		});
+		await flush();
+		expect(savedCoffees.getCalls).toBe(0);
 
 		projectionSync.emit({
 			id: "6",

@@ -18,6 +18,16 @@ test("rejects the previously empty Apple entitlement", () => {
   assert.throws(() => validateNativeReleaseConfig(config), /Apple entitlement/);
 });
 
+test("rejects a native build without symbol and source-map uploads", () => {
+  const config = readNativeReleaseConfig();
+  config.iosProject = config.iosProject.replaceAll("sentry-xcode-debug-files.sh", "missing-debug-files-script");
+  assert.throws(() => validateNativeReleaseConfig(config), /debug-symbol/);
+
+  const metroConfig = readNativeReleaseConfig();
+  metroConfig.metroConfig = "module.exports = {};";
+  assert.throws(() => validateNativeReleaseConfig(metroConfig), /source maps/);
+});
+
 test("keeps unrelated microphone and background location permissions forbidden", () => {
   for (const key of ["NSMicrophoneUsageDescription", "NSLocationAlwaysUsageDescription", "UIBackgroundModes"]) {
     const config = readNativeReleaseConfig();

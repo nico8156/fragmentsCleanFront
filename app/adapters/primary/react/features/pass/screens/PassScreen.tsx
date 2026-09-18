@@ -1,24 +1,16 @@
-import { useNavigation } from "@react-navigation/native";
 import { SymbolView } from "expo-symbols";
-import React, { useCallback } from "react";
+import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
-import { ScanTicketFab } from "@/app/adapters/primary/react/features/scan/components/ScanTicketFab";
 import { PassRequirementViewModel, PassRingViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
 import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
 
 export function PassScreen() {
-	const navigation = useNavigation<any>();
-	const inset = useSafeAreaInsets();
 	const vm = usePassRingsViewModel();
-
-	const onPrimaryAction = useCallback(() => {
-		navigation.navigate("ScanTicketModal");
-	}, [navigation]);
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
@@ -75,11 +67,7 @@ export function PassScreen() {
 						<LevelDot key={ring.level} ring={ring} />
 					))}
 				</View>
-
-				<View style={styles.fabClearance} />
 			</ScrollView>
-
-			<ScanTicketFab onPress={onPrimaryAction} insetBottom={inset.bottom} />
 		</SafeAreaView>
 	);
 }
@@ -283,9 +271,6 @@ const styles = StyleSheet.create({
 	},
 	lockedLabel: {
 		color: palette.textMuted,
-	},
-	fabClearance: {
-		height: 32,
 	},
 });
 

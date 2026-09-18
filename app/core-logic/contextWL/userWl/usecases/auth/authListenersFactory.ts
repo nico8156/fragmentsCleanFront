@@ -70,6 +70,7 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 
 	let activeSession: AuthSession | undefined;
 	let epoch = 0;
+	let refreshInFlight: { epoch: number; promise: Promise<void> } | undefined;
 	let secureWrites: Promise<unknown> = Promise.resolve();
 	const writeSecure = (operation: () => Promise<unknown>) => {
 		secureWrites = secureWrites.catch(() => undefined).then(operation);
@@ -197,68 +198,67 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 	listen({
 		actionCreator: authMaybeRefreshRequested,
 		effect: async (_action, api) => {
-			const attempt = epoch;
-			const sessionAtStart = activeSession;
-			if (!activeSession) {
+			const refreshEpoch = epoch;
+			if (refreshInFlight?.epoch === refreshEpoch) {
+				await refreshInFlight.promise;
 				return;
 			}
 
-			const { tokens } = activeSession;
-			const now = Date.now();
+			const refreshOperation = (async () => {
+				const attempt = epoch;
+				const sessionAtStart = activeSession;
+				if (!activeSession) return;
 
-			if (tokens.expiresAt - now > MINIMUM_TOKEN_TTL_MS) {
-				return;
-			}
+				const { tokens } = activeSession;
+				if (tokens.expiresAt - Date.now() > MINIMUM_TOKEN_TTL_MS) return;
 
-			const authServer = getAuthServer();
-			const secureStore = getSecureStore();
+				const authServer = getAuthServer();
+				const secureStore = getSecureStore();
 
-			if (!authServer) {
-				api.dispatch(authSessionExpired({ reason: "Session expirée" }));
-				return;
-			}
-
-			if (!secureStore) {
-				api.dispatch(authSessionRefreshFailed({ error: "auth secure store unavailable" }));
-				return;
-			}
-
-			try {
-				const refreshed = await authServer.refreshSession(activeSession);
-				if (attempt !== epoch || activeSession !== sessionAtStart) return;
-				await writeSecure(() => secureStore.saveSession(refreshed.session));
-				if (attempt !== epoch || activeSession !== sessionAtStart) return;
-
-				activeSession = refreshed.session;
-				deps.onSessionChanged?.(activeSession);
-
-				api.dispatch(authSessionRefreshed({ session: toSessionSnapshot(refreshed.session) }));
-
-				if (refreshed.user) {
-					api.dispatch(authUserHydrationSucceeded({ user: refreshed.user }));
-				}
-			} catch (error: any) {
-				if (attempt !== epoch || activeSession !== sessionAtStart) return;
-				const errorMessage = error?.message ?? "Session refresh failed";
-				if (isTransientRefreshFailure(error)) {
-					api.dispatch(
-						authSessionRefreshFailed({
-							error: errorMessage,
-						}),
-					);
+				if (!authServer) {
+					api.dispatch(authSessionExpired({ reason: "Session expirée" }));
 					return;
 				}
 
-				activeSession = undefined;
-				deps.onSessionChanged?.(activeSession);
-				await writeSecure(() => secureStore.clearSession()).catch(() => undefined);
-				if (attempt !== epoch) return;
-				api.dispatch(
-					authSessionRefreshFailed({
-						error: errorMessage,
-					}),
-				);
-				api.dispatch(authSignedOut());
+				if (!secureStore) {
+					api.dispatch(authSessionRefreshFailed({ error: "auth secure store unavailable" }));
+					return;
+				}
+
+				try {
+					const refreshed = await authServer.refreshSession(activeSession);
+					if (attempt !== epoch || activeSession !== sessionAtStart) return;
+					await writeSecure(() => secureStore.saveSession(refreshed.session));
+					if (attempt !== epoch || activeSession !== sessionAtStart) return;
+
+					activeSession = refreshed.session;
+					deps.onSessionChanged?.(activeSession);
+					api.dispatch(authSessionRefreshed({ session: toSessionSnapshot(refreshed.session) }));
+
+					if (refreshed.user) {
+						api.dispatch(authUserHydrationSucceeded({ user: refreshed.user }));
+					}
+				} catch (error: any) {
+					if (attempt !== epoch || activeSession !== sessionAtStart) return;
+					const errorMessage = error?.message ?? "Session refresh failed";
+					if (isTransientRefreshFailure(error)) {
+						api.dispatch(authSessionRefreshFailed({ error: errorMessage }));
+						return;
+					}
+
+					activeSession = undefined;
+					deps.onSessionChanged?.(activeSession);
+					await writeSecure(() => secureStore.clearSession()).catch(() => undefined);
+					if (attempt !== epoch) return;
+					api.dispatch(authSessionRefreshFailed({ error: errorMessage }));
+					api.dispatch(authSignedOut());
+				}
+			})();
+			refreshInFlight = { epoch: refreshEpoch, promise: refreshOperation };
+			try {
+				await refreshOperation;
+			} finally {
+				if (refreshInFlight?.promise === refreshOperation) refreshInFlight = undefined;
 			}
 		},
 	});
@@ -320,17 +320,16 @@ export const authListenerFactory = (deps: AuthListenerDeps) => {
 			if (attempt === epoch) api.dispatch(authSignedOut());
 
 			void (async () => {
-				try {
-					if (session && authServer) {
-						await authServer.logout(session);
+				if (!session) return;
+				const remoteOperations: Promise<void>[] = [];
+				if (authServer) remoteOperations.push(authServer.logout(session));
+				if (oAuthGateway) remoteOperations.push(oAuthGateway.signOut(session.provider));
+				const results = await Promise.allSettled(remoteOperations);
+				results.forEach(result => {
+					if (result.status === "rejected") {
+						console.warn("[LOGOUT] remote revocation failed", result.reason);
 					}
-
-					if (session && oAuthGateway) {
-						await oAuthGateway.signOut(session.provider);
-					}
-				} catch (e) {
-					console.warn("[LOGOUT] error during remote logout", e);
-				}
+				});
 			})();
 		},
 	});

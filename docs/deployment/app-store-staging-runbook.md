@@ -40,6 +40,29 @@ npx eas env:create production \
   --visibility plaintext
 ```
 
+Crash reporting also requires a Sentry React Native project. Configure these
+values in the EAS `production` environment before requesting a build:
+
+```bash
+npx eas env:create production --scope project \
+  --name EXPO_PUBLIC_SENTRY_DSN --value '<sentry-dsn>' --visibility plaintext
+npx eas env:create production --scope project \
+  --name SENTRY_ORG --value '<organization-slug>' --visibility plaintext
+npx eas env:create production --scope project \
+  --name SENTRY_PROJECT --value '<project-slug>' --visibility plaintext
+npx eas env:create production --scope project \
+  --name SENTRY_AUTH_TOKEN --visibility secret
+```
+
+The DSN, organization and project are build configuration. Enter the auth token
+through the interactive prompt. It is available only inside the EAS build job
+and must never enter Expo `extra`, Git, shell history or a release receipt.
+Dynamic Expo config cannot read EAS `secret` values locally and therefore
+validates only DSN, organization and project. Missing build credentials must
+make the Sentry upload phase fail. The app removes user identity, request data,
+breadcrumbs and arbitrary extra context before a crash event leaves the device.
+Performance tracing and session replay remain disabled.
+
 Use the staging host only in the `development` or `preview` EAS environment.
 An App Store binary must target the production HTTPS host.
 
@@ -107,11 +130,37 @@ npx eas build --profile production --platform ios --clear-cache
 npx eas submit --profile production --platform ios
 ```
 
+## Signed IPA inspection
+
+Freeze the mobile commit and EAS build id, download that exact `.ipa`, then run:
+
+```bash
+npm run native:ipa:inspect -- \
+  --ipa /absolute/path/to/Fragments.ipa \
+  --build-id <eas-build-id> \
+  --git-commit <40-character-mobile-sha>
+```
+
+The command verifies the bundle/version, embedded store provisioning profile,
+Apple Sign-In entitlement, disabled debugger attachment, privacy manifests,
+embedded JavaScript bundle and code-signing identity. Record its SHA-256 output
+in the release evidence. A local `CSSMERR_TP_NOT_TRUSTED` is reported distinctly
+from an altered/invalid signature because a downloaded distribution certificate
+may not be trusted by the local keychain.
+
+The build is not qualified until EAS logs show successful Sentry source-map and
+debug-symbol upload and a deliberate non-fatal TestFlight diagnostic resolves to
+the original TypeScript source in Sentry. Never add a permanent public crash
+button to the App Store binary.
+
 Before submission, verify App Store Connect metadata:
 
 - location usage description matches the app behavior;
 - no background location claim;
 - privacy questionnaire mentions location and account/auth data accurately;
+- privacy policy and App Privacy inventory mention diagnostic crash data sent
+  to Sentry as a processor, with the retention and region actually selected in
+  the Sentry account;
 - screenshots show the production app, not local/demo data;
 - Google Sign-In works on the production bundle identifier.
 - camera usage is declared as ticket OCR; no background location capability is

@@ -142,6 +142,10 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 	const routeProjectionUpdated = (event: ProjectionSyncEvent, dispatch: AppDispatchWl, getState: () => RootStateWl) => {
 		if (isIgnorableSyncEvent(event)) return;
 		if (event.eventName !== "projection.updated") return;
+		const currentUserId = selectEffectiveUserId(getState()) ?? activeOwner ?? deps.sessionRef?.current?.userId;
+		const isCurrentUserProjection = event.scope === "user"
+			&& Boolean(currentUserId)
+			&& event.entityId === String(currentUserId);
 
 		if (event.projection === "articles" && (event.scope === "entity" || event.scope === "collection")) {
 			outboxTelemetry.projectionRefreshRequested({
@@ -175,13 +179,11 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 		if (event.projection === "experiences" && event.scope === "coffee" && event.entityId) {
 			dispatch(coffeeExperiencesRetrieval({ coffeeId: event.entityId }) as any);
 		}
-		if (event.projection === "experiences" && event.scope === "user"
-			&& event.entityId === String(selectEffectiveUserId(getState()))) {
+		if (event.projection === "experiences" && isCurrentUserProjection) {
 			dispatch(myExperiencesRetrieval() as any);
 		}
 
-		if (event.projection === "blocked-users" && event.scope === "user"
-			&& event.entityId === String(selectEffectiveUserId(getState()))) {
+		if (event.projection === "blocked-users" && isCurrentUserProjection) {
 			dispatch(blockedUsersRetrieval() as any);
 		}
 
@@ -205,7 +207,7 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			dispatch(ticketRetrieval({ ticketId: event.entityId as any }) as any);
 		}
 
-		if (event.projection === "entitlements" && event.scope === "user" && event.entityId) {
+		if (event.projection === "entitlements" && isCurrentUserProjection && event.entityId) {
 			outboxTelemetry.projectionRefreshRequested({
 				projection: "entitlements",
 				scope: "user",
@@ -215,7 +217,7 @@ export const projectionSyncListenerFactory = (deps: ProjectionSyncListenerDeps) 
 			dispatch(entitlementsRetrieval({ userId: event.entityId }) as any);
 		}
 
-		if (event.projection === "savedCoffees" && event.scope === "user" && event.entityId) {
+		if (event.projection === "savedCoffees" && isCurrentUserProjection && event.entityId) {
 			outboxTelemetry.projectionRefreshRequested({
 				projection: "savedCoffees",
 				scope: "user",

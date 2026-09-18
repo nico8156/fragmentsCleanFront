@@ -17,11 +17,23 @@ const googleMobileIosRedirectUri =
 const supportEmail = process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
 const privacyPolicyUrl = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
 const termsUrl = process.env.EXPO_PUBLIC_TERMS_URL;
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+const sentryOrg = process.env.SENTRY_ORG;
+const sentryProject = process.env.SENTRY_PROJECT;
 
 const isPublicHttpsUrl = (value) => {
   try {
     const url = new URL(value);
     return url.protocol === "https:" && !url.username && !url.password && url.hostname !== "localhost";
+  } catch {
+    return false;
+  }
+};
+
+const isSentryDsn = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && Boolean(url.username) && !url.password && Boolean(url.hostname) && /^\/\d+\/?$/.test(url.pathname);
   } catch {
     return false;
   }
@@ -39,6 +51,9 @@ if (environment === "production" && !supportEmail) {
 }
 if (environment === "production" && (!isPublicHttpsUrl(privacyPolicyUrl) || !isPublicHttpsUrl(termsUrl))) {
   throw new Error("Production requires HTTPS EXPO_PUBLIC_PRIVACY_POLICY_URL and EXPO_PUBLIC_TERMS_URL");
+}
+if (environment === "production" && (!isSentryDsn(sentryDsn) || !sentryOrg || !sentryProject)) {
+  throw new Error("Production requires Sentry DSN, organization and project configuration");
 }
 
 const plugins = [
@@ -73,6 +88,7 @@ const plugins = [
   ],
   "expo-web-browser",
   "expo-apple-authentication",
+  "@sentry/react-native",
 ];
 
 if (environment !== "production") {
@@ -125,6 +141,7 @@ module.exports = {
       supportEmail,
       privacyPolicyUrl,
       termsUrl,
+      sentryDsn,
     },
   },
 };

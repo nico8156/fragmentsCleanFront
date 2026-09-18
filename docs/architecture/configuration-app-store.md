@@ -21,6 +21,13 @@ Forbidden:
 - LAN IP as production config
 - gateway-specific hidden `Constants.expoConfig` reads
 
+Crash reporting is the sole exception to the general absence of telemetry. It
+uses `@sentry/react-native` behind the observability adapter. Production builds
+fail closed unless the public DSN, organization/project and secret source-map
+upload token are available from EAS. The token is never copied into Expo
+`extra`; tracing and replay are disabled, and the event sanitizer removes user,
+request, breadcrumb and arbitrary extra fields.
+
 ## App Store Readiness
 
 Before submission:
@@ -29,6 +36,10 @@ Before submission:
 - `fragments://` and the Google redirect scheme are declared by the native binary
 - location permission text is accurate and foreground-only
 - camera permission is used only for ticket OCR
-- no background location, microphone, Face ID, or photo-library permission
+- no background location, microphone or Face ID permission; selected-photo
+  access has a precise photo-library purpose string
 - privacy manifest and permission strings match actual behavior
 - production build uses HTTPS API
+- exact signed IPA passes `npm run native:ipa:inspect`
+- EAS logs prove symbol/source-map upload and a TestFlight diagnostic is
+  symbolicated before App Store submission
