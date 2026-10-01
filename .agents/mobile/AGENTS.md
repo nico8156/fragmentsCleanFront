@@ -6,6 +6,10 @@ Use this guide for all work in `/Users/nicolasmaldiney/fragmentsCleanFront`.
 
 Before coding, classify the task:
 
+First read [the iteration workflow](../iteration-workflow.md) and choose
+`BEHAVIOUR`, `PIN`, `REFACTORING` or `CHORE`. The routes below describe
+ownership and boundaries, independently of iteration type.
+
 1. Optimistic command: user write requiring offline support.
 2. Read feature: data retrieval from backend or local projection.
 3. Socket ACK: backend ACK event handling.
@@ -39,6 +43,11 @@ cast directly to the `Article` domain type. The public shape remains
 ## Definition of Done
 
 Before completing a mobile task:
+- examples drove the design through inspected RED / minimum GREEN cycles
+- targeted mutation scope, actual results and survivor dispositions are recorded
+- mutation-driven PIN tests pass on original code and fail on the intended fault
+- temporary mutations are removed and final relevant tests pass
+- unavailable execution or non-applicability is explicit
 - the dependency direction is preserved
 - the write/read flow has tests
 - offline behavior is explicit

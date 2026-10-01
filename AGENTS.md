@@ -230,6 +230,21 @@ Expected tests:
 
 Mocks are allowed for native technical boundaries. Business ports should use named fakes.
 
+## Delivery Workflow
+
+Read [.agents/iteration-workflow.md](.agents/iteration-workflow.md) before work.
+Classify `BEHAVIOUR`, `PIN`, `REFACTORING` or `CHORE`, then choose the mobile
+architecture route. For behavior, present outcomes, concrete examples and
+uncertainties; let inspected RED / minimum GREEN / REFACTOR cycles shape the
+state, actions and interfaces. Do not prebuild the anticipated solution.
+
+Continue on `PASS` or `REVIEW`; escalate actual product/design ambiguity.
+Challenge meaningful green slices with targeted mutations. A mutation-driven
+`PIN` passes on the original and fails on the mutant. Analyze equivalents and
+out-of-contract cases, restore mutations, and report actual execution evidence.
+Pure refactors start green; documentation and visual-only chores require
+proportionate checks, not fabricated REDs.
+
 ## Explicit Prohibitions
 
 - no `fetch` in screens

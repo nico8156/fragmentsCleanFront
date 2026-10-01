@@ -20,6 +20,15 @@ Examples:
 
 ## Steps
 
+Read [the iteration workflow](../../iteration-workflow.md) first. These are
+boundary responsibilities, not a precomputed implementation sequence. For
+`BEHAVIOUR`, express one observable example, inspect its RED and implement only
+its minimum GREEN before the next example. Reuse existing contracts; introduce
+new structures only when an example or invariant requires them. Continue on
+`PASS`/`REVIEW`, escalate material ambiguity, then apply the targeted mutation
+checkpoint to the green slice and pin missing protection. `REFACTORING` starts
+green; `CHORE` uses proportionate checks.
+
 1. Define UI action.
 2. Write listener/use case test first.
 3. Add optimistic reducer transition.
@@ -49,4 +58,3 @@ Examples:
 - socket ACK drops the record
 - `/commands/{commandId}` `APPLIED` drops the record without socket
 - `/commands/{commandId}` `REJECTED` rolls back and drops
-
