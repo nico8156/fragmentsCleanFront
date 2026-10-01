@@ -2,6 +2,11 @@
 
 Before implementing, classify the mobile task.
 
+Read [the iteration workflow](../iteration-workflow.md) first. Apply its
+emergent TDD and targeted mutation checkpoint to behavior changes. Treat the
+orchestrators as responsibilities to cover one example at a time, not as a
+predetermined implementation plan.
+
 ## Optimistic Command
 
 Use `orchestrators/optimistic-command.md` for offline-first writes.
@@ -44,4 +49,3 @@ Identify:
 - gateway port needed
 - whether write must use outbox
 - whether command status fallback is required
-
