@@ -4,6 +4,8 @@
   <dict>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
+    <key>CFBundleAllowMixedLocalizations</key>
+    <true/>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
@@ -56,16 +58,18 @@
     </dict>
     <key>NSCameraUsageDescription</key>
     <string>Fragments utilise l’appareil photo pour lire tes tickets et ajouter tes photos.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Fragments accède aux photos que tu choisis pour ton profil et tes expériences.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Fragments utilise votre position uniquement lorsque vous explorez les cafés autour de vous.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Fragments accède aux photos que tu choisis pour ton profil et tes expériences.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>RCTNewArchEnabled</key>
     <true/>
+    <key>RCTRootViewBackgroundColor</key>
+    <integer>4278847237</integer>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
