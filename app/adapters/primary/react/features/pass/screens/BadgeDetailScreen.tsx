@@ -1,7 +1,7 @@
 // BadgeDetailScreen.tsx
 import { RouteProp, useRoute } from "@react-navigation/native";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
@@ -26,7 +26,7 @@ export function BadgeDetailScreen() {
 
 	if (!badge) {
 		return (
-			<SafeAreaView style={styles.safeArea}>
+			<SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
 				<Text style={styles.error}>Badge introuvable.</Text>
 			</SafeAreaView>
 		);
@@ -40,19 +40,19 @@ export function BadgeDetailScreen() {
 				: "Verrouillé";
 
 	return (
-		<SafeAreaView style={styles.safeArea}>
-			<View style={styles.container}>
+		<SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+			<ScrollView contentContainerStyle={styles.container}>
 				<View style={styles.header}>
 					<Text style={styles.icon}>{BADGE_ICONS[badge.level] ?? "🎖️"}</Text>
 
-					<Text style={styles.title}>{badge.label}</Text>
+					<Text accessibilityRole="header" style={styles.title}>{badge.label}</Text>
 					<Text style={styles.description}>Progression du Pass calculée et conservée par Fragments.</Text>
 
 					<Text style={styles.status}>{statusText}</Text>
 				</View>
 
 				<View style={styles.card}>
-					<Text style={styles.sectionTitle}>Progression</Text>
+					<Text accessibilityRole="header" style={styles.sectionTitle}>Progression</Text>
 
 					<View style={styles.progressRow}>
 						<Text style={styles.progressText}>
@@ -78,7 +78,7 @@ export function BadgeDetailScreen() {
 				</View>
 
 				<View style={styles.card}>
-					<Text style={styles.sectionTitle}>Détail des critères</Text>
+					<Text accessibilityRole="header" style={styles.sectionTitle}>Détail des critères</Text>
 
 					{badge.requirements.map((requirement) => (
 						<View key={requirement.key} style={styles.axisRow}>
@@ -94,13 +94,13 @@ export function BadgeDetailScreen() {
 				</View>
 
 				<View style={styles.card}>
-					<Text style={styles.sectionTitle}>Sources de progression</Text>
+					<Text accessibilityRole="header" style={styles.sectionTitle}>Sources de progression</Text>
 
 					<Text style={styles.sourceLine}>📝 {counters.experiences} expériences publiées</Text>
 					<Text style={styles.sourceLine}>🔍 {counters.cafes} cafés découverts</Text>
 					<Text style={styles.sourceLine}>🎟️ {counters.tickets} tickets validés</Text>
 				</View>
-			</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
 
 	title: {
 		fontSize: 22,
-		fontWeight: "900",
+		fontWeight: "600",
 		color: palette.textPrimary,
 	},
 
@@ -144,19 +144,19 @@ const styles = StyleSheet.create({
 		backgroundColor: palette.elevated,
 		borderRadius: 18,
 		padding: 16,
-		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: palette.border,
 		gap: 10,
 	},
 
 	sectionTitle: {
 		fontSize: 14,
-		fontWeight: "800",
+		fontWeight: "600",
 		color: palette.textPrimary,
 	},
 
 	progressRow: {
 		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 8,
 		justifyContent: "space-between",
 	},
 
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
 
 	progressPercent: {
 		fontSize: 13,
-		color: palette.textMuted,
+		color: palette.textSecondary,
 	},
 
 	progressBarBg: {
@@ -184,15 +184,18 @@ const styles = StyleSheet.create({
 
 	remaining: {
 		fontSize: 12,
-		color: palette.textMuted,
+		color: palette.textSecondary,
 	},
 
 	axisRow: {
 		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 8,
 		justifyContent: "space-between",
 	},
 
 	axisLabel: {
+		flex: 1,
 		fontSize: 13,
 		color: palette.textSecondary,
 	},

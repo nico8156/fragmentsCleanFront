@@ -18,6 +18,7 @@ import {
 	View,
 } from "react-native";
 import { Section } from "./Section";
+import { typography } from "@/app/adapters/primary/react/css/designTokens";
 import type { ReportReason } from "@/app/core-logic/contextWL/commentWl/typeAction/commentWl.type";
 
 export function CommentsSection({
@@ -108,6 +109,7 @@ export function CommentsSection({
 					value={draft}
 					onChangeText={setDraft}
 					onFocus={() => onRequestScrollToComposer?.()}
+					accessibilityLabel="Mon commentaire"
 					placeholder="Écris un commentaire…"
 					placeholderTextColor={palette.textMuted}
 					style={s.input}
@@ -117,6 +119,9 @@ export function CommentsSection({
 				/>
 
 				<Pressable
+					accessibilityRole="button"
+					accessibilityLabel="Envoyer le commentaire"
+					accessibilityState={{ disabled: !canSend }}
 					onPress={submit}
 					disabled={!canSend}
 					style={({ pressed }) => [
@@ -128,7 +133,7 @@ export function CommentsSection({
 					<SymbolView
 						name="paperplane.fill"
 						size={16}
-						tintColor={palette.danger}
+						tintColor={palette.background}
 						fallback={<Text>➤</Text>}
 					/>
 				</Pressable>
@@ -296,12 +301,12 @@ function CommentCard({
 				)}
 
 				{item.isAuthor && !editing ? (
-					<View style={s.actions}>
-						<Pressable onPress={startEdit} style={s.actionBtn}>
-							<Text style={s.actionText}>Modifier</Text>
+					<View style={s.authorActions}>
+						<Pressable accessibilityRole="button" onPress={startEdit} style={s.authorActionBtn}>
+							<Text style={s.authorActionText}>Modifier</Text>
 						</Pressable>
-						<Pressable onPress={onDelete} style={s.actionBtn}>
-							<Text style={[s.actionText, s.danger]}>Supprimer</Text>
+						<Pressable accessibilityRole="button" onPress={onDelete} style={s.authorActionBtn}>
+							<Text style={[s.authorActionText, s.danger]}>Supprimer</Text>
 						</Pressable>
 					</View>
 				) : !editing ? (
@@ -363,18 +368,13 @@ const s = StyleSheet.create({
 	// --- comment card (slightly lighter)
 	commentCard: {
 		flexDirection: "row",
-		paddingVertical: 9,
-		paddingHorizontal: 9,
-		borderRadius: 18,
-		backgroundColor: palette.elevated,
-		borderWidth: 1,
-		borderColor: palette.border_muted_30,
-		marginBottom: 9,
+		paddingVertical: 12,
+		marginBottom: 8,
 	},
 	commentContent: { flex: 1, marginLeft: 10 },
 
 	commentHeader: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-	author: { color: palette.textPrimary, fontWeight: "800", maxWidth: 180 },
+	author: { ...typography.body, color: palette.textPrimary, fontWeight: "600", maxWidth: 180 },
 	time: { color: palette.textMuted, fontWeight: "700", marginLeft: 6, fontSize: 12 },
 
 	pill: {
@@ -394,7 +394,11 @@ const s = StyleSheet.create({
 		fontSize: 14,
 	},
 
-	// actions as chips
+	authorActions: { flexDirection: "row", flexWrap: "wrap", columnGap: 16, marginTop: 4 },
+	authorActionBtn: { minHeight: 44, justifyContent: "center", paddingVertical: 6, maxWidth: "100%" },
+	authorActionText: { color: palette.textSecondary, fontWeight: "400", fontSize: 13, lineHeight: 18 },
+
+	// Other comment actions retain their existing presentation.
 	actions: { flexDirection: "row", marginTop: 10 },
 	actionBtn: {
 		paddingHorizontal: 10,
@@ -437,15 +441,7 @@ const s = StyleSheet.create({
 	miniBtnTextPrimary: { color: palette.textPrimary },
 
 	// --- composer
-	composer: {
-		marginTop: 8,
-		borderRadius: 18,
-		backgroundColor: palette.surface,
-		borderWidth: 1,
-		borderColor: palette.border_muted_30,
-		padding: 9,
-		position: "relative",
-	},
+	composer: { marginTop: 8, position: "relative" },
 
 	input: {
 		width: "100%",
@@ -464,21 +460,9 @@ const s = StyleSheet.create({
 	},
 
 	sendIconBtn: {
-		position: "absolute",
-		right: 18,
-		bottom: 18,
-		height: 44,
-		width: 44,
-		borderRadius: 22,
-		backgroundColor: palette.danger_30,
-		borderWidth: 1,
-		borderColor: palette.danger,
-		alignItems: "center",
-		justifyContent: "center",
-		shadowColor: "#000000",
-		shadowOpacity: 0.18,
-		shadowRadius: 8,
-		shadowOffset: { width: 0, height: 4 },
+		position: "absolute", right: 8, bottom: 8, height: 44, width: 44,
+		borderRadius: 22, backgroundColor: palette.accent,
+		alignItems: "center", justifyContent: "center",
 	},
 	sendBtnDisabled: {
 		opacity: 0.5,

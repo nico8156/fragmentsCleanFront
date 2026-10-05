@@ -1,5 +1,6 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { filterPublicCoffeeTags } from "@/app/adapters/primary/react/features/cafes/coffeePresentation";
+import { typography, spacing, radii } from "@/app/adapters/primary/react/css/designTokens";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Section } from "./Section";
@@ -25,11 +26,9 @@ const s = StyleSheet.create({
 	wrap: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
 	tag: {
 		paddingHorizontal: 12,
-		paddingVertical: 8,
-		borderRadius: 999,
+		paddingVertical: spacing.micro,
+		borderRadius: radii.control,
 		backgroundColor: palette.elevated,
-		borderWidth: 1,
-		borderColor: palette.border,
 	},
-	tagText: { fontSize: 14, fontWeight: "800", color: palette.textPrimary },
+	tagText: { ...typography.body, color: palette.textPrimary },
 });

@@ -1,4 +1,5 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { spacing, typography } from "@/app/adapters/primary/react/css/designTokens";
 import { SymbolView } from "expo-symbols";
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -54,7 +55,7 @@ function InfoRow({
 			</View>
 			<View style={{ flex: 1 }}>
 				<Text style={s.title}>{title}</Text>
-				<Text style={s.value} numberOfLines={3}>
+				<Text style={s.value}>
 					{value}
 				</Text>
 			</View>
@@ -74,7 +75,7 @@ function OpeningHoursBlock({
 
 	return (
 		<View style={{ marginTop: 12 }}>
-			<Pressable onPress={() => setOpen((v) => !v)} style={s.hoursCard} hitSlop={8}>
+			<Pressable accessibilityRole="button" accessibilityLabel="Horaires de la semaine" accessibilityState={{ expanded: open }} onPress={() => setOpen((v) => !v)} style={s.hoursCard} hitSlop={8}>
 				<View style={s.icon}>
 					<SymbolView
 						name="clock"
@@ -86,7 +87,7 @@ function OpeningHoursBlock({
 
 				<View style={{ flex: 1 }}>
 					<Text style={s.title}>Horaires • Aujourd’hui ({dayNames[todayIndex]})</Text>
-					<Text style={s.value} numberOfLines={1}>
+					<Text style={s.value}>
 						{todayLabel}
 					</Text>
 				</View>
@@ -117,77 +118,13 @@ function OpeningHoursBlock({
 }
 
 const s = StyleSheet.create({
-	wrap: {
-		paddingHorizontal: 2,
-		paddingTop: 2,
-		gap: 10,
-	},
-
-	row: {
-		flexDirection: "row",
-		gap: 10,
-		alignItems: "flex-start",
-		paddingHorizontal: 12,
-		paddingVertical: 10,
-		borderRadius: 16,
-		backgroundColor: "rgba(255,255,255,0.04)",
-		borderWidth: 1,
-		borderColor: "rgba(255,255,255,0.08)",
-	},
-
-	icon: {
-		width: 34,
-		height: 34,
-		borderRadius: 12,
-		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "rgba(255,255,255,0.06)",
-		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: "rgba(255,255,255,0.10)",
-	},
-
-	title: {
-		fontSize: 12,
-		fontWeight: "900",
-		color: palette.textPrimary_1,
-		opacity: 0.9,
-	},
-	value: {
-		marginTop: 2,
-		fontSize: 13,
-		fontWeight: "800",
-		color: palette.textMuted,
-	},
-
-	hoursCard: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 10,
-		paddingHorizontal: 12,
-		paddingVertical: 10,
-		borderRadius: 16,
-		backgroundColor: "rgba(255,255,255,0.06)",
-		borderWidth: 1,
-		borderColor: "rgba(255,255,255,0.10)",
-	},
-
-	dayCard: {
-		paddingHorizontal: 12,
-		paddingVertical: 10,
-		borderRadius: 16,
-		backgroundColor: "rgba(255,255,255,0.04)",
-		borderWidth: 1,
-		borderColor: "rgba(255,255,255,0.08)",
-	},
-	dayTitle: {
-		fontSize: 12,
-		fontWeight: "900",
-		color: palette.textPrimary_1,
-	},
-	dayValue: {
-		marginTop: 2,
-		fontSize: 12,
-		fontWeight: "800",
-		color: palette.textMuted,
-	},
+	wrap: { gap: spacing.micro },
+	row: { flexDirection: "row", gap: spacing.compact, alignItems: "flex-start", paddingVertical: 4 },
+	icon: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
+	title: { ...typography.body, color: palette.textMuted },
+	value: { ...typography.body, color: palette.textPrimary, marginTop: 2 },
+	hoursCard: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: spacing.compact },
+	dayCard: { flexDirection: "row", gap: spacing.compact, paddingVertical: 4, paddingLeft: 36 },
+	dayTitle: { ...typography.body, color: palette.textSecondary, width: 44 },
+	dayValue: { ...typography.body, color: palette.textPrimary, flex: 1 },
 });

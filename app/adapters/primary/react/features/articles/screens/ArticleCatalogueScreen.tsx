@@ -1,3 +1,5 @@
+import { ScrollClearance } from "@/app/adapters/primary/react/components/design/ScrollClearance";
+import { scrollContentSpacing } from "@/app/adapters/primary/react/css/designTokens";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import type { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 import { useArticlesHome } from "@/app/adapters/secondary/viewModel/useArticlesHome";
@@ -22,27 +24,29 @@ export function ArticleCatalogueScreen() {
             <Text style={styles.title}>Tous les articles</Text>
             <Text style={styles.intro}>Les histoires publiées par Fragments, de la plus récente à la plus ancienne.</Text>
         </View>
-        <FlatList
-            data={articles}
-            keyExtractor={(article) => article.id}
-            contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}
-            refreshing={isLoading}
-            onRefresh={refresh}
-            renderItem={({ item }) => <Pressable
-                onPress={() => navigation.navigate("Article", { slug: item.slug })}
-                style={styles.card}
-                accessibilityRole="button"
-                accessibilityLabel={`Lire ${item.title}`}
-            >
-                <Image source={item.cover.url} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
-                <View style={styles.copy}>
-                    <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-                    <Text style={styles.cardIntro} numberOfLines={2}>{item.intro}</Text>
-                    {item.featuredRank !== null ? <Text style={styles.featured}>À la une</Text> : null}
-                </View>
-            </Pressable>}
-            ListEmptyComponent={<Text style={styles.empty}>{isLoading ? "Chargement des articles…" : isError ? "Impossible de charger les articles. Tire vers le bas pour réessayer." : "Aucun article publié pour le moment."}</Text>}
-        />
+        <ScrollClearance floatingTab={false}>
+            <FlatList
+                data={articles}
+                keyExtractor={(article) => article.id}
+                contentContainerStyle={[styles.list, scrollContentSpacing]}
+                refreshing={isLoading}
+                onRefresh={refresh}
+                renderItem={({ item }) => <Pressable
+                    onPress={() => navigation.navigate("Article", { slug: item.slug })}
+                    style={styles.card}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Lire ${item.title}`}
+                >
+                    <Image source={item.cover.url} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
+                    <View style={styles.copy}>
+                        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                        <Text style={styles.cardIntro} numberOfLines={2}>{item.intro}</Text>
+                        {item.featuredRank !== null ? <Text style={styles.featured}>À la une</Text> : null}
+                    </View>
+                </Pressable>}
+                ListEmptyComponent={<Text style={styles.empty}>{isLoading ? "Chargement des articles…" : isError ? "Impossible de charger les articles. Tire vers le bas pour réessayer." : "Aucun article publié pour le moment."}</Text>}
+            />
+        </ScrollClearance>
     </View>;
 }
 

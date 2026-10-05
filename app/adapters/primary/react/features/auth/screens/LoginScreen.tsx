@@ -1,11 +1,12 @@
-import { FontAwesome } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, NativeModules, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, NativeModules, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuthUser } from "@/app/adapters/secondary/viewModel/useAuthUser";
 import { ReleaseLegalLinks } from "@/app/adapters/primary/react/components/ReleaseLegalLinks";
+import { palette } from "@/app/adapters/primary/react/css/colors";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { hasAppleButtonView } from "../appleButtonAvailability";
 
 export function LoginScreen() {
@@ -32,42 +33,20 @@ export function LoginScreen() {
 
 	return (
 		<SafeAreaView style={styles.safe} testID="login-screen">
-			<View style={styles.container}>
+			<ScrollView contentContainerStyle={styles.container}>
 				{/* Logo / identité */}
 				<View style={styles.brandBlock}>
-					<View style={styles.logoContainer}>
-						<FontAwesome name="coffee" size={36} color="#111" />
-					</View>
+					<Image source={require("@/assets/images/icon.png")} style={styles.logoContainer} resizeMode="contain" accessible={false} />
 
 					<Text style={styles.title}>Fragments</Text>
 
 					<Text style={styles.tagline}>
-						Sauvegarde tes cafés préférés et retrouve-les partout
+						Ton carnet de cafés.
 					</Text>
 				</View>
 
 				{/* Bouton principal */}
-				<Pressable
-					testID="google-sign-in"
-					onPress={handlePress}
-					disabled={isLoading}
-					style={({ pressed }) => [
-						styles.googleButton,
-						pressed && styles.pressed,
-						isLoading && styles.disabled,
-					]}
-				>
-					{isLoading ? (
-						<ActivityIndicator color="#111" />
-					) : (
-						<View style={styles.googleContent}>
-							<FontAwesome name="google" size={20} color="#111" />
-							<Text style={styles.googleText}>
-								Continuer avec Google
-							</Text>
-						</View>
-					)}
-				</Pressable>
+				<GoogleSignInButton onPress={handlePress} loading={isLoading} />
 
 				{appleAvailable ? <AppleAuthentication.AppleAuthenticationButton
 					testID="apple-sign-in"
@@ -80,7 +59,7 @@ export function LoginScreen() {
 
 				{/* Gestion d’erreur propre */}
 				{error ? (
-					<Text style={styles.error}>
+					<Text accessibilityRole="alert" style={styles.error}>
 						{error}
 					</Text>
 				) : null}
@@ -92,7 +71,7 @@ export function LoginScreen() {
 					</Text>
 					<ReleaseLegalLinks color="#d4d4d4" />
 				</View>
-			</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -100,11 +79,12 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
 	safe: {
 		flex: 1,
-		backgroundColor: "#0a0a0a",
+		backgroundColor: palette.background,
 	},
 
 	container: {
-		flex: 1,
+		flexGrow: 1,
+		paddingVertical: 24,
 		paddingHorizontal: 24,
 		justifyContent: "center",
 		alignItems: "center",
@@ -117,15 +97,7 @@ const styles = StyleSheet.create({
 		marginBottom: 24,
 	},
 
-	logoContainer: {
-		width: 84,
-		height: 84,
-		borderRadius: 42,
-		backgroundColor: "#ffffff",
-		alignItems: "center",
-		justifyContent: "center",
-		marginBottom: 8,
-	},
+	logoContainer: { width: 112, height: 112 },
 
 	title: {
 		fontSize: 30,
@@ -140,37 +112,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 	},
 
-	googleButton: {
-		justifyContent: "center",
-		width: "100%",
-		height: 50,
-		borderRadius: 12,
-		backgroundColor: "#ffffff",
-		alignItems: "center",
-	},
-
-	googleContent: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 10,
-	},
 	appleButton: {
 		width: "100%",
 		height: 50,
-	},
-
-	googleText: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: "#111111",
-	},
-
-	pressed: {
-		opacity: 0.7,
-	},
-
-	disabled: {
-		opacity: 0.6,
 	},
 
 	error: {
@@ -179,27 +123,14 @@ const styles = StyleSheet.create({
 		marginTop: 6,
 	},
 
-	skipButton: {
-		marginTop: 8,
-		padding: 8,
-	},
-
-	skipText: {
-		color: "#9ca3af",
-		fontSize: 15,
-	},
-
 	legal: {
 		fontSize: 12,
-		color: "#6b7280",
+		color: palette.textSecondary,
 		textAlign: "center",
 		paddingHorizontal: 16,
 	},
 	legalBlock: {
-		position: "absolute",
-		bottom: 8,
-		left: 24,
-		right: 24,
+		marginTop: 24,
 		alignItems: "center",
 	},
 });

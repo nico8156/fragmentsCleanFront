@@ -1,31 +1,37 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
+import type { ReactElement } from "react";
 import { CoffeeId, parseToCoffeeId } from "@/app/core-logic/contextWL/coffeeWl/typeAction/coffeeWl.type";
 import CoffeeListItem from "@/app/adapters/primary/react/features/map/components/coffeeSelection/coffeeListItem";
-import { palette } from "@/app/adapters/primary/react/css/colors";
+import { ContentState } from "@/app/adapters/primary/react/components/design/Primitives";
+import { spacing, scrollContentSpacing } from "@/app/adapters/primary/react/css/designTokens";
+import { ScrollClearance } from "@/app/adapters/primary/react/components/design/ScrollClearance";
 
 type Props = {
     onSelectCoffee?: (id: CoffeeId) => void;
     coffeeIds: string[];
+    header?: ReactElement;
 }
 
-const CoffeeList = ({onSelectCoffee, coffeeIds}: Props) => {
+const CoffeeList = ({onSelectCoffee, coffeeIds, header}: Props) => {
 
     return (
-        <FlatList
-            data={coffeeIds}
-            keyExtractor={(id) => id}
-            renderItem={({item}) => (
-                <CoffeeListItem id={parseToCoffeeId(item)} onPress={onSelectCoffee}/>
-            )}
-            contentContainerStyle={coffeeIds.length === 0 ? styles.emptyContent : styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-                <View style={styles.emptyState}>
-                    <Text style={styles.emptyTitle}>Aucun café trouvé</Text>
-                    <Text style={styles.emptySubtitle}>Change de quartier ou actualise ta position.</Text>
-                </View>
-            }
-        />
+        <ScrollClearance>{bottom => (
+            <FlatList
+                data={coffeeIds}
+                ListHeaderComponent={header}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
+                keyExtractor={(id) => id}
+                renderItem={({item}) => (
+                    <CoffeeListItem id={parseToCoffeeId(item)} onPress={onSelectCoffee}/>
+                )}
+                contentContainerStyle={[coffeeIds.length === 0 ? styles.emptyContent : styles.listContent, scrollContentSpacing, { paddingBottom: scrollContentSpacing.paddingBottom + bottom }]}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <ContentState kind="empty" title="Aucun café trouvé" message="Essaie une autre recherche ou ajuste les filtres." />
+                }
+            />
+        )}</ScrollClearance>
     )
 }
 
@@ -33,29 +39,12 @@ export default CoffeeList;
 
 const styles = StyleSheet.create({
     listContent: {
-        paddingVertical: 12,
+        paddingTop: spacing.compact,
 
-        gap: 16,
+        gap: spacing.micro,
     },
     emptyContent: {
         flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 24,
+        gap: spacing.section,
     },
-    emptyState: {
-        alignItems: 'center',
-        gap: 12,
-    },
-    emptyTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: palette.textPrimary,
-    },
-    emptySubtitle: {
-        fontSize: 14,
-        textAlign: 'center',
-        color: palette.textMuted,
-        lineHeight: 20,
-    },
-})
+});

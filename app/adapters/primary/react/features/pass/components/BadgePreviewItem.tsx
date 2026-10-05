@@ -33,7 +33,7 @@ export function BadgePreviewItem({ badge, onPress }: Props) {
 				: "Progression en synchronisation";
 
 	return (
-		<TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.card}>
+		<TouchableOpacity accessibilityRole="button" accessibilityLabel={`${badge.label}, ${pill.text}, ${badge.progressPercent} %`} onPress={onPress} activeOpacity={0.9} style={styles.card}>
 			<View style={styles.rowTop}>
 				<Text style={styles.icon}>{BADGE_ICONS[badge.level] ?? "🎖️"}</Text>
 				<View style={{ flex: 1 }}>
@@ -59,17 +59,16 @@ export function BadgePreviewItem({ badge, onPress }: Props) {
 
 const styles = StyleSheet.create({
 	card: {
+		minHeight: 44,
 		backgroundColor: palette.elevated,
 		borderRadius: 18,
 		padding: 14,
-		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: palette.border,
 		gap: 10,
 	},
-	rowTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+	rowTop: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 },
 	icon: { fontSize: 26 },
-	title: { color: palette.textPrimary, fontSize: 14, fontWeight: "800" },
-	subtitle: { color: palette.textMuted, fontSize: 12, marginTop: 2 },
+	title: { color: palette.textPrimary, fontSize: 14, fontWeight: "600" },
+	subtitle: { color: palette.textSecondary, fontSize: 12, marginTop: 2 },
 
 	pill: {
 		paddingHorizontal: 10,
@@ -86,14 +85,12 @@ const styles = StyleSheet.create({
 
 	rowProgress: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
 	progressText: { color: palette.textPrimary, fontSize: 12, fontWeight: "700" },
-	progressTextMuted: { color: palette.textMuted, fontSize: 12 },
+	progressTextMuted: { color: palette.textSecondary, fontSize: 12 },
 
 	progressBarBg: {
 		height: 8,
 		borderRadius: 999,
 		backgroundColor: palette.overlay,
-		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: palette.border,
 		overflow: "hidden",
 	},
 	progressBarFill: {

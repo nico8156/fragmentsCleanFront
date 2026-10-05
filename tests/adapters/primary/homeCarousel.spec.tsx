@@ -2,6 +2,8 @@ import React from "react";
 import { FlatList, StyleSheet } from "react-native";
 import { MasterHeader } from "@/app/adapters/primary/react/features/home/components/MasterHeader";
 
+let mockDimensions = { width: 390, height: 844, scale: 3, fontScale: 1 };
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({ __esModule: true, default: () => mockDimensions }));
 jest.mock("expo-image", () => ({ Image: "ExpoImage" }));
 // React's test renderer is the technical native-view boundary, not a business fake.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -14,6 +16,7 @@ const articles = Array.from({ length: 5 }, (_, index) => ({
 
 describe("Home hero carousel", () => {
   let tree: any;
+  beforeEach(() => { mockDimensions = { width: 390, height: 844, scale: 3, fontScale: 1 }; });
   afterEach(() => { if (tree) act(() => tree.unmount()); });
 
   it("pages all five articles and centers its indicators without a fixed left offset", () => {
@@ -26,6 +29,17 @@ describe("Home hero carousel", () => {
     const width = list.props.getItemLayout(undefined, 1).length;
     act(() => list.props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: width } } }));
     expect(tree.root.findByProps({ testID: "hero-pagination" }).props.accessibilityLabel).toBe("Article 2 sur 5");
+  });
+
+  it("reduces normal hero height and grows to contain accessibility text below controls", () => {
+    act(() => { tree = create(<MasterHeader articles={articles} topClearance={124} />); });
+    const normalHeight = StyleSheet.flatten(tree.root.findByType(FlatList).props.style).height;
+    expect(normalHeight).toBeLessThan(390 * 1.2);
+    mockDimensions = { ...mockDimensions, fontScale: 3 };
+    act(() => tree.update(<MasterHeader articles={articles} topClearance={124} />));
+    const accessibleHeight = StyleSheet.flatten(tree.root.findByType(FlatList).props.style).height;
+    expect(accessibleHeight).toBeGreaterThan(normalHeight);
+    expect(accessibleHeight).toBeGreaterThanOrEqual(124 + (2 * 32 + 3 * 20) * 3);
   });
 
   it("resets paging after editorial replacement and hides meaningless single-item dots", () => {

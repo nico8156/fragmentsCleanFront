@@ -3,24 +3,30 @@ import { useWindowDimensions, FlatList, Pressable, StyleSheet, Text, View } from
 import { Image } from "expo-image";
 import { ArticlePreviewVM } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { spacing, typography } from "@/app/adapters/primary/react/css/designTokens";
 import { articleTagColors } from "../articleTagColors";
 
 type Props = {
     articles: ArticlePreviewVM[];
+    topClearance?: number;
     onArticlePress?: (slug: string) => void;
 };
 
-export function MasterHeader({ articles, onArticlePress }: Props) {
-    const { width } = useWindowDimensions();
+export function MasterHeader({ articles, onArticlePress, topClearance = 112 }: Props) {
+    const { width, height: windowHeight, fontScale } = useWindowDimensions();
+    // Keep two title/intro lines clear of the controls, even with large text.
+    const copyHeight = (2 * typography.screen.lineHeight + 3 * typography.body.lineHeight) * fontScale
+        + 2 * spacing.compact + spacing.micro + 44;
+    const height = Math.max(Math.round(Math.min(width * 1.16, windowHeight * 0.6)), topClearance + copyHeight);
     if (!articles.length) return null;
     // An editorial reorder/removal or viewport resize starts a coherent new pager.
     return <ArticleCarousel key={JSON.stringify([width, articles.map(item => item.id)])}
-        articles={articles} onArticlePress={onArticlePress} width={width} />;
+        articles={articles} onArticlePress={onArticlePress} width={width} height={height} />;
 }
 
-function ArticleCarousel({ articles, onArticlePress, width }: Props & { width: number }) {
+function ArticleCarousel({ articles, onArticlePress, width, height }: Props & { width: number; height: number }) {
     const [index, setIndex] = useState(0);
-    const size = { width, height: Math.round(width * 1.4) };
+    const size = { width, height };
 
     const handlePress = useCallback(
         (slug: string) => {
@@ -108,39 +114,30 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(8, 5, 4, 0.15)",
     },
     content: {
-        gap: 16,
-        paddingBottom: 54,
-        paddingHorizontal: 5,
+        gap: spacing.compact,
+        paddingBottom: 44,
     },
     tag: {
         alignSelf: "flex-start",
         backgroundColor: palette.success,
-        paddingVertical: 6,
-        paddingHorizontal: 14,
+        paddingVertical: 4,
+        paddingHorizontal: spacing.compact,
 
-        shadowColor: "#000",
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 6 },
     },
     tagText: {
         color: "#1A0D08",
-        fontWeight: "700",
-        fontSize: 12,
+        ...typography.body,
+        fontWeight: "600",
         letterSpacing: 0.6,
         textTransform: "uppercase",
     },
     title: {
         color: palette.textPrimary,
-        fontSize: 28,
-        fontWeight: "800",
-        letterSpacing: 0.2,
-        lineHeight: 34,
+        ...typography.screen,
     },
     subtitle: {
         color: palette.textPrimary,
-        fontSize: 15,
-        lineHeight: 22,
+        ...typography.body,
     },
     pagination: {
         position: "absolute",

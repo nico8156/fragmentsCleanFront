@@ -1,12 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
 import { useCallback } from "react";
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { palette } from "@/app/adapters/primary/react/css/colors";
+import { RootScreenTitle } from "@/app/adapters/primary/react/components/design/RootScreenTitle";
 
+import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
 import { ProfileLayout } from "@/app/adapters/primary/react/features/profile/components/ProfileLayout";
-import {
-	ProfileMenuItem,
-	ProfileMenuList,
-} from "@/app/adapters/primary/react/features/profile/components/ProfileMenuList";
+import { ProfileShortcuts } from "../components/ProfileShortcuts";
 
 import {
 	ProfileStackNavigationProp,
@@ -18,20 +20,10 @@ import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePas
 
 type ProfileMenuDestination = Exclude<keyof ProfileStackParamList, "ProfileHome">;
 
-const MENU_ITEMS: ProfileMenuItem<ProfileMenuDestination>[] = [
-	{ symbolName: "pencil", title: "Modifier mon profil", destination: "EditProfile" },
-	{ symbolName: "list.bullet.rectangle.portrait", title: "Mes tickets", destination: "Tickets" },
-	{ symbolName: "heart.fill", title: "Mes favoris", destination: "Favorites" },
-	{ symbolName: "cup.and.saucer.fill", title: "Mes expériences", destination: "Experiences" },
-	{ symbolName: "dial.low", title: "Paramètres", destination: "AppSettings" },
-];
-
 export function ProfileScreen() {
 	const navigation = useNavigation<ProfileStackNavigationProp>();
-	const { displayName, avatarUrl } = useAuthUser();
+	const { displayName, avatarUrl, primaryEmail, profileMutationStatus, profileMutationError } = useAuthUser();
 	const pass = usePassRingsViewModel();
-
-	const safeDisplayName = displayName ?? "Profil";
 
 	const handleNavigate = useCallback(
 		(destination: ProfileMenuDestination) => {
@@ -41,11 +33,21 @@ export function ProfileScreen() {
 	);
 
 	return (
-		<ProfileLayout>
-			<ProfileHero avatarUrl={avatarUrl} displayName={safeDisplayName} rings={pass.displayRings} />
-			<ProfileMenuList items={MENU_ITEMS} onNavigate={handleNavigate} />
+		<SafeAreaView edges={["top", "left", "right"]} style={styles.root}>
+		<ProfileLayout paddingTop={8}>
+			<RootScreenTitle>Profil</RootScreenTitle>
+			<ProfileHero avatarUrl={avatarUrl} displayName={displayName} email={primaryEmail} rings={pass.displayRings}
+				onEdit={() => handleNavigate("EditProfile")} syncing={profileMutationStatus === "pending"} error={profileMutationError} />
+			<ProfileCard title="Mon carnet">
+				<ProfileShortcuts onNavigate={handleNavigate} />
+			</ProfileCard>
 		</ProfileLayout>
+		</SafeAreaView>
 	);
 }
+
+const styles = StyleSheet.create({
+	root: { flex: 1, backgroundColor: palette.background },
+});
 
 export default ProfileScreen;

@@ -1,5 +1,5 @@
 import BottomSheet from "@gorhom/bottom-sheet";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { StatusBar, StyleSheet, View } from "react-native";
@@ -23,6 +23,9 @@ import { useDistanceToPoint } from "@/app/adapters/secondary/viewModel/useDistan
 import { useUserLocationFromStore } from "@/app/adapters/secondary/viewModel/useUserLocation";
 
 import { palette } from "@/app/adapters/primary/react/css/colors";
+import { spacing, radii, surfaces } from "@/app/adapters/primary/react/css/designTokens";
+import { ContentState } from "@/app/adapters/primary/react/components/design/Primitives";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
 
 import { useBlurOverlay } from "@/app/adapters/primary/react/features/map/hook/useBlurOverlay";
@@ -36,6 +39,8 @@ type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export function MapScreen() {
 	const navigation = useNavigation<RootStackNavigationProp>();
+	const isFocused = useIsFocused();
+	const insets = useSafeAreaInsets();
 
 	// --- BottomSheet state
 	const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
@@ -159,7 +164,8 @@ export function MapScreen() {
 
 	return (
 		<GestureHandlerRootView style={styles.safeArea} onLayout={onLayout} testID="coffee-map-screen">
-			<StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+			{/* Tabs stay mounted: only the visible light map needs dark system text. */}
+			<StatusBar barStyle={isFocused && viewMode === "map" ? "dark-content" : "light-content"} translucent backgroundColor="transparent" />
 
 			<View style={styles.container}>
 				{viewMode === "map" ? (
@@ -195,7 +201,7 @@ export function MapScreen() {
 						)}
 
 						<ActionButtonsWrapper toggleViewMode={toggleViewMode} />
-						{permission === "denied" || status === "error" ? <View style={styles.locationNotice} accessibilityRole="alert"><Animated.Text style={styles.locationNoticeText}>Localisation indisponible — explore la carte librement.</Animated.Text></View> : null}
+						{permission === "denied" || status === "error" ? <View style={[styles.locationNotice, { top: insets.top + 72 }]}><ContentState kind="error" message="Localisation indisponible — explore la carte librement." /></View> : null}
 
 						<LocalisationButton
 							localizeMe={localizeMe}
@@ -239,8 +245,7 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
-	locationNotice: { position: "absolute", top: 122, left: 20, right: 20, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: "rgba(21,16,14,0.88)", borderWidth: StyleSheet.hairlineWidth, borderColor: palette.border },
-	locationNoticeText: { color: palette.textSecondary, textAlign: "center", fontSize: 13, fontWeight: "700" },
+	locationNotice: { position: "absolute", left: spacing.section, right: spacing.section, paddingHorizontal: spacing.standard, borderRadius: radii.card, backgroundColor: surfaces.floating },
 });
 
 export default MapScreen;

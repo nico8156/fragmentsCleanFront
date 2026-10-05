@@ -1,3 +1,5 @@
+import { FragmentsButton } from "@/app/adapters/primary/react/components/design/Primitives";
+import { spacing, typography } from "@/app/adapters/primary/react/css/designTokens";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { PassAvatar } from "@/app/adapters/primary/react/features/pass/components/PassAvatar";
 import type { PassRingViewModel } from "@/app/adapters/secondary/viewModel/passViewModel";
@@ -8,10 +10,13 @@ interface ProfileHeroProps {
 	displayName?: string;
 	email?: string;
 	rings?: PassRingViewModel[];
+	onEdit?: () => void;
+	syncing?: boolean;
+	error?: string;
 }
 
-export function ProfileHero({ avatarUrl, displayName, email, rings = [] }: ProfileHeroProps) {
-	const safeDisplayName = displayName ?? "Profil";
+export function ProfileHero({ avatarUrl, displayName, email, rings = [], onEdit, syncing, error }: ProfileHeroProps) {
+	const safeDisplayName = displayName?.trim() || "Utilisateur";
 	const fallbackInitial = (safeDisplayName.trim()?.[0] ?? "?").toUpperCase();
 
 	return (
@@ -19,31 +24,22 @@ export function ProfileHero({ avatarUrl, displayName, email, rings = [] }: Profi
 			<PassAvatar
 				imageUrl={avatarUrl}
 				rings={rings}
-				size={132}
+				size={80}
 				fallbackInitial={fallbackInitial}
 				accessibilityLabel={`${safeDisplayName}, progression Pass actuelle`}
 			/>
 
-			<Text style={styles.name}>{safeDisplayName}</Text>
+			<Text accessibilityRole="header" style={styles.name}>{safeDisplayName}</Text>
 			{email ? <Text style={styles.email}>{email}</Text> : null}
+			{syncing ? <Text accessibilityLiveRegion="polite" style={styles.email}>Profil en cours de synchronisation…</Text> : null}
+			{error ? <Text accessibilityRole="alert" style={styles.email}>{error}</Text> : null}
+			{onEdit ? <FragmentsButton label="Modifier mon profil" variant="tertiary" onPress={onEdit} /> : null}
 		</View>
 	);
 }
 
 const styles = StyleSheet.create({
-	wrapper: {
-		alignItems: "center",
-		gap: 8,
-		paddingTop: 8,
-		paddingBottom: 12,
-	},
-	name: {
-		fontSize: 28,
-		fontWeight: "600",
-		color: palette.text_90,
-	},
-	email: {
-		fontSize: 14,
-		color: palette.textSecondary,
-	},
+	wrapper: { alignItems: "center", gap: spacing.micro, paddingVertical: spacing.compact },
+	name: { ...typography.screen, color: palette.textPrimary, textAlign: "center", alignSelf: "stretch" },
+	email: { ...typography.body, color: palette.textSecondary, textAlign: "center", alignSelf: "stretch" },
 });

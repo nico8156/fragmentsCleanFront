@@ -1,8 +1,10 @@
+import { ScrollClearance } from "@/app/adapters/primary/react/components/design/ScrollClearance";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { HomeContentSections } from "@/app/adapters/primary/react/features/home/components/HomeContentSections";
 import { MasterHeader } from "@/app/adapters/primary/react/features/home/components/MasterHeader";
 import { RootStackNavigationProp } from "@/app/adapters/primary/react/navigation/types";
-import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
+import { radii, spacing, scrollContentSpacing } from "@/app/adapters/primary/react/css/designTokens";
+import { ContentState, FloatingIconButton } from "@/app/adapters/primary/react/components/design/Primitives";
 import { useArticlesHome } from "@/app/adapters/secondary/viewModel/useArticlesHome";
 import { useCoffeeDiscovery } from "@/app/adapters/secondary/viewModel/useCoffeeDiscovery";
 import { usePassRingsViewModel } from "@/app/adapters/secondary/viewModel/usePassRingsViewModel";
@@ -16,8 +18,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
 	Animated,
-	ActivityIndicator,
-	Text,
 	NativeScrollEvent,
 	NativeSyntheticEvent,
 	Pressable,
@@ -115,22 +115,24 @@ export function HomeScreen() {
 			<StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
 			{/* Scroll: HERO doit remonter tout en haut (derrière header/icônes) */}
-			<AnimatedScrollView
-				alwaysBounceVertical
-				onScroll={handleScroll}
-				scrollEventThrottle={16}
-				contentContainerStyle={styles.scrollContent}
-				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={palette.textPrimary} progressViewOffset={topPad} />}
-			>
-				<View style={styles.heroSection}>
-					<MasterHeader articles={sliderArticles} onArticlePress={openArticle} />
-				</View>
+			<ScrollClearance>{bottom => (
+				<AnimatedScrollView
+					alwaysBounceVertical
+					onScroll={handleScroll}
+					scrollEventThrottle={16}
+					contentContainerStyle={[scrollContentSpacing, { paddingBottom: scrollContentSpacing.paddingBottom + bottom }]}
+					refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={palette.textPrimary} progressViewOffset={topPad} />}
+				>
+					<View style={styles.heroSection}>
+						<MasterHeader topClearance={topPad + spacing.standard} articles={sliderArticles} onArticlePress={openArticle} />
+					</View>
 
-				{/* Spacer: évite que les sections démarrent sous la barre */}
-				<View style={{ height: 16 }} />
+					{/* Spacer: évite que les sections démarrent sous la barre */}
+					<View style={{ height: spacing.standard }} />
 
-				<HomeContentSections content={homeContent} onOpenMap={openMap} onOpenScan={openScanModal} onOpenCoffee={openCoffee} onOpenArticle={openArticle} onOpenArticleCatalogue={openArticleCatalogue} onOpenExperiences={openExperiences} onOpenPass={openPass} />
-			</AnimatedScrollView>
+					<HomeContentSections content={homeContent} onOpenMap={openMap} onOpenScan={openScanModal} onOpenCoffee={openCoffee} onOpenArticle={openArticle} onOpenArticleCatalogue={openArticleCatalogue} onOpenExperiences={openExperiences} onOpenPass={openPass} />
+				</AnimatedScrollView>
+			)}</ScrollClearance>
 
 			{/* Header unique au-dessus du HERO */}
 			<View style={[styles.headerShell, { paddingTop: insets.top, height: topPad }]}>
@@ -155,9 +157,9 @@ export function HomeScreen() {
 								pointerEvents={showFloating ? "auto" : "none"}
 								accessibilityElementsHidden={!showFloating}
 							>
-								<Pressable onPress={openSearch} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Rechercher">
-									<Ionicons name="search" size={22} color={palette.textPrimary} />
-								</Pressable>
+								<FloatingIconButton compact onPress={openSearch} accessibilityLabel="Rechercher">
+									<Ionicons name="search" size={20} color={palette.textPrimary} />
+								</FloatingIconButton>
 							</Animated.View>
 						</View>
 					</View>
@@ -183,9 +185,9 @@ export function HomeScreen() {
 								pointerEvents={showFloating ? "auto" : "none"}
 								accessibilityElementsHidden={!showFloating}
 							>
-								<Pressable onPress={openScanModal} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Scanner un ticket">
-									<MaterialIcons name="document-scanner" size={22} color={palette.textPrimary} />
-								</Pressable>
+								<FloatingIconButton compact onPress={openScanModal} accessibilityLabel="Scanner un ticket">
+									<MaterialIcons name="document-scanner" size={20} color={palette.textPrimary} />
+								</FloatingIconButton>
 							</Animated.View>
 						</View>
 					</View>
@@ -193,11 +195,10 @@ export function HomeScreen() {
 			</View>
 			{!preparing && (refreshing || message || catalogueLoading) ? (
 				<View pointerEvents="none" style={[styles.refreshNotice, { top: topPad + 8 }]} accessibilityLiveRegion="polite">
-					{refreshing || catalogueLoading ? <ActivityIndicator size="small" color={palette.textPrimary} /> : null}
-					<Text style={styles.refreshText}>{refreshing ? "Actualisation…" : message ?? "Actualisation des cafés…"}</Text>
+					<ContentState kind={refreshing || catalogueLoading ? "loading" : "notice"} message={refreshing ? "Actualisation…" : message ?? "Actualisation des cafés…"} />
 				</View>
 			) : null}
-			{preparing ? <View style={styles.preparing} accessibilityLiveRegion="polite"><ActivityIndicator color={palette.accent} /><Text style={styles.refreshText}>Préparation de ton accueil…</Text></View> : null}
+			{preparing ? <View style={styles.preparing} accessibilityLiveRegion="polite"><ContentState kind="loading" message="Préparation de ton accueil…" /></View> : null}
 		</View>
 	);
 }
@@ -205,19 +206,14 @@ export function HomeScreen() {
 const SLOT_SIZE = 56;
 
 const styles = StyleSheet.create({
-	container: { flex: 1 },
+	container: { flex: 1, backgroundColor: palette.background },
 	preparing: { ...StyleSheet.absoluteFillObject, zIndex: 700, backgroundColor: palette.background, justifyContent: "center", alignItems: "center", gap: 12 },
-	refreshNotice: { position: "absolute", zIndex: 650, alignSelf: "center", maxWidth: "90%", flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.accentMuted },
-	refreshText: { color: palette.textPrimary, fontSize: 13, flexShrink: 1 },
-
-	scrollContent: {
-		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
-	},
+	refreshNotice: { position: "absolute", zIndex: 650, alignSelf: "center", maxWidth: "90%", paddingHorizontal: spacing.standard, borderRadius: radii.card, backgroundColor: palette.surface },
 
 	heroSection: {
 		backgroundColor: palette.surface,
 		// pas de marginTop -> l’image peut remonter derrière le header
-		marginBottom: 28,
+		marginBottom: spacing.micro,
 	},
 
 	// Header unique
@@ -232,7 +228,7 @@ const styles = StyleSheet.create({
 		...StyleSheet.absoluteFillObject,
 		backgroundColor: "rgba(12, 8, 6, 0.92)",
 		borderBottomWidth: StyleSheet.hairlineWidth,
-		borderBottomColor: palette.secondary_90,
+		borderBottomColor: palette.border,
 	},
 	headerContent: {
 		height: HEADER_BAR_HEIGHT,
@@ -288,18 +284,6 @@ const styles = StyleSheet.create({
 		marginBottom: 12,
 	},
 
-	roundButton: {
-		backgroundColor: "rgba(33, 24, 19, 0.85)",
-		borderRadius: 26,
-		padding: 14,
-		borderWidth: 1,
-		borderColor: palette.secondary_90,
-		shadowColor: "#000",
-		shadowOpacity: 0.22,
-		shadowRadius: 12,
-		shadowOffset: { width: 0, height: 6 },
-		elevation: 4,
-	},
 });
 
 export default HomeScreen;

@@ -1,8 +1,10 @@
+import { tabBarClearance } from "@/app/adapters/primary/react/css/designTokens";
 import type { RootTabsParamList } from "@/app/adapters/primary/react/navigation/types";
 import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
 
-export const FLOATING_TAB_BAR_CLEARANCE = 116;
+// Legacy default for screens migrated separately; new root surfaces use their safe-area inset.
+export const FLOATING_TAB_BAR_CLEARANCE = tabBarClearance(24);
 
 export const floatingTabGlassPresentation = {
 	blurIntensity: 68,

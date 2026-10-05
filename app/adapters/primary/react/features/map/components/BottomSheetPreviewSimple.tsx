@@ -1,12 +1,13 @@
-import { palette } from "@/app/adapters/primary/react/css/colors";
-import React, { useMemo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { ContentState, FragmentsButton } from "@/app/adapters/primary/react/components/design/Primitives";
+import { spacing, surfaces, typography } from "@/app/adapters/primary/react/css/designTokens";
 
 type Props = {
 	name?: string;
 	isOpen?: boolean;
 	distanceText?: string;
-	todayHoursLabel?: string; // ex: "08:30–18:00" ou "ferme à 18:00"
+	todayHoursLabel?: string;
 	onPressDetails: () => void;
 	onPressDirections: () => void;
 	canOpenDirections: boolean;
@@ -14,245 +15,46 @@ type Props = {
 };
 
 export default function BottomSheetPreviewSimple({
-	name,
-	isOpen,
-	distanceText,
-	todayHoursLabel,
-	onPressDetails,
-	onPressDirections,
-	canOpenDirections,
-	isLoading = false,
+	name, isOpen, distanceText, todayHoursLabel, onPressDetails, onPressDirections, canOpenDirections, isLoading = false,
 }: Props) {
 	const hasSelection = Boolean(name);
-
-	const openLabel = useMemo(() => {
-		if (!hasSelection) return "—";
-		if (isOpen === undefined) return "Statut inconnu";
-		return isOpen ? "OUVERT" : "FERMÉ";
-	}, [hasSelection, isOpen]);
-
-	const openSubLabel = useMemo(() => {
-		if (!hasSelection) return "Tape un marker pour voir un spot";
-		if (!todayHoursLabel) return "Horaires dans la fiche";
-		// on garde simple et lisible
-		return todayHoursLabel;
-	}, [hasSelection, todayHoursLabel]);
-
-	const distanceLabel = useMemo(() => {
-		if (!hasSelection) return "—";
-		return distanceText ?? "Distance inconnue";
-	}, [hasSelection, distanceText]);
-
+	const openLabel = !hasSelection ? "—" : isOpen === undefined ? "Statut inconnu" : isOpen ? "Ouvert" : "Fermé";
 	return (
 		<View style={styles.container}>
-			{/* Handle (simple + lisible) */}
-
-			{/* NOM — très visible */}
-			<Text style={styles.title} numberOfLines={1}>
-				{name ?? "Sélectionnez un coffee shop"}
-			</Text>
-
-			{/* 2 colonnes : OUVERTURE / DISTANCE */}
+			<Text style={styles.title} accessibilityRole="header">{name ?? "Sélectionnez un coffee shop"}</Text>
 			<View style={styles.grid}>
-				<InfoBlock
-					label="Ouverture"
-					value={openLabel}
-					subValue={openSubLabel}
-					emphasis={isOpen ? "positive" : isOpen === false ? "negative" : "neutral"}
-					disabled={!hasSelection}
-				/>
-				<InfoBlock
-					label="Distance"
-					value={distanceLabel}
-					subValue={hasSelection ? "Depuis toi" : ""}
-					emphasis="neutral"
-					disabled={!hasSelection}
-				/>
+				<View style={styles.info}>
+					<Text style={styles.meta}>Ouverture</Text>
+					<Text style={styles.value}>{openLabel}</Text>
+					<Text style={styles.meta}>{!hasSelection ? "Tape un marker pour voir un spot" : todayHoursLabel || "Horaires dans la fiche"}</Text>
+				</View>
+				<View style={styles.info}>
+					<Text style={styles.meta}>Distance</Text>
+					<Text style={styles.value}>{!hasSelection ? "—" : distanceText ?? "Distance inconnue"}</Text>
+					{hasSelection ? <Text style={styles.meta}>Depuis toi</Text> : null}
+				</View>
 			</View>
-
-			{isLoading ? <View style={styles.loading}><ActivityIndicator color={palette.accent} /><Text style={styles.loadingText}>Chargement du café…</Text></View> : null}
-
+			{isLoading ? <ContentState kind="loading" tone="light" message="Chargement du café…" /> : null}
 			<View style={styles.actions}>
-				<Pressable
-					onPress={onPressDetails}
-					disabled={!hasSelection || isLoading}
-					accessibilityRole="button"
-					accessibilityLabel="Voir la fiche du café"
-					style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed, (!hasSelection || isLoading) && styles.ctaDisabled]}
-				>
-					<Text style={styles.ctaText}>Voir la fiche</Text>
-					<Text style={styles.ctaIcon}>→</Text>
-				</Pressable>
-				<Pressable
-					onPress={onPressDirections}
-					disabled={!canOpenDirections || isLoading}
-					accessibilityRole="button"
-					accessibilityLabel="Ouvrir l’itinéraire"
-					style={({ pressed }) => [styles.secondaryCta, pressed && styles.ctaPressed, (!canOpenDirections || isLoading) && styles.ctaDisabled]}
-				>
-					<Text style={styles.secondaryCtaText}>Itinéraire</Text>
-				</Pressable>
+				<FragmentsButton label="Voir la fiche" accessibilityLabel="Voir la fiche du café" onPress={onPressDetails}
+					disabled={!hasSelection || isLoading} tone="light" style={styles.primaryAction} />
+				<FragmentsButton label="Itinéraire" accessibilityLabel="Ouvrir l’itinéraire" onPress={onPressDirections}
+					disabled={!canOpenDirections || isLoading} tone="light" variant="secondary" style={styles.secondaryAction} />
 			</View>
-
-			{/* Hint minimal */}
-			<Text style={styles.hint}>Glisse pour fermer</Text>
-		</View>
-	);
-}
-
-function InfoBlock({
-	label,
-	value,
-	subValue,
-	emphasis,
-	disabled,
-}: {
-	label: string;
-	value: string;
-	subValue?: string;
-	emphasis: "positive" | "negative" | "neutral";
-	disabled?: boolean;
-}) {
-	const toneStyle =
-		emphasis === "positive"
-			? styles.tonePositive
-			: emphasis === "negative"
-				? styles.toneNegative
-				: styles.toneNeutral;
-
-	return (
-		<View style={[styles.block, toneStyle, disabled && styles.blockDisabled]}>
-			<Text style={styles.blockLabel} numberOfLines={1}>
-				{label}
-			</Text>
-			<Text style={styles.blockValue} numberOfLines={1}>
-				{value}
-			</Text>
-			{subValue ? (
-				<Text style={styles.blockSub} numberOfLines={1}>
-					{subValue}
-				</Text>
-			) : null}
+			<Text style={[styles.meta, styles.hint]}>Glisse pour fermer</Text>
 		</View>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		paddingHorizontal: 18,
-		paddingTop: 10,
-		paddingBottom: 14,
-		backgroundColor: palette.textPrimary_1,
-		borderTopLeftRadius: 28,
-		borderTopRightRadius: 28,
-		gap: 14,
-	},
-
-	handle: {
-		alignSelf: "center",
-		width: 78,
-		height: 6,
-		borderRadius: 99,
-		backgroundColor: palette.border,
-		opacity: 0.9,
-	},
-
-	title: {
-		fontSize: 28, // plus grand = “confirmation”
-		fontWeight: "900",
-		color: palette.background_1,
-		letterSpacing: -0.5,
-	},
-
-	grid: {
-		flexDirection: "row",
-		gap: 12,
-	},
-
-	block: {
-		flex: 1,
-		borderRadius: 18,
-		paddingHorizontal: 14,
-		paddingVertical: 12,
-		borderWidth: 1,
-	},
-
-	// label petit, value gros : hiérarchie nette
-	blockLabel: {
-		fontSize: 12,
-		fontWeight: "800",
-		color: palette.textMuted,
-		opacity: 0.95,
-	},
-	blockValue: {
-		fontSize: 18,
-		fontWeight: "900",
-		color: palette.background_1,
-		letterSpacing: 0.3,
-		marginTop: 6,
-	},
-	blockSub: {
-		fontSize: 12,
-		fontWeight: "700",
-		color: palette.background_30,
-		marginTop: 4,
-	},
-
-	tonePositive: {
-		backgroundColor: "rgba(46, 204, 113, 0.08)",
-		borderColor: "rgba(46, 204, 113, 0.18)",
-	},
-	toneNegative: {
-		backgroundColor: "rgba(231, 76, 60, 0.07)",
-		borderColor: "rgba(231, 76, 60, 0.16)",
-	},
-	toneNeutral: {
-		backgroundColor: "rgba(255,255,255,0.05)",
-		borderColor: "rgba(255,255,255,0.10)",
-	},
-	blockDisabled: {
-		opacity: 0.5,
-	},
-
-	cta: {
-		flex: 1,
-		height: 52,
-		borderRadius: 18,
-		backgroundColor: palette.accent,
-		alignItems: "center",
-		justifyContent: "center",
-		flexDirection: "row",
-		gap: 10,
-	},
-	ctaText: {
-		fontSize: 16,
-		fontWeight: "900",
-		color: palette.textPrimary,
-		letterSpacing: 0.2,
-	},
-	ctaIcon: {
-		fontSize: 18,
-		fontWeight: "900",
-		color: palette.textPrimary,
-		marginTop: -1,
-	},
-	ctaPressed: {
-		opacity: 0.9,
-		transform: [{ scale: 0.99 }],
-	},
-	ctaDisabled: {
-		opacity: 0.45,
-	},
-	actions: { flexDirection: "row", gap: 10 },
-	secondaryCta: { height: 52, borderRadius: 18, paddingHorizontal: 16, borderWidth: 1, borderColor: palette.accent_30, alignItems: "center", justifyContent: "center", backgroundColor: palette.accentSoft },
-	secondaryCtaText: { color: palette.textPrimary, fontSize: 14, fontWeight: "900" },
-	loading: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 2 },
-	loadingText: { color: palette.textSecondary, fontSize: 13, fontWeight: "700" },
-
-	hint: {
-		textAlign: "center",
-		fontSize: 12,
-		color: palette.textMuted,
-		opacity: 0.9,
-	},
+	container: { paddingHorizontal: spacing.section, paddingTop: spacing.micro, paddingBottom: spacing.standard, gap: spacing.section },
+	title: { ...typography.screen, color: surfaces.previewText },
+	grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.standard },
+	info: { flexGrow: 1, flexBasis: 130, gap: spacing.micro },
+	value: { ...typography.card, color: surfaces.previewText },
+	meta: { ...typography.body, color: surfaces.previewSecondary },
+	actions: { flexDirection: "row", flexWrap: "wrap", gap: spacing.compact },
+	primaryAction: { flexGrow: 1, flexBasis: 170 },
+	secondaryAction: { flexGrow: 1, flexBasis: 110 },
+	hint: { textAlign: "center" },
 });

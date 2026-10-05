@@ -12,13 +12,13 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
-	SafeAreaView,
 	StatusBar,
 	StyleSheet,
 	Text,
 	TextInput,
 	View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
 
 const MIN_QUERY = 3;
@@ -73,7 +73,7 @@ export function SearchScreen() {
 			>
 				{/* Header */}
 				<View style={styles.header}>
-					<Pressable onPress={onBack} style={styles.backButton} accessibilityRole="button" hitSlop={10}>
+					<Pressable accessibilityLabel="Retour" onPress={onBack} style={styles.backButton} accessibilityRole="button" hitSlop={10}>
 						<Ionicons name="chevron-back" size={22} color={palette.textPrimary} />
 					</Pressable>
 
@@ -82,6 +82,7 @@ export function SearchScreen() {
 						<TextInput
 							value={query}
 							onChangeText={setQuery}
+							accessibilityLabel="Rechercher un café"
 							placeholder="Rechercher un café"
 							placeholderTextColor={palette.textMuted}
 							style={styles.input}
@@ -94,7 +95,7 @@ export function SearchScreen() {
 						/>
 
 						{query.length > 0 ? (
-							<Pressable onPress={onClear} style={styles.clearButton} accessibilityRole="button" hitSlop={10}>
+							<Pressable accessibilityLabel="Effacer la recherche" onPress={onClear} style={styles.clearButton} accessibilityRole="button" hitSlop={10}>
 								<Ionicons name="close" size={18} color={palette.textMuted} />
 							</Pressable>
 						) : null}
@@ -180,12 +181,12 @@ const styles = StyleSheet.create({
 	backButton: {
 		width: 44,
 		height: 44,
-		borderRadius: 14,
+		borderRadius: 999,
 		alignItems: "center",
 		justifyContent: "center",
 		backgroundColor: "rgba(36, 27, 22, 0.72)",
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: palette.secondary_90,
+		borderColor: palette.border,
 	},
 
 	searchField: {
@@ -209,8 +210,8 @@ const styles = StyleSheet.create({
 	},
 
 	clearButton: {
-		width: 34,
-		height: 34,
+		width: 44,
+		height: 44,
 		borderRadius: 12,
 		alignItems: "center",
 		justifyContent: "center",
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
 		borderRadius: 18,
 		backgroundColor: "rgba(33, 24, 19, 0.35)",
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: palette.secondary_90,
+		borderColor: palette.border,
 		padding: 18,
 	},
 	emptyTitle: {

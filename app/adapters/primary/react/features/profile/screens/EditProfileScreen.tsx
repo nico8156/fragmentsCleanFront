@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { typography } from "@/app/adapters/primary/react/css/designTokens";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { ProfileCard } from "@/app/adapters/primary/react/features/profile/components/ProfileCard";
 import { ProfileHero } from "@/app/adapters/primary/react/features/profile/components/ProfileHero";
@@ -60,13 +61,13 @@ export function EditProfileScreen() {
 					<Text style={styles.saveText}>{preparingAvatar ? "Préparation…" : avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}</Text>
 				</Pressable>
 				{avatarUrl ? (
-					<Pressable testID="remove-avatar" disabled={preparingAvatar} onPress={removeAvatar} accessibilityRole="button" accessibilityState={{ disabled: preparingAvatar }}>
+					<Pressable testID="remove-avatar" style={styles.textAction} disabled={preparingAvatar} onPress={removeAvatar} accessibilityRole="button" accessibilityState={{ disabled: preparingAvatar }}>
 						<Text style={styles.removeText}>Supprimer la photo</Text>
 					</Pressable>
 				) : null}
 				{imageError ? <Text accessibilityRole="alert" style={styles.error}>{imageError}</Text> : null}
 				{imagePermissionDenied ? (
-					<Pressable accessibilityRole="button" onPress={() => void Linking.openSettings()}>
+					<Pressable style={styles.textAction} accessibilityRole="button" onPress={() => void Linking.openSettings()}>
 						<Text style={styles.settingsLink}>Ouvrir les réglages</Text>
 					</Pressable>
 				) : null}
@@ -141,7 +142,9 @@ const styles = StyleSheet.create({
 		color: palette.textPrimary,
 		backgroundColor: palette.bg_dark_10,
 	},
+	textAction: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start" },
 	saveButton: {
+		minHeight: 44,
 		alignItems: "center",
 		borderRadius: 12,
 		backgroundColor: palette.accent,
@@ -155,11 +158,11 @@ const styles = StyleSheet.create({
 	},
 	saveText: {
 		color: palette.background,
-		fontSize: 16,
-		fontWeight: "800",
+		...typography.body,
+		fontWeight: "600",
 	},
 	error: {
-		color: "#ef4444",
+		color: palette.danger,
 	},
 	success: {
 		color: palette.textSecondary,
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
 		color: palette.textSecondary,
 	},
 	removeText: {
-		color: "#ef4444",
+		color: palette.danger,
 		fontWeight: "600",
 		textAlign: "center",
 	},

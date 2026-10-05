@@ -1,4 +1,6 @@
-export const MAP_PREVIEW_SNAP_POINTS = ["58%"] as const;
+import { compactSheetGeometry } from "@/app/adapters/primary/react/css/designTokens";
+
+export const MAP_PREVIEW_SNAP_POINTS = [`${compactSheetGeometry.maxHeightPercent}%`] as const;
 
 type CloseableSheetRef = {
 	readonly current: { close: () => void } | null;

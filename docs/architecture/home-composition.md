@@ -82,3 +82,15 @@ pour une seule carte. Le hero et le bandeau au scroll conservent leur présentat
 Tests de composant et vertical Redux : cinq rangs, changement de page, nouvelle
 sélection et passage de cache ancien à snapshot complet. Recette gestuelle iPhone
 restante, aucun déploiement mobile effectué par cette correction.
+
+### Ajustement visuel PR1 — 5 octobre 2026
+
+La revue design demande désormais un hero plus court, une typo moins lourde et
+des contrôles de 44 points. Cette retouche de `MasterHeader` remplace la consigne
+de conservation visuelle ci-dessus ; sélection éditoriale et pagination restent
+identiques. Sa hauteur tient compte de la taille de texte et de la zone des
+contrôles. `ScrollClearance` réserve désormais la hauteur de la tab bar dans le padding
+du contenu (correction PR5), y compris après les rangées articles. Le viewport
+reste plein écran pour laisser le contenu défiler derrière le verre ; le dernier
+élément peut remonter au-dessus de la barre. Les cards cafés sont allégées sans
+changer leurs données.

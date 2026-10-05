@@ -5,7 +5,7 @@ import {
 	NavigationContainer,
 	NavigationIndependentTree,
 } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createNativeStackNavigator, type NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { useMemo } from "react";
 import { ActivityIndicator, Button, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,6 +28,8 @@ import { AppSettingsScreen } from "@/app/adapters/primary/react/features/profile
 import { EditProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/EditProfileScreen";
 import { FavoritesScreen } from "@/app/adapters/primary/react/features/profile/screens/FavoritesScreen";
 import { ProfileScreen } from "@/app/adapters/primary/react/features/profile/screens/ProfileScreen";
+import { ScreenHeader } from "@/app/adapters/primary/react/components/design/ScreenHeader";
+import { ProfileHeader } from "@/app/adapters/primary/react/features/profile/components/ProfileHeader";
 import { TicketsScreen } from "@/app/adapters/primary/react/features/profile/screens/TicketsScreen";
 import { MyExperiencesScreen } from "@/app/adapters/primary/react/features/experiences/screens/MyExperiencesScreen";
 
@@ -119,14 +121,13 @@ function ProfileNavigator() {
 		<ProfileStack.Navigator
 			screenOptions={{
 				headerShown: true,
-				headerStyle: { backgroundColor: palette.primary_30 },
-				headerTitleStyle: { color: palette.accent_1, fontWeight: "700" },
-				headerTintColor: palette.accent_1,
-				headerBackVisible: true,
-				contentStyle: { backgroundColor: palette.bg_light_90 },
+				header: ({ navigation, options, route, back }) => (
+					<ProfileHeader title={options.title ?? route.name} onBack={back ? () => navigation.goBack() : undefined} />
+				),
+				contentStyle: { backgroundColor: palette.background },
 			}}
 		>
-			<ProfileStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: "Profil" }} />
+			<ProfileStack.Screen name="ProfileHome" component={ProfileScreen} options={{ title: "Profil", headerShown: false }} />
 			<ProfileStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Modifier mon profil" }} />
 			<ProfileStack.Screen name="Tickets" component={TicketsScreen} options={{ title: "Mes tickets" }} />
 			<ProfileStack.Screen name="Favorites" component={FavoritesScreen} options={{ title: "Mes favoris" }} />
@@ -162,22 +163,26 @@ function TabsNavigator() {
 /*                           SIGNED IN NAVIGATOR                              */
 /* -------------------------------------------------------------------------- */
 
+const secondaryHeader = ({ navigation, options, route, back }: NativeStackHeaderProps) => (
+    <ScreenHeader title={options.title ?? route.name} onBack={back ? () => navigation.goBack() : undefined} />
+);
+
 function SignedInNavigator() {
 	return (
-		<Stack.Navigator screenOptions={{ contentStyle: { backgroundColor: palette.bg_light_90 } }}>
+		<Stack.Navigator screenOptions={{ contentStyle: { backgroundColor: palette.background } }}>
 			<Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
 			<Stack.Screen name="CafeDetails" component={CafeDetailsScreen} options={{ headerShown: false }} />
 			<Stack.Screen name="Article" component={ArticleScreen} options={{ headerShown: false }} />
 			<Stack.Screen name="ArticleCatalogue" component={ArticleCatalogueScreen} options={{ headerShown: false }} />
-			<Stack.Screen name="BadgeDetail" component={BadgeDetailScreen} options={{ title: "Badge" }} />
-			<Stack.Screen name="AllBadges" component={AllBadgesScreen} options={{ title: "Tous les badges" }} />
+			<Stack.Screen name="BadgeDetail" component={BadgeDetailScreen} options={{ title: "Badge", header: secondaryHeader }} />
+			<Stack.Screen name="AllBadges" component={AllBadgesScreen} options={{ title: "Tous les badges", header: secondaryHeader }} />
 			<Stack.Screen
 				name="ScanTicketModal"
 				component={ScanTicketScreen}
 				options={{
 					presentation: "modal",
+					header: secondaryHeader,
 					title: "Scanner un ticket",
-					headerTitleStyle: { color: palette.accent_1, fontWeight: "bold" },
 				}}
 			/>
 			<Stack.Screen name="ScanTicketSuccess" component={ScanTicketSuccessScreen} options={{ headerShown: false }} />
@@ -224,14 +229,14 @@ export function RootNavigator() {
 	const { HasCompletedOnboarding } = useOnBoarding();
 
 	const LoadingScreen = () => (
-		<View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+		<View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}>
 			<ActivityIndicator />
 		</View>
 	);
 
 	const content = useMemo(() => {
 		if (hasSession && !accountScope.ready) return (
-			<View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+			<View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center", padding: 24 }}>
 				{accountScope.error ? <>
 					<Text accessibilityRole="alert" style={{ color: palette.textPrimary, textAlign: "center" }}>{accountScope.error}</Text>
 					<Button title="Réessayer" onPress={() => dispatch(accountStorageRetry())} />

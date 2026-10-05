@@ -2,6 +2,7 @@ import { SymbolView } from "expo-symbols";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SFSymbols6_0 } from "sf-symbols-typescript";
 
+import { spacing, typography } from "@/app/adapters/primary/react/css/designTokens";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 
 export interface ProfileMenuItem<TDestination extends string = string> {
@@ -27,6 +28,8 @@ export function ProfileMenuList<TDestination extends string>({
 				return (
 					<Pressable
 						key={item.destination}
+						accessibilityRole="button"
+						accessibilityLabel={item.title}
 						onPress={() => onNavigate(item.destination)}
 						style={({ pressed }) => [styles.row, pressed && styles.pressed]}
 						android_ripple={{ color: palette.bg_dark_10 }}
@@ -52,41 +55,10 @@ export function ProfileMenuList<TDestination extends string>({
 }
 
 const styles = StyleSheet.create({
-	card: {
-		backgroundColor: palette.bg_dark_30,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: palette.border,
-		overflow: "hidden",
-	},
-	row: {
-		paddingHorizontal: 18,
-		paddingVertical: 16,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "space-between",
-	},
-	pressed: {
-		opacity: 0.7,
-	},
-	left: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 14,
-	},
-	label: {
-		fontSize: 17,
-		fontWeight: "600",
-		color: palette.text_90,
-	},
-	divider: {
-		position: "absolute",
-		left: 54,
-		right: 0,
-		bottom: 0,
-		height: 1,
-		backgroundColor: palette.border,
-		opacity: 0.6,
-	},
+	card: { gap: 0 },
+	row: { minHeight: 56, paddingVertical: spacing.compact, flexDirection: "row", alignItems: "center", gap: spacing.compact },
+	pressed: { opacity: 0.7 },
+	left: { flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.compact },
+	label: { ...typography.card, color: palette.textPrimary, flex: 1 },
+	divider: { position: "absolute", left: 34, right: 0, bottom: 0, height: StyleSheet.hairlineWidth, backgroundColor: palette.border, opacity: 0.6 },
 });
-

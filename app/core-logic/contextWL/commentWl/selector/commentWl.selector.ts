@@ -25,6 +25,11 @@ const selectCommentsState = (state: RootStateWl): CommentsSlice => state.cState;
 
 export const selectAllComments = (state: RootStateWl) => state.cState.entities.entities;
 
+export const selectBlockedUsers = createSelector(
+	[(state: RootStateWl) => state.cState.blockedUsers],
+	(blockedUsers) => Object.values(blockedUsers),
+);
+
 export const selectKnownCommentTargetIds = createSelector(
 	[selectCommentsState],
 	(commentsState): CafeId[] => Object.keys(commentsState.byTarget ?? {}),

@@ -1,8 +1,8 @@
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { Image } from "expo-image";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { FlatList, LayoutChangeEvent, StyleSheet, Text, View } from "react-native";
-import { Section } from "./Section";
+import { radii, spacing as space, typography } from "@/app/adapters/primary/react/css/designTokens";
 
 export function PhotosSection({ photos }: { photos: string[] }) {
 	const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -12,23 +12,14 @@ export function PhotosSection({ photos }: { photos: string[] }) {
 		if (w && w !== containerWidth) setContainerWidth(w);
 	};
 
-	const spacing = 10;
-	const sideGutter = 10; // petit air à gauche/droite à l’intérieur de la card
-
-	const itemWidth = useMemo(() => {
-		if (!containerWidth) return 280; // fallback
-		// ✅ largeur réelle dispo dans la card
-		const w = containerWidth - sideGutter * 2;
-		return Math.max(240, w); // garde un minimum
-	}, [containerWidth]);
-
-	const snapInterval = itemWidth + spacing;
+	const itemWidth = containerWidth;
+	const snapInterval = itemWidth + space.micro;
 
 	return (
-		<Section title="Photos">
+		<View style={s.section}>
 			<View onLayout={onLayout} style={s.carouselWrap}>
 				{/* On attend de connaître la largeur pour éviter un premier rendu “trop large” */}
-				{containerWidth > 0 ? (
+				{photos.length === 0 ? <View style={s.empty}><Text style={s.photoEmptyText}>Aucune photo pour le moment</Text></View> : containerWidth > 0 ? (
 					<FlatList
 						data={photos}
 						keyExtractor={(uri, idx) => `${uri}-${idx}`}
@@ -38,21 +29,12 @@ export function PhotosSection({ photos }: { photos: string[] }) {
 						snapToInterval={snapInterval}
 						snapToAlignment="start"
 						disableIntervalMomentum
-						contentContainerStyle={{
-							paddingLeft: sideGutter,
-							paddingRight: sideGutter,
-						}}
-						ItemSeparatorComponent={() => <View style={{ width: spacing }} />}
-						renderItem={({ item }) => (
+						ItemSeparatorComponent={() => <View style={{ width: space.micro }} />}
+						renderItem={({ item, index }) => (
 							<View style={[s.photoFrame, { width: itemWidth }]}>
-								<Image source={item} style={s.photo} contentFit="cover" cachePolicy="memory-disk" />
+								<Image source={item} style={s.photo} contentFit="cover" cachePolicy="memory-disk" accessibilityLabel={`Photo du café ${index + 1} sur ${photos.length}`} />
 							</View>
 						)}
-						ListEmptyComponent={
-							<View style={[s.photoFrame, s.photoEmpty, { width: itemWidth }]}>
-								<Text style={s.photoEmptyText}>Aucune photo</Text>
-							</View>
-						}
 					/>
 				) : (
 					<View style={[s.photoFrame, s.photoEmpty, { width: "100%" }]}>
@@ -60,21 +42,23 @@ export function PhotosSection({ photos }: { photos: string[] }) {
 					</View>
 				)}
 			</View>
-		</Section>
+		</View>
 	);
 }
 
 const s = StyleSheet.create({
-	carouselWrap: { paddingTop: 2 },
+	section: { paddingHorizontal: space.standard },
+	carouselWrap: { paddingTop: 0 },
+	empty: { paddingVertical: space.standard },
 
 	photoFrame: {
-		height: 250,
-		borderRadius: 18,
+		aspectRatio: 4 / 3,
+		borderRadius: radii.card,
 		overflow: "hidden",
 		backgroundColor: palette.elevated,
 	},
 	photo: { width: "100%", height: "100%" },
 
 	photoEmpty: { alignItems: "center", justifyContent: "center" },
-	photoEmptyText: { color: palette.textMuted, fontWeight: "800" },
+	photoEmptyText: { ...typography.body, color: palette.textMuted },
 });

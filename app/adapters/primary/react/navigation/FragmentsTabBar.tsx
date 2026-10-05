@@ -1,3 +1,4 @@
+import { tabBarGeometry } from "@/app/adapters/primary/react/css/designTokens";
 import { floatingTabGlassPresentation, floatingTabPresentation } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 import { palette } from "@/app/adapters/primary/react/css/colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,7 +31,7 @@ export function FragmentsTabBar({ state, descriptors, navigation }: BottomTabBar
 	if (keyboardVisible) return null;
 
 	return (
-		<View style={[styles.shell, { bottom: Math.max(insets.bottom, 10) + 10 }]}>
+		<View style={[styles.shell, { bottom: Math.max(insets.bottom, tabBarGeometry.minimumInset) + tabBarGeometry.bottomGap }]}>
 			{reduceTransparency ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.opaque]} /> : <BlurView pointerEvents="none" intensity={floatingTabGlassPresentation.blurIntensity} tint="dark" style={StyleSheet.absoluteFill} />}
 			<View pointerEvents="none" style={styles.glassTint} />
 			<View pointerEvents="none" style={styles.glassHighlight} />
@@ -89,7 +90,7 @@ function FragmentsTabItem({ label, icon, selected, onPress, onLongPress }: {
 }
 
 const styles = StyleSheet.create({
-	shell: { position: "absolute", left: 16, right: 16, height: 70, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: floatingTabGlassPresentation.borderColor, shadowColor: palette.accent, shadowOpacity: 0.2, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 13 },
+	shell: { position: "absolute", left: 16, right: 16, height: tabBarGeometry.height, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: floatingTabGlassPresentation.borderColor, shadowColor: palette.accent, shadowOpacity: 0.2, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 13 },
 	opaque: { backgroundColor: palette.surface },
 	glassTint: { ...StyleSheet.absoluteFillObject, backgroundColor: floatingTabGlassPresentation.surfaceColor },
 	glassHighlight: { position: "absolute", top: 0, left: 22, right: 22, height: 1, borderRadius: 99, backgroundColor: floatingTabGlassPresentation.highlightColor },

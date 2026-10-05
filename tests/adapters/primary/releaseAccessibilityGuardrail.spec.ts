@@ -16,16 +16,19 @@ describe("release accessibility guardrails", () => {
 		expect(location).toContain('accessibilityLabel={isFollowing ? "Recentrer sur ma position, suivi actif"');
 	});
 
-	it("centers legal links and aligns the login button typography", () => {
+	it("keeps legal links centered and the Google action accessible after extraction", () => {
 		const login = source("app/adapters/primary/react/features/auth/screens/LoginScreen.tsx");
 		const links = source("app/adapters/primary/react/components/ReleaseLegalLinks.tsx");
 		expect(links).toContain('alignItems: "center"');
 		expect(links).toContain('textAlign: "center"');
-		expect(login).toContain('fontWeight: "600"');
+		expect(login).toContain("<GoogleSignInButton onPress={handlePress} loading={isLoading} />");
+		const google = source("app/adapters/primary/react/features/auth/components/GoogleSignInButton.tsx");
+		expect(google).toContain('accessibilityLabel="Continuer avec Google"');
+		expect(google).toContain('fontWeight: "500"');
 	});
 
 	it("keeps ticket, profile and experience mutations exposed as accessible controls", () => {
-		const scan = source("app/adapters/primary/react/features/scan/screens/ScanTicketScreen.tsx");
+		const scan = source("app/adapters/primary/react/features/scan/components/ScanTicketContent.tsx");
 		const profile = source("app/adapters/primary/react/features/profile/screens/EditProfileScreen.tsx");
 		const experiences = source("app/adapters/primary/react/features/cafes/components/ExperiencesSection.tsx");
 

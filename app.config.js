@@ -62,10 +62,11 @@ const plugins = [
   [
     "expo-splash-screen",
     {
-      image: "./assets/images/splash-icon.png",
-      imageWidth: 200,
+      image: "./assets/images/icon.png",
+      imageWidth: 112,
       resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#0A0705",
+      dark: { image: "./assets/images/icon.png", backgroundColor: "#0A0705" },
     },
   ],
   "expo-secure-store",
@@ -107,6 +108,7 @@ module.exports = {
       "com.googleusercontent.apps.255942605258-jisbuvlprrs8pp2qb6ft3psa6hg650fe",
     ],
     userInterfaceStyle: "automatic",
+    backgroundColor: "#0A0705",
     newArchEnabled: true,
     ios: {
       supportsTablet: false,

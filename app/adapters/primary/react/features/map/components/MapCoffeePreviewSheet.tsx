@@ -1,10 +1,11 @@
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Platform, StyleSheet, useWindowDimensions } from "react-native";
 
-import { palette } from "@/app/adapters/primary/react/css/colors";
+import { compactSheetPresentation } from "@/app/adapters/primary/react/components/design/Primitives";
+import { compactSheetGeometry } from "@/app/adapters/primary/react/css/designTokens";
+import { useBottomClearance } from "@/app/adapters/primary/react/components/design/ScrollClearance";
 import BottomSheetPreviewSimple from "@/app/adapters/primary/react/features/map/components/BottomSheetPreviewSimple";
-import { FLOATING_TAB_BAR_CLEARANCE } from "@/app/adapters/primary/react/navigation/floatingTabBar";
 
 type Props = {
 	bottomSheetRef: React.RefObject<BottomSheet | null>;
@@ -41,6 +42,8 @@ export default function MapCoffeePreviewSheet({
 	canOpenDirections,
 	isLoading,
 }: Props) {
+	const clearance = useBottomClearance();
+	const { height } = useWindowDimensions();
 	return (
 		<BottomSheet
 			ref={bottomSheetRef}
@@ -50,12 +53,13 @@ export default function MapCoffeePreviewSheet({
 			snapPoints={snapPoints}
 			enablePanDownToClose
 			enableOverDrag={false}
-			enableContentPanningGesture={false}
+			enableDynamicSizing
+			maxDynamicContentSize={height * compactSheetGeometry.maxHeightPercent / 100}
 			keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
 			keyboardBlurBehavior="none"
-			backgroundStyle={{ backgroundColor: palette.textPrimary_1 }}
+			backgroundStyle={compactSheetPresentation}
 		>
-			<BottomSheetView style={styles.sheetContent}>
+			<BottomSheetScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: clearance }]} showsVerticalScrollIndicator={false}>
 				<BottomSheetPreviewSimple
 					name={name}
 					isOpen={isOpen}
@@ -66,15 +70,13 @@ export default function MapCoffeePreviewSheet({
 					canOpenDirections={canOpenDirections}
 					isLoading={isLoading}
 				/>
-			</BottomSheetView>
+			</BottomSheetScrollView>
 		</BottomSheet>
 	);
 }
 
 const styles = StyleSheet.create({
 	sheetContent: {
-		backgroundColor: palette.textPrimary_1,
-		paddingBottom: FLOATING_TAB_BAR_CLEARANCE,
 		minHeight: 200,
 	},
 });

@@ -18,13 +18,14 @@
     "fingerprint:check": "node scripts/check-expo-fingerprint.mjs",
     "test:release:config": "node --test scripts/check-native-release-config.test.mjs scripts/inspect-ios-ipa.test.mjs scripts/mobile-ci-workflow.test.cjs scripts/release-public-config.test.cjs",
     "native:ipa:inspect": "node scripts/inspect-ios-ipa.mjs",
-    "verify:ci": "npm audit --audit-level=high && npm run lint && npm run typecheck && npm test -- --runInBand && npm run redux:map:check && npm run test:release:config && npm run native:release:check && npm run fingerprint:check",
+    "verify:ci": "npm audit --audit-level=high && npm run lint && npm run typecheck && npm run test:metro:watch && npm test -- --runInBand && npm run redux:map:check && npm run test:release:config && npm run native:release:check && npm run fingerprint:check",
     "redux:map": "node scripts/generate-redux-action-map.js",
     "redux:map:check": "node scripts/generate-redux-action-map.js --check",
     "build:dev": "eas build --profile development",
     "build:dev:fresh": "eas build --profile development --clear-cache",
     "build:prod": "eas build --profile production",
-    "build:prod:fresh": "eas build --profile production --clear-cache"
+    "build:prod:fresh": "eas build --profile production --clear-cache",
+    "test:metro:watch": "node --test scripts/metro-watch-compat.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

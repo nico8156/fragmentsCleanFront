@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { View } from "react-native";
+import { palette } from "@/app/adapters/primary/react/css/colors";
 import { Provider } from "react-redux";
 
 import { AppBootstrap } from "@/app/adapters/primary/react/AppBootstrap";
@@ -16,8 +18,10 @@ function RootLayout() {
 
 	return (
 		<Provider store={store}>
-			<AppBootstrap />
-			<RootNavigator />
+			<View style={{ flex: 1, backgroundColor: palette.background }}>
+				<AppBootstrap />
+				<RootNavigator />
+			</View>
 		</Provider>
 	);
 }

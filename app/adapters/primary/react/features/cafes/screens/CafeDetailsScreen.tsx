@@ -1,22 +1,17 @@
+import { ScrollClearance } from "@/app/adapters/primary/react/components/design/ScrollClearance";
+import { scrollContentSpacing } from "@/app/adapters/primary/react/css/designTokens";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
 	Keyboard,
 	KeyboardEvent,
-	LayoutChangeEvent,
 	Platform,
 	RefreshControl,
 	Dimensions,
 	View,
+	ScrollView,
+	StatusBar,
 } from "react-native";
-import Animated, {
-	Extrapolation,
-	interpolate,
-	runOnJS,
-	useAnimatedScrollHandler,
-	useAnimatedStyle,
-	useSharedValue,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -74,35 +69,9 @@ export default function CafeDetailsScreen() {
 		};
 	}, []);
 
-	// --- Scroll + sticky actions
+	// Scroll position is used only to keep the editor above the keyboard.
 	const scrollRef = useRef<any>(null);
 	const currentScrollYRef = useRef(0);
-	const scrollY = useSharedValue(0);
-	const actionsThreshold = useSharedValue(180);
-
-	const updateCurrentScrollY = (y: number) => {
-		currentScrollYRef.current = y;
-	};
-
-	const onScroll = useAnimatedScrollHandler({
-		onScroll: (e) => {
-			scrollY.value = e.contentOffset.y;
-			runOnJS(updateCurrentScrollY)(e.contentOffset.y);
-		},
-	});
-
-	const bottomBarStyle = useAnimatedStyle(() => {
-		const t = actionsThreshold.value;
-		const show = interpolate(scrollY.value, [t - 10, t + 40], [0, 1], Extrapolation.CLAMP);
-		return {
-			opacity: show,
-			transform: [{ translateY: interpolate(show, [0, 1], [18, 0], Extrapolation.CLAMP) }],
-		};
-	});
-
-	const onActionsLayout = (e: LayoutChangeEvent) => {
-		actionsThreshold.value = e.nativeEvent.layout.y + 40;
-	};
 
 	const statusLabel = useMemo(() => {
 		if (isOpenNow === undefined) return "STATUT";
@@ -121,7 +90,7 @@ export default function CafeDetailsScreen() {
 
 	// --- Guards
 	if (!coffeeId) return <DetailsError onBack={() => navigation.goBack()} />;
-	if (!coffee) return <DetailsSkeleton />;
+	if (!coffee) return <DetailsSkeleton onBack={() => navigation.goBack()} />;
 
 	const onBack = () => navigation.goBack();
 
@@ -133,7 +102,6 @@ export default function CafeDetailsScreen() {
 	};
 
 	const refreshing = likes.isLoading || likes.isRefreshing;
-	const showSticky = keyboardHeight === 0;
 
 	const scrollToCommentsEnd = () => {
 		// double RAF : laisse le layout se stabiliser (clavier / sections)
@@ -158,6 +126,7 @@ export default function CafeDetailsScreen() {
 
 	return (
 		<SafeAreaView style={styles.safe} edges={["top"]} testID="coffee-detail-loaded">
+			<StatusBar barStyle="light-content" />
 			<View style={styles.screen}>
 				<CafeDetailsHeader
 					title={coffee.name}
@@ -174,58 +143,42 @@ export default function CafeDetailsScreen() {
 					onPressComments={scrollToCommentsEnd}
 				/>
 
-				<Animated.ScrollView
-					ref={scrollRef}
-					onScroll={onScroll}
-					scrollEventThrottle={16}
-					automaticallyAdjustKeyboardInsets
-					keyboardDismissMode="interactive"
-					keyboardShouldPersistTaps="handled"
-					refreshControl={
-						<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textMuted} />
-					}
-					contentContainerStyle={[styles.content, { paddingBottom: 120 + (Platform.OS === "ios" ? 0 : keyboardHeight) }]}
-				>
-					<DetailsActionsRow
-						coffee={coffee}
-						addressLine={addressLine}
-						saved={{
-							saved: savedCoffee.saved,
-							pending: savedCoffee.isOptimistic,
-							onToggle: savedCoffee.toggle,
-						}}
-						onLayout={onActionsLayout}
-					/>
+				<ScrollClearance floatingTab={false}>
+					<ScrollView
+						ref={scrollRef}
+						onScroll={event => { currentScrollYRef.current = event.nativeEvent.contentOffset.y; }}
+						scrollEventThrottle={16}
+						automaticallyAdjustKeyboardInsets
+						keyboardDismissMode="interactive"
+						keyboardShouldPersistTaps="handled"
+						refreshControl={
+							<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textMuted} />
+						}
+						contentContainerStyle={[scrollContentSpacing, { paddingBottom: scrollContentSpacing.paddingBottom + (Platform.OS === "ios" ? 0 : keyboardHeight) }]}
+					>
+						<PhotosSection photos={coffee.photos ?? []} />
+						<DetailsActionsRow
+							coffee={coffee}
+							addressLine={addressLine}
+							saved={{
+								saved: savedCoffee.saved,
+								pending: savedCoffee.isOptimistic,
+								onToggle: savedCoffee.toggle,
+							}}
+						/>
 
-					<PhotosSection photos={coffee.photos ?? []} />
-					<TagsSection tags={(coffee as any).tags ?? []} />
-					<ExperiencesSection coffeeId={String(coffeeId)} />
-					<InfoSection coffee={coffee} addressLine={addressLine} />
+						<ExperiencesSection coffeeId={String(coffeeId)} />
+						<TagsSection tags={(coffee as any).tags ?? []} />
+						<InfoSection coffee={coffee} addressLine={addressLine} />
 
-					<CommentsSection
-						coffeeId={String(coffeeId)}
-						comments={comments}
-						onRequestScrollToComposer={scrollToCommentsEnd}
-						onRequestEnsureVisible={ensureRectVisibleAboveKeyboard}
-					/>
-				</Animated.ScrollView>
-
-				{showSticky && (
-					<Animated.View style={[styles.bottomBar, bottomBarStyle]}>
-						<View style={{ width: "100%" }}>
-							<DetailsActionsRow
-								coffee={coffee}
-								addressLine={addressLine}
-								compact
-								saved={{
-									saved: savedCoffee.saved,
-									pending: savedCoffee.isOptimistic,
-									onToggle: savedCoffee.toggle,
-								}}
-							/>
-						</View>
-					</Animated.View>
-				)}
+						<CommentsSection
+							coffeeId={String(coffeeId)}
+							comments={comments}
+							onRequestScrollToComposer={scrollToCommentsEnd}
+							onRequestEnsureVisible={ensureRectVisibleAboveKeyboard}
+						/>
+					</ScrollView>
+				</ScrollClearance>
 			</View>
 		</SafeAreaView>
 	);

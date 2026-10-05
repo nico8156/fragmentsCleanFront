@@ -8,8 +8,16 @@ or product state.
 `FragmentsTabBar` uses the React Navigation tab state and emits the standard
 `tabPress`/`tabLongPress` events before navigating. It hides while the keyboard
 is visible and switches from blur to an opaque surface when Reduce Transparency
-is enabled. Root scroll surfaces reserve `FLOATING_TAB_BAR_CLEARANCE`; the map
-remains intentionally underneath the bar while its location control clears it.
+is enabled. Tab routes use `ScrollClearance` to provide bottom content padding
+through a render callback: the scroll viewport extends behind the translucent
+bar, with no fixed full-width opaque band. At maximum scroll, the last control
+clears the bar height, safe-area inset, bottom gap and a readable margin.
+Home, the coffee list, Pass and the shared profile layout use this same calculation.
+Root-stack routes (including cafe details and the article catalogue) retain
+safe-area-only clearance because they are outside the tab navigator.
+The preview sheet uses the same bottom content padding without an opaque footer.
+Legacy screens retain `FLOATING_TAB_BAR_CLEARANCE`. The map remains underneath
+the bar while its location control clears it.
 
 The TestFlight refinement keeps the same dimensions and destinations, while
 raising blur, adding a thin light rim and a restrained accent shadow. This

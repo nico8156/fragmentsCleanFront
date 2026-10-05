@@ -15,7 +15,7 @@ export function AllBadgesScreen() {
 	const { levels } = usePassRingsViewModel();
 
 	return (
-		<SafeAreaView style={styles.safeArea}>
+		<SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
 			<FlatList
 				data={levels}
 				keyExtractor={(level) => level.level}
