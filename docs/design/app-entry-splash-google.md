@@ -43,4 +43,7 @@ Aucun lancement iPhone/simulateur ni compilation Xcode possible dans cet environ
 
 Après reconstruction/installation du build iOS : lancement à froid, fond sombre en modes clair et sombre, logo net centré, transition vers entrée/login/Home selon l'état existant, Continuer une seule fois, Google lisible, puis auth habituelle. Vérifier aussi petit écran et grande police. Aucun délai artificiel n'a été ajouté au splash.
 
-**REVIEW natif** pour cette dernière passe ; pas de publication TestFlight effectuée.
+**REVIEW rendu natif** pour cette dernière passe. Mise à jour livraison :
+le build **1.0.0 (10)** a été compilé et transmis à App Store Connect pour
+TestFlight avec succès le 5 octobre 2026. Voir le [reçu de livraison](../deployment/testflight-design-2026-10-05.md).
+La QA sur le binaire installé reste à faire.
