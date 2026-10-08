@@ -5,6 +5,16 @@ jest.mock("@/app/adapters/secondary/gateways/media/uploadPrivateFile", () => ({
 	uploadPrivateFile: (...args: unknown[]) => mockUploadPrivateFile(...args),
 }));
 
+
+it.each(["REVIEW_REQUIRED", "REJECTED"])("never exposes a transport URL for %s media", async status => {
+ const fetchMock=jest.spyOn(global,"fetch").mockResolvedValue(new Response(JSON.stringify({items:[{experienceId:"e",coffeeId:"c",authorId:"u",message:"Texte",publicationStatus:"PUBLISHED",moderationStatus:"VISIBLE",version:1,media:[{mediaId:"m",position:0,status,url:"https://must-not-render.test/image"}]}]}),{status:200}));
+ try {
+  const gateway=new HttpExperienceGateway({baseUrl:"https://api.test",getAccessToken:async()=>"token"});
+  const page=await gateway.listCoffee({coffeeId:"c",signal:new AbortController().signal});
+  expect(page.items[0].media).toEqual([expect.objectContaining({mediaId:"m",status,url:undefined})]);
+ } finally { fetchMock.mockRestore(); }
+});
+
 describe("HttpExperienceGateway", () => {
 	it.each(["create", "update", "publish", "delete", "report", "deleteMedia"] as const)("maps %s outbox commands without leaking the internal discriminator", async method => {
 		const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 202 }));
@@ -52,4 +62,15 @@ describe("HttpExperienceGateway", () => {
 			localUri: "file:///private/photo.jpg",
 		});
 	});
+});
+
+it.each([true,false,undefined])("only forwards explicit photo moderation permission: %s",async consent=>{
+ const original=global.fetch;
+ const fetchMock=jest.fn().mockResolvedValueOnce({ok:true,status:200,json:async()=>({uploadRequired:false})}).mockResolvedValueOnce({ok:true,status:202});
+ global.fetch=fetchMock;
+ try {
+  const gateway=new HttpExperienceGateway({baseUrl:"https://api.test",getAccessToken:async()=>"token"});
+  await gateway.uploadMedia({commandId:"cmd",experienceId:"e",mediaId:"m",image:{localUri:"file:///photo.jpg",contentType:"image/jpeg",size:123,moderationConsent:consent},at:"2026-10-08T00:00:00Z"});
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).moderationConsent).toBe(consent===true);
+ } finally {global.fetch=original;}
 });

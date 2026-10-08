@@ -51,6 +51,7 @@ export interface AppUser {
     // Profil applicatif
     displayName?: string;
     avatarUrl?: string;
+    avatarModerationStatus?: "REVIEW_REQUIRED" | "REJECTED";
     bio?: string;
 
     // Comptes liés OAuth

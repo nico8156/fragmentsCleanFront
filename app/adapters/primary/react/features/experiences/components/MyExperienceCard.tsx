@@ -68,10 +68,11 @@ export function MyExperienceCard({ item, coffeeName, onUpdate, onPublish, onDele
 					{view.mediaPending ? <Text accessibilityLiveRegion="polite" style={s.muted}>Photo en attente de synchronisation…</Text> : null}
 				</View>
 			) : null}
+			{view.mediaReviewLabel ? <Text accessibilityLiveRegion="polite" style={s.muted}>{view.mediaReviewLabel}</Text> : null}
 			{mediaError ? <Text accessibilityRole="alert" style={s.errorText}>{mediaError}</Text> : null}
 
 			<ExperienceActionsMenu>
-				{view.mediaUri ? <ActionButton label="Supprimer la photo" danger onPress={confirmPhotoDelete} /> : (
+				{media ? <ActionButton label="Supprimer la photo" danger onPress={confirmPhotoDelete} /> : (
 					<ActionButton
 						label="Ajouter une photo" quiet
 						disabled={item.optimistic}

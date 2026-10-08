@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 const mockLaunchLibrary = jest.fn();
 const mockRender = jest.fn();
 const mockResize = jest.fn();
@@ -67,8 +68,17 @@ const installManipulator = () => mockManipulate.mockImplementation(() => ({
 import { pickDurableImage } from "@/app/adapters/secondary/gateways/media/pickDurableImage";
 
 describe("pickDurableImage", () => {
+    afterEach(()=>jest.restoreAllMocks());
+    it("does not prepare an image without permission to share with OpenAI",async()=>{
+      jest.spyOn(Alert,"alert").mockImplementationOnce((_title,_message,buttons)=>{buttons?.find(b=>b.text==="Annuler")?.onPress?.();});
+      await expect(pickDurableImage("library")).resolves.toBeUndefined();
+      expect(mockCopy).not.toHaveBeenCalled();
+      expect(mockManipulate).not.toHaveBeenCalled();
+    });
+
 	beforeEach(() => {
 		jest.clearAllMocks();
+        jest.spyOn(Alert,"alert").mockImplementation((_title,_message,buttons)=>{buttons?.find(b=>b.text==="Autoriser l’analyse")?.onPress?.();});
 		mockRequireOptionalNativeModule.mockReturnValue({});
 		installManipulator();
 		mockLaunchLibrary.mockResolvedValue({
@@ -111,6 +121,7 @@ describe("pickDurableImage", () => {
 		expect(mockCopy).toHaveBeenCalledWith("file:///cache/normalized.jpg", expect.stringMatching(/pending-private-media\/.*\.jpg$/));
 		expect(mockDelete).toHaveBeenCalledWith("file:///cache/normalized.jpg");
 		expect(result).toMatchObject({
+            moderationConsent: true,
 			contentType: "image/jpeg",
 			size: 1_500_000,
 			width: 1600,

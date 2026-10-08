@@ -22,7 +22,7 @@ const mergeServerPage = (state: ExperienceStateWl, current: ExperienceCollection
 		if (local && (local.version > item.version || (local.optimistic && local.version === item.version))) continue;
 		// A create snapshot can precede the independently queued media attachment.
 		const pendingMedia = (local?.media ?? []).filter(media => media.localUri && media.uploadStatus
-			&& !(item.media ?? []).some(remote => remote.mediaId === media.mediaId && remote.url));
+			&& !(item.media ?? []).some(remote => remote.mediaId === media.mediaId && (remote.url || remote.status === "REVIEW_REQUIRED" || remote.status === "REJECTED")));
 		adapter.upsertOne(state.entities, { ...item, media: [...(item.media ?? []), ...pendingMedia], optimistic: false });
 	}
 	current.ids = [...new Set([...optimistic, ...items.map(item => item.experienceId)])];

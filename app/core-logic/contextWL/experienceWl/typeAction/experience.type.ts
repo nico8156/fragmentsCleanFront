@@ -3,8 +3,8 @@ import type { EntityState } from "@reduxjs/toolkit";
 export type ExperienceStatus = "DRAFT" | "PUBLISHED" | "DELETED";
 export type ExperienceModerationStatus = "VISIBLE" | "HIDDEN";
 export type ExperienceReportReason = "HARASSMENT" | "HATE_SPEECH" | "SEXUAL_CONTENT" | "VIOLENCE" | "SPAM" | "FALSE_INFORMATION" | "OTHER";
-export type LocalImageInput = { localUri: string; contentType: "image/jpeg" | "image/png"; size: number; width?: number; height?: number };
-export type ExperienceMediaItem = { mediaId: string; url?: string; localUri?: string; width?: number; height?: number; position: number; uploadStatus?: "QUEUED" | "UPLOADING" };
+export type LocalImageInput = { moderationConsent?: boolean; localUri: string; contentType: "image/jpeg" | "image/png"; size: number; width?: number; height?: number };
+export type ExperienceMediaItem = { status?: "AVAILABLE" | "REVIEW_REQUIRED" | "REJECTED"; mediaId: string; url?: string; localUri?: string; width?: number; height?: number; position: number; uploadStatus?: "QUEUED" | "UPLOADING" };
 
 export type ExperienceEntity = {
 	experienceId: string;

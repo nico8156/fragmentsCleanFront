@@ -129,6 +129,7 @@ export function useAuthUser() {
 
 	return {
 		...authSummary,
+		avatarModerationStatus: user?.avatarModerationStatus,
 		signInWithGoogle,
 		signInWithApple,
 		refreshToken,

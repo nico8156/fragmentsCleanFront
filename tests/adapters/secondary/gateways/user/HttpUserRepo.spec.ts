@@ -5,6 +5,16 @@ jest.mock("@/app/adapters/secondary/gateways/media/uploadPrivateFile", () => ({
 	uploadPrivateFile: (...args: unknown[]) => mockUploadPrivateFile(...args),
 }));
 
+
+it.each(["REVIEW_REQUIRED","REJECTED"])("maps avatar %s without replacing the active URL",async avatarModerationStatus=>{
+ const original=global.fetch;
+ global.fetch=jest.fn().mockResolvedValue({ok:true,status:200,json:async()=>({userId:"u",displayName:"Ada",avatarUrl:"https://previous.test/avatar",avatarModerationStatus,version:2})});
+ try {
+  const repo=new HttpUserRepo({baseUrl:"https://api.test",getAccessToken:async()=>"token"});
+  await expect(repo.getById("u" as any)).resolves.toMatchObject({avatarModerationStatus,avatarUrl:"https://previous.test/avatar"});
+ } finally {global.fetch=original;}
+});
+
 describe("HttpUserRepo", () => {
 	const originalFetch = global.fetch;
 
@@ -76,4 +86,15 @@ describe("HttpUserRepo", () => {
 			localUri: "file:///private/avatar.png",
 		});
 	});
+});
+
+it.each([true,false,undefined])("only forwards explicit photo moderation permission: %s",async consent=>{
+ const original=global.fetch;
+ const fetchMock=jest.fn().mockResolvedValueOnce({ok:true,status:200,json:async()=>({uploadRequired:false})}).mockResolvedValueOnce({ok:true,status:202});
+ global.fetch=fetchMock;
+ try {
+  const gateway=new HttpUserRepo({baseUrl:"https://api.test",getAccessToken:async()=>"token"});
+  await gateway.uploadAvatar({commandId:"cmd",mediaId:"m",image:{localUri:"file:///photo.jpg",contentType:"image/jpeg",size:123,moderationConsent:consent},at:"2026-10-08T00:00:00Z"});
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).moderationConsent).toBe(consent===true);
+ } finally {global.fetch=original;}
 });

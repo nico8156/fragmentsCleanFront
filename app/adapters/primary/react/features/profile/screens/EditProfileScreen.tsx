@@ -13,6 +13,7 @@ export function EditProfileScreen() {
 	const {
 		displayName,
 		avatarUrl,
+		avatarModerationStatus,
 		profileMutationStatus,
 		profileMutationError,
 		updateDisplayName,
@@ -60,7 +61,7 @@ export function EditProfileScreen() {
 				>
 					<Text style={styles.saveText}>{preparingAvatar ? "Préparation…" : avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}</Text>
 				</Pressable>
-				{avatarUrl ? (
+				{avatarUrl || avatarModerationStatus ? (
 					<Pressable testID="remove-avatar" style={styles.textAction} disabled={preparingAvatar} onPress={removeAvatar} accessibilityRole="button" accessibilityState={{ disabled: preparingAvatar }}>
 						<Text style={styles.removeText}>Supprimer la photo</Text>
 					</Pressable>
@@ -71,6 +72,7 @@ export function EditProfileScreen() {
 						<Text style={styles.settingsLink}>Ouvrir les réglages</Text>
 					</Pressable>
 				) : null}
+				{avatarModerationStatus ? <Text accessibilityLiveRegion="polite" style={styles.helper}>{avatarModerationStatus === "REVIEW_REQUIRED" ? "Nouvelle photo en cours de validation. Ton avatar public reste inchangé." : "Nouvelle photo refusée. Tu peux en choisir une autre."}</Text> : null}
 				{pending && avatarUrl?.startsWith("file:") ? (
 					<Text accessibilityLiveRegion="polite" style={styles.helper}>Photo prête, synchronisation en cours…</Text>
 				) : null}

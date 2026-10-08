@@ -14,6 +14,7 @@ type MeResponseDto = {
 	userId: string;
 	displayName?: string;
 	avatarUrl?: string | null;
+	avatarModerationStatus?: string | null;
 	createdAt: string;
 	updatedAt: string;
 	version: number;
@@ -53,7 +54,8 @@ export class HttpUserRepo implements UserRepo {
 			createdAt: dto.createdAt as ISODate,
 			updatedAt: dto.updatedAt as ISODate,
 			displayName: dto.displayName,
-			avatarUrl: dto.avatarUrl ?? undefined, // ✅ FIX ICI
+			avatarUrl: dto.avatarUrl ?? undefined,
+			avatarModerationStatus: dto.avatarModerationStatus === "REVIEW_REQUIRED" || dto.avatarModerationStatus === "REJECTED" ? dto.avatarModerationStatus : undefined,
 			bio: undefined,
 			identities: [],
 			roles: ["user"],
@@ -106,7 +108,7 @@ export class HttpUserRepo implements UserRepo {
 		const confirmation = await fetch(`${this.baseUrl}/api/users/me/avatar/${input.mediaId}/confirm`, {
 			method: "POST",
 			headers: authorization,
-			body: JSON.stringify({ commandId: input.commandId, at: input.at }),
+			body: JSON.stringify({ commandId: input.commandId, at: input.at, moderationConsent: input.image.moderationConsent === true }),
 		});
 		if (!confirmation.ok) {
 			throw await toGatewayErrorFromHttpResponse(confirmation, `Avatar confirmation failed (${confirmation.status})`);

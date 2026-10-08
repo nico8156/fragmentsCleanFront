@@ -4,6 +4,14 @@ import type { ExperienceEntity } from "@/app/core-logic/contextWL/experienceWl/t
 
 const entity = (overrides: Partial<ExperienceEntity> = {}): ExperienceEntity => ({ experienceId: "e1", userId: "u1", coffeeId: "c1", authorName: "Nicolas", message: "Très belle visite", status: "PUBLISHED", moderationStatus: "VISIBLE", createdAt: "2026-09-11T10:00:00Z", updatedAt: "2026-09-11T10:00:00Z", version: 0, ...overrides });
 
+
+it.each(["REVIEW_REQUIRED", "REJECTED"] as const)("reconciles %s without retaining a pending upload", status => {
+ const local=experienceReducer(initialExperienceState,experienceOptimisticCreated({entity:entity({media:[{mediaId:"m",localUri:"file:///photo.jpg",uploadStatus:"QUEUED",position:0}]})}));
+ const remote={mediaId:"m",status,position:0};
+ const reconciled=experienceReducer(local,coffeeExperiencesReceived({coffeeId:"c1",page:{items:[entity({version:1,media:[remote]})]}}));
+ expect(reconciled.entities.entities.e1.media).toEqual([remote]);
+});
+
 describe("experienceReducer", () => {
 	it("keeps a deleted experience hidden through late snapshots and an earlier command ACK, but restores on explicit rejection", () => {
 		const before = entity({ version: 1 });

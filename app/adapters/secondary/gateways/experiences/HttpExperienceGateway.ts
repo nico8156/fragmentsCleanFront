@@ -19,7 +19,7 @@ export class HttpExperienceGateway implements ExperienceGateway {
 				message: String(item.message ?? ""), status: item.publicationStatus,
 				moderationStatus: item.moderationStatus, createdAt: item.createdAt, updatedAt: item.updatedAt,
 				publishedAt: item.publicationStatus === "PUBLISHED" ? item.updatedAt : null, version: Number(item.version ?? 0),
-				media: Array.isArray(item.media) ? item.media.map((media: any) => ({ mediaId: String(media.mediaId), url: String(media.url), width: media.width, height: media.height, position: Number(media.position ?? 0) })) : [],
+				media: Array.isArray(item.media) ? item.media.map((media: any) => ({ mediaId: String(media.mediaId), url: media.status && media.status !== "AVAILABLE" ? undefined : typeof media.url === "string" ? media.url : undefined, status: media.status === "REVIEW_REQUIRED" || media.status === "REJECTED" ? media.status : "AVAILABLE", width: media.width, height: media.height, position: Number(media.position ?? 0) })) : [],
 			})) : [],
 			nextCursor: raw?.nextCursor ?? null,
 		};
@@ -54,7 +54,7 @@ export class HttpExperienceGateway implements ExperienceGateway {
 		const confirmed = await fetch(`${this.baseUrl}/api/experiences/${input.experienceId}/media/${input.mediaId}/confirm`, {
 			method: "POST",
 			headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-			body: JSON.stringify({ commandId: input.commandId, at: input.at }),
+			body: JSON.stringify({ commandId: input.commandId, at: input.at, moderationConsent: input.image.moderationConsent === true }),
 		});
 		if (!confirmed.ok) {
 			throw await toGatewayErrorFromHttpResponse(confirmed, `Experience media confirmation failed (${confirmed.status})`);

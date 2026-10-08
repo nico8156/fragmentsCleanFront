@@ -6,6 +6,7 @@ export type MyExperienceCardViewModel = {
 	statusTone: "draft" | "pending" | "published" | "hidden";
 	mediaUri?: string;
 	mediaPending: boolean;
+	mediaReviewLabel?: string;
 };
 
 export const buildMyExperienceCardViewModel = (
@@ -31,5 +32,6 @@ export const buildMyExperienceCardViewModel = (
 		statusTone,
 		mediaUri: media?.url ?? media?.localUri,
 		mediaPending: Boolean(media?.uploadStatus),
+		mediaReviewLabel: media?.status === "REVIEW_REQUIRED" ? "Photo en cours de validation. Elle reste privée." : media?.status === "REJECTED" ? "Photo refusée. Tu peux la supprimer et en proposer une autre." : undefined,
 	};
 };

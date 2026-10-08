@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
@@ -67,9 +68,18 @@ const prepareImage = async (asset: ImagePicker.ImagePickerAsset): Promise<Prepar
 	return normalizeToJpeg(asset.uri, asset.width, asset.height);
 };
 
+const requestModerationPermission = () => new Promise<boolean>(resolve => {
+ Alert.alert("Vérification de cette photo",
+  "Pour sécuriser les publications, cette photo sera transmise à OpenAI pour une analyse automatique. Si elle est signalée, elle restera privée jusqu’à une vérification humaine par Fragments. Autorises-tu cet envoi ?",
+  [{text:"Annuler",style:"cancel",onPress:()=>resolve(false)},
+   {text:"Autoriser l’analyse",onPress:()=>resolve(true)}],
+  {cancelable:true,onDismiss:()=>resolve(false)});
+});
+
 export const pickDurableImage = async (source: Source): Promise<LocalImageInput | undefined> => {
 	const result = await launch(source);
 	if (result.canceled || !result.assets[0]) return undefined;
+	if (!await requestModerationPermission()) return undefined;
 	const asset = result.assets[0];
 	const prepared = await prepareImage(asset);
 
@@ -87,6 +97,7 @@ export const pickDurableImage = async (source: Source): Promise<LocalImageInput 
 	}
 	return {
 		localUri: destination.uri,
+		moderationConsent: true,
 		contentType: prepared.contentType,
 		size,
 		width: prepared.width,

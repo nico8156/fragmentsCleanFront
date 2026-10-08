@@ -1,5 +1,14 @@
 import { buildMyExperienceCardViewModel } from "@/app/adapters/secondary/viewModel/myExperienceCardViewModel";
 
+
+it.each([["REVIEW_REQUIRED","Photo en cours de validation. Elle reste privée."],["REJECTED","Photo refusée. Tu peux la supprimer et en proposer une autre."]])("explains %s without a perpetual synchronization state", (status,label) => {
+ const view=buildMyExperienceCardViewModel({status:"PUBLISHED",media:[{mediaId:"m",status,position:0}]} as any);
+ expect(view.mediaReviewLabel).toBe(label);
+ expect(view.mediaPending).toBe(false);
+ expect(view.mediaUri).toBeUndefined();
+ expect(view.statusLabel).toBe("Publiée");
+});
+
 describe("myExperienceCardViewModel", () => {
 	it("does not announce a fully synchronized publication while its photo is pending", () => {
 		const view = buildMyExperienceCardViewModel({ status: "PUBLISHED", optimistic: false, media: [{ mediaId: "m", localUri: "file:///photo.jpg", uploadStatus: "QUEUED" }] } as any);
