@@ -7,10 +7,10 @@ export function GoogleSignInButton({ onPress, loading }: { onPress: () => void; 
             accessibilityState={{ disabled: loading, busy: loading }}
             style={({ pressed }) => [styles.button, (pressed || loading) && styles.dimmed]}>
             <View style={styles.content}>
-                {loading ? <ActivityIndicator color="#1F1F1F" /> :
+                {loading ? <ActivityIndicator color="#000000" style={styles.logo} /> :
                     <Image source={require("@/assets/images/google-g.png")} style={styles.logo}
                         resizeMode="contain" accessible={false} />}
-                <Text style={styles.label}>Continuer avec Google</Text>
+                <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>Continuer avec Google</Text>
             </View>
         </Pressable>
     );
@@ -19,8 +19,8 @@ export function GoogleSignInButton({ onPress, loading }: { onPress: () => void; 
 const styles = StyleSheet.create({
     button: { width: "100%", minHeight: 50, paddingHorizontal: 16, paddingVertical: 12,
         borderRadius: 12, backgroundColor: "#FFFFFF", justifyContent: "center" },
-    content: { flexDirection: "row", alignItems: "center", gap: 12 },
+    content: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
     logo: { width: 20, height: 20 },
-    label: { flex: 1, color: "#1F1F1F", fontSize: 16, lineHeight: 22, fontWeight: "500" },
+    label: { flexShrink: 1, textAlign: "center", color: "#000000", fontSize: 21.5, lineHeight: 26, fontWeight: "500" },
     dimmed: { opacity: 0.65 },
 });
