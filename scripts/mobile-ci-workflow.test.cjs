@@ -22,3 +22,11 @@ test("pull requests and main run the complete mobile source gate", () => {
 		assert.match(reference[1], /@[0-9a-f]{40}$/);
 	}
 });
+
+
+test("source verification runs the tested security policy before other checks", () => {
+	const { scripts } = JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf8"));
+	assert.match(scripts["verify:ci"], /^npm run test:security && npm run security:check && /);
+	assert.equal(scripts["test:security"], "node --test scripts/security-policy.test.cjs");
+	assert.equal(scripts["security:check"], "node scripts/check-mobile-security.cjs");
+});
